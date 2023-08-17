@@ -152,8 +152,8 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
         <Content Include="LICENSE.md" />
-        <Content Include="Thunderstore\CHANGELOG.md" />
         <Content Include="Thunderstore\icon.png" />
+        <Content Include="Thunderstore\CHANGELOG.md" />
         <Content Include="Thunderstore\manifest.json" />
         <Content Include="UpdateManifest.ps1" />
     </ItemGroup>

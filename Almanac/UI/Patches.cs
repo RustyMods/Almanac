@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using BepInEx.Logging;
 using HarmonyLib;
+using LocalizationManager;
 using UnityEngine;
 using UnityEngine.UI;
 using YamlDotNet.Serialization;
@@ -64,14 +65,12 @@ public static class Patches
             var contentPanel = trophyFrame.transform.Find("ContentPanel");
             var AlmanacList = contentPanel.transform.Find("AlmanacList");
             var closeButton = trophyFrame.Find("Closebutton");
+            
             ButtonSfx buttonSfx = closeButton.gameObject.GetComponent<ButtonSfx>();
             
             if (trophyList == null || !trophyFrame || !contentPanel || !AlmanacList) return;
 
-            foreach (var trophy in trophyList)
-            {
-                CreateAndAddButton(trophy, AlmanacList, contentPanel, buttonSfx);
-            }
+            foreach (var trophy in trophyList) CreateAndAddButton(trophy, AlmanacList, contentPanel, buttonSfx);
         }
 
         private static void CreateAndAddButton(GameObject trophyPanelIconPrefab, Transform parentElement, Transform contentPanel, ButtonSfx buttonSfx)
@@ -327,23 +326,61 @@ public static class Patches
 
             text.text = content;
 
-            if (content == "Weak") {text.color = weakColorConfig;}
+            if (content == "Weak")
+            {
+                text.color = weakColorConfig;
+                text.text = Localization.instance.Localize("$almanac_weak");
+            }
 
             if (content == "VeryWeak")
             {
                 text.color = veryWeakColorConfig;
-                text.text = "Very Weak";
+                text.text = Localization.instance.Localize("$almanac_very_weak");
             }
-            if (content == "Ignore") text.color = ignoreColorConfig;
-            if (content == "Immune") text.color = immuneColorConfig;
-            if (content == "Resistant") text.color = resistantColorConfig;
+
+            if (content == "Ignore")
+            {
+                text.color = ignoreColorConfig;
+                text.text = Localization.instance.Localize("$almanac_ignore");
+            }
+
+            if (content == "Immune")
+            {
+                text.color = immuneColorConfig;
+                text.text = Localization.instance.Localize("$almanac_immune");
+            }
+
+            if (content == "Resistant")
+            {
+                text.color = resistantColorConfig;
+                text.text = Localization.instance.Localize("$almanac_resistant");
+            }
             if (content == "VeryResistant")
             {
                 text.color = veryResistantColorConfig;
-                text.text = "Very Resistant";
+                text.text = Localization.instance.Localize("$almanac_very_resistant");
             }
             if (content == "N/A") text.color = Color.white;
-            if (content == "Normal") text.color = normalColorConfig;
+            if (content == "Normal")
+            {
+                text.color = normalColorConfig;
+                text.text = Localization.instance.Localize("$almanac_normal");
+            }
+
+            if (content == "False")
+            {
+                text.text = Localization.instance.Localize("$almanac_false");
+            }
+
+            if (content == "True")
+            {
+                text.text = Localization.instance.Localize("$almanac_true");
+            }
+
+            if (content == "Unknown")
+            {
+                text.text = Localization.instance.Localize("$almanac_unknown");
+            }
         }
 
         private static void SetImageElement(GameObject dummyElement, string id, Image inputImage)

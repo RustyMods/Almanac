@@ -115,13 +115,14 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="Almanac.cs" />
-        <Compile Include="CreateSprite.cs" />
-        <Compile Include="CreatureDataCollector.cs" />
-        <Compile Include="ElementHover.cs" />
-        <Compile Include="Patches.cs" />
+        <Compile Include="Managers\LocalizationManager.cs" />
         <Compile Include="Plugin.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
+        <Compile Include="UI\Almanac.cs" />
+        <Compile Include="UI\CreateSprite.cs" />
+        <Compile Include="UI\CreatureDataCollector.cs" />
+        <Compile Include="UI\ElementHover.cs" />
+        <Compile Include="UI\Patches.cs" />
         <Compile Include="VersionHandshake.cs" />
     </ItemGroup>
     <ItemGroup>
@@ -148,6 +149,9 @@
         <EmbeddedResource Include="icons\poisonIcon.png" />
         <EmbeddedResource Include="icons\spiritIcon.png" />
         <Content Include="ILRepack.targets" />
+        <Content Include="Libs\LocalizationManager.dll">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
         <Content Include="Libs\ServerSync.dll">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
@@ -155,6 +159,7 @@
         <Content Include="Thunderstore\icon.png" />
         <Content Include="Thunderstore\CHANGELOG.md" />
         <Content Include="Thunderstore\manifest.json" />
+        <EmbeddedResource Include="translations\English.yml" />
         <Content Include="UpdateManifest.ps1" />
     </ItemGroup>
     <ItemGroup>

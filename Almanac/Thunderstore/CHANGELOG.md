@@ -6,21 +6,19 @@ Information tool that modifies the in-game trophy panel.
 - Creature intelligence
 - Creature taming items
 - Items that are not known by players, are blacked out
-### How to use
-```
-Simply open up the trophy panel using the in-game trophy button
-Icons have been modified to become buttons.
-Almanac generates file first time user clicks on a icon.
-If the data is missing, try regenerating almanac
-If it still is missing, it probably does not have any creature associated with the trophy.
-```
 ### Configurations
+- color configurations for damage modifiers
+- localization yml file for extended language support
 ```
-Users are able to configure the damage modifiers colors using the cfg file.
+For more details about how to create your own localization yml file. 
+Please find me on OdinPlus discord. 
+There will be a mod-test release channel where we will be sharing configs
 ```
 | `Version` | `Update Notes`    |
 |-----------|-------------------|
 | 1.0.0     | - Initial Release |
+
+![](https://gcdnb.pbrd.co/images/3ic2BUmr0qzc.png?o=1)
 
 ## Contact information
 For Questions or Comments, find <span style="color:orange">Rusty</span> in the Odin Plus Team Discord

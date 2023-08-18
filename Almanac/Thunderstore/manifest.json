@@ -1,6 +1,6 @@
 {
-  "name": "RustyMods",
-  "version_number": "1.0.0",
+  "name": "Almanac",
+  "version_number": "1.0.1",
   "website_url": "https://github.com/RustyMods/Almanac",
   "description": "Almanac information tool",
   "dependencies": [

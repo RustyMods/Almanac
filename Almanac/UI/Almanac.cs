@@ -85,6 +85,10 @@ public static class Almanac
             textContent.resizeTextMaxSize = 25;
             textContent.resizeTextForBestFit = true;
 
+            Outline outline = text.AddComponent<Outline>();
+            outline.effectColor = new Color(0f, 0f, 0f, 1f);
+            outline.effectDistance = new Vector2(1f, -1f);
+
             var sfx = RegenerateButton.AddComponent<ButtonSfx>();
             sfx.m_sfxPrefab = closeButtonSfx.m_sfxPrefab;
         }

@@ -41,9 +41,9 @@ namespace Almanac
 
         public void Awake()
         {
-            _serverConfigLocked = config("1 - General", "Lock Configuration", Toggle.On,
-                "If on, the configuration is locked and can be changed by server admins only.");
-            _ = ConfigSync.AddLockingConfigEntry(_serverConfigLocked);
+            // _serverConfigLocked = config("1 - General", "Lock Configuration", Toggle.On,
+            //     "If on, the configuration is locked and can be changed by server admins only.");
+            // _ = ConfigSync.AddLockingConfigEntry(_serverConfigLocked);
 
             _normalColorConfig = config("2 - Resistance Colors", "Normal", Color.white, "Color code for normal damages", false);
             _weakColorConfig = config("2 - Resistance Colors", "Weak", new Color(1f, 0.7f, 0f, 1f), "Color code for weak damages", false);

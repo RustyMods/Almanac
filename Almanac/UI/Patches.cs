@@ -65,7 +65,7 @@ public static class Patches
             var contentPanel = trophyFrame.transform.Find("ContentPanel");
             var AlmanacList = contentPanel.transform.Find("AlmanacList");
             var closeButton = trophyFrame.Find("Closebutton");
-            
+
             ButtonSfx buttonSfx = closeButton.gameObject.GetComponent<ButtonSfx>();
             
             if (trophyList == null || !trophyFrame || !contentPanel || !AlmanacList) return;
@@ -76,7 +76,6 @@ public static class Patches
         private static void CreateAndAddButton(GameObject trophyPanelIconPrefab, Transform parentElement, Transform contentPanel, ButtonSfx buttonSfx)
         {
             var trophyName = trophyPanelIconPrefab.transform.Find("name").GetComponent<Text>().text;
-
             var localizedName = trophyName;
             if (trophyName.StartsWith("$")) localizedName = TryLocalizeString(trophyName);
 

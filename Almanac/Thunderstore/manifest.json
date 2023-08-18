@@ -1,9 +1,0 @@
-{
-  "name": "Almanac",
-  "version_number": "1.0.1",
-  "website_url": "https://github.com/RustyMods/Almanac",
-  "description": "Almanac information tool",
-  "dependencies": [
-    "denikson-BepInExPack_Valheim-5.4.2105"
-  ]
-}

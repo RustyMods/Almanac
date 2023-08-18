@@ -417,7 +417,7 @@ public static class Patches
                 if (result.name is "no data" or "unknown")
                 {
                     var trophyName = TryLocalizeString(creature.trophyName);
-                    if (trophyName == creatureName && creature.name != "ML_GoblinLox") result = creature;
+                    if (trophyName == creatureName && creature.name != "ML_GoblinLox" && creature.name != "MurkPod_RtD") result = creature;
                 }
             }
 

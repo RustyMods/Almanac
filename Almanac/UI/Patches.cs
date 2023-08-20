@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using BepInEx.Logging;
 using HarmonyLib;
-using LocalizationManager;
 using UnityEngine;
 using UnityEngine.UI;
 using YamlDotNet.Serialization;
 
-namespace Almanac;
+namespace Almanac.UI;
 
 public static class Patches
 {
@@ -21,24 +21,57 @@ public static class Patches
         {
             if (!__instance) return;
             var trophyList = __instance.m_trophyList;
-
+            var bossNames = new List<string>()
+            {
+                Localization.instance.Localize("$enemy_eikthyr"),
+                Localization.instance.Localize("$enemy_gdking"),
+                Localization.instance.Localize("$enemy_bonemass"),
+                Localization.instance.Localize("$enemy_dragon"),
+                Localization.instance.Localize("$enemy_goblinking"),
+                Localization.instance.Localize("$enemy_seekerqueen")
+            };
+            var uniqueVectorSet = new HashSet<Vector3>();
+            
             foreach (var trophy in trophyList)
             {
                 var trophyName = trophy.transform.Find("name");
-                var trophyDesc = trophy.transform.Find("description");
                 var trophyPos = trophy.transform.position;
-
                 var panelDisplayName = trophyName.gameObject.GetComponent<Text>().text;
-                var localizedTrophyName = TryLocalizeString("$item_trophy_troll");
-                if (panelDisplayName.ToLower().Contains("troll") || panelDisplayName == localizedTrophyName)
+
+                if (Localization.instance.Localize(panelDisplayName).ToLower().Contains("troll"))
                 {
-                    if (Math.Abs(trophyPos.x - 1010f) < 5f && Math.Abs(trophyPos.y - 694f) < 5f)
-                    {
-                        trophyName.gameObject.SetActive(false);
-                        trophyDesc.gameObject.SetActive(false);
-                    }
-                }
+                    if (!(Math.Abs(trophyPos.x - 1010f) < 5f) || !(Math.Abs(trophyPos.y - 694f) < 5f)) continue;
+                    trophy.transform.position = new Vector3(830f, 874f, 0.0f);
+                };
+                if (bossNames.Contains(Localization.instance.Localize(panelDisplayName))) uniqueVectorSet.Add(trophyPos);
+                
             }
+            
+            foreach (var trophy in trophyList)
+            {
+                var trophyPos = trophy.transform.position;
+                var trophyName = trophy.transform.Find("name").gameObject.GetComponent<Text>().text;
+
+                if (uniqueVectorSet.Contains(trophyPos) && Localization.instance.Localize(trophyName).ToLower() != Localization.instance.Localize("draugr") && !bossNames.Contains(trophyName))
+                {
+                    trophyPos = TryMoveTrophy(trophyPos, uniqueVectorSet);
+                }
+                uniqueVectorSet.Add(trophyPos);
+                trophy.transform.position = trophyPos;
+            }
+        }
+
+        private static Vector2 TryMoveTrophy(Vector3 position, HashSet<Vector3> uniqueVectors)
+        {
+            float increment = 180f;
+
+            var currentX = position.x;
+            var currentY = position.y;
+
+            position = currentX + increment >= 1190f ? new Vector3(110f, currentY - increment, 0.0f) : new Vector3(position.x + increment, currentY, 0.0f);
+            if (uniqueVectors.Contains(position)) position = TryMoveTrophy(position, uniqueVectors);
+            
+            return position;
         }
 
         [HarmonyPatch(nameof(InventoryGui.OnCloseTrophies)), HarmonyPostfix]
@@ -62,25 +95,27 @@ public static class Patches
             
             var trophyList = __instance.m_trophyList;
             var trophyFrame = __instance.m_trophiesPanel.transform.Find("TrophiesFrame");
-            var contentPanel = trophyFrame.transform.Find("ContentPanel");
-            var AlmanacList = contentPanel.transform.Find("AlmanacList");
+            var contentPanel = trophyFrame.Find("ContentPanel");
+            
+            var AlmanacList = contentPanel.Find("AlmanacList");
             var closeButton = trophyFrame.Find("Closebutton");
 
             ButtonSfx buttonSfx = closeButton.gameObject.GetComponent<ButtonSfx>();
             
             if (trophyList == null || !trophyFrame || !contentPanel || !AlmanacList) return;
 
-            foreach (var trophy in trophyList) CreateAndAddButton(trophy, AlmanacList, contentPanel, buttonSfx);
+            foreach (var trophy in trophyList) AddButtonComponent(trophy, AlmanacList, contentPanel, buttonSfx);
         }
 
-        private static void CreateAndAddButton(GameObject trophyPanelIconPrefab, Transform parentElement, Transform contentPanel, ButtonSfx buttonSfx)
+        private static void AddButtonComponent(GameObject trophyPanelIconPrefab, Transform parentElement, Transform contentPanel, ButtonSfx buttonSfx)
         {
             var trophyName = trophyPanelIconPrefab.transform.Find("name").GetComponent<Text>().text;
-            var localizedName = trophyName;
-            if (trophyName.StartsWith("$")) localizedName = TryLocalizeString(trophyName);
-
+            var localizedName = Localization.instance.Localize(trophyName);
             var TrophyIcon = trophyPanelIconPrefab.transform.Find("icon_bkg").transform.Find("icon")
                 .GetComponent<Image>();
+            
+            var sfx = trophyPanelIconPrefab.AddComponent<ButtonSfx>();
+            sfx.m_sfxPrefab = buttonSfx.m_sfxPrefab;
             
             var button = trophyPanelIconPrefab.AddComponent<Button>();
             button.interactable = true;
@@ -100,34 +135,20 @@ public static class Patches
             button.onClick.AddListener(() =>
             {
                 var dummyElement = parentElement.transform.Find("AlmanacElement (0)");
-                if (dummyElement) setAlmanacData(dummyElement.gameObject, localizedName, TrophyIcon);
-
+                if (!dummyElement) return;
+                setAlmanacData(dummyElement.gameObject, localizedName, TrophyIcon);
                 SetActiveElement(contentPanel.gameObject, "WelcomePanel", "0", false);
                 SetActiveElement(parentElement.gameObject, "AlmanacElement", "0", true);
-            });
 
-            var sfx = trophyPanelIconPrefab.AddComponent<ButtonSfx>();
-            sfx.m_sfxPrefab = buttonSfx.m_sfxPrefab;
-        }
-        private static string TryLocalizeString(string input)
-        {
-            try
-            {
-                return Localization.instance.Localize(input);
-            }
-            catch (NullReferenceException e)
-            {
-                return input;
-            }
+            });
         }
         private static void setAlmanacData(GameObject dummyElement, string creatureName, Image trophyIcon)
         {
-            Player player = Player.m_localPlayer;
+            var player = Player.m_localPlayer;
             var creatureData = GetAllCreatureData();
             var creature = getCreature(creatureData, creatureName);
-            var displayName = creature.display_name;
-            if (displayName.StartsWith("$")) displayName = TryLocalizeString(displayName);
-            SetTextElement(dummyElement, "displayName", displayName);
+            
+            SetTextElement(dummyElement, "displayName", Localization.instance.Localize(creature.display_name));
             SetTextElement(dummyElement, "faction", creature.faction ?? "no data");
             SetTextElement(dummyElement, "health", $"{creature.health.ToString()} HP");
             SetImageElement(dummyElement, "icon", trophyIcon);
@@ -144,12 +165,12 @@ public static class Patches
             SetTextElement(dummyElement, "poison", $"{creature.poison}");
             SetTextElement(dummyElement, "spirit", $"{creature.spirit}");
 
-            for (var index = 0; index < 7; index++)
+            for (var index = 0; index < 7; ++index)
             {
                 var dropBgElement = dummyElement.transform.Find($"ImageElement (dropIconBg ({index}))");
                 try
                 {
-                    GameObject item = ObjectDB.instance.GetItemPrefab(creature.drops[index]);
+                    var item = ObjectDB.instance.GetItemPrefab(creature.drops[index]);
                     if (!item)
                     {
                         SetActiveElement(dummyElement, "ImageElement", $"dropIconBg ({index})", false);
@@ -180,19 +201,15 @@ public static class Patches
             for (var index = 0; index < 4; index++)
             {
                 SetAttackDefault(dummyElement, index);
-                if (creature.defaultItems != new List<CreatureDataCollector.AttackData>())
+                if (creature.defaultItems == new List<CreatureDataCollector.AttackData>()) continue;
+                if (creature.defaultItems.Count <= index) continue;
+                try
                 {
-                    if (creature.defaultItems.Count > index)
-                    {
-                        try
-                        {
-                            SetAttackValues(dummyElement, index, creature.defaultItems[index]);
-                        }
-                        catch (IndexOutOfRangeException)
-                        {
-                            Debug.Log("failed to set almanac default item data");
-                        }
-                    }
+                    SetAttackValues(dummyElement, index, creature.defaultItems[index]);
+                }
+                catch (IndexOutOfRangeException)
+                {
+                    Debug.Log("failed to set almanac default item data");
                 }
             }
             
@@ -207,11 +224,11 @@ public static class Patches
             SetTextElement(dummyElement, "staggerDamageFactor", $"{creature.staggerDamageFactor}");
 
             SetTextElement(dummyElement, "weakSpot",
-                creature.weakSpot.Count != 0 ? $"{creature.weakSpot[0]}" : "No weak spots");
+                creature.weakSpot.Count != 0 ? $"{creature.weakSpot[0]}" : Localization.instance.Localize("$almanac_no_weak_spot"));
 
             SetActiveElement(dummyElement, "TextElement", "consumeItems (no data)", creature.consumeItems.Count == 0);
             
-            for (var index = 0; index < 7; index++)
+            for (var index = 0; index < 7; ++index)
             {
                 var bgElement = dummyElement.transform.Find($"ImageElement (iconBg ({index}))");
                 try
@@ -248,45 +265,49 @@ public static class Patches
 
         private static void SetAttackValues(GameObject element, int index, CreatureDataCollector.AttackData attackItem)
         {
-            SetTextElement(element, $"attackName ({index})", attackItem.name);
-            SetTextElement(element, $"attackBlunt ({index})", attackItem.blunt.ToString());
-            SetTextElement(element, $"attackSlash ({index})", attackItem.slash.ToString());
-            SetTextElement(element, $"attackPierce ({index})", attackItem.piece.ToString());
-            SetTextElement(element, $"attackChop ({index})", attackItem.chop.ToString());
-            SetTextElement(element, $"attackPickaxe ({index})", attackItem.pickaxe.ToString());
-            SetTextElement(element, $"attackFire ({index})", attackItem.fire.ToString());
-            SetTextElement(element, $"attackFrost ({index})", attackItem.frost.ToString());
-            SetTextElement(element, $"attackLightning ({index})", attackItem.lightning.ToString());
-            SetTextElement(element, $"attackPoison ({index})", attackItem.poison.ToString());
-            SetTextElement(element, $"attackSpirit ({index})", attackItem.spirit.ToString());
-            SetTextElement(element, $"attackAttackForce ({index})", attackItem.attackForce.ToString());
-            SetTextElement(element, $"attackBackStabBonus ({index})", attackItem.backStabBonus.ToString());
-            SetTextElement(element, $"attackDodgeable ({index})", attackItem.dodgeable.ToString());
-            SetTextElement(element, $"attackBlockable ({index})", attackItem.blockable.ToString());
-
-            var localizedStatusEffect = attackItem.statusEffect;
-            if (localizedStatusEffect.StartsWith("$")) localizedStatusEffect = Localization.instance.Localize(attackItem.statusEffect);
-            SetTextElement(element, $"attackStatusEffect ({index})", localizedStatusEffect);
+            var attackKeyValues = new Dictionary<string, string>()
+            {
+                { $"attackName ({index})", attackItem.name },
+                { $"attackBlunt ({index})", attackItem.blunt.ToString() },
+                { $"attackSlash ({index})", attackItem.slash.ToString() },
+                { $"attackPierce ({index})", attackItem.piece.ToString() },
+                { $"attackChop ({index})", attackItem.chop.ToString() },
+                { $"attackPickaxe ({index})", attackItem.pickaxe.ToString() },
+                { $"attackFire ({index})", attackItem.fire.ToString() },
+                { $"attackFrost ({index})", attackItem.frost.ToString() },
+                { $"attackLightning ({index})", attackItem.lightning.ToString() },
+                { $"attackPoison ({index})", attackItem.poison.ToString() },
+                { $"attackSpirit ({index})", attackItem.spirit.ToString() },
+                { $"attackAttackForce ({index})", attackItem.attackForce.ToString() },
+                { $"attackBackStabBonus ({index})", attackItem.backStabBonus.ToString() },
+                { $"attackDodgeable ({index})", attackItem.dodgeable.ToString() },
+                { $"attackBlockable ({index})", attackItem.blockable.ToString() },
+                { $"attackStatusEffect ({index})", Localization.instance.Localize(attackItem.statusEffect) },
+            };
+            foreach (var data in attackKeyValues) SetTextElement(element, data.Key, data.Value);
         }
 
         private static void SetAttackDefault(GameObject element, int index)
         {
-            SetTextElement(element, $"attackName ({index})", "No data");
-            SetTextElement(element, $"attackBlunt ({index})", "N/A");
-            SetTextElement(element, $"attackSlash ({index})", "N/A");
-            SetTextElement(element, $"attackPierce ({index})", "N/A");
-            SetTextElement(element, $"attackChop ({index})", "N/A");
-            SetTextElement(element, $"attackPickaxe ({index})", "N/A");
-            SetTextElement(element, $"attackFire ({index})", "N/A");
-            SetTextElement(element, $"attackFrost ({index})", "N/A");
-            SetTextElement(element, $"attackLightning ({index})", "N/A");
-            SetTextElement(element, $"attackPoison ({index})", "N/A");
-            SetTextElement(element, $"attackSpirit ({index})", "N/A");
-            SetTextElement(element, $"attackAttackForce ({index})", "N/A");
-            SetTextElement(element, $"attackBackStabBonus ({index})", "N/A");
-            SetTextElement(element, $"attackDodgeable ({index})", "N/A");
-            SetTextElement(element, $"attackBlockable ({index})", "N/A");
-            SetTextElement(element, $"attackStatusEffect ({index})", "N/A");
+            var defaultDataMap = new Dictionary<string, string>()
+            {
+                { $"attackName ({index})", "No data" },
+                { $"attackBlunt ({index})", "N/A" },
+                { $"attackSlash ({index})", "N/A" },
+                { $"attackPierce ({index})", "N/A" },
+                { $"attackPickaxe ({index})", "N/A" },
+                { $"attackFire ({index})", "N/A" },
+                { $"attackFrost ({index})", "N/A" },
+                { $"attackLightning ({index})", "N/A" },
+                { $"attackPoison ({index})", "N/A" },
+                { $"attackSpirit ({index})", "N/A" },
+                { $"attackAttackForce ({index})", "N/A" },
+                { $"attackBackStabBonus ({index})", "N/A" },
+                { $"attackDodgeable ({index})", "N/A" },
+                { $"attackBlockable ({index})", "N/A" },
+                { $"attackStatusEffect ({index})", "N/A" },
+            };
+            foreach (var data in defaultDataMap) SetTextElement(element, data.Key, data.Value);
         }
 
         private static void SetActiveElement(GameObject parentElement, string type, string id, bool active)
@@ -299,87 +320,75 @@ public static class Patches
         {
             var element = dummyElement.transform.Find($"ImageElement ({id})");
             var hoverElement = element.transform.Find("hoverTextElement");
-            if (hoverElement)
-            {
-                var text = hoverElement.GetComponent<Text>();
-                var localizedText = content;
-                if (localizedText.StartsWith("$")) localizedText = Localization.instance.Localize(content);
-                text.text = localizedText;
-            }
+            if (!hoverElement) return;
+            var text = hoverElement.GetComponent<Text>();
+            text.text = Localization.instance.Localize(content);
         }
 
         private static void SetTextElement(GameObject dummyElement, string id, string content = "Unknown")
         {
-            Color normalColorConfig = AlmanacPlugin._normalColorConfig.Value;
-            Color weakColorConfig = AlmanacPlugin._weakColorConfig.Value;
-            Color veryWeakColorConfig = AlmanacPlugin._veryWeakColorConfig.Value;
-            Color resistantColorConfig = AlmanacPlugin._resistantColorConfig.Value;
-            Color veryResistantColorConfig = AlmanacPlugin._veryResistantColorConfig.Value;
-            Color immuneColorConfig = AlmanacPlugin._immuneColorConfig.Value;
-            Color ignoreColorConfig = AlmanacPlugin._ignoreColorConfig.Value;
-            
             var element = dummyElement.transform.Find($"TextElement ({id})");
             if (!element) return;
+            
             var text = element.gameObject.GetComponent<Text>();
             element.gameObject.SetActive(true);
 
-            text.text = content;
+            text.text = SetLocalizedText(content);
 
-            if (content == "Weak")
+            var exclusionColorMap = new List<string>()
             {
-                text.color = weakColorConfig;
-                text.text = Localization.instance.Localize("$almanac_weak");
-            }
+                "weakSpot",
+                "consumeItems (no data)",    
+                "displayName",
+                "attackName",
+                "attackStatusEffect"
+            };
+            if (!exclusionColorMap.Any(id.StartsWith)) text.color = SetColorCodes(content);
+        }
 
-            if (content == "VeryWeak")
+        private static string SetLocalizedText(string originalContent)
+        {
+            var conversionMap = new Dictionary<string, string>()
             {
-                text.color = veryWeakColorConfig;
-                text.text = Localization.instance.Localize("$almanac_very_weak");
-            }
+                { "Weak", "$almanac_weak" },
+                { "VeryWeak", "$almanac_very_weak" },
+                { "Ignore", "$almanac_ignore" },
+                { "Immune", "$almanac_immune" },
+                { "Resistant", "$almanac_resistant" },
+                { "N/A", "$almanac_na" },
+                { "Normal", "$almanac_normal" },
+                { "False", "$almanac_false" },
+                { "True", "$almanac_true" },
+                { "Unknown", "$almanac_unknown" },
+                { "No data", "$almanac_no_data" },
+                { "ForestMonsters", "$almanac_forest_monsters" },
+                { "Undead", "$almanac_undead" },
+                { "MountainMonsters", "$almanac_mountain_monsters" },
+                { "PlainsMonsters", "$almanac_plains_monsters" },
+                { "MistlandsMonsters", "$almanac_mistlands_monsters" },
+                { "AnimalsVeg", "$almanac_animals_veg" },
+                { "SeaMonsters", "$almanac_sea_monsters" },
+                { "Boss", "$almanac_boss" },
+                { "Dverger", "$almanac_dverger" }
+            };
+            
+            return conversionMap.ContainsKey(originalContent) ? Localization.instance.Localize(conversionMap[originalContent]) : originalContent;
+        }
 
-            if (content == "Ignore")
+        private static Color SetColorCodes(string context)
+        {
+            return context switch
             {
-                text.color = ignoreColorConfig;
-                text.text = Localization.instance.Localize("$almanac_ignore");
-            }
-
-            if (content == "Immune")
-            {
-                text.color = immuneColorConfig;
-                text.text = Localization.instance.Localize("$almanac_immune");
-            }
-
-            if (content == "Resistant")
-            {
-                text.color = resistantColorConfig;
-                text.text = Localization.instance.Localize("$almanac_resistant");
-            }
-            if (content == "VeryResistant")
-            {
-                text.color = veryResistantColorConfig;
-                text.text = Localization.instance.Localize("$almanac_very_resistant");
-            }
-            if (content == "N/A") text.color = Color.white;
-            if (content == "Normal")
-            {
-                text.color = normalColorConfig;
-                text.text = Localization.instance.Localize("$almanac_normal");
-            }
-
-            if (content == "False")
-            {
-                text.text = Localization.instance.Localize("$almanac_false");
-            }
-
-            if (content == "True")
-            {
-                text.text = Localization.instance.Localize("$almanac_true");
-            }
-
-            if (content == "Unknown")
-            {
-                text.text = Localization.instance.Localize("$almanac_unknown");
-            }
+                "Normal" => AlmanacPlugin._normalColorConfig.Value,
+                "Weak" => AlmanacPlugin._weakColorConfig.Value,
+                "VeryWeak" => AlmanacPlugin._veryWeakColorConfig.Value,
+                "Resistant" => AlmanacPlugin._resistantColorConfig.Value,
+                "VeryResistant" => AlmanacPlugin._veryResistantColorConfig.Value,
+                "Ignore" => AlmanacPlugin._ignoreColorConfig.Value,
+                "Immune" => AlmanacPlugin._immuneColorConfig.Value,
+                "N/A" => Color.white,
+                _ => Color.white
+            };
         }
 
         private static void SetImageElement(GameObject dummyElement, string id, Image inputImage)
@@ -408,20 +417,46 @@ public static class Patches
         {
             TextInfo textInfo = CultureInfo.CurrentCulture.TextInfo;
             var result = new CreatureDataCollector.CreatureData();
-            foreach (CreatureDataCollector.CreatureData? creature in data)
+            for (var i = data.Count - 1; i >= 0; --i)
             {
-                var displayName = TryLocalizeString(creature.display_name);
+                var creature = data[i];
+                var displayName = Localization.instance.Localize(creature.display_name);
                 if (displayName == "The Queen") displayName = "Queen";
                 if (displayName == "Dvergr rogue") displayName = "Dvergr";
-                if (textInfo.ToTitleCase(displayName) == textInfo.ToTitleCase(creatureName)) result = creature;
-                if (result.name is "no data" or "unknown")
+                
+                var trophyName = Localization.instance.Localize(creature.trophyName);
+
+                if (textInfo.ToTitleCase(displayName) == textInfo.ToTitleCase(creatureName)) return creature;
+
+                if (trophyName == creatureName)
                 {
-                    var trophyName = TryLocalizeString(creature.trophyName);
-                    if (trophyName == creatureName && creature.name != "ML_GoblinLox" && creature.name != "MurkPod_RtD") result = creature;
+                    if (creatureName.ToLower().Contains(displayName.ToLower())) return creature;
+                    if (trophyName.ToLower().Contains(displayName.ToLower())) return creature;
+                    if (SubstringExistsInAnyOrder(trophyName, creatureName)) return creature;
                 }
+
+                if (trophyName.Contains(creatureName)) return creature;
             }
 
             return result;
+        }
+
+        private static bool SubstringExistsInAnyOrder(string mainString, string subString)
+        {
+            mainString = mainString.ToLower();
+            subString = subString.ToLower();
+
+            var mainFreq = mainString.GroupBy(c => c).ToDictionary(g => g.Key, g => g.Count());
+            var subFreq = subString.GroupBy(c => c).ToDictionary(g => g.Key, g => g.Count());
+            
+            foreach (var kvp in subFreq)
+            {
+                if (!mainFreq.ContainsKey(kvp.Key) || mainFreq[kvp.Key] < kvp.Value)
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         private static List<CreatureDataCollector.CreatureData> GetAllCreatureData()

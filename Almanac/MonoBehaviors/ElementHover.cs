@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace Almanac;
+namespace Almanac.MonoBehaviors;
 
 public class ElementHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {

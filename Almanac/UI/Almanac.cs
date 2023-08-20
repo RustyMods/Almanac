@@ -1,14 +1,12 @@
 ﻿using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using BepInEx.Logging;
+using Almanac.MonoBehaviors;
 using HarmonyLib;
-using LocalizationManager;
 using UnityEngine;
 using UnityEngine.UI;
 using GameObject = UnityEngine.GameObject;
 
-namespace Almanac;
+namespace Almanac.UI;
 
 public static class Almanac
 {
@@ -26,13 +24,13 @@ public static class Almanac
         private static void CreateRegenerateFileButton(Transform parentElement)
         {
             var TrophiesFrame = parentElement.Find("TrophiesFrame");
-            var Closebutton = TrophiesFrame.Find("Closebutton");
-            var closeText = Closebutton.Find("Text");
-            var closeButtonScript = Closebutton.gameObject.GetComponent<Button>();
-            var closeButtonSfx = Closebutton.gameObject.GetComponent<ButtonSfx>();
+            var closeButton = TrophiesFrame.Find("Closebutton");
+            var closeText = closeButton.Find("Text");
+            var closeButtonScript = closeButton.gameObject.GetComponent<Button>();
+            var closeButtonSfx = closeButton.gameObject.GetComponent<ButtonSfx>();
             
             Font font = closeText.gameObject.GetComponent<Text>().font;
-            Image closeImage = Closebutton.GetComponent<Image>();
+            Image closeImage = closeButton.GetComponent<Image>();
 
             if (!closeImage || !font || !closeButtonScript) return;
             
@@ -98,9 +96,8 @@ public static class Almanac
             var TrophiesFrame = parentElement.Find("TrophiesFrame");
             var border = TrophiesFrame.Find("border (1)");
             if (!TrophiesFrame || !border) return;
-            // Get panel background image
+
             var borderBgImage = border.GetComponent<Image>();
-            // Get the blue background image from trophy list
             var iconBg = trophyElement.transform.Find("icon_bkg").gameObject.GetComponent<Image>();
             if (!iconBg) return;
             
@@ -108,7 +105,7 @@ public static class Almanac
                 .Find("Sliding Area").transform.Find("Handle").GetComponent<Image>();
             if (!cloneHandle) return;
             
-            Vector2 position = new Vector2(880f, 0f);
+            var position = new Vector2(880f, 0f);
             
             CreateBorder(TrophiesFrame, borderBgImage, position);
             GameObject AlmanacContentPanel = CreateContentPanel(TrophiesFrame, position);
@@ -264,7 +261,7 @@ public static class Almanac
             scrollbar.onValueChanged = new Scrollbar.ScrollEvent();
             
             RectTransform rectTransform = element.GetComponent<RectTransform>();
-            scrollbar.onValueChanged.AddListener(call: (e) => { rectTransform.anchoredPosition = e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2400f) : new Vector2(0f, (e - 0.5f) * 1f); });
+            scrollbar.onValueChanged.AddListener(call: (e) => { rectTransform.anchoredPosition = e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f); });
             
             return scrollbar;
         }
@@ -305,16 +302,17 @@ public static class Almanac
 
             Transform DummyElement = DummyPanel.transform;
             
-            CreateTextElement(DummyElement, "displayName", "$almanac_untitled", font, -30f, 360f, 100f, 150f, Color.yellow, 25, TextAnchor.MiddleLeft, shadow: true);
-            CreateTextElement(DummyElement, "faction", "$almanac_factionless", font, -30f, 320f, 100f, 100f, Color.white, 16, TextAnchor.MiddleLeft);
-            CreateTextElement(DummyElement, "health", "1000 HP", font, 100f, 320f, 100f, 100f, Color.white, 20, TextAnchor.MiddleRight, true);
+            CreateTextElement(DummyElement, "displayName", "$almanac_untitled", font, 50f, 360f, 250f, 150f, Color.yellow, 25, TextAnchor.MiddleLeft, shadow: true);
+            CreateTextElement(DummyElement, "faction", "$almanac_factionless", font, 0f, 320f, 150f, 50f, Color.white, 16, TextAnchor.MiddleLeft);
+            CreateTextElement(DummyElement, "health", "1000 HP", font, 110f, 320f, 100f, 50f, Color.white, 20, TextAnchor.MiddleRight, true);
             CreateImageElement(DummyElement,"icon", font, -145f, 340f, 120f, 120f, false);
             // panel left alignment
             float anchorX = -110f;
             
-            CreateTextElement(DummyElement, "creatureStats", "$almanac_creature_resistances", font, anchorX, 300f, 100f, 100f, Color.white, 20, active: true, shadow: true);
+            CreateTextElement(DummyElement, "creatureStats", "$almanac_creature_resistances", font, anchorX, 300f, 
+                100f, 100f, Color.white, 20, active: true, shadow: true, 
+                horizontalWrapMode: HorizontalWrapMode.Overflow, verticalWrapMode: VerticalWrapMode.Overflow);
             
-            // Create Icons
             float iconXPos = anchorX - 50f;
             var iconElements = new Dictionary<string, string>()
             {
@@ -335,7 +333,7 @@ public static class Almanac
             {
                 CreateCustomImageElement(DummyElement, iconList[index].Key, font, iconXPos, 230f - (index * 25f), 25f, 25f, iconList[index].Value, active: true);
             }
-            // Create Tags
+
             var creatureStatsTags = new Dictionary<string, string>()
             {
                 { "bluntTag", "$almanac_blunt" },
@@ -373,9 +371,12 @@ public static class Almanac
             for (var index = 0; index < statsList.Count; index++)
             {
                 float statListX = anchorX + 210f;
-                CreateTextElement(DummyElement, statsList[index], "$almanac_unknown", font, statListX, 270f - (index * 25f), 100f, 100f, Color.white, 16);
+                CreateTextElement(DummyElement, statsList[index], "$almanac_unknown", font, statListX, 270f - (index * 25f), 150f, 100f, Color.white, 16);
             }
-            CreateTextElement(DummyElement, "creatureDrops", "$almanac_creature_drops", font, anchorX, 0f, 100f, 100f, Color.white, 20, shadow: true);
+            CreateTextElement(DummyElement, "creatureDrops", "$almanac_creature_drops", font, anchorX, 0f, 
+                100f, 100f, Color.white, 20, shadow: true, 
+                horizontalWrapMode: HorizontalWrapMode.Overflow, verticalWrapMode: VerticalWrapMode.Overflow);
+            
             for (var index = 0; index < 7; index++)
             {
                 GameObject dropBackground = CreateImageElement(DummyElement, $"dropIconBg ({index})", font,
@@ -384,59 +385,64 @@ public static class Almanac
                 CreateImageElement(dropBackground.transform, $"creatureDrop ({index})", font, 0f, 0f, 45f, 45f, false, true, shadow: true);
             }
 
-            CreateTextElement(DummyElement, "defaultAttacks", "$almanac_creature_attacks", font, anchorX, -125f, 100f, 100f, Color.white, 20, shadow: true);
-            for (var index = 0; index < 4; index++) CreateDefaultAttackStats(DummyElement, font, index, anchorX - 5f, -140f);
+            CreateTextElement(DummyElement, "defaultAttacks", "$almanac_creature_attacks", font, anchorX, -125f, 
+                100f, 100f, Color.white, 20, shadow: true,
+                horizontalWrapMode: HorizontalWrapMode.Overflow, verticalWrapMode: VerticalWrapMode.Overflow);
             
-            CreateTextElement(DummyElement, "intelligence", "$almanac_creature_intelligence", font, anchorX, -1085f, 100f, 100f, Color.white, 20, shadow: true);
+            for (var index = 0; index < 4; index++) CreateDefaultAttackStats(DummyElement, font, index, anchorX - 5f, -170f);
             
-            CreateAIStats(DummyElement, font, anchorX - 5f, -1125f, iconBackground);
+            CreateTextElement(DummyElement, "intelligence", "$almanac_creature_intelligence", font, anchorX, -975f, 
+                100f, 100f, Color.white, 20, shadow: true,
+                horizontalWrapMode: HorizontalWrapMode.Overflow, verticalWrapMode: VerticalWrapMode.Overflow);
+            
+            CreateAIStats(DummyElement, font, anchorX - 5f, -1050f, iconBackground);
 
             return DummyPanel;
         }
 
         private static void CreateAIStats(Transform parentElement, Font font, float x, float y, Image iconBackground)
         {
-            CreateTextElement(parentElement, "avoidFireTag", "$almanac_avoid_fire", font, x, y, 100f, 100f, Color.white, 16);
-            CreateTextElement(parentElement, "afraidOfFireTag", "$almanac_afraid_of_fire", font, x, y - 25f, 100f, 100f, Color.white, 16);
-            CreateTextElement(parentElement, "avoidWaterTag", "$almanac_avoid_water", font, x, y - 50f, 100f, 100f, Color.white, 16);
+            CreateTextElement(parentElement, "avoidFireTag", "$almanac_avoid_fire", font, x + 50f, y, 200f, 25f, Color.white, 16);
+            CreateTextElement(parentElement, "afraidOfFireTag", "$almanac_afraid_of_fire", font, x + 50f, y - 25f, 200f, 25f, Color.white, 16);
+            CreateTextElement(parentElement, "avoidWaterTag", "$almanac_avoid_water", font, x + 50f, y - 50f, 200f, 25f, Color.white, 16);
             
-            CreateTextElement(parentElement, "avoidFire", "False", font, x + 250f, y, 100f, 100f, Color.white, 16);
-            CreateTextElement(parentElement, "afraidOfFire", "False", font, x + 250f, y - 25f, 100f, 100f, Color.white, 16);
-            CreateTextElement(parentElement, "avoidWater", "False", font, x + 250f, y - 50f, 100f, 100f, Color.white, 16);
+            CreateTextElement(parentElement, "avoidFire", "False", font, x + 250f, y, 100f, 25f, Color.white, 16);
+            CreateTextElement(parentElement, "afraidOfFire", "False", font, x + 250f, y - 25f, 100f, 25f, Color.white, 16);
+            CreateTextElement(parentElement, "avoidWater", "False", font, x + 250f, y - 50f, 100f, 25f, Color.white, 16);
 
-            CreateTextElement(parentElement, "tolerateWaterTag", "$almanac_tolerate_water", font, x, y - 75f, 100f, 100f, Color.white, 16);
-            CreateTextElement(parentElement, "tolerateSmokeTag", "$almanac_tolerate_smoke", font, x, y - 100f, 100f, 100f, Color.white, 16);
-            CreateTextElement(parentElement, "tolerateTarTag", "$almanac_tolerate_tar", font, x, y - 125f, 100f, 100f, Color.white, 16);
+            CreateTextElement(parentElement, "tolerateWaterTag", "$almanac_tolerate_water", font, x + 50f, y - 75f, 200f, 25f, Color.white, 16);
+            CreateTextElement(parentElement, "tolerateSmokeTag", "$almanac_tolerate_smoke", font, x + 50f, y - 100f, 200f, 25f, Color.white, 16);
+            CreateTextElement(parentElement, "tolerateTarTag", "$almanac_tolerate_tar", font, x + 50f, y - 125f, 200f, 25f, Color.white, 16);
             
-            CreateTextElement(parentElement, "tolerateWater", "False", font, x + 250f, y - 75f, 100f, 100f, Color.white, 16);
-            CreateTextElement(parentElement, "tolerateSmoke", "False", font, x + 250f, y - 100f, 100f, 100f, Color.white, 16);
-            CreateTextElement(parentElement, "tolerateTar", "False", font, x + 250f, y - 125f, 100f, 100f, Color.white, 16);
+            CreateTextElement(parentElement, "tolerateWater", "False", font, x + 250f, y - 75f, 100f, 25f, Color.white, 16);
+            CreateTextElement(parentElement, "tolerateSmoke", "False", font, x + 250f, y - 100f, 100f, 25f, Color.white, 16);
+            CreateTextElement(parentElement, "tolerateTar", "False", font, x + 250f, y - 125f, 100f, 25f, Color.white, 16);
             
-            CreateTextElement(parentElement, "staggerWhenBlockedTag", "$almanac_stagger_when_blocked", font, x, y - 150f, 100f, 100f, Color.white, 16);
-            CreateTextElement(parentElement, "staggerDamageFactorTag", "$almanac_stagger_damage_factor", font, x, y - 175f, 100f, 100f, Color.white, 16);
+            CreateTextElement(parentElement, "staggerWhenBlockedTag", "$almanac_stagger_when_blocked", font, x  + 50f, y - 150f, 200f, 25f, Color.white, 16);
+            CreateTextElement(parentElement, "staggerDamageFactorTag", "$almanac_stagger_damage_factor", font, x + 50f, y - 175f, 200f, 25f, Color.white, 16);
             
-            CreateTextElement(parentElement, "staggerWhenBlocked", "False", font, x + 250f, y - 150f, 100f, 100f, Color.white, 16);
-            CreateTextElement(parentElement, "staggerDamageFactor", "0", font, x + 250f, y - 175f, 100f, 100f, Color.white, 16);
+            CreateTextElement(parentElement, "staggerWhenBlocked", "False", font, x + 250f, y - 150f, 100f, 25f, Color.white, 16);
+            CreateTextElement(parentElement, "staggerDamageFactor", "0", font, x + 250f, y - 175f, 100f, 25f, Color.white, 16);
             
-            CreateTextElement(parentElement, "weakSpot", "$almanac_no_weak_spot", font, x, y - 200f, 100f, 100f, Color.yellow, 16);
+            CreateTextElement(parentElement, "weakSpot", "$almanac_no_weak_spot", font, x + 50f, y - 200f, 200f, 25f, Color.yellow, 16);
             
-            CreateImageElement(parentElement, $"attackOverlay (99)", font, 0f, y - 100f, 400f, 200f, true,
+            CreateImageElement(parentElement, $"attackOverlay (99)", font, 0f, y - 100f, 400f, 400f, true,
                 false, null, 0f);
 
-            CreateTextElement(parentElement, "consumeItemsTag", "$almanac_taming_food_items", font, x, y - 250f, 100f, 100f, Color.white, 20, shadow: true);
-            CreateTextElement(parentElement, "consumeItems (no data)", "$almanac_creature_not_tamable", font, x, y - 275f, 100f, 100f, Color.yellow, 16, active: false);
+            CreateTextElement(parentElement, "consumeItemsTag", "$almanac_taming_food_items", font, x + 5f, y - 215f, 100f, 100f, Color.white, 20, shadow: true, horizontalWrapMode: HorizontalWrapMode.Overflow);
+            CreateTextElement(parentElement, "consumeItems (no data)", "$almanac_creature_not_tamable", font, x, y - 250f, 100f, 100f, Color.yellow, 16, active: false, horizontalWrapMode: HorizontalWrapMode.Overflow);
             for (var index = 0; index < 7; index++)
             {
                 GameObject dummyBackground = CreateImageElement(parentElement, $"iconBg ({index})", font,
-                    -155f + (index * 52), y - 350f, 50f, 50f, sprite: iconBackground.sprite, active: true, alpha: 1f);
+                    -155f + (index * 52), y - 315f, 50f, 50f, sprite: iconBackground.sprite, active: true, alpha: 1f);
                 CreateImageElement(dummyBackground.transform, $"consumeItem ({index})", font, 0f, 0f, 45f, 45f, addHoverableText: true, shadow: true);
             }
         }
         private static void CreateDefaultAttackStats(Transform parentElement, Font font, int index, float x, float y)
         {
-            float position = index * 225f;
-            float spacing = 25f;
-            float distanceFromTitle = 25f;
+            float position = index * 200f;
+            float spacing = 20f;
+            float distanceFromTitle = 20f;
 
             Dictionary<string, string> attackTags = new Dictionary<string, string>()
             {
@@ -479,20 +485,29 @@ public static class Almanac
                 { $"attackBlockable ({index})", "0" },
             };
             List<KeyValuePair<string, string>> attackValueList = attackValues.ToList();
-            for (var i = 0; i < 9; i++)
+            for (var i = 0; i < 9; ++i)
             {
                 float anchorY = (y - position - (spacing * i) - distanceFromTitle);
                 float valueAnchorX = x + 120f;
-                CreateTextElement(parentElement, attackTagList[i].Key, attackTagList[i].Value, font, x, anchorY, 100f, 100f, Color.white, 16);
-                CreateTextElement(parentElement, attackValueList[i].Key, attackValueList[i].Value, font, valueAnchorX, anchorY, 100f, 100f, (i == 0) ? Color.yellow : Color.white, 16);
+                if (attackTagList[i].Key.StartsWith("attackName") ||
+                    attackTagList[i].Key.StartsWith("attackStatusEffect"))
+                {
+                    CreateTextElement(parentElement, attackTagList[i].Key, attackTagList[i].Value, font, x, anchorY, 100f, 25f, Color.white, 16);
+                    CreateTextElement(parentElement, attackValueList[i].Key, attackValueList[i].Value, font, valueAnchorX + 50f, anchorY, 200f, 25f, Color.yellow, 16);
+                }
+                else
+                {
+                    CreateTextElement(parentElement, attackTagList[i].Key, attackTagList[i].Value, font, x, anchorY, 100f, 25f, Color.white, 16);
+                    CreateTextElement(parentElement, attackValueList[i].Key, attackValueList[i].Value, font, valueAnchorX, anchorY, 100f, 25f, Color.white, 16);
+                }
             }
-            for (var i = 9; i < attackTagList.Count; i++)
+            for (var i = 9; i < attackTagList.Count; ++i)
             {
-                float anchorY = (y - position - (spacing * (i - 9)) - distanceFromTitle - 25f);
+                float anchorY = (y - position - (spacing * (i - 9)) - distanceFromTitle - 20f);
                 float anchorX = x + 180f;
                 float anchorValueX = anchorX + 130f;
-                CreateTextElement(parentElement, attackTagList[i].Key, attackTagList[i].Value, font, anchorX, anchorY, 100f, 100f, Color.white, 16);
-                CreateTextElement(parentElement, attackValueList[i].Key, attackValueList[i].Value, font, anchorValueX, anchorY, 100f, 100f, Color.white, 16);
+                CreateTextElement(parentElement, attackTagList[i].Key, attackTagList[i].Value, font, anchorX, anchorY, 100f, 25f, Color.white, 16);
+                CreateTextElement(parentElement, attackValueList[i].Key, attackValueList[i].Value, font, anchorValueX, anchorY, 100f, 25f, Color.white, 16);
             }
             CreateImageElement(parentElement, $"attackOverlay ({index})", font, 0f, y - position - 250f, 400f, 250f, true,
                 false, null, 0f);
@@ -585,7 +600,7 @@ public static class Almanac
             Transform parentElement, string id, string content, Font font,
             float anchoredX, float anchoredY, float sizeX, float sizeY,
             Color color , int fontSize = 10, TextAnchor alignment = TextAnchor.LowerLeft, bool active = true,
-            bool shadow = false)
+            bool shadow = false, HorizontalWrapMode horizontalWrapMode = HorizontalWrapMode.Wrap, VerticalWrapMode verticalWrapMode = VerticalWrapMode.Truncate)
         {
             GameObject textElement = new GameObject($"TextElement ({id})");
             textElement.SetActive(active);
@@ -601,16 +616,16 @@ public static class Almanac
             text.supportRichText = true;
             text.alignment = alignment;
             text.alignByGeometry = false;
-            text.horizontalOverflow = HorizontalWrapMode.Overflow;
-            text.verticalOverflow = VerticalWrapMode.Overflow;
+            text.horizontalOverflow = horizontalWrapMode;
+            text.verticalOverflow = verticalWrapMode;
             text.resizeTextForBestFit = true;
-            text.resizeTextMinSize = 1;
-            text.resizeTextMaxSize = 32;
+            text.resizeTextMinSize = 6;
+            text.resizeTextMaxSize = fontSize;
             text.color = color;
             text.raycastTarget = false;
 
             text.text = Localization.instance.Localize(content);
-            
+
             if (shadow)
             {
                 var shadowElement = textElement.AddComponent<Shadow>();

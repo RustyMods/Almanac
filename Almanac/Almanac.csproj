@@ -116,12 +116,12 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="Managers\LocalizationManager.cs" />
+        <Compile Include="MonoBehaviors\CreateSprite.cs" />
+        <Compile Include="MonoBehaviors\ElementHover.cs" />
         <Compile Include="Plugin.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="UI\Almanac.cs" />
-        <Compile Include="UI\CreateSprite.cs" />
         <Compile Include="UI\CreatureDataCollector.cs" />
-        <Compile Include="UI\ElementHover.cs" />
         <Compile Include="UI\Patches.cs" />
         <Compile Include="VersionHandshake.cs" />
     </ItemGroup>

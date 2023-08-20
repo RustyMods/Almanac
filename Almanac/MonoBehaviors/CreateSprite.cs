@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Almanac;
+namespace Almanac.MonoBehaviors;
 
 public class CreateSprite : MonoBehaviour
 {

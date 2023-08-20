@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using BepInEx;
 using BepInEx.Logging;
 using JetBrains.Annotations;
 using UnityEngine;
 using YamlDotNet.Serialization;
 
-namespace Almanac;
+namespace Almanac.UI;
 public class CreatureDataCollector
 {
     public static readonly string outputFilePath = Paths.ConfigPath + Path.DirectorySeparatorChar + "AlmanacCreatureData.yml";
@@ -76,22 +77,13 @@ public class CreatureDataCollector
         Debug.Log("Creature data collected and saved YAML file to " + outputFilePath);
     }
 
-    private static bool inArray(CreatureData data, List<CreatureData> array)
+    private static bool inArray(CreatureData data, IEnumerable<CreatureData> array)
     {
-        foreach (var arrayData in array)
-        {
-            if (data.name == arrayData.name) return true;
-        }
-        return false;
+        return array.Any(arrayData => data.name == arrayData.name);
     }
-    private static bool inArray(AttackData data, List<AttackData> array)
+    private static bool inArray(AttackData data, IEnumerable<AttackData> array)
     {
-        foreach (var arrayData in array)
-        {
-            if (data.name == arrayData.name) return true;
-        }
-
-        return false;
+        return array.Any(arrayData => data.name == arrayData.name);
     }
 
     private static List<CreatureData> GetCreatureData()
@@ -105,30 +97,28 @@ public class CreatureDataCollector
             Humanoid humanoidScript = obj.GetComponent<Humanoid>();
             MonsterAI monsterAIScript = obj.GetComponent<MonsterAI>();
             AnimalAI animalAI = obj.GetComponent<AnimalAI>();
-            if (!obj.name.Contains("(Clone)"))
+            if (obj.name.Contains("(Clone)") || obj.name is "DvergerTest" or "TheHive" or "Hive") continue;
+            if (humanoidScript)
             {
-                if (humanoidScript)
-                {
-                    SaveCreatureData(obj, creatureData, humanoidScript);
-                    SaveDefaultItemsAttackData(creatureData, humanoidScript);
-                    SaveCharacterDropData(obj, creatureData);
-                }
-                if (characterScript)
-                {
-                    SaveCreatureData(obj, creatureData, characterScript);
-                    SaveCharacterDropData(obj, creatureData);
-                }
-                if (monsterAIScript)
-                {
-                    SaveMonsterAIData(monsterAIScript, creatureData);
-                }
-
-                if (animalAI)
-                {
-                    SaveAnimalAIData(animalAI, creatureData);
-                }
-                if (inArray(creatureData, data) == false) data.Add(creatureData);
+                SaveCreatureData(obj, creatureData, humanoidScript);
+                SaveDefaultItemsAttackData(creatureData, humanoidScript);
+                SaveCharacterDropData(obj, creatureData);
             }
+            if (characterScript)
+            {
+                SaveCreatureData(obj, creatureData, characterScript);
+                SaveCharacterDropData(obj, creatureData);
+            }
+            if (monsterAIScript)
+            {
+                SaveMonsterAIData(monsterAIScript, creatureData);
+            }
+
+            if (animalAI)
+            {
+                SaveAnimalAIData(animalAI, creatureData);
+            }
+            if (inArray(creatureData, data) == false) data.Add(creatureData);
         }
 
         return data;
@@ -216,9 +206,9 @@ public class CreatureDataCollector
             data.staggerDamageFactor = script.m_staggerDamageFactor;
 
             List<string> weakSpots = new List<string>();
-            foreach (var weakspot in script.m_weakSpots)
+            foreach (var spot in script.m_weakSpots)
             {
-                weakSpots.Add(weakspot.name);
+                weakSpots.Add(spot.name);
             }
 
             data.weakSpot = weakSpots;
@@ -288,7 +278,7 @@ public class CreatureDataCollector
         }
         catch (Exception e)
         {
-            System.Console.WriteLine(e);
+            AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"failed to get humanoid data of {data.name}, continuing...");
         }
     }
     private static void SaveAttackData(GameObject prefab, List<AttackData> array)

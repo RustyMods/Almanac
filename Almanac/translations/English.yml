@@ -61,3 +61,6 @@ almanac_animals_veg: "Animals Veg"
 almanac_sea_monsters: "Sea Monsters"
 almanac_boss: "Boss"
 almanac_dverger: "Dverger"
+# Almanac Buttons
+almanac_creature_button: "Creatures"
+almanac_trophies_button: "Trophies"

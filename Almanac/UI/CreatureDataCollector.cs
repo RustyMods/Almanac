@@ -134,7 +134,7 @@ public class CreatureDataCollector
             foreach (var item in script.m_consumeItems) consumeItems.Add(item.name);
             data.consumeItems = consumeItems;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"failed to get monster data of {data.name}, continuing...");
         }
@@ -147,7 +147,7 @@ public class CreatureDataCollector
             data.afraidOfFire = script.m_afraidOfFire;
             data.avoidWater = script.m_avoidWater;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"failed to get animal data of {data.name}, continuing...");
         }
@@ -165,13 +165,15 @@ public class CreatureDataCollector
                 foreach (var drop in drops)
                 {
                     dropList.Add(drop.m_prefab.name);
-                    if (drop.m_prefab.name.Contains("Trophy"))
+                    if (drop.m_prefab.name.Contains("Trophy") && drop.m_prefab.name != "TrophyAmber_coe")
+                    {
                         data.trophyName = drop.m_prefab.GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
+                    }
                 }
                 data.drops = dropList;
             }
         }
-        catch (Exception e)
+        catch (Exception)
         {
             AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"failed to get creature drop data of {data.name}, continuing...");
         }
@@ -186,7 +188,7 @@ public class CreatureDataCollector
             data.faction = script.m_faction.ToString();
 
             var damageModifiers = script.m_damageModifiers;
-                        
+            
             data.blunt = damageModifiers.m_blunt.ToString();
             data.slash = damageModifiers.m_slash.ToString();
             data.piece = damageModifiers.m_pierce.ToString();
@@ -206,14 +208,10 @@ public class CreatureDataCollector
             data.staggerDamageFactor = script.m_staggerDamageFactor;
 
             List<string> weakSpots = new List<string>();
-            foreach (var spot in script.m_weakSpots)
-            {
-                weakSpots.Add(spot.name);
-            }
-
+            foreach (var spot in script.m_weakSpots) weakSpots.Add(spot.name);
             data.weakSpot = weakSpots;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"failed to get humanoid data of {data.name}, continuing...");
         }
@@ -255,7 +253,7 @@ public class CreatureDataCollector
 
             data.weakSpot = weakSpots;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"failed to get character data of {data.name}, continuing...");
         }
@@ -276,7 +274,7 @@ public class CreatureDataCollector
             if (randomSets != null) foreach (var set in randomSets) foreach (var attackItem in set.m_items) SaveAttackData(attackItem, creatureAttackData);
             data.defaultItems = creatureAttackData;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"failed to get humanoid data of {data.name}, continuing...");
         }
@@ -313,7 +311,7 @@ public class CreatureDataCollector
             
             if (inArray(attackData, array) == false) array.Add(attackData);
         }
-        catch (Exception e)
+        catch (Exception)
         {
             AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"failed to get attack data of {prefab.name}, continuing...");
         }

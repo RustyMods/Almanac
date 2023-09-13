@@ -31,7 +31,7 @@ namespace Almanac
         // To set requirements of install
         
         private static readonly ConfigSync ConfigSync = new(ModGUID)
-            { DisplayName = ModName, CurrentVersion = ModVersion, MinimumRequiredVersion = ModVersion, ModRequired = false};
+            { DisplayName = ModName, CurrentVersion = ModVersion, ModRequired = false};
         
         public enum Toggle
         {

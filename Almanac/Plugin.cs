@@ -17,7 +17,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "1.0.5";
+        internal const string ModVersion = "1.0.7";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         private static string ConfigFileName = ModGUID + ".cfg";
@@ -48,7 +48,9 @@ namespace Almanac
             _veryResistantColorConfig = config("2 - Resistance Colors", "Very Resistant", new Color(0.5f, 0.5f, 0.5f, 1f), "Color code for very resistant damages", false);
             _immuneColorConfig = config("2 - Resistance Colors", "Immune", new Color(0.5f, 0.5f, 1f, 1f), "Color code for immune damages", false);
             _ignoreColorConfig = config("2 - Resistance Colors", "Ignore", new Color(0.5f, 0.5f, 1f, 1f), "Color code for ignore damages", false);
-            
+
+            _CreatureKnowledgeLock = config("3 - Utilities", "Creature Data", Toggle.On,
+                "If on, creature data is locked behind knowledge of drops", false);
             Localizer.Load();
 
             Assembly assembly = Assembly.GetExecutingAssembly();
@@ -97,6 +99,8 @@ namespace Almanac
         public static ConfigEntry<Color> _veryResistantColorConfig = null!;
         public static ConfigEntry<Color> _ignoreColorConfig = null!;
         public static ConfigEntry<Color> _immuneColorConfig = null!;
+
+        public static ConfigEntry<Toggle> _CreatureKnowledgeLock = null!;
 
 
         private ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description,

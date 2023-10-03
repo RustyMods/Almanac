@@ -9,7 +9,7 @@ using UnityEngine;
 using YamlDotNet.Serialization;
 
 namespace Almanac.UI;
-public class CreatureDataCollector
+public static class CreatureDataCollector
 {
     public static readonly string outputFilePath = Paths.ConfigPath + Path.DirectorySeparatorChar + "AlmanacCreatureData.yml";
     
@@ -70,11 +70,30 @@ public class CreatureDataCollector
     public static void CollectAndSaveCreatureData()
     {
         List<CreatureData> creatureData = GetCreatureData();
+        creatureData.RemoveAt(0);
+        
+        foreach (var data in creatureData)
+        { 
+            RenameCreatureData(data);
+        }
+        
         Serializer serializer = new Serializer();
         string yamlData = serializer.Serialize(creatureData);
         
         File.WriteAllText(outputFilePath, yamlData);
         Debug.Log("Creature data collected and saved YAML file to " + outputFilePath);
+    }
+
+    private static void RenameCreatureData(CreatureData creatureData)
+    {
+        Dictionary<string, string> conversion = new Dictionary<string, string>()
+        {
+            { "Leech_cave", "$enemy_leech_cave" },
+            { "DvergerMageFire", "$enemy_dverger_mage_fire" },
+            { "DvergerMageIce", "$enemy_dverger_mage_ice" },
+            { "DvergerMageSupport", "$enemy_dverger_mage_support" }
+        };
+        if (conversion.ContainsKey(creatureData.name)) creatureData.display_name = conversion[creatureData.name];
     }
 
     private static bool inArray(CreatureData data, IEnumerable<CreatureData> array)

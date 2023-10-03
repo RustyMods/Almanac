@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using Almanac.MonoBehaviors;
 using BepInEx.Logging;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
 using YamlDotNet.Serialization;
+using Object = UnityEngine.Object;
 
 namespace Almanac.UI;
 
@@ -20,6 +22,7 @@ public static class Patches
         public static void FixTrophiesList(InventoryGui __instance)
         {
             if (!__instance) return;
+    
             var trophyList = __instance.m_trophyList;
             var bossNames = new List<string>()
             {
@@ -37,7 +40,7 @@ public static class Patches
                 var trophyName = trophy.transform.Find("name");
                 var trophyPos = trophy.transform.position;
                 var panelDisplayName = trophyName.gameObject.GetComponent<Text>().text;
-
+    
                 if (Localization.instance.Localize(panelDisplayName).ToLower().Contains("troll"))
                 {
                     if (!(Math.Abs(trophyPos.x - 1010f) < 5f) || !(Math.Abs(trophyPos.y - 694f) < 5f)) continue;
@@ -51,7 +54,7 @@ public static class Patches
             {
                 var trophyPos = trophy.transform.position;
                 var trophyName = trophy.transform.Find("name").gameObject.GetComponent<Text>().text;
-
+    
                 if (uniqueVectorSet.Contains(trophyPos) && Localization.instance.Localize(trophyName).ToLower() != Localization.instance.Localize("draugr") && !bossNames.Contains(trophyName))
                 {
                     trophyPos = TryMoveTrophy(trophyPos, uniqueVectorSet);
@@ -60,20 +63,20 @@ public static class Patches
                 trophy.transform.position = trophyPos;
             }
         }
-
+    
         private static Vector2 TryMoveTrophy(Vector3 position, HashSet<Vector3> uniqueVectors)
         {
             float increment = 180f;
-
+    
             var currentX = position.x;
             var currentY = position.y;
-
+    
             position = currentX + increment >= 1190f ? new Vector3(110f, currentY - increment, 0.0f) : new Vector3(position.x + increment, currentY, 0.0f);
             if (uniqueVectors.Contains(position)) position = TryMoveTrophy(position, uniqueVectors);
             
             return position;
         }
-
+    
         [HarmonyPatch(nameof(InventoryGui.OnCloseTrophies)), HarmonyPostfix]
         public static void closeAlmanac(InventoryGui __instance)
         {
@@ -87,26 +90,97 @@ public static class Patches
             dummyElement.gameObject.SetActive(false);
             welcomePanel.gameObject.SetActive(true);
         }
-        
+    
         [HarmonyPatch(nameof(InventoryGui.OnOpenTrophies)), HarmonyPostfix]
         public static void AddButtons(InventoryGui __instance)
         {
             if (!__instance) return;
-            
+    
+            SetUnknownCreatures(__instance,
+                AlmanacPlugin._CreatureKnowledgeLock.Value == AlmanacPlugin.Toggle.On
+                    ? AlmanacPlugin.Toggle.On
+                    : AlmanacPlugin.Toggle.Off);
+            SetUnknownMaterials(__instance,
+                AlmanacPlugin._CreatureKnowledgeLock.Value == AlmanacPlugin.Toggle.On
+                    ? AlmanacPlugin.Toggle.On
+                    : AlmanacPlugin.Toggle.Off);
+    
             var trophyList = __instance.m_trophyList;
             var trophyFrame = __instance.m_trophiesPanel.transform.Find("TrophiesFrame");
             var contentPanel = trophyFrame.Find("ContentPanel");
             
             var AlmanacList = contentPanel.Find("AlmanacList");
             var closeButton = trophyFrame.Find("Closebutton");
-
+    
             ButtonSfx buttonSfx = closeButton.gameObject.GetComponent<ButtonSfx>();
             
             if (trophyList == null || !trophyFrame || !contentPanel || !AlmanacList) return;
-
+    
             foreach (var trophy in trophyList) AddButtonComponent(trophy, AlmanacList, contentPanel, buttonSfx);
         }
-
+    
+        private static void SetUnknownMaterials(InventoryGui __instance, AlmanacPlugin.Toggle toggle)
+        {
+            var materials = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Material, "");
+            var trophyPanel = __instance.m_trophiesPanel;
+            var trophyFrame = trophyPanel.transform.Find("TrophiesFrame");
+            var materialPanel = trophyFrame.transform.Find("materialPanel");
+            for (int i = 0; i < materials.Count; ++i)
+            {
+                var container = materialPanel.Find($"materialContainer ({i})");
+                var icon = container.Find("iconObj");
+                Image iconImage = icon.gameObject.GetComponent<Image>();
+                var hoverText = container.Find("hoverTextElement");
+                Text text = hoverText.gameObject.GetComponent<Text>();
+                Button button = container.GetComponent<Button>();
+                if (!Player.m_localPlayer.IsKnownMaterial(materials[i].m_itemData.m_shared.m_name) && toggle == AlmanacPlugin.Toggle.On)
+                {
+                    iconImage.color = new Color(0f, 0f, 0f, 1f);
+                    text.text = "???";
+                    button.interactable = false;
+                }
+                else
+                {
+                    iconImage.color = new Color(1f, 1f, 1f, 1f);
+                    text.text = Localization.instance.Localize(materials[i].m_itemData.m_shared.m_name);
+                    button.interactable = true;
+                }
+            }
+        }
+        private static void SetUnknownCreatures(InventoryGui __instance, AlmanacPlugin.Toggle toggle)
+        {
+            var creatures = GetAllCreatureData();
+            var trophyPanel = __instance.m_trophiesPanel;
+            var trophyFrame = trophyPanel.transform.Find("TrophiesFrame");
+            var creaturePanel = trophyFrame.transform.Find("creaturePanel");
+            for (int i = 0; i < creatures.Count; ++i)
+            {
+                var container = creaturePanel.Find($"CreatureContainer ({i})");
+                bool isWise = true;
+                if (toggle == AlmanacPlugin.Toggle.On)
+                {
+                    foreach (var item in creatures[i].drops)
+                    {
+                        if (Player.m_localPlayer.IsKnownMaterial(item)) continue;
+                        isWise = false;
+                    }
+                }
+    
+                Button button = container.gameObject.GetComponent<Button>();
+                Text text = container.Find($"CreatureContainer Text ({i})").gameObject.GetComponent<Text>();
+                if (isWise)
+                {
+                    button.interactable = true;
+                    text.text = Localization.instance.Localize(creatures[i].display_name);
+                }
+                else
+                {
+                    button.interactable = false;
+                    text.text = "Locked";
+                }
+            }
+        }
+    
         private static void AddButtonComponent(GameObject trophyPanelIconPrefab, Transform parentElement, Transform contentPanel, ButtonSfx buttonSfx)
         {
             var trophyName = trophyPanelIconPrefab.transform.Find("name").GetComponent<Text>().text;
@@ -139,32 +213,72 @@ public static class Patches
                 setAlmanacData(dummyElement.gameObject, localizedName, TrophyIcon);
                 SetActiveElement(contentPanel.gameObject, "WelcomePanel", "0", false);
                 SetActiveElement(parentElement.gameObject, "AlmanacElement", "0", true);
-
+                SetActiveElement(parentElement.gameObject, "MaterialElement", "0", false);
             });
         }
-        private static void setAlmanacData(GameObject dummyElement, string creatureName, Image trophyIcon)
+    
+        public static void SetMaterialData(GameObject dummyElement, ItemDrop materialData)
+        {
+            var sharedData = materialData.m_itemData.m_shared;
+            string name = Localization.instance.Localize(sharedData.m_name);
+            string description = Localization.instance.Localize(sharedData.m_description);
+            float maxStackSize = sharedData.m_maxStackSize;
+            float weight = sharedData.m_weight;
+            bool teleportable = sharedData.m_teleportable;
+            bool questItem = sharedData.m_questItem;
+            
+            Sprite sprite = sharedData.m_icons[0];
+            
+            // Shared Information
+            SetTextElement(dummyElement, "materialName", name);
+            SetTextElement(dummyElement, "materialDescription", description);
+            SetTextElement(dummyElement, "maxStackSize", $"Stack size: {maxStackSize}");
+            SetImageElement(dummyElement, "icon", sprite, Color.white);
+        }
+        public static void setAlmanacData(GameObject dummyElement, string creatureName, Image trophyIcon = null!)
         {
             var player = Player.m_localPlayer;
             var creatureData = GetAllCreatureData();
             var creature = getCreature(creatureData, creatureName);
-            
+
             SetTextElement(dummyElement, "displayName", Localization.instance.Localize(creature.display_name));
             SetTextElement(dummyElement, "faction", creature.faction ?? "no data");
             SetTextElement(dummyElement, "health", $"{creature.health.ToString()} HP");
-            SetImageElement(dummyElement, "icon", trophyIcon);
-
+            if (trophyIcon != null)
+            {
+                SetImageElement(dummyElement, "icon", trophyIcon);
+            }
+            else
+            {
+                var trophy = creature.trophyName;
+                foreach (var item in creature.drops)
+                {
+                    if (item.Contains("Trophy")) trophy = item;
+                }
+                var trophyObj = ObjectDB.instance.GetItemPrefab(trophy);
+                if (trophyObj)
+                {
+                    var icon = trophyObj.GetComponent<ItemDrop>().m_itemData.m_shared.m_icons[0];
+                    SetImageElement(dummyElement, "icon", icon, new Color(1f, 1f, 1f, 1f));
+                }
+                else
+                {
+                    SetImageDefault(dummyElement, "icon");
+                }
+            }
+    
             SetTextElement(dummyElement, "blunt", $"{creature.blunt}");
             SetTextElement(dummyElement, "slash", $"{creature.slash}");
             SetTextElement(dummyElement, "pierce", $"{creature.piece}");
             SetTextElement(dummyElement, "chop", $"{creature.chop}");
             SetTextElement(dummyElement, "pickaxe", $"{creature.pickaxe}");
-
+    
             SetTextElement(dummyElement, "fire", $"{creature.fire}");
             SetTextElement(dummyElement, "frost", $"{creature.frost}");
             SetTextElement(dummyElement, "lightning", $"{creature.lightning}");
             SetTextElement(dummyElement, "poison", $"{creature.poison}");
             SetTextElement(dummyElement, "spirit", $"{creature.spirit}");
-
+    
             for (var index = 0; index < 7; ++index)
             {
                 var dropBgElement = dummyElement.transform.Find($"ImageElement (dropIconBg ({index}))");
@@ -179,7 +293,7 @@ public static class Patches
                     {
                         var icon = item.GetComponent<ItemDrop>().m_itemData.m_shared.m_icons[0];
                         var itemName = item.GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
-                        if (player.IsKnownMaterial(item.GetComponent<ItemDrop>().m_itemData.m_shared.m_name))
+                        if (player.IsKnownMaterial(itemName))
                         {
                             SetImageElement(dropBgElement.gameObject, $"creatureDrop ({index})", icon, new Color(1f, 1f, 1f, 1f));
                             SetHoverableText(dropBgElement.gameObject, $"creatureDrop ({index})", itemName);
@@ -197,7 +311,7 @@ public static class Patches
                     SetActiveElement(dummyElement, "ImageElement", $"dropIconBg ({index})", false);
                 }
             }
-
+    
             for (var index = 0; index < 4; index++)
             {
                 SetAttackDefault(dummyElement, index);
@@ -222,10 +336,10 @@ public static class Patches
             
             SetTextElement(dummyElement, "staggerWhenBlocked", $"{creature.staggerWhenBlocked}");
             SetTextElement(dummyElement, "staggerDamageFactor", $"{creature.staggerDamageFactor}");
-
+    
             SetTextElement(dummyElement, "weakSpot",
                 creature.weakSpot.Count != 0 ? $"{creature.weakSpot[0]}" : Localization.instance.Localize("$almanac_no_weak_spot"));
-
+    
             SetActiveElement(dummyElement, "TextElement", "consumeItems (no data)", creature.consumeItems.Count == 0);
             
             for (var index = 0; index < 7; ++index)
@@ -262,7 +376,7 @@ public static class Patches
             }
             dummyElement.SetActive(true);
         }
-
+    
         private static void SetAttackValues(GameObject element, int index, CreatureDataCollector.AttackData attackItem)
         {
             var attackKeyValues = new Dictionary<string, string>()
@@ -286,7 +400,7 @@ public static class Patches
             };
             foreach (var data in attackKeyValues) SetTextElement(element, data.Key, data.Value);
         }
-
+    
         private static void SetAttackDefault(GameObject element, int index)
         {
             var defaultDataMap = new Dictionary<string, string>()
@@ -309,13 +423,13 @@ public static class Patches
             };
             foreach (var data in defaultDataMap) SetTextElement(element, data.Key, data.Value);
         }
-
-        private static void SetActiveElement(GameObject parentElement, string type, string id, bool active)
+    
+        public static void SetActiveElement(GameObject parentElement, string type, string id, bool active)
         {
             var element = parentElement.transform.Find($"{type} ({id})");
             element.gameObject.SetActive(active);
         }
-
+    
         private static void SetHoverableText(GameObject dummyElement, string id, string content)
         {
             var element = dummyElement.transform.Find($"ImageElement ({id})");
@@ -324,7 +438,7 @@ public static class Patches
             var text = hoverElement.GetComponent<Text>();
             text.text = Localization.instance.Localize(content);
         }
-
+    
         private static void SetTextElement(GameObject dummyElement, string id, string content = "Unknown")
         {
             var element = dummyElement.transform.Find($"TextElement ({id})");
@@ -332,9 +446,9 @@ public static class Patches
             
             var text = element.gameObject.GetComponent<Text>();
             element.gameObject.SetActive(true);
-
+    
             text.text = SetLocalizedText(content);
-
+    
             var exclusionColorMap = new List<string>()
             {
                 "weakSpot",
@@ -345,7 +459,7 @@ public static class Patches
             };
             if (!exclusionColorMap.Any(id.StartsWith)) text.color = SetColorCodes(content);
         }
-
+    
         private static string SetLocalizedText(string originalContent)
         {
             var conversionMap = new Dictionary<string, string>()
@@ -374,7 +488,7 @@ public static class Patches
             
             return conversionMap.ContainsKey(originalContent) ? Localization.instance.Localize(conversionMap[originalContent]) : originalContent;
         }
-
+    
         private static Color SetColorCodes(string context)
         {
             return context switch
@@ -390,7 +504,7 @@ public static class Patches
                 _ => Color.white
             };
         }
-
+    
         private static void SetImageElement(GameObject dummyElement, string id, Image inputImage)
         {
             var element = dummyElement.transform.Find($"ImageElement ({id})");
@@ -401,7 +515,7 @@ public static class Patches
             image.fillCenter = inputImage.fillCenter;
             image.type = inputImage.type;
         }
-
+    
         private static void SetImageElement(GameObject dummyElement, string id, Sprite sprite, Color color)
         {
             var element = dummyElement.transform.Find($"ImageElement ({id})");
@@ -411,7 +525,14 @@ public static class Patches
             image.sprite = sprite;
             image.color = color;
         }
-
+    
+        private static void SetImageDefault(GameObject dummyElement, string id)
+        {
+            var element = dummyElement.transform.Find($"ImageElement ({id})");
+            if (!element) return;
+            element.gameObject.SetActive(false);
+        }
+    
         private static CreatureDataCollector.CreatureData getCreature(List<CreatureDataCollector.CreatureData> data,
             string creatureName)
         {
@@ -425,27 +546,27 @@ public static class Patches
                 if (displayName == "Dvergr rogue") displayName = "Dvergr";
                 
                 var trophyName = Localization.instance.Localize(creature.trophyName);
-
+    
                 if (textInfo.ToTitleCase(displayName) == textInfo.ToTitleCase(creatureName)) return creature;
-
+    
                 if (trophyName == creatureName)
                 {
                     if (creatureName.ToLower().Contains(displayName.ToLower())) return creature;
                     if (trophyName.ToLower().Contains(displayName.ToLower())) return creature;
                     if (SubstringExistsInAnyOrder(trophyName, creatureName)) return creature;
                 }
-
+    
                 if (trophyName.Contains(creatureName)) return creature;
             }
-
+    
             return result;
         }
-
+    
         private static bool SubstringExistsInAnyOrder(string mainString, string subString)
         {
             mainString = mainString.ToLower();
             subString = subString.ToLower();
-
+    
             var mainFreq = mainString.GroupBy(c => c).ToDictionary(g => g.Key, g => g.Count());
             var subFreq = subString.GroupBy(c => c).ToDictionary(g => g.Key, g => g.Count());
             
@@ -458,8 +579,8 @@ public static class Patches
             }
             return true;
         }
-
-        private static List<CreatureDataCollector.CreatureData> GetAllCreatureData()
+    
+        public static List<CreatureDataCollector.CreatureData> GetAllCreatureData()
         {
             string yamlFilePath = CreatureDataCollector.outputFilePath;
             List<CreatureDataCollector.CreatureData> CreatureData;
@@ -468,7 +589,6 @@ public static class Patches
                 string yamlContents = File.ReadAllText(yamlFilePath);
                 Deserializer deserializer = new Deserializer();
                 CreatureData = deserializer.Deserialize<List<CreatureDataCollector.CreatureData>>(yamlContents);
-            
             }
             else
             {

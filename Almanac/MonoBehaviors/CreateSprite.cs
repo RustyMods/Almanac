@@ -9,11 +9,11 @@ public class CreateSprite : MonoBehaviour
     public string path;
     private void Start()
     {
-        Sprite sprite = LoadEmbeddedSprite(path);
+        Sprite? sprite = LoadEmbeddedSprite(path);
         if (sprite != null) GetComponent<Image>().sprite = sprite;
     }
 
-    private Sprite LoadEmbeddedSprite(string resourcePath)
+    private Sprite? LoadEmbeddedSprite(string resourcePath)
     {
         Assembly assembly = Assembly.GetExecutingAssembly();
         using (var stream = assembly.GetManifestResourceStream(resourcePath))

@@ -65,6 +65,8 @@ almanac_dverger: "Dverger"
 almanac_creature_button: "Creatures"
 almanac_trophies_button: "Trophies"
 almanac_material_button: "Materials"
+almanac_consummable_button: "Consummables"
+almanac_gear_button: "Equipment"
 # Creature Renames
 enemy_leech_cave: "Cave Leech"
 enemy_dverger_mage_fire: "Fire Mage Dverger"
@@ -72,3 +74,4 @@ enemy_dverger_mage_ice: "Ice Mage Dverger"
 enemy_dverger_mage_support: "Support Mage Dverger"
 # Almanac Materials
 almanac_material_stats: "Information"
+almanac_consummable_stats: "Information"

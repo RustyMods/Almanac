@@ -214,6 +214,7 @@ public static class Patches
                 SetActiveElement(contentPanel.gameObject, "WelcomePanel", "0", false);
                 SetActiveElement(parentElement.gameObject, "AlmanacElement", "0", true);
                 SetActiveElement(parentElement.gameObject, "MaterialElement", "0", false);
+                SetActiveElement(parentElement.gameObject, "consummableElement", "0", false);
             });
         }
     
@@ -232,6 +233,24 @@ public static class Patches
             // Shared Information
             SetTextElement(dummyElement, "materialName", name);
             SetTextElement(dummyElement, "materialDescription", description);
+            SetTextElement(dummyElement, "maxStackSize", $"Stack size: {maxStackSize}");
+            SetImageElement(dummyElement, "icon", sprite, Color.white);
+        }
+        public static void SetItemsData(GameObject dummyElement, ItemDrop data)
+        {
+            var sharedData = data.m_itemData.m_shared;
+            string name = Localization.instance.Localize(sharedData.m_name);
+            string description = Localization.instance.Localize(sharedData.m_description);
+            float maxStackSize = sharedData.m_maxStackSize;
+            float weight = sharedData.m_weight;
+            bool teleportable = sharedData.m_teleportable;
+            bool questItem = sharedData.m_questItem;
+            
+            Sprite sprite = sharedData.m_icons[0];
+            
+            // Shared Information
+            SetTextElement(dummyElement, "Name", name);
+            SetTextElement(dummyElement, "Description", description);
             SetTextElement(dummyElement, "maxStackSize", $"Stack size: {maxStackSize}");
             SetImageElement(dummyElement, "icon", sprite, Color.white);
         }

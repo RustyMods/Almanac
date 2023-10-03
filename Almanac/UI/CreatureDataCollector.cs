@@ -67,7 +67,7 @@ public static class CreatureDataCollector
         public string statusEffectTooltip = "";
     }
     
-    public static void CollectAndSaveCreatureData()
+    public static List<CreatureData> CollectAndSaveCreatureData()
     {
         List<CreatureData> creatureData = GetCreatureData();
         creatureData.RemoveAt(0);
@@ -82,6 +82,8 @@ public static class CreatureDataCollector
         
         File.WriteAllText(outputFilePath, yamlData);
         Debug.Log("Creature data collected and saved YAML file to " + outputFilePath);
+
+        return creatureData;
     }
 
     private static void RenameCreatureData(CreatureData creatureData)

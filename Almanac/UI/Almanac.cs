@@ -51,6 +51,8 @@ public static class Almanac
         private static RectTransform projectileRectTransform = null!;
         private static RectTransform fishRectTransform = null!;
 
+        public static Scrollbar AlmanacScrollbar = null!;
+
         public static void Postfix(InventoryGui __instance)
         {
             if (!__instance) return;
@@ -1008,6 +1010,9 @@ public static class Almanac
             GameObject AlmanacListRoot = CreateListRoot(AlmanacList.transform);
 
             AddListScrollRect(AlmanacList, AlmanacListRoot, scrollbar);
+
+            AlmanacScrollbar = scrollbar;
+            
             CreateWelcomePanel(AlmanacContentPanel.transform);
         }
 
@@ -1163,11 +1168,11 @@ public static class Almanac
                 // consumeRectTransform.anchoredPosition =
                 //     e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
                 equipmentRectTransform.anchoredPosition = 
-                    e < 0.5f ? new Vector2(0f, (e - 0.5f) * -760f) : new Vector2(0f, (e - 0.5f) * 1f);
+                    e < 0.5f ? new Vector2(0f, (e - 0.5f) * -500f) : new Vector2(0f, (e - 0.5f) * 1f);
                 weaponRectTransform.anchoredPosition = 
-                    e < 0.5f ? new Vector2(0f, (e - 0.5f) * -800f) : new Vector2(0f, (e - 0.5f) * 1f);
-                // projectileRectTransform.anchoredPosition =
-                //     e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
+                    e < 0.5f ? new Vector2(0f, (e - 0.5f) * -1700f) : new Vector2(0f, (e - 0.5f) * 1f);
+                projectileRectTransform.anchoredPosition =
+                    e < 0.5f ? new Vector2(0f, (e - 0.5f) * -1600f) : new Vector2(0f, (e - 0.5f) * 1f);
                 // fishRectTransform.anchoredPosition = 
                 //     e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
             });
@@ -1628,7 +1633,111 @@ public static class Almanac
                     horizontalAlignment: HorizontalAlignmentOptions.Right
                 );
             }
-            
+
+            CreateItemDataSet(
+                DummyElement,
+                "attackStaminaLabel", "$almanac_attack_stamina_label",
+                "attackStamina", "0",
+                leftAlignment, -800f
+                );
+            CreateItemDataSet(
+                DummyElement,
+                "attackEitrLabel", "$almanac_attack_eitr_label",
+                "attackEitr", "0",
+                leftAlignment, -825f
+                );
+            CreateItemDataSet(
+                DummyElement,
+                "attackHealthLabel", "$almanac_attack_health_label",
+                "attackHealth", "0",
+                leftAlignment, -850f
+                );
+            CreateItemDataSet(
+                DummyElement,
+                "attackHealthPercentageLabel", "$almanac_attack_health_percentage_label",
+                "attackHealthPercentage", "0",
+                leftAlignment, -875f
+                );
+            CreateItemDataSet(
+                DummyElement,
+                "speedFactorLabel", "$almanac_attack_speed_factor_label",
+                "speedFactor", "0",
+                leftAlignment, -900f
+                );
+            CreateItemDataSet(
+                DummyElement,
+                "speedFactorRotationLabel", "$almanac_speed_factor_rotation_label",
+                "speedFactorRotation", "0",
+                leftAlignment, -925f
+                );
+            CreateItemDataSet(
+                DummyElement,
+                "attackStartNoiseLabel", "$almanac_attack_start_noise_label",
+                "attackStartNoise", "0",
+                leftAlignment, -950f
+                );
+            CreateItemDataSet(
+                DummyElement,
+                "attackHitNoiseLabel", "$almanac_attack_hit_noise_label",
+                "attackHitNoise", "0",
+                leftAlignment, -975f
+                );
+            CreateItemDataSet(
+                DummyElement,
+                "damageMultiplierLabel", "$almanac_damage_multiplier_label",
+                "damageMultiplier", "0",
+                leftAlignment, -1000f
+                );
+            CreateItemDataSet(
+                DummyElement,
+                "forceMultiplierLabel", "$almanac_force_multiplier_label",
+                "forceMultiplier", "0",
+                leftAlignment, -1025f
+                );
+            CreateItemDataSet(
+                DummyElement,
+                "staggerMultiplierLabel", "$almanac_stagger_multiplier_label",
+                "staggerMultiplier", "0",
+                leftAlignment, -1050f
+                );
+            CreateItemDataSet(
+                DummyElement,
+                "recoilPushbackLabel", "$almanac_recoil_pushback_label",
+                "recoilPushback", "0",
+                leftAlignment, -1075f
+                );
+            CreateItemDataSet(
+                DummyElement, 
+                "selfDamageLabel", "$almanac_self_damage_label",
+                "selfDamage", "0",
+                leftAlignment, -1100f
+                );
+            // Bows
+            CreateItemDataSet(
+                DummyElement,
+                "drawDurationMinLabel", "$almanac_draw_duration_min_label",
+                "drawDuration", "0",
+                leftAlignment, -1125f
+                );
+            CreateItemDataSet(
+                DummyElement,
+                "drawStaminaDrainLabel", "$almanac_draw_stamina_drain_label",
+                "drawStamina", "0",
+                leftAlignment, -1150f
+                );
+            CreateItemDataSet(
+                DummyElement,
+                "reloadTimeLabel", "$almanac_reload_time_label",
+                "reloadTime", "0",
+                leftAlignment, -1175f
+                );
+            CreateItemDataSet(
+                DummyElement,
+                "reloadStaminaDrainLabel", "$almanac_reload_stamina_drain_label",
+                "reloadStaminaDrain", "0",
+                leftAlignment, -1200f
+                );
+
             return DummyPanel;
         }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Security.Policy;
 using Almanac.MonoBehaviors;
 using BepInEx.Logging;
 using HarmonyLib;
@@ -140,7 +141,7 @@ public static class Patches
             var trophyList = __instance.m_trophyList;
             var trophyFrame = __instance.m_trophiesPanel.transform.Find("TrophiesFrame");
             var contentPanel = trophyFrame.Find("ContentPanel");
-        
+
             var AlmanacList = contentPanel.Find("AlmanacList");
             var closeButton = trophyFrame.Find("Closebutton");
         
@@ -699,6 +700,33 @@ public static class Patches
                 SetTextElement(Element, weaponPerLevel.Key, $"+<color=orange>{weaponPerLevel.Value}</color>/level");
             }
 
+            Dictionary<string, string> weaponAttackData = new Dictionary<string, string>()
+            {
+                { "attackStamina", $"{sharedData.m_attack.m_attackStamina}" },
+                { "attackEitr", $"{sharedData.m_attack.m_attackEitr}" },
+                { "attackHealth", $"{sharedData.m_attack.m_attackHealth}" },
+                { "attackHealthPercentage", $"{sharedData.m_attack.m_attackHealthPercentage}%" },
+                { "speedFactor", $"{sharedData.m_attack.m_speedFactor * 100}%" },
+                { "speedFactorRotation", $"{sharedData.m_attack.m_speedFactorRotation * 100}%" },
+                { "attackStartNoise", $"{sharedData.m_attack.m_attackStartNoise}" },
+                { "attackHitNoise", $"{sharedData.m_attack.m_attackHitNoise}" },
+                { "damageMultiplier", $"{sharedData.m_attack.m_damageMultiplier}" },
+                { "forceMultiplier", $"{sharedData.m_attack.m_forceMultiplier}" },
+                { "staggerMultiplier", $"{sharedData.m_attack.m_staggerMultiplier}" },
+                { "recoilPushback", $"{sharedData.m_attack.m_recoilPushback}" },
+                { "selfDamage", $"{sharedData.m_attack.m_selfDamage}" },
+                
+                { "drawDuration", $"{sharedData.m_attack.m_drawDurationMin}" },
+                { "drawStamina", $"{sharedData.m_attack.m_drawStaminaDrain}" },
+                { "reloadTime", $"{sharedData.m_attack.m_reloadTime}" },
+                { "reloadStaminaDrain", $"{sharedData.m_attack.m_reloadStaminaDrain}" },
+
+            };
+            foreach (KeyValuePair<string, string> weaponAttackInfo in weaponAttackData)
+            {
+                SetTextElement(Element, weaponAttackInfo.Key, weaponAttackInfo.Value);
+            }
+
             // Reorganize panel based on topic
             Dictionary<string, string> foodElements = new Dictionary<string, string>()
             {
@@ -820,6 +848,58 @@ public static class Patches
                 { "lightningTagWeaponPerLevel", "TextElement" },
                 { "poisonTagWeaponPerLevel", "TextElement" },
                 { "spiritTagWeaponPerLevel", "TextElement" },
+                
+                { "attackStaminaLabel", "TextElement" },
+                { "attackStamina", "TextElement" },
+                
+                { "attackEitrLabel", "TextElement" },
+                { "attackEitr", "TextElement" },
+                
+                { "attackHealthLabel", "TextElement" },
+                { "attackHealth", "TextElement" },
+                
+                { "attackHealthPercentageLabel", "TextElement" },
+                { "attackHealthPercentage", "TextElement" },
+                
+                { "speedFactorLabel", "TextElement" },
+                { "speedFactor", "TextElement" },
+                
+                { "speedFactorRotationLabel", "TextElement" },
+                { "speedFactorRotation", "TextElement" },
+                
+                { "attackStartNoiseLabel", "TextElement" },
+                { "attackStartNoise", "TextElement" },
+                
+                { "attackHitNoiseLabel", "TextElement" },
+                { "attackHitNoise", "TextElement" },
+                
+                { "damageMultiplierLabel", "TextElement" },
+                { "damageMultiplier", "TextElement" },
+                
+                { "forceMultiplierLabel", "TextElement" },
+                { "forceMultiplier", "TextElement" },
+                
+                { "staggerMultiplierLabel", "TextElement" },
+                { "staggerMultiplier", "TextElement" },
+                
+                { "recoilPushbackLabel", "TextElement" },
+                { "recoilPushback", "TextElement" },
+                
+                { "selfDamageLabel", "TextElement" },
+                { "selfDamage", "TextElement" },
+            };
+
+            Dictionary<string, string> bowElements = new Dictionary<string, string>()
+            {
+                { "drawDurationMinLabel", "TextElement" },
+                { "drawStaminaDrainLabel", "TextElement" },
+                { "reloadTimeLabel", "TextElement" },
+                { "reloadStaminaDrainLabel", "TextElement" },
+                
+                { "drawDuration", "TextElement" },
+                { "drawStamina", "TextElement" },
+                { "reloadTime", "TextElement" },
+                { "reloadStaminaDrain", "TextElement" },
             };
 
             var ItemType = sharedData.m_itemType;
@@ -828,18 +908,24 @@ public static class Patches
             foreach (KeyValuePair<string, string> modiferElement in modifierElements) SetActiveElement(Element, modiferElement.Value, modiferElement.Key, true);
             foreach (KeyValuePair<string, string> equipmentElement in equipmentElements) SetActiveElement(Element, equipmentElement.Value, equipmentElement.Key, true);
             foreach (KeyValuePair<string, string> weaponElement in weaponElements) SetActiveElement(Element, weaponElement.Value, weaponElement.Key, true);
+            foreach (KeyValuePair<string, string> bowElement in bowElements) SetActiveElement(Element, bowElement.Value, bowElement.Key, true);
             
             if (ItemType is ItemDrop.ItemData.ItemType.Material)
             {
                 foreach (KeyValuePair<string, string> foodElement in foodElements) SetActiveElement(Element, foodElement.Value, foodElement.Key, false);
                 foreach (KeyValuePair<string, string> modiferElement in modifierElements) SetActiveElement(Element, modiferElement.Value, modiferElement.Key, false);
                 foreach (KeyValuePair<string, string> equipmentElement in equipmentElements) SetActiveElement(Element, equipmentElement.Value, equipmentElement.Key, false);
+                foreach (KeyValuePair<string, string> weaponElement in weaponElements) SetActiveElement(Element, weaponElement.Value, weaponElement.Key, false);
+                foreach (KeyValuePair<string, string> bowElement in bowElements) SetActiveElement(Element, bowElement.Value, bowElement.Key, false);
             }
             
             if (ItemType is ItemDrop.ItemData.ItemType.Consumable)
             {
+                // foreach (KeyValuePair<string, string> foodElement in foodElements) SetActiveElement(Element, foodElement.Value, foodElement.Key, true);
                 foreach (KeyValuePair<string, string> modiferElement in modifierElements) SetActiveElement(Element, modiferElement.Value, modiferElement.Key, false);
                 foreach (KeyValuePair<string, string> equipmentElement in equipmentElements) SetActiveElement(Element, equipmentElement.Value, equipmentElement.Key, false);
+                foreach (KeyValuePair<string, string> weaponElement in weaponElements) SetActiveElement(Element, weaponElement.Value, weaponElement.Key, false);
+                foreach (KeyValuePair<string, string> bowElement in bowElements) SetActiveElement(Element, bowElement.Value, bowElement.Key, false);
             }
             
             if (ItemType 
@@ -853,12 +939,14 @@ public static class Patches
                 )
             {
                 foreach (KeyValuePair<string, string> foodElement in foodElements) SetActiveElement(Element, foodElement.Value, foodElement.Key, false);
+                // foreach (KeyValuePair<string, string> modiferElement in modifierElements) SetActiveElement(Element, modiferElement.Value, modiferElement.Key, true);
+                // foreach (KeyValuePair<string, string> equipmentElement in equipmentElements) SetActiveElement(Element, equipmentElement.Value, equipmentElement.Key, true);
                 foreach (KeyValuePair<string, string> weaponElement in weaponElements) SetActiveElement(Element, weaponElement.Value, weaponElement.Key, false);
+                foreach (KeyValuePair<string, string> bowElement in bowElements) SetActiveElement(Element, bowElement.Value, bowElement.Key, false);
             }
             
             if (ItemType
-                is ItemDrop.ItemData.ItemType.Bow
-                or ItemDrop.ItemData.ItemType.Hands
+                is ItemDrop.ItemData.ItemType.Hands
                 or ItemDrop.ItemData.ItemType.Shield
                 or ItemDrop.ItemData.ItemType.Tool
                 or ItemDrop.ItemData.ItemType.Torch
@@ -869,6 +957,19 @@ public static class Patches
                )
             {
                 foreach (KeyValuePair<string, string> foodElement in foodElements) SetActiveElement(Element, foodElement.Value, foodElement.Key, false);
+                // foreach (KeyValuePair<string, string> modiferElement in modifierElements) SetActiveElement(Element, modiferElement.Value, modiferElement.Key, true);
+                // foreach (KeyValuePair<string, string> equipmentElement in equipmentElements) SetActiveElement(Element, equipmentElement.Value, equipmentElement.Key, true);
+                // foreach (KeyValuePair<string, string> weaponElement in weaponElements) SetActiveElement(Element, weaponElement.Value, weaponElement.Key, true);
+                foreach (KeyValuePair<string, string> bowElement in bowElements) SetActiveElement(Element, bowElement.Value, bowElement.Key, false);
+            }
+
+            if (ItemType is ItemDrop.ItemData.ItemType.Bow)
+            {
+                foreach (KeyValuePair<string, string> foodElement in foodElements) SetActiveElement(Element, foodElement.Value, foodElement.Key, false);
+                // foreach (KeyValuePair<string, string> modiferElement in modifierElements) SetActiveElement(Element, modiferElement.Value, modiferElement.Key, true);
+                // foreach (KeyValuePair<string, string> equipmentElement in equipmentElements) SetActiveElement(Element, equipmentElement.Value, equipmentElement.Key, true);
+                // foreach (KeyValuePair<string, string> weaponElement in weaponElements) SetActiveElement(Element, weaponElement.Value, weaponElement.Key, true);
+                // foreach (KeyValuePair<string, string> bowElement in bowElements) SetActiveElement(Element, bowElement.Value, bowElement.Key, true);
             }
             
             if (ItemType is ItemDrop.ItemData.ItemType.Fish)
@@ -877,6 +978,7 @@ public static class Patches
                 foreach (KeyValuePair<string, string> modiferElement in modifierElements) SetActiveElement(Element, modiferElement.Value, modiferElement.Key, false);
                 foreach (KeyValuePair<string, string> equipmentElement in equipmentElements) SetActiveElement(Element, equipmentElement.Value, equipmentElement.Key, false);
                 foreach (KeyValuePair<string, string> weaponElement in weaponElements) SetActiveElement(Element, weaponElement.Value, weaponElement.Key, false);
+                foreach (KeyValuePair<string, string> bowElement in bowElements) SetActiveElement(Element, bowElement.Value, bowElement.Key, false);
             }
 
             if (ItemType 
@@ -885,13 +987,13 @@ public static class Patches
                 )
             {
                 foreach (KeyValuePair<string, string> foodElement in foodElements) SetActiveElement(Element, foodElement.Value, foodElement.Key, false);
-                foreach (KeyValuePair<string, string> modiferElement in modifierElements) SetActiveElement(Element, modiferElement.Value, modiferElement.Key, false);
-                foreach (KeyValuePair<string, string> equipmentElement in equipmentElements) SetActiveElement(Element, equipmentElement.Value, equipmentElement.Key, false);
-                foreach (KeyValuePair<string, string> weaponElement in weaponElements) SetActiveElement(Element, weaponElement.Value, weaponElement.Key, false);
+                // foreach (KeyValuePair<string, string> modiferElement in modifierElements) SetActiveElement(Element, modiferElement.Value, modiferElement.Key, true);
+                // foreach (KeyValuePair<string, string> equipmentElement in equipmentElements) SetActiveElement(Element, equipmentElement.Value, equipmentElement.Key, true);
+                // foreach (KeyValuePair<string, string> weaponElement in weaponElements) SetActiveElement(Element, weaponElement.Value, weaponElement.Key, true);
+                foreach (KeyValuePair<string, string> bowElement in bowElements) SetActiveElement(Element, bowElement.Value, bowElement.Key, false);
             }
-            AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"{Player.m_localPlayer.GetPlayerID()}");
-            
         }
+        
 
         private static string GetTagFromID(string id)
         {

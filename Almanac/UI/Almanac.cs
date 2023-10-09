@@ -4,7 +4,8 @@ using System.Linq;
 using Almanac.MonoBehaviors;
     using BepInEx.Logging;
     using HarmonyLib;
-using UnityEngine;
+    using TMPro;
+    using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 using GameObject = UnityEngine.GameObject;
@@ -23,19 +24,33 @@ public static class Almanac
         private static Transform TrophiesPanel = null!;
         private static Button closeButtonScript = null!;
         private static ButtonSfx closeButtonSfx = null!;
-        private static Font font = null!;
+        private static TMP_FontAsset font = null!;
         private static Image closeButtonImage = null!;
-        private static List<ItemDrop> materials = null!;
-        private static List<ItemDrop> consummables = null!;
-        private static List<ItemDrop> gear = null!;
-        private static List<ItemDrop> weapons = null!;
-        private static List<ItemDrop> fish = null!;
-        private static List<ItemDrop> ammunitions = null!;
-        private static List<CreatureDataCollector.CreatureData> creatures = null!;
-        // private static Image handleImage = null!;
+        public static List<ItemDrop> materials = null!;
+        public static List<ItemDrop> consummables = null!;
+        public static List<ItemDrop> gear = null!;
+        public static List<ItemDrop> weapons = null!;
+        public static List<ItemDrop> fish = null!;
+        public static List<ItemDrop> ammunitions = null!;
+        public static List<CreatureDataCollector.CreatureData> creatures = null!;
         private static Image borderImage = null!;
         private static Image iconBg = null!;
-        
+        private static Image weightIcon = null!;
+        private static Image armorIcon = null!;
+        private static TextMeshProUGUI cloneTextMesh = null!;
+        public static List<GameObject> buildables = null!;
+        public static List<GameObject> cookingStations = null!;
+        public static List<GameObject> fermentingStations = null!;
+        public static List<GameObject> smelterStations = null!;
+
+        private static RectTransform creatureRectTransform = null!;
+        private static RectTransform materialRectTransform = null!;
+        private static RectTransform consumeRectTransform = null!;
+        private static RectTransform equipmentRectTransform = null!;
+        private static RectTransform weaponRectTransform = null!;
+        private static RectTransform projectileRectTransform = null!;
+        private static RectTransform fishRectTransform = null!;
+
         public static void Postfix(InventoryGui __instance)
         {
             if (!__instance) return;
@@ -45,7 +60,10 @@ public static class Almanac
             TrophiesFrame = TrophiesPanel.Find("TrophiesFrame");
 
             var closeButton = TrophiesFrame.Find("Closebutton");
-            font = closeButton.Find("Text").GetComponent<Text>().font;
+            var closeButtonText = closeButton.Find("Text");
+            var TextMeshProUGui = closeButtonText.GetComponent<TextMeshProUGUI>();
+            cloneTextMesh = TextMeshProUGui;
+            font = TextMeshProUGui.font;
             closeButtonScript = closeButton.GetComponent<Button>();
             closeButtonSfx = closeButton.GetComponent<ButtonSfx>();
             closeButtonImage = closeButton.GetComponent<Image>();
@@ -73,7 +91,8 @@ public static class Almanac
             var attachAtgeir = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Attach_Atgeir, "");
             var twoHandedLeft = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.TwoHandedWeaponLeft, "");
             var ammoNonEquip = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.AmmoNonEquipable, "");
-
+            
+            
             List<ItemDrop> gearList = new List<ItemDrop>();
             gearList.AddRange(helmet);
             gearList.AddRange(chest);
@@ -93,29 +112,56 @@ public static class Almanac
             weaponList.AddRange(tool);
             weaponList.AddRange(attachAtgeir);
             weaponList.AddRange(twoHandedLeft);
-
+            
             List<ItemDrop> ammunition = new List<ItemDrop>();
             ammunition.AddRange(ammo);
             ammunition.AddRange(ammoNonEquip);
-
+            
             weapons = GetValidItemDropList(weaponList);
             gear = new List<ItemDrop>(GetValidItemDropList(gearList).OrderBy(name => Localization.instance.Localize(name.m_itemData.m_shared.m_name)));
             ammunitions = GetValidItemDropList(ammunition);
-            // handleImage = TrophiesFrame.Find("Trophies").Find("TrophyListScroll")
-            //     .Find("Sliding Area").Find("Handle").GetComponent<Image>();
-
             borderImage = TrophiesFrame.Find("border (1)").GetComponent<Image>();
+            weightIcon = __instance.m_player.Find("Weight").Find("weight_icon").GetComponent<Image>();
+            armorIcon = __instance.m_player.Find("Armor").Find("armor_icon").GetComponent<Image>();
+
+            GameObject[] AllObjects = Resources.FindObjectsOfTypeAll<GameObject>();
+            List<GameObject> Pieces = new List<GameObject>();
+            List<GameObject> cookeries = new List<GameObject>();
+            List<GameObject> fermenters = new List<GameObject>();
+            List<GameObject> smelters = new List<GameObject>();
+            foreach (GameObject GO in AllObjects)
+            {
+                Piece pieceScript;
+                CookingStation cookingStationScript;
+                Fermenter fermenterScript;
+                Smelter smelterScript;
+                GO.TryGetComponent(out pieceScript);
+                GO.TryGetComponent(out cookingStationScript);
+                GO.TryGetComponent(out fermenterScript);
+                GO.TryGetComponent(out smelterScript);
+                if (pieceScript != null) Pieces.Add(GO);
+                if (cookingStationScript != null) cookeries.Add(GO);
+                if (fermenterScript != null) fermenters.Add(GO);
+                if (smelterScript != null) smelters.Add(GO);
+            }
+
+            buildables = Pieces;
+            cookingStations = cookeries;
+            fermentingStations = fermenters;
+            smelterStations = smelters;
 
             RepositionTrophyPanel(-220f, 0f);
             CreateAlmanacPanel();
-            CreateRegenerateFileButton();
+            // CreateRegenerateFileButton();
             CreateCreaturesPanel();
             CreateMaterialPanel();
             CreatePanel("consummable", consummables);
             CreatePanel("gear", gear);
             CreatePanel("weapon", weapons);
             CreatePanel("ammo", ammunitions);
+            CreatePanel("fish", fish);
             
+            CreateTabs("fishButton", "fish", -760f, 425f);
             CreateTabs("ammoButton", "ammo", -605f, 425f);
             CreateTabs("weaponButton", "weapon", -450f, 425f);
             CreateTabs("gearButton", "gear", -295f, 425f);
@@ -184,22 +230,15 @@ public static class Almanac
             textRect.anchoredPosition = new Vector2(0f, 0f);
             textRect.sizeDelta = new Vector2(150f, 40f);
 
-            Text textContent = text.AddComponent<Text>();
-            textContent.text = Localization.instance.Localize("$almanac_regenerate_almanac");
+            TextMeshProUGUI textContent = text.AddComponent<TextMeshProUGUI>();
             textContent.font = font;
-            textContent.alignment = TextAnchor.MiddleCenter;
-            textContent.fontSize = 18;
-            textContent.horizontalOverflow = HorizontalWrapMode.Wrap;
-            textContent.verticalOverflow = VerticalWrapMode.Truncate;
+            textContent.text = Localization.instance.Localize("$almanac_regenerate_almanac");
+            textContent.fontSize = 17;
+            textContent.autoSizeTextContainer = false;
+            textContent.alignment = TextAlignmentOptions.MidlineJustified;
             textContent.color = new Color(0.8f, 0.5f, 0f, 1f);
-            textContent.supportRichText = true;
-            textContent.resizeTextMinSize = 1;
-            textContent.resizeTextMaxSize = 25;
-            textContent.resizeTextForBestFit = true;
-
-            Outline outline = text.AddComponent<Outline>();
-            outline.effectColor = new Color(0f, 0f, 0f, 1f);
-            outline.effectDistance = new Vector2(1f, -1f);
+            textContent.overflowMode = TextOverflowModes.ScrollRect;
+            textContent.textWrappingMode = TextWrappingModes.Normal;
 
             var sfx = RegenerateButton.AddComponent<ButtonSfx>();
             sfx.m_sfxPrefab = closeButtonSfx.m_sfxPrefab;
@@ -245,22 +284,16 @@ public static class Almanac
             textRect.anchoredPosition = new Vector2(0f, 0f);
             textRect.sizeDelta = new Vector2(150f, 30f);
 
-            Text textContent = text.AddComponent<Text>();
-            textContent.text = Localization.instance.Localize($"$almanac_{name}_button");
+            TextMeshProUGUI textContent = text.AddComponent<TextMeshProUGUI>();
             textContent.font = font;
-            textContent.alignment = TextAnchor.MiddleCenter;
+            textContent.text = Localization.instance.Localize($"$almanac_{name}_button");
+            textContent.autoSizeTextContainer = false;
             textContent.fontSize = 18;
-            textContent.horizontalOverflow = HorizontalWrapMode.Wrap;
-            textContent.verticalOverflow = VerticalWrapMode.Truncate;
+            textContent.overflowMode = TextOverflowModes.Truncate;
             textContent.color = new Color(0.8f, 0.5f, 0f, 1f);
-            textContent.supportRichText = true;
-            textContent.resizeTextMinSize = 1;
-            textContent.resizeTextMaxSize = 25;
-            textContent.resizeTextForBestFit = true;
-
-            Outline outline = text.AddComponent<Outline>();
-            outline.effectColor = new Color(0f, 0f, 0f, 1f);
-            outline.effectDistance = new Vector2(1f, -1f);
+            textContent.maskable = true;
+            textContent.horizontalAlignment = HorizontalAlignmentOptions.Center;
+            textContent.verticalAlignment = VerticalAlignmentOptions.Middle;
 
             var sfx = TrophiesButton.AddComponent<ButtonSfx>();
             sfx.m_sfxPrefab = closeButtonSfx.m_sfxPrefab;
@@ -276,8 +309,9 @@ public static class Almanac
             var gearPanel = TrophiesFrame.Find("gearPanel");
             var weaponPanel = TrophiesFrame.Find("weaponPanel");
             var ammoPanel = TrophiesFrame.Find("ammoPanel");
-
-            topic.gameObject.GetComponent<Text>().text = Localization.instance.Localize($"$almanac_{name}_button");
+            var fishPanel = TrophiesFrame.Find("fishPanel");
+            
+            topic.gameObject.GetComponent<TextMeshProUGUI>().text = Localization.instance.Localize($"$almanac_{name}_button");
             
             materialPanel.gameObject.SetActive(name == "material");
             trophies.gameObject.SetActive(name == "trophies");
@@ -286,6 +320,7 @@ public static class Almanac
             gearPanel.gameObject.SetActive(name == "gear");
             weaponPanel.gameObject.SetActive(name == "weapon");
             ammoPanel.gameObject.SetActive(name == "ammo");
+            fishPanel.gameObject.SetActive(name == "fish");
         }
         
         private static void CreatePanel(string id, List<ItemDrop> list)
@@ -356,13 +391,14 @@ public static class Almanac
             objTextRect.anchoredPosition = new Vector2(0f, 0f);
             objTextRect.sizeDelta = new Vector2(50f, 50f);
 
-            Text objTextComponent = objText.AddComponent<Text>();
-            objTextComponent.text = $"{index + 1}";
-            objTextComponent.alignment = TextAnchor.MiddleCenter;
-            objTextComponent.font = font;
-            objTextComponent.supportRichText = true;
-            objTextComponent.resizeTextForBestFit = true;
-            objTextComponent.color = new Color(1f, 0.5f, 0f, 0.8f);
+            TextMeshProUGUI objTextMesh = objText.AddComponent<TextMeshProUGUI>();
+            objTextMesh.font = font;
+            objTextMesh.text = $"{index + 1}";
+            objTextMesh.autoSizeTextContainer = false;
+            objTextMesh.color = new Color(1f, 0.5f, 0f, 0.8f);
+            objTextMesh.richText = true;
+            objTextMesh.horizontalAlignment = HorizontalAlignmentOptions.Center;
+            objTextMesh.verticalAlignment = VerticalAlignmentOptions.Middle;
 
             Image objImg = obj.AddComponent<Image>();
             objImg.sprite = closeButtonImage.sprite;
@@ -378,16 +414,13 @@ public static class Almanac
             objSfx.m_sfxPrefab = closeButtonSfx.m_sfxPrefab;
             
             objButton.interactable = true;
-            objButton.transition = Selectable.Transition.ColorTint;
-            objButton.colors = new ColorBlock()
+            objButton.transition = Selectable.Transition.SpriteSwap;
+            objButton.spriteState = new SpriteState()
             {
-                normalColor = new Color(1f, 1f, 1f, 1f),
-                highlightedColor = new Color(1f, 1f, 1f, 1f),
-                pressedColor = new Color(0.5f, 0.5f, 0.5f, 1f),
-                selectedColor = new Color(1f, 1f, 1f, 1f),
-                disabledColor = new Color(0.5f, 0.5f, 0.5f, 0.5f),
-                colorMultiplier = 1f,
-                fadeDuration = 0.1f
+                highlightedSprite = closeButtonScript.spriteState.highlightedSprite,
+                pressedSprite = closeButtonScript.spriteState.pressedSprite,
+                selectedSprite = closeButtonScript.spriteState.selectedSprite,
+                disabledSprite = closeButtonScript.spriteState.disabledSprite
             };
             objButton.onClick = new Button.ButtonClickedEvent();
             objButton.onClick.AddListener(() =>
@@ -447,7 +480,7 @@ public static class Almanac
             iconImage.color = new Color(1f, 1f, 1f, 1f);
             iconImage.pixelsPerUnitMultiplier = 1f;
             
-            AddHoverableText(container, name, 16);
+            AddHoverableText(container, name, 16, anchoredY: -45f);
             
             if (index > 71) container.SetActive(false);
             
@@ -474,7 +507,7 @@ public static class Almanac
                 var AlmanacList = AlmanacPanel.Find("AlmanacList");
                 var element = AlmanacList.Find($"{id}Element (0)");
                 SetActiveElement(id);
-                Patches.InventoryPatches.SetItemsData(element.gameObject, data);
+                Patches.OnOpenTrophiesPatch.SetItemsData(element.gameObject, data);
             });
         }
          private static void CreateContainerWithoutSprite(Transform parentElement, ItemDrop data, int index, Vector2 position, string id)
@@ -501,20 +534,19 @@ public static class Almanac
             iconRect.anchoredPosition = new Vector2(0f, 0f);
             iconRect.sizeDelta = new Vector2(65f, 65f);
 
-            Text iconText = iconObj.AddComponent<Text>();
-            iconText.text = "?";
-            iconText.font = font;
-            iconText.fontSize = 20;
-            iconText.color = new Color(1f, 0.5f, 0f, 1f);
-            iconText.resizeTextForBestFit = true;
-            iconText.alignment = TextAnchor.MiddleCenter;
+            TextMeshProUGUI iconTextMesh = iconObj.AddComponent<TextMeshProUGUI>();
+            iconTextMesh.font = font;
+            iconTextMesh.text = "?";
+            iconTextMesh.fontSize = 20;
+            iconTextMesh.autoSizeTextContainer = false;
+            iconTextMesh.color = new Color(1f, 0.5f, 0f, 1f);
+            iconTextMesh.horizontalAlignment = HorizontalAlignmentOptions.Center;
+            iconTextMesh.verticalAlignment = VerticalAlignmentOptions.Middle;
+            iconTextMesh.fontSizeMin = 2f;
+            iconTextMesh.fontSizeMax = 20f;
+            iconTextMesh.enableAutoSizing = true;
 
-            // Image iconImage = iconObj.AddComponent<Image>();
-            // iconImage.sprite = iconSprite;
-            // iconImage.color = new Color(1f, 1f, 1f, 1f);
-            // iconImage.pixelsPerUnitMultiplier = 1f;
-            
-            AddHoverableText(container, name, 16);
+            AddHoverableText(container, name, 16, anchoredY: -40f);
             
             if (index > 71) container.SetActive(false);
             
@@ -541,7 +573,7 @@ public static class Almanac
                 var AlmanacList = AlmanacPanel.Find("AlmanacList");
                 var element = AlmanacList.Find($"{id}Element (0)");
                 SetActiveElement(id);
-                Patches.InventoryPatches.SetItemsData(element.gameObject, data);
+                Patches.OnOpenTrophiesPatch.SetItemsData(element.gameObject, data);
             });
         }
         private static void CreateMaterialPanel()
@@ -605,13 +637,13 @@ public static class Almanac
             objTextRect.anchoredPosition = new Vector2(0f, 0f);
             objTextRect.sizeDelta = new Vector2(50f, 50f);
 
-            Text objTextComponent = objText.AddComponent<Text>();
-            objTextComponent.text = $"{index + 1}";
-            objTextComponent.alignment = TextAnchor.MiddleCenter;
-            objTextComponent.font = font;
-            objTextComponent.supportRichText = true;
-            objTextComponent.resizeTextForBestFit = true;
-            objTextComponent.color = new Color(1f, 0.5f, 0f, 0.8f);
+            TextMeshProUGUI objTextMesh = objText.AddComponent<TextMeshProUGUI>();
+            objTextMesh.font = font;
+            objTextMesh.text = $"{index + 1}";
+            objTextMesh.autoSizeTextContainer = false;
+            objTextMesh.color = new Color(1f, 0.5f, 0f, 0.8f);
+            objTextMesh.horizontalAlignment = HorizontalAlignmentOptions.Center;
+            objTextMesh.verticalAlignment = VerticalAlignmentOptions.Middle;
 
             Image objImg = obj.AddComponent<Image>();
             objImg.sprite = closeButtonImage.sprite;
@@ -627,16 +659,14 @@ public static class Almanac
             objSfx.m_sfxPrefab = closeButtonSfx.m_sfxPrefab;
             
             objButton.interactable = true;
-            objButton.transition = Selectable.Transition.ColorTint;
-            objButton.colors = new ColorBlock()
+            objButton.targetGraphic = objImg;
+            objButton.transition = Selectable.Transition.SpriteSwap;
+            objButton.spriteState = new SpriteState()
             {
-                normalColor = new Color(1f, 1f, 1f, 1f),
-                highlightedColor = new Color(1f, 1f, 1f, 1f),
-                pressedColor = new Color(0.5f, 0.5f, 0.5f, 1f),
-                selectedColor = new Color(1f, 1f, 1f, 1f),
-                disabledColor = new Color(0.5f, 0.5f, 0.5f, 0.5f),
-                colorMultiplier = 1f,
-                fadeDuration = 0.1f
+                highlightedSprite = closeButtonScript.spriteState.highlightedSprite,
+                pressedSprite = closeButtonScript.spriteState.pressedSprite,
+                selectedSprite = closeButtonScript.spriteState.selectedSprite,
+                disabledSprite = closeButtonScript.spriteState.disabledSprite
             };
             objButton.onClick = new Button.ButtonClickedEvent();
             objButton.onClick.AddListener(() =>
@@ -687,7 +717,7 @@ public static class Almanac
             iconImage.color = new Color(1f, 1f, 1f, 1f);
             iconImage.pixelsPerUnitMultiplier = 1f;
             
-            AddHoverableText(container, name, 18);
+            AddHoverableText(container, name, 18, anchoredY: -45f);
             
             if (index > 71) container.SetActive(false);
             
@@ -712,9 +742,9 @@ public static class Almanac
             {
                 var AlmanacPanel = TrophiesFrame.Find("ContentPanel");
                 var AlmanacList = AlmanacPanel.Find("AlmanacList");
-                var MaterialElement = AlmanacList.Find("MaterialElement (0)");
+                var MaterialElement = AlmanacList.Find("materialElement (0)");
                 SetActiveElement("material");
-                Patches.InventoryPatches.SetMaterialData(MaterialElement.gameObject, data);
+                Patches.OnOpenTrophiesPatch.SetItemsData(MaterialElement.gameObject, data);
             });
         }
 
@@ -722,17 +752,23 @@ public static class Almanac
         {
             var AlmanacPanel = TrophiesFrame.Find("ContentPanel");
             var AlmanacList = AlmanacPanel.Find("AlmanacList");
-            var MaterialElement = AlmanacList.Find("MaterialElement (0)");
+            var MaterialElement = AlmanacList.Find("materialElement (0)");
             var AlmanacElement = AlmanacList.Find("AlmanacElement (0)");
             var ConsummableElement = AlmanacList.Find("consummableElement (0)");
             var GearElement = AlmanacList.Find("gearElement (0)");
             var WelcomePanel = AlmanacPanel.Find("WelcomePanel (0)");
+            var AmmoElement = AlmanacList.Find("ammoElement (0)");
+            var weaponElement = AlmanacList.Find("weaponElement (0)");
+            var fishElement = AlmanacList.Find("fishElement (0)");
                 
             WelcomePanel.gameObject.SetActive(name == "welcome");
             MaterialElement.gameObject.SetActive(name == "material");
             AlmanacElement.gameObject.SetActive(name == "creatures");
             ConsummableElement.gameObject.SetActive(name == "consummable");
             GearElement.gameObject.SetActive(name == "gear");
+            AmmoElement.gameObject.SetActive(name == "ammo");
+            weaponElement.gameObject.SetActive(name == "weapon");
+            fishElement.gameObject.SetActive(name == "fish");
         }
         private static void CreateCreaturesPanel()
         {
@@ -753,7 +789,6 @@ public static class Almanac
             rectTransform.anchoredPosition = new Vector2(0f, 0f);
             rectTransform.sizeDelta = new Vector2(1260f, 650f);
             
-
             Image backgroundImage = background.AddComponent<Image>();
             
             Image trophiesImage = trophies.gameObject.GetComponent<Image>();
@@ -778,13 +813,13 @@ public static class Almanac
             objTextRect.anchoredPosition = new Vector2(0f, 0f);
             objTextRect.sizeDelta = new Vector2(50f, 50f);
 
-            Text objTextComponent = objText.AddComponent<Text>();
-            objTextComponent.text = $"{index + 1}";
-            objTextComponent.alignment = TextAnchor.MiddleCenter;
-            objTextComponent.font = font;
-            objTextComponent.supportRichText = true;
-            objTextComponent.resizeTextForBestFit = true;
-            objTextComponent.color = new Color(1f, 0.5f, 0f, 0.8f);
+            TextMeshProUGUI objTextMesh = objText.AddComponent<TextMeshProUGUI>();
+            objTextMesh.font = font;
+            objTextMesh.text = $"{index + 1}";
+            objTextMesh.autoSizeTextContainer = false;
+            objTextMesh.color = new Color(1f, 0.5f, 0f, 0.8f);
+            objTextMesh.horizontalAlignment = HorizontalAlignmentOptions.Center;
+            objTextMesh.verticalAlignment = VerticalAlignmentOptions.Middle;
 
             Image objImg = obj.AddComponent<Image>();
             objImg.sprite = closeButtonImage.sprite;
@@ -800,16 +835,13 @@ public static class Almanac
             objSfx.m_sfxPrefab = closeButtonSfx.m_sfxPrefab;
             
             objButton.interactable = true;
-            objButton.transition = Selectable.Transition.ColorTint;
-            objButton.colors = new ColorBlock()
+            objButton.transition = Selectable.Transition.SpriteSwap;
+            objButton.spriteState = new SpriteState()
             {
-                normalColor = new Color(1f, 1f, 1f, 1f),
-                highlightedColor = new Color(1f, 1f, 1f, 1f),
-                pressedColor = new Color(0.5f, 0.5f, 0.5f, 1f),
-                selectedColor = new Color(1f, 1f, 1f, 1f),
-                disabledColor = new Color(0.5f, 0.5f, 0.5f, 0.5f),
-                colorMultiplier = 1f,
-                fadeDuration = 0.1f
+                highlightedSprite = closeButtonScript.spriteState.highlightedSprite,
+                pressedSprite = closeButtonScript.spriteState.pressedSprite,
+                selectedSprite = closeButtonScript.spriteState.selectedSprite,
+                disabledSprite = closeButtonScript.spriteState.disabledSprite
             };
             objButton.onClick = new Button.ButtonClickedEvent();
             objButton.onClick.AddListener(() =>
@@ -850,25 +882,21 @@ public static class Almanac
                 var name = creatures[i].display_name;
                 float x = -500f + (i / 20) * xSpacing;
                 float y = 305f - (i % 20) * ySpacing;
-            
-                if (i > 99f)
+
+                if (i > 99)
                 {
                     x = -500f + ((i - 100) / 20) * xSpacing;
                     y = 305f - ((i - 100) % 20) * ySpacing;
-                    
-                    Vector2 position = new Vector2(x, y);
-                    CreateCreatureButton(AlmanacElement, parentElement, position, i, Localization.instance.Localize(name), false);
                 }
-                else
-                {
-                    Vector2 position = new Vector2(x, y);
-                    CreateCreatureButton(AlmanacElement ,parentElement, position, i, Localization.instance.Localize(name), true);
-                }
+                
+                Vector2 position = new Vector2(x, y);
+                CreateCreatureButton(AlmanacElement, parentElement, position, i, Localization.instance.Localize(name), !(i > 99f));
             }
             
         }
 
-        private static void CreateCreatureButton(Transform AlmanacElement, Transform parentElement, Vector2 position, int i,
+        private static void CreateCreatureButton(
+            Transform AlmanacElement, Transform parentElement, Vector2 position, int i,
             string content, bool active)
         {
             var width = 250f;
@@ -895,16 +923,13 @@ public static class Almanac
 
             Button button = CreatureContainer.AddComponent<Button>();
             button.interactable = true;
-            button.transition = Selectable.Transition.ColorTint;
-            button.colors = new ColorBlock()
+            button.transition = Selectable.Transition.SpriteSwap;
+            button.spriteState = new SpriteState()
             {
-                normalColor = new Color(1f, 1f, 1f, 1f),
-                highlightedColor = new Color(1f, 1f, 1f, 1f),
-                pressedColor = new Color(0.5f, 0.5f, 0.5f, 1f),
-                selectedColor = new Color(1f, 1f, 1f, 1f),
-                disabledColor = new Color(0.5f, 0.5f, 0.5f, 0.5f),
-                colorMultiplier = 1f,
-                fadeDuration = 0.1f
+                highlightedSprite = closeButtonScript.spriteState.highlightedSprite,
+                pressedSprite = closeButtonScript.spriteState.pressedSprite,
+                selectedSprite = closeButtonScript.spriteState.selectedSprite,
+                disabledSprite = closeButtonScript.spriteState.disabledSprite
             };
 
             GameObject objText = new GameObject($"CreatureContainer Text ({i})") { layer = 5 };
@@ -924,23 +949,23 @@ public static class Almanac
             image.pixelsPerUnitMultiplier = 1f;
             image.fillCenter = true;
             image.raycastTarget = true;
-            
-            Text text = objText.AddComponent<Text>();
+
+            TextMeshProUGUI text = objText.AddComponent<TextMeshProUGUI>();
             text.font = font;
-            text.color = Color.yellow;
             text.text = content;
-            text.alignment = TextAnchor.MiddleCenter;
-            text.supportRichText = true;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Truncate;
-            text.resizeTextForBestFit = true;
-            
+            text.color = Color.yellow;
+            text.autoSizeTextContainer = false;
+            text.overflowMode = TextOverflowModes.Ellipsis;
+            text.verticalAlignment = VerticalAlignmentOptions.Middle;
+            text.horizontalAlignment = HorizontalAlignmentOptions.Center;
+            text.fontSize = 16;
+
             button.targetGraphic = ContainerBg;
             button.onClick = new Button.ButtonClickedEvent();
             button.onClick.AddListener(() =>
             {
                 SetActiveElement("creature");
-                Patches.InventoryPatches.setAlmanacData(AlmanacElement.gameObject, content);
+                Patches.OnOpenTrophiesPatch.setAlmanacData(AlmanacElement.gameObject, content);
             });
         }
 
@@ -956,19 +981,30 @@ public static class Almanac
             GameObject AlmanacList = CreateList(AlmanacContentPanel.transform);
             
             GameObject AlmanacElement = CreateAlmanacElement(AlmanacList.transform, iconBg);
-            GameObject MaterialElement = CreateMaterialElement(AlmanacList.transform);
+            
+            GameObject MaterialElement = CreateItemElement(AlmanacList.transform, "material");
             GameObject ConsummableElement = CreateItemElement(AlmanacList.transform, "consummable");
             GameObject GearElement = CreateItemElement(AlmanacList.transform, "gear");
             GameObject WeaponElement = CreateItemElement(AlmanacList.transform, "weapon");
             GameObject AmmoElement = CreateItemElement(AlmanacList.transform, "ammo");
+            GameObject FishElement = CreateItemElement(AlmanacList.transform, "fish");
             
             MaterialElement.SetActive(false);
             ConsummableElement.SetActive(false);
             GearElement.SetActive(false);
             WeaponElement.SetActive(false);
             AmmoElement.SetActive(false);
+            FishElement.SetActive(false);
 
-            Scrollbar scrollbar = AddScrollbarComponent(AlmanacScroll, AlmanacScrollHandle, AlmanacElement);
+            creatureRectTransform = AlmanacElement.GetComponent<RectTransform>();
+            materialRectTransform = MaterialElement.GetComponent<RectTransform>();
+            consumeRectTransform = ConsummableElement.GetComponent<RectTransform>();
+            equipmentRectTransform = GearElement.GetComponent<RectTransform>();
+            weaponRectTransform = WeaponElement.GetComponent<RectTransform>();
+            projectileRectTransform = AmmoElement.GetComponent<RectTransform>();
+            fishRectTransform = FishElement.GetComponent<RectTransform>();
+
+            Scrollbar scrollbar = AddScrollbarComponent(AlmanacScroll, AlmanacScrollHandle);
             GameObject AlmanacListRoot = CreateListRoot(AlmanacList.transform);
 
             AddListScrollRect(AlmanacList, AlmanacListRoot, scrollbar);
@@ -1094,8 +1130,7 @@ public static class Almanac
             return AlmanacScrollHandle;
         }
 
-        private static Scrollbar AddScrollbarComponent(GameObject targetGameObject, GameObject scrollHandle,
-            GameObject element)
+        private static Scrollbar AddScrollbarComponent(GameObject targetGameObject, GameObject scrollHandle)
         {
             Scrollbar scrollbar = targetGameObject.AddComponent<Scrollbar>();
             scrollbar.name = "AlmanacScrollBar";
@@ -1119,10 +1154,21 @@ public static class Almanac
             scrollbar.value = 1f;
             scrollbar.onValueChanged = new Scrollbar.ScrollEvent();
 
-            RectTransform rectTransform = element.GetComponent<RectTransform>();
             scrollbar.onValueChanged.AddListener(call: (e) =>
             {
-                rectTransform.anchoredPosition =
+                creatureRectTransform.anchoredPosition =
+                    e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
+                materialRectTransform.anchoredPosition = 
+                    e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
+                consumeRectTransform.anchoredPosition =
+                    e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
+                equipmentRectTransform.anchoredPosition = 
+                    e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
+                weaponRectTransform.anchoredPosition = 
+                    e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
+                projectileRectTransform.anchoredPosition =
+                    e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
+                fishRectTransform.anchoredPosition = 
                     e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
             });
 
@@ -1167,54 +1213,420 @@ public static class Almanac
             
             Transform DummyElement = DummyPanel.transform;
 
-            CreateTextElement(DummyElement, "Name", "no data", 50f, 360f, 250f, 150f,
-                Color.yellow, 25, TextAnchor.MiddleLeft, shadow: true);
-            CreateTextElement(DummyElement, "Description", "no data", 0f, 320f, 150f, 50f, Color.white,
-                16, TextAnchor.MiddleLeft);
-            CreateTextElement(DummyElement, "maxStackSize", $"Stack size: no data", 110f, 320f, 100f, 50f, Color.white, 20,
-                TextAnchor.MiddleRight, true);
-            CreateImageElement(DummyElement, "icon", -145f, 340f, 120f, 120f, false);
-            // panel left alignment
-            float anchorX = -110f;
+            Color gray = new Color(0.5f, 0.5f, 0.5f, 1f);
+            Color orange = new Color(1f, 0.6f, 0f, 1f);
 
-            CreateTextElement(DummyElement, "stats", $"$almanac_{id}_stats", anchorX, 300f,
-                100f, 100f, Color.white, 20, active: true, shadow: true,
-                horizontalWrapMode: HorizontalWrapMode.Overflow, verticalWrapMode: VerticalWrapMode.Overflow);
+            CreateTextElement(
+                DummyElement, "Name", "$almanac_no_data", 
+                30f, 360f,
+                225f, 25f,
+                Color.yellow, 25,
+                horizontalAlignment: HorizontalAlignmentOptions.Left,
+                wrapMode: TextWrappingModes.NoWrap
+            );
+            CreateTextElement(
+                DummyElement, "Description", "$almanac_no_data",
+                30f, 305f,
+                225f, 75f,
+                Color.white, 16,
+                verticalAlignment: VerticalAlignmentOptions.Top,
+                horizontalAlignment: HorizontalAlignmentOptions.Left,
+                overflowModes: TextOverflowModes.Ellipsis
+            );
+            CreateImageElement(
+                DummyElement, "icon", 
+                -145f, 340f, 
+                120f, 120f
+            );
+            
+            CreateTextElement(
+                DummyElement, "stats", $"$almanac_general_stats", 
+                0f, 250f, 
+                200f, 100f, 
+                Color.white, 20
+            );
+            
+            CreateImageElement(
+                DummyElement, "weight_icon",
+                120f, 200f,
+                50f, 50f,
+                true, false, 
+                shadow: true,
+                sprite: weightIcon.sprite
+                );
+            GameObject WeightText = CreateTextElement(
+                DummyElement, "weight", $"0", 
+                120f, 197f, 
+                50f, 100f, 
+                Color.black, 18
+            );
+            AddHoverableText(WeightText, "$almanac_weight");
+            
+            GameObject prefabImage = CreateImageElement(
+                DummyElement, "prefabImage",
+                -50f, 200f,
+                220f, 40f,
+                true, false, closeButtonImage.sprite
+            );
+            Button prefabImageButton = prefabImage.AddComponent<Button>();
+            ButtonSfx prefabImageButtonSfx = prefabImage.AddComponent<ButtonSfx>();
+            prefabImageButtonSfx.m_sfxPrefab = closeButtonSfx.m_sfxPrefab;
+            
+            prefabImageButton.interactable = true;
+            prefabImageButton.transition = closeButtonScript.transition;
+            prefabImageButton.targetGraphic = prefabImage.GetComponent<Image>();
+            prefabImageButton.spriteState = new SpriteState()
+            {
+                highlightedSprite = closeButtonScript.spriteState.highlightedSprite,
+                pressedSprite = closeButtonScript.spriteState.pressedSprite,
+                selectedSprite = closeButtonScript.spriteState.selectedSprite,
+                disabledSprite = closeButtonScript.spriteState.disabledSprite
+            };
+            
+            prefabImageButton.onClick = new Button.ButtonClickedEvent();
             
             
+            CreateTextElement(
+                prefabImage.transform, "prefabName", "$almanac_no_data",
+                0f, 0f, 
+                210f, 40f,
+                orange, 18
+            );
+            AddHoverableText(prefabImage, $"$almanac_prefab_name_label");
+
+            float leftAlignment = -70f;
+
+            CreateItemDataSet(
+                DummyElement,
+                "maxStackSizeLabel", "$almanac_stack_size_label",
+                "maxStackSize", "0/0",
+                leftAlignment, 130f
+                );
+
+            CreateItemDataSet(
+                DummyElement,
+                "valueLabel", "$almanac_value_label",
+                "value", "0",
+                leftAlignment, 105f
+                );
+            
+            CreateItemDataSet(
+                DummyElement,
+                "qualityLabel", "$almanac_quality_label",
+                "quality", "0",
+                leftAlignment, 80f
+                );
+            
+            CreateItemDataSet(
+                DummyElement,
+                "durabilityLabel", "$almanac_durability_label",
+                "durability", "0",
+                leftAlignment, 55f
+                );
+            
+            CreateTextElement(
+                DummyElement, "teleportable", "$almanac_not_teleportable",
+                0f, 25f,
+                225f, 25f,
+                orange, 18
+            );
+            
+            CreateTextElement(
+                DummyElement, "recipeTitle", "$almanac_recipe_title",
+                0f, 0f,
+                150f, 100f,
+                Color.white, 20
+            );
+            CreateTextElement(
+                DummyElement, "recipeNull", "$almanac_no_recipe",
+                0f, 0f,
+                200f, 100f,
+                orange, 18,
+                active: false
+            );
+
+            GameObject craftingStation = CreateImageElement(
+                DummyElement, "craftingStation",
+                -120f, -50f,
+                75f, 75f,
+                addHoverableText: true,
+                active: false
+            );
+            AddHoverableText(craftingStation, "$almanac_crafting_station_label", anchoredY: -40f);
+
+            for (int i = 0; i < 5; ++i)
+            {
+                GameObject ResourceBackground = CreateImageElement(
+                    DummyElement, $"recipe ({i})",
+                    -50f + (i * 51f), -50f,
+                    50f, 50f,
+                    addHoverableText: true,
+                    sprite: iconBg.sprite,
+                    active: false
+                );
+                CreateImageElement(ResourceBackground.transform, "item",
+                    0f, 0f,
+                    40f, 40f
+                    );
+                CreateTextElement(ResourceBackground.transform, $"recipeAmount", "0",
+                    0f, 0f,
+                    50f, 50f,
+                    orange, 14,
+                    active: false,
+                    verticalAlignment: VerticalAlignmentOptions.Bottom
+                    );
+            }
+
+            CreateTextElement(
+                DummyElement, "foodTitle", "$almanac_food_title",
+                0f, -110f,
+                150f, 100f,
+                Color.white, 20
+                );
+
+            CreateItemDataSet(
+                DummyElement,
+                "healthBonusLabel", "$almanac_health_bonus_label",
+                "healthBonus", "0",
+                leftAlignment, -140f
+                );
+
+            CreateItemDataSet(
+                DummyElement,
+                "staminaBonusLabel", "$almanac_stamina_bonus_label",
+                "staminaBonus", "0",
+                leftAlignment, -165f
+                );
+            
+            CreateItemDataSet(
+                DummyElement, 
+                "eitrBonusLabel", "$almanac_eitr_bonus_label", 
+                "eitrBonus", "0",
+                leftAlignment, -190f
+                );
+            
+            CreateItemDataSet(
+                DummyElement,
+                "foodBurnLabel", "$almanac_food_burn_label",
+                "foodBurn", "0",
+                leftAlignment, -215f
+                );
+            
+            CreateItemDataSet(
+                DummyElement,
+                "foodRegenLabel", "$almanac_food_regen_label",
+                "foodRegen", "0",
+                leftAlignment, -240f
+                );
+
+            CreateTextElement(
+                DummyElement, "consumeEffectDescription", "$almanac_no_data",
+                0f, -280f,
+                350f, 50f, 
+                orange, 16,
+                overflowModes: TextOverflowModes.Overflow
+            );
+            var consumeIcons = new Dictionary<string, string>()
+            {
+                { "consumeEffectBlunt", "Almanac.icons.sledgeIcon.png" },
+                { "consumeEffectSlash", "Almanac.icons.swordIcon.png" },
+                { "consumeEffectPierce", "Almanac.icons.arrowIcon.png" },
+                { "consumeEffectChop", "Almanac.icons.axeIcon.png" },
+                { "consumeEffectPickaxe", "Almanac.icons.pickaxeIcon.png" },
+                { "consumeEffectFire", "Almanac.icons.fireIcon.png" },
+                { "consumeEffectIce", "Almanac.icons.frostIcon.png" },
+                { "consumeEffectLightning", "Almanac.icons.lightningIcon.png" },
+                { "consumeEffectPoison", "Almanac.icons.poisonIcon.png" },
+                { "consumeEffectSpirit", "Almanac.icons.spiritIcon.png" }
+            };
+            List<KeyValuePair<string, string>> consumeIconList = consumeIcons.ToList();
+
+            for (var index = 0; index < consumeIcons.Count; index++)
+            {
+                CreateCustomImageElement(
+                    DummyElement, consumeIconList[index].Key,
+                    -110f + (index * 25f), -335f,
+                    25f, 25f,
+                    consumeIconList[index].Value,
+                    true,
+                    true
+                );
+            } 
+            
+            CreateTextElement(
+                DummyElement, "statModifiersTitle", "$almanac_stat_modifiers_title",
+                0f, -395f,
+                150f, 25f,
+                Color.white, 20
+            );
+
+            CreateItemDataSet(
+                DummyElement,
+                "movementLabel", "$almanac_movement_modifier_label",
+                "movement", "0",
+                leftAlignment, -425f
+                );
+            CreateItemDataSet(
+                DummyElement,
+                "eitrRegenLabel", "$almanac_eitr_regen_label",
+                "eitrRegen", "0",
+                leftAlignment, -450f
+                );
+            CreateItemDataSet(
+                DummyElement, 
+                "stamModLabel", "$almanac_base_items_stamina_modifier_label",
+                "stamMod", "0",
+                leftAlignment, -475f
+                );
+
+            CreateTextElement(DummyElement, "setName", "$almanac_no_data",
+                0f, -500f,
+                350f, 50f,
+                Color.white, 16
+                );
+            CreateTextElement(
+                DummyElement, "setDescription", "$almanac_no_data",
+                0f, -550f,
+                350f, 50f,
+                orange, 16
+                );
+            var setIcons = new Dictionary<string, string>()
+            {
+                { "setEffectBlunt", "Almanac.icons.sledgeIcon.png" },
+                { "setEffectSlash", "Almanac.icons.swordIcon.png" },
+                { "setEffectPierce", "Almanac.icons.arrowIcon.png" },
+                { "setEffectChop", "Almanac.icons.axeIcon.png" },
+                { "setEffectPickaxe", "Almanac.icons.pickaxeIcon.png" },
+                { "setEffectFire", "Almanac.icons.fireIcon.png" },
+                { "setEffectIce", "Almanac.icons.frostIcon.png" },
+                { "setEffectLightning", "Almanac.icons.lightningIcon.png" },
+                { "setEffectPoison", "Almanac.icons.poisonIcon.png" },
+                { "setEffectSpirit", "Almanac.icons.spiritIcon.png" }
+            };
+            List<KeyValuePair<string, string>> setIconList = setIcons.ToList();
+
+            for (var index = 0; index < setIconList.Count; index++)
+            {
+                CreateCustomImageElement(
+                    DummyElement, setIconList[index].Key,
+                    -110f + (index * 25f), -600f,
+                    25f, 25f,
+                    setIconList[index].Value,
+                    true,
+                    true
+                );
+            }
+
+            CreateTextElement(
+                DummyElement,
+                "modifySkill", "$almanac_no_data",
+                0f, -650f,
+                350f, 25f,
+                Color.white, 16
+                );
+
+            GameObject ArmorIconBG = CreateImageElement(
+                DummyElement, "armorBg",
+                -125f, -700f,
+                40f, 40f,
+                true,
+                true,
+                armorIcon.sprite,
+                shadow: true
+            );
+            CreateTextElement(
+                ArmorIconBG.transform, "armor", "0",
+                0f, 0f,
+                35f, 35f,
+                Color.black, 16
+                );
+            CreateTextElement(
+                DummyElement,
+                "equipmentStats", "$almanac_equipment_title",
+                0f, -700f,
+                150f, 25f,
+                Color.white, 20
+                );
+            CreateItemDataSet(
+                DummyElement, 
+                "armorPerLevelLabel", "$almanac_armor_per_level_label",
+                "armorPerLevel", "0",
+                leftAlignment, -730f
+                );
+            
+            var weaponTypeIcons = new Dictionary<string, string>()
+            {
+                { "weaponBlunt", "Almanac.icons.sledgeIcon.png" },
+                { "weaponSlash", "Almanac.icons.swordIcon.png" },
+                { "weaponPierce", "Almanac.icons.arrowIcon.png" },
+                { "weaponChop", "Almanac.icons.axeIcon.png" },
+                { "weaponPickaxe", "Almanac.icons.pickaxeIcon.png" },
+                { "weaponFire", "Almanac.icons.fireIcon.png" },
+                { "weaponIce", "Almanac.icons.frostIcon.png" },
+                { "weaponLightning", "Almanac.icons.lightningIcon.png" },
+                { "weaponPoison", "Almanac.icons.poisonIcon.png" },
+                { "weaponSpirit", "Almanac.icons.spiritIcon.png" }
+            };
+            List<KeyValuePair<string, string>> weaponTypeList = weaponTypeIcons.ToList();
+
+            for (var index = 0; index < weaponTypeList.Count; index++)
+            {
+                CreateCustomImageElement(
+                    DummyElement, weaponTypeList[index].Key,
+                    leftAlignment - 30f, -755f - (index * 25f),
+                    25f, 25f,
+                    weaponTypeList[index].Value,
+                    true,
+                    true
+                );
+            }
+            
+            var weaponTypeTags = new Dictionary<string, string>()
+            {
+                { "bluntTag", "$almanac_blunt" },
+                { "slashTag", "$almanac_slash" },
+                { "pierceTag", "$almanac_pierce" },
+                { "chopTag", "$almanac_chop" },
+                { "pickaxeTag", "$almanac_pickaxe" },
+                { "fireTag", "$almanac_fire" },
+                { "frostTag", "$almanac_frost" },
+                { "lightningTag", "$almanac_lightning" },
+                { "poisonTag", "$almanac_poison" },
+                { "spiritTag", "$almanac_spirit" },
+            };
+            List<KeyValuePair<string, string>> weaponTagList = weaponTypeTags.ToList();
+            for (var index = 0; index < weaponTagList.Count; index++)
+            {
+                var localizedValue = Localization.instance.Localize(weaponTagList[index].Value);
+                CreateTextElement(
+                    DummyElement, weaponTagList[index].Key, localizedValue,
+                    leftAlignment + 30f, -755f - (index * 25f),
+                    100f, 25f,
+                    Color.white, 16,
+                    horizontalAlignment: HorizontalAlignmentOptions.Left
+                );
+            }
+
+
             return DummyPanel;
         }
-        private static GameObject CreateMaterialElement(Transform parentElement)
+
+        private static void CreateItemDataSet(Transform parentElement, string labelId, string labelContent,
+            string valueId, string valueContent, float anchoredX, float anchoredY)
         {
-            GameObject DummyPanel = new GameObject("MaterialElement (0)");
-            RectTransform DummyRectTransform = DummyPanel.AddComponent<RectTransform>();
-            DummyRectTransform.SetParent(parentElement);
-            DummyRectTransform.anchoredPosition = new Vector2(0f, 0f);
-            DummyRectTransform.sizeDelta = new Vector2(390f, 750f);
-
-            Image dummyImage = DummyPanel.AddComponent<Image>();
-            dummyImage.fillCenter = true;
-            dummyImage.color = new Color(0f, 0f, 0f, 0f);
-            dummyImage.raycastTarget = true;
-            
-            Transform DummyElement = DummyPanel.transform;
-
-            CreateTextElement(DummyElement, "materialName", "no data", 50f, 360f, 250f, 150f,
-                Color.yellow, 25, TextAnchor.MiddleLeft, shadow: true);
-            CreateTextElement(DummyElement, "materialDescription", "no data", 0f, 320f, 150f, 50f, Color.white,
-                16, TextAnchor.MiddleLeft);
-            CreateTextElement(DummyElement, "maxStackSize", $"Stack size: no data", 110f, 320f, 100f, 50f, Color.white, 20,
-                TextAnchor.MiddleRight, true);
-            CreateImageElement(DummyElement, "icon", -145f, 340f, 120f, 120f, false);
-            // panel left alignment
-            float anchorX = -110f;
-
-            CreateTextElement(DummyElement, "materialStats", "$almanac_material_stats", anchorX, 300f,
-                100f, 100f, Color.white, 20, active: true, shadow: true,
-                horizontalWrapMode: HorizontalWrapMode.Overflow, verticalWrapMode: VerticalWrapMode.Overflow);
-            
-            
-            return DummyPanel;
+            CreateTextElement(
+                parentElement, labelId, labelContent,
+                anchoredX, anchoredY,
+                180f, 25f,
+                Color.white, 16,
+                horizontalAlignment: HorizontalAlignmentOptions.Left
+            );
+            CreateTextElement(
+                parentElement, valueId, valueContent,
+                anchoredX + 200f, anchoredY,
+                40f, 40f,
+                new Color(1f, 0.5f, 0f, 1f), 16
+            );
         }
         private static GameObject CreateAlmanacElement(Transform parentElement, Image iconBackground)
         {
@@ -1231,19 +1643,49 @@ public static class Almanac
 
             Transform DummyElement = DummyPanel.transform;
 
-            CreateTextElement(DummyElement, "displayName", "$almanac_untitled", 50f, 360f, 250f, 150f,
-                Color.yellow, 25, TextAnchor.MiddleLeft, shadow: true);
-            CreateTextElement(DummyElement, "faction", "$almanac_factionless", 0f, 320f, 150f, 50f, Color.white,
-                16, TextAnchor.MiddleLeft);
-            CreateTextElement(DummyElement, "health", "1000 HP", 110f, 320f, 100f, 50f, Color.white, 20,
-                TextAnchor.MiddleRight, true);
-            CreateImageElement(DummyElement, "icon", -145f, 340f, 120f, 120f, false);
-            // panel left alignment
+            CreateTextElement(
+                DummyElement, "displayName", "$almanac_untitled",
+                50f, 345f,
+                250f, 50f,
+                Color.yellow, 25,
+                overflowModes: TextOverflowModes.ScrollRect,
+                horizontalAlignment: HorizontalAlignmentOptions.Left
+            );
+            CreateTextElement(
+                DummyElement, "faction", "$almanac_factionless", 
+                0f, 310f, 
+                150f, 50f,
+                Color.white, 16,
+                horizontalAlignment: HorizontalAlignmentOptions.Left
+            );
+            CreateTextElement(
+                DummyElement, "health", "1000 HP",
+                120f, 310f,
+                100f, 50f,
+                Color.white, 20
+            );
+            CreateImageElement(
+                DummyElement, "icon",
+                -145f, 340f,
+                120f, 120f
+                );
+            
+            CreateCustomImageElement(
+                DummyElement, "questionMark",
+                -145f, 340f,
+                120f, 120f,
+                "Almanac.icons.QuestionMark.png");
+
             float anchorX = -110f;
 
-            CreateTextElement(DummyElement, "creatureStats", "$almanac_creature_resistances", anchorX, 300f,
-                100f, 100f, Color.white, 20, active: true, shadow: true,
-                horizontalWrapMode: HorizontalWrapMode.Overflow, verticalWrapMode: VerticalWrapMode.Overflow);
+            CreateTextElement(
+                DummyElement, "creatureStats", "$almanac_creature_resistances",
+                0f, 250f,
+                200f, 50f,
+                Color.white, 20,
+                active: true,
+                overflowModes: TextOverflowModes.Overflow
+            );
 
             float iconXPos = anchorX - 50f;
             var iconElements = new Dictionary<string, string>()
@@ -1263,8 +1705,13 @@ public static class Almanac
 
             for (var index = 0; index < iconElements.Count; index++)
             {
-                CreateCustomImageElement(DummyElement, iconList[index].Key, iconXPos, 230f - (index * 25f), 25f,
-                    25f, iconList[index].Value, active: true);
+                CreateCustomImageElement(
+                    DummyElement, iconList[index].Key,
+                    iconXPos, 230f - (index * 25f),
+                    25f, 25f,
+                    iconList[index].Value,
+                    active: true
+                    );
             }
 
             var creatureStatsTags = new Dictionary<string, string>()
@@ -1285,8 +1732,13 @@ public static class Almanac
             {
                 float statsTagX = anchorX + 30f;
                 var localizedValue = Localization.instance.Localize(statsTagList[index].Value);
-                CreateTextElement(DummyElement, statsTagList[index].Key, localizedValue, statsTagX,
-                    270f - (index * 25f), 100f, 100f, Color.white, 16);
+                CreateTextElement(
+                    DummyElement, statsTagList[index].Key, localizedValue,
+                    statsTagX, 230f - (index * 25f),
+                    100f, 25f,
+                    Color.white, 16,
+                    horizontalAlignment: HorizontalAlignmentOptions.Left
+                    );
             }
 
             // Create values
@@ -1306,94 +1758,239 @@ public static class Almanac
             for (var index = 0; index < statsList.Count; index++)
             {
                 float statListX = anchorX + 210f;
-                CreateTextElement(DummyElement, statsList[index], "$almanac_unknown", statListX,
-                    270f - (index * 25f), 150f, 100f, Color.white, 16);
+                CreateTextElement(
+                    DummyElement, statsList[index], "$almanac_unknown",
+                    statListX, 230f - (index * 25f),
+                    150f, 25f,
+                    Color.white, 16,
+                    horizontalAlignment: HorizontalAlignmentOptions.Left
+                    );
             }
 
-            CreateTextElement(DummyElement, "creatureDrops", "$almanac_creature_drops", anchorX, 0f,
-                100f, 100f, Color.white, 20, shadow: true,
-                horizontalWrapMode: HorizontalWrapMode.Overflow, verticalWrapMode: VerticalWrapMode.Overflow);
+            CreateTextElement(
+                DummyElement, "creatureDrops", "$almanac_creature_drops",
+                0f, -55f,
+                200f, 50f,
+                Color.white, 20,
+                overflowModes: TextOverflowModes.Overflow
+            );
 
             for (var index = 0; index < 7; index++)
             {
-                GameObject dropBackground = CreateImageElement(DummyElement, $"dropIconBg ({index})",
-                    -155f + (index * 52), -100f, 50f, 50f, false, sprite: iconBackground.sprite);
+                GameObject dropBackground = CreateImageElement(
+                    DummyElement, $"dropIconBg ({index})",
+                    -155f + (index * 52), -100f,
+                    50f, 50f,
+                    sprite: iconBackground.sprite
+                    );
 
-                CreateImageElement(dropBackground.transform, $"creatureDrop ({index})", 0f, 0f, 45f, 45f, false,
-                    true, shadow: true);
+                CreateImageElement(
+                    dropBackground.transform, $"creatureDrop ({index})",
+                    0f, 0f,
+                    45f, 45f,
+                    false,
+                    true,
+                    shadow: true
+                    );
             }
 
-            CreateTextElement(DummyElement, "defaultAttacks", "$almanac_creature_attacks", anchorX, -125f,
-                100f, 100f, Color.white, 20, shadow: true,
-                horizontalWrapMode: HorizontalWrapMode.Overflow, verticalWrapMode: VerticalWrapMode.Overflow);
+            CreateTextElement(
+                DummyElement, "defaultAttacks", "$almanac_creature_attacks",
+                0f, -170f,
+                200f, 50f,
+                Color.white, 20,
+                overflowModes: TextOverflowModes.Overflow
+            );
 
             for (var index = 0; index < 4; index++)
-                CreateDefaultAttackStats(DummyElement, index, anchorX - 5f, -170f);
+                CreateDefaultAttackStats(
+                    DummyElement, index,
+                    anchorX - 5f, -170f
+                    );
 
-            CreateTextElement(DummyElement, "intelligence", "$almanac_creature_intelligence", anchorX, -975f,
-                100f, 100f, Color.white, 20, shadow: true,
-                horizontalWrapMode: HorizontalWrapMode.Overflow, verticalWrapMode: VerticalWrapMode.Overflow);
+            CreateTextElement(
+                DummyElement, "intelligence", "$almanac_creature_intelligence",
+                0f, -1015f,
+                200f, 50f,
+                Color.white, 20,
+                overflowModes: TextOverflowModes.Overflow
+            );
 
-            CreateAIStats(DummyElement, anchorX - 5f, -1050f, iconBackground);
+            CreateAIStats(
+                DummyElement,
+                anchorX - 5f, -1050f,
+                iconBackground
+                );
 
             return DummyPanel;
         }
 
         private static void CreateAIStats(Transform parentElement, float x, float y, Image iconBackground)
         {
-            CreateTextElement(parentElement, "avoidFireTag", "$almanac_avoid_fire", x + 50f, y, 200f, 25f,
-                Color.white, 16);
-            CreateTextElement(parentElement, "afraidOfFireTag", "$almanac_afraid_of_fire", x + 50f, y - 25f, 200f,
-                25f, Color.white, 16);
-            CreateTextElement(parentElement, "avoidWaterTag", "$almanac_avoid_water", x + 50f, y - 50f, 200f, 25f,
-                Color.white, 16);
+            CreateTextElement(
+                parentElement, "avoidFireTag", "$almanac_avoid_fire",
+                x + 50f, y,
+                200f, 25f,
+                Color.white, 16,
+                horizontalAlignment: HorizontalAlignmentOptions.Left
+                );
+            CreateTextElement(
+                parentElement, "afraidOfFireTag", "$almanac_afraid_of_fire",
+                x + 50f, y - 25f,
+                200f, 25f,
+                Color.white, 16,
+                horizontalAlignment: HorizontalAlignmentOptions.Left
+                );
+            CreateTextElement(
+                parentElement, "avoidWaterTag", "$almanac_avoid_water",
+                x + 50f, y - 50f,
+                200f, 25f,
+                Color.white, 16,
+                horizontalAlignment: HorizontalAlignmentOptions.Left
+                );
 
-            CreateTextElement(parentElement, "avoidFire", "False", x + 250f, y, 100f, 25f, Color.white, 16);
-            CreateTextElement(parentElement, "afraidOfFire", "False", x + 250f, y - 25f, 100f, 25f, Color.white,
-                16);
-            CreateTextElement(parentElement, "avoidWater", "False", x + 250f, y - 50f, 100f, 25f, Color.white,
-                16);
+            CreateTextElement(
+                parentElement, "avoidFire", "False",
+                x + 240f, y,
+                100f, 25f,
+                 Color.white, 16,
+                horizontalAlignment: HorizontalAlignmentOptions.Right
+                );
+            CreateTextElement(
+                parentElement, "afraidOfFire", "False",
+                x + 240f, y - 25f,
+                100f, 25f,
+                Color.white, 16,
+                horizontalAlignment: HorizontalAlignmentOptions.Right);
+            CreateTextElement(
+                parentElement, "avoidWater", "False",
+                x + 240f, y - 50f,
+                100f, 25f,
+                Color.white, 16,
+                horizontalAlignment: HorizontalAlignmentOptions.Right
+                );
 
-            CreateTextElement(parentElement, "tolerateWaterTag", "$almanac_tolerate_water", x + 50f, y - 75f,
-                200f, 25f, Color.white, 16);
-            CreateTextElement(parentElement, "tolerateSmokeTag", "$almanac_tolerate_smoke", x + 50f, y - 100f,
-                200f, 25f, Color.white, 16);
-            CreateTextElement(parentElement, "tolerateTarTag", "$almanac_tolerate_tar", x + 50f, y - 125f, 200f,
-                25f, Color.white, 16);
+            CreateTextElement(
+                parentElement, "tolerateWaterTag", "$almanac_tolerate_water",
+                x + 50f, y - 75f,
+                200f, 25f,
+                Color.white, 16,
+                horizontalAlignment: HorizontalAlignmentOptions.Left
+                );
+            CreateTextElement(
+                parentElement, "tolerateSmokeTag", "$almanac_tolerate_smoke",
+                x + 50f, y - 100f,
+                200f, 25f,
+                Color.white, 16,
+                horizontalAlignment: HorizontalAlignmentOptions.Left
+                );
+            CreateTextElement(
+                parentElement, "tolerateTarTag", "$almanac_tolerate_tar",
+                x + 50f, y - 125f,
+                200f, 25f,
+                Color.white, 16,
+                horizontalAlignment: HorizontalAlignmentOptions.Left);
 
-            CreateTextElement(parentElement, "tolerateWater", "False", x + 250f, y - 75f, 100f, 25f, Color.white,
-                16);
-            CreateTextElement(parentElement, "tolerateSmoke", "False", x + 250f, y - 100f, 100f, 25f, Color.white,
-                16);
-            CreateTextElement(parentElement, "tolerateTar", "False", x + 250f, y - 125f, 100f, 25f, Color.white,
-                16);
+            CreateTextElement(
+                parentElement, "tolerateWater", "False",
+                x + 240f, y - 75f,
+                100f, 25f,
+                Color.white, 16,
+                horizontalAlignment: HorizontalAlignmentOptions.Right
+                );
+            CreateTextElement(
+                parentElement, "tolerateSmoke", "False",
+                x + 240f, y - 100f,
+                100f, 25f,
+                Color.white, 16,
+                horizontalAlignment: HorizontalAlignmentOptions.Right
+                );
+            CreateTextElement(
+                parentElement, "tolerateTar", "False",
+                x + 240f, y - 125f,
+                100f, 25f,
+                Color.white, 16,
+                horizontalAlignment: HorizontalAlignmentOptions.Right
+                );
 
-            CreateTextElement(parentElement, "staggerWhenBlockedTag", "$almanac_stagger_when_blocked", x + 50f,
-                y - 150f, 200f, 25f, Color.white, 16);
-            CreateTextElement(parentElement, "staggerDamageFactorTag", "$almanac_stagger_damage_factor", x + 50f,
-                y - 175f, 200f, 25f, Color.white, 16);
+            CreateTextElement(
+                parentElement, "staggerWhenBlockedTag", "$almanac_stagger_when_blocked",
+                x + 50f, y - 150f,
+                200f, 25f,
+                Color.white, 16,
+                horizontalAlignment: HorizontalAlignmentOptions.Left
+                );
+            CreateTextElement(
+                parentElement, "staggerDamageFactorTag", "$almanac_stagger_damage_factor",
+                x + 50f, y - 175f,
+                200f, 25f,
+                Color.white, 16,
+                horizontalAlignment: HorizontalAlignmentOptions.Left
+                );
 
-            CreateTextElement(parentElement, "staggerWhenBlocked", "False", x + 250f, y - 150f, 100f, 25f,
-                Color.white, 16);
-            CreateTextElement(parentElement, "staggerDamageFactor", "0", x + 250f, y - 175f, 100f, 25f,
-                Color.white, 16);
+            CreateTextElement(
+                parentElement, "staggerWhenBlocked", "False",
+                x + 240f, y - 150f,
+                100f, 25f,
+                Color.white, 16,
+                horizontalAlignment: HorizontalAlignmentOptions.Right
+                );
+            CreateTextElement(
+                parentElement, "staggerDamageFactor", "0",
+                x + 240f, y - 175f,
+                100f, 25f,
+                Color.white, 16,
+                horizontalAlignment: HorizontalAlignmentOptions.Right
+                );
 
-            CreateTextElement(parentElement, "weakSpot", "$almanac_no_weak_spot", x + 50f, y - 200f, 200f, 25f,
-                Color.yellow, 16);
+            CreateTextElement(
+                parentElement, "weakSpot", "$almanac_no_weak_spot",
+                x + 50f, y - 200f,
+                200f, 25f,
+                Color.yellow, 16,
+                horizontalAlignment: HorizontalAlignmentOptions.Left);
 
-            CreateImageElement(parentElement, $"attackOverlay (99)", 0f, y - 100f, 400f, 400f, true,
-                false, null, 0f);
+            CreateImageElement(
+                parentElement, $"attackOverlay (99)",
+                0f, y - 100f,
+                400f, 400f,
+                true,
+                false,
+                null,
+                0f
+                );
 
-            CreateTextElement(parentElement, "consumeItemsTag", "$almanac_taming_food_items", x + 5f, y - 215f,
-                100f, 100f, Color.white, 20, shadow: true, horizontalWrapMode: HorizontalWrapMode.Overflow);
-            CreateTextElement(parentElement, "consumeItems (no data)", "$almanac_creature_not_tamable", x,
-                y - 250f, 100f, 100f, Color.yellow, 16, active: false, horizontalWrapMode: HorizontalWrapMode.Overflow);
+            CreateTextElement(
+                parentElement, "consumeItemsTag", "$almanac_taming_food_items",
+                0f, y - 275f,
+                200f, 50f,
+                Color.white, 20,
+                overflowModes: TextOverflowModes.Overflow
+            );
+            CreateTextElement(
+                parentElement, "consumeItems (no data)", "$almanac_creature_not_tamable",
+                0f, y - 310f,
+                200f, 50f,
+                Color.yellow, 16,
+                active: false,
+                overflowModes: TextOverflowModes.Overflow
+            );
             for (var index = 0; index < 7; index++)
             {
-                GameObject dummyBackground = CreateImageElement(parentElement, $"iconBg ({index})",
-                    -155f + (index * 52), y - 315f, 50f, 50f, sprite: iconBackground.sprite, active: true, alpha: 1f);
-                CreateImageElement(dummyBackground.transform, $"consumeItem ({index})", 0f, 0f, 45f, 45f,
-                    addHoverableText: true, shadow: true);
+                GameObject dummyBackground = CreateImageElement(
+                    parentElement, $"iconBg ({index})",
+                    -155f + (index * 52), y - 315f,
+                    50f, 50f,
+                    sprite: iconBackground.sprite,
+                    active: true, alpha: 1f
+                    );
+                CreateImageElement(
+                    dummyBackground.transform, $"consumeItem ({index})",
+                    0f, 0f,
+                    45f, 45f,
+                    addHoverableText: true,
+                    shadow: true
+                    );
             }
         }
 
@@ -1451,17 +2048,37 @@ public static class Almanac
                 if (attackTagList[i].Key.StartsWith("attackName") ||
                     attackTagList[i].Key.StartsWith("attackStatusEffect"))
                 {
-                    CreateTextElement(parentElement, attackTagList[i].Key, attackTagList[i].Value, x, anchorY,
-                        100f, 25f, Color.white, 16);
-                    CreateTextElement(parentElement, attackValueList[i].Key, attackValueList[i].Value,
-                        valueAnchorX + 50f, anchorY, 200f, 25f, Color.yellow, 16);
+                    CreateTextElement(
+                        parentElement, attackTagList[i].Key, attackTagList[i].Value, 
+                        x, anchorY,
+                        100f, 25f, 
+                        Color.white, 16,
+                        horizontalAlignment: HorizontalAlignmentOptions.Left
+                    );
+                    CreateTextElement(
+                        parentElement, attackValueList[i].Key, attackValueList[i].Value,
+                        valueAnchorX + 50f, anchorY, 
+                        200f, 25f, 
+                        Color.yellow, 16,
+                        horizontalAlignment: HorizontalAlignmentOptions.Left,
+                        overflowModes: TextOverflowModes.Ellipsis
+                        );
                 }
                 else
                 {
-                    CreateTextElement(parentElement, attackTagList[i].Key, attackTagList[i].Value, x, anchorY,
-                        100f, 25f, Color.white, 16);
-                    CreateTextElement(parentElement, attackValueList[i].Key, attackValueList[i].Value,
-                        valueAnchorX, anchorY, 100f, 25f, Color.white, 16);
+                    CreateTextElement(
+                        parentElement, attackTagList[i].Key, attackTagList[i].Value, x, anchorY,
+                        100f, 25f, 
+                        Color.white, 16,
+                        horizontalAlignment: HorizontalAlignmentOptions.Left
+                        );
+                    CreateTextElement(
+                        parentElement, attackValueList[i].Key, attackValueList[i].Value,
+                        valueAnchorX, anchorY,
+                        100f, 25f,
+                        Color.white, 16,
+                        horizontalAlignment: HorizontalAlignmentOptions.Left
+                        );
                 }
             }
 
@@ -1470,15 +2087,31 @@ public static class Almanac
                 float anchorY = (y - position - (spacing * (i - 9)) - distanceFromTitle - 20f);
                 float anchorX = x + 180f;
                 float anchorValueX = anchorX + 130f;
-                CreateTextElement(parentElement, attackTagList[i].Key, attackTagList[i].Value, anchorX, anchorY,
-                    100f, 25f, Color.white, 16);
-                CreateTextElement(parentElement, attackValueList[i].Key, attackValueList[i].Value, anchorValueX,
-                    anchorY, 100f, 25f, Color.white, 16);
+                CreateTextElement(
+                    parentElement, attackTagList[i].Key, attackTagList[i].Value,
+                    anchorX, anchorY,
+                    100f, 25f,
+                    Color.white, 16,
+                    horizontalAlignment: HorizontalAlignmentOptions.Left
+                    );
+                CreateTextElement(
+                    parentElement, attackValueList[i].Key, attackValueList[i].Value,
+                    anchorValueX, anchorY,
+                    100f, 25f,
+                    Color.white, 16,
+                    horizontalAlignment: HorizontalAlignmentOptions.Left
+                    );
             }
 
-            CreateImageElement(parentElement, $"attackOverlay ({index})", 0f, y - position - 250f, 400f, 250f,
+            CreateImageElement(
+                parentElement, $"attackOverlay ({index})",
+                0f, y - position - 250f,
+                400f, 250f,
                 true,
-                false, null, 0f);
+                false,
+                null,
+                0f
+                );
         }
 
         private static GameObject CreateImageElement(Transform parentElement, string id, float anchoredX,
@@ -1512,7 +2145,7 @@ public static class Almanac
             return imageElement;
         }
 
-        private static void CreateCustomImageElement(Transform parentElement, string id, float anchoredX,
+        private static GameObject CreateCustomImageElement(Transform parentElement, string id, float anchoredX,
             float anchoredY, float sizeX, float sizeY, string imagePath, bool active = false,
             bool addHoverableText = false, float alpha = 1f)
         {
@@ -1536,9 +2169,11 @@ public static class Almanac
             image.color = new Color(1f, 1f, 1f, alpha);
 
             if (addHoverableText) AddHoverableText(imageElement, "Unknown");
+
+            return imageElement;
         }
 
-        private static void AddHoverableText(GameObject obj, string content, int fontSize = 12)
+        private static void AddHoverableText(GameObject obj, string content, int fontSize = 12, float anchoredX = 0f, float anchoredY = -35f)
         {
             obj.AddComponent<ElementHover>();
 
@@ -1547,33 +2182,38 @@ public static class Almanac
 
             RectTransform rectTransform = HoverTextElement.AddComponent<RectTransform>();
             rectTransform.SetParent(obj.transform);
-            rectTransform.anchoredPosition = new Vector2(0f, -35f);
+            rectTransform.anchoredPosition = new Vector2(anchoredX, anchoredY);
             rectTransform.sizeDelta = new Vector2(80f, 30f);
 
-            Text text = HoverTextElement.AddComponent<Text>();
-
-            text.text = content;
+            TextMeshProUGUI text = HoverTextElement.AddComponent<TextMeshProUGUI>();
             text.font = font;
-            text.fontSize = fontSize;
-            text.lineSpacing = 1;
-            text.supportRichText = true;
-            text.alignment = TextAnchor.MiddleCenter;
-            text.alignByGeometry = false;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Overflow;
-            text.resizeTextForBestFit = false;
-            text.resizeTextMinSize = 1;
-            text.resizeTextMaxSize = 16;
             text.color = Color.white;
-            text.raycastTarget = false;
+            text.autoSizeTextContainer = false;
+            text.text = content;
+            text.overflowMode = TextOverflowModes.Overflow;
+            text.fontSize = fontSize;
+            text.horizontalAlignment = HorizontalAlignmentOptions.Center;
+            text.verticalAlignment = VerticalAlignmentOptions.Middle;
+            text.textWrappingMode = TextWrappingModes.NoWrap;
         }
 
-        private static void CreateTextElement(
-            Transform parentElement, string id, string content,
-            float anchoredX, float anchoredY, float sizeX, float sizeY,
-            Color color, int fontSize = 10, TextAnchor alignment = TextAnchor.LowerLeft, bool active = true,
-            bool shadow = false, HorizontalWrapMode horizontalWrapMode = HorizontalWrapMode.Wrap,
-            VerticalWrapMode verticalWrapMode = VerticalWrapMode.Truncate)
+        private static GameObject CreateTextElement(
+            Transform parentElement, 
+            string id, 
+            string content,
+            float anchoredX, 
+            float anchoredY, 
+            float sizeX, 
+            float sizeY,
+            Color color, 
+            int fontSize = 10,
+            bool active = true,
+            bool shadow = false,
+            TextOverflowModes overflowModes = TextOverflowModes.ScrollRect,
+            HorizontalAlignmentOptions horizontalAlignment = HorizontalAlignmentOptions.Center,
+            VerticalAlignmentOptions verticalAlignment = VerticalAlignmentOptions.Middle,
+            TextWrappingModes wrapMode = TextWrappingModes.Normal
+        )
         {
             GameObject textElement = new GameObject($"TextElement ({id})");
             textElement.SetActive(active);
@@ -1582,30 +2222,26 @@ public static class Almanac
             textRectTransform.anchoredPosition = new Vector2(anchoredX, anchoredY);
             textRectTransform.sizeDelta = new Vector2(sizeX, sizeY);
 
-            Text text = textElement.AddComponent<Text>();
+            TextMeshProUGUI text = textElement.AddComponent<TextMeshProUGUI>();
             text.font = font;
-            text.fontSize = fontSize;
-            text.lineSpacing = 1;
-            text.supportRichText = true;
-            text.alignment = alignment;
-            text.alignByGeometry = false;
-            text.horizontalOverflow = horizontalWrapMode;
-            text.verticalOverflow = verticalWrapMode;
-            text.resizeTextForBestFit = true;
-            text.resizeTextMinSize = 6;
-            text.resizeTextMaxSize = fontSize;
-            text.color = color;
-            text.raycastTarget = false;
-
             text.text = Localization.instance.Localize(content);
+            text.fontSize = fontSize;
+            text.overflowMode = overflowModes;
+            text.color = color;
+            text.isOverlay = true;
+            text.enableAutoSizing = true; // makes text invisible ?
+            text.autoSizeTextContainer = false;
+            text.horizontalAlignment = horizontalAlignment;
+            text.verticalAlignment = verticalAlignment;
+            text.wordWrappingRatios = 1f;
+            text.textWrappingMode = wrapMode;
+            text.richText = true;
+            text.fontSizeMax = fontSize;
+            text.fontSizeMin = 2f;
+            text.lineSpacingAdjustment = 2f;
+            text.lineSpacingAdjustment = 2f;
 
-            if (shadow)
-            {
-                var shadowElement = textElement.AddComponent<Shadow>();
-                shadowElement.effectColor = new Color(0f, 0f, 0f, 0.5f);
-                shadowElement.effectDistance = new Vector2(4f, -3f);
-                shadowElement.useGraphicAlpha = true;
-            }
+            return textElement;
         }
 
         private static void RepositionTrophyPanel(float x, float y)

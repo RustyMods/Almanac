@@ -77,11 +77,11 @@ public static class CreatureDataCollector
             RenameCreatureData(data);
         }
         
-        Serializer serializer = new Serializer();
-        string yamlData = serializer.Serialize(creatureData);
-        
-        File.WriteAllText(outputFilePath, yamlData);
-        Debug.Log("Creature data collected and saved YAML file to " + outputFilePath);
+        // Serializer serializer = new Serializer();
+        // string yamlData = serializer.Serialize(creatureData);
+        //
+        // File.WriteAllText(outputFilePath, yamlData);
+        // AlmanacPlugin.AlmanacLogger.Log(LogLevel.Info, "Creature data collected and saved YAML file to " + outputFilePath);
 
         return creatureData;
     }
@@ -157,7 +157,7 @@ public static class CreatureDataCollector
         }
         catch (Exception)
         {
-            AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"failed to get monster data of {data.name}, continuing...");
+            AlmanacPlugin.AlmanacLogger.Log(LogLevel.Info, $"failed to get monster data of {data.name}, continuing...");
         }
     }
     private static void SaveAnimalAIData(AnimalAI script, CreatureData data)
@@ -170,7 +170,7 @@ public static class CreatureDataCollector
         }
         catch (Exception)
         {
-            AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"failed to get animal data of {data.name}, continuing...");
+            AlmanacPlugin.AlmanacLogger.Log(LogLevel.Info, $"failed to get animal data of {data.name}, continuing...");
         }
         
     }
@@ -196,7 +196,7 @@ public static class CreatureDataCollector
         }
         catch (Exception)
         {
-            AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"failed to get creature drop data of {data.name}, continuing...");
+            AlmanacPlugin.AlmanacLogger.Log(LogLevel.Info, $"failed to get creature drop data of {data.name}, continuing...");
         }
     }
     private static void SaveCreatureData(GameObject prefab, CreatureData data, Humanoid script)
@@ -234,7 +234,7 @@ public static class CreatureDataCollector
         }
         catch (Exception)
         {
-            AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"failed to get humanoid data of {data.name}, continuing...");
+            AlmanacPlugin.AlmanacLogger.Log(LogLevel.Info, $"failed to get humanoid data of {data.name}, continuing...");
         }
     }
     private static void SaveCreatureData(GameObject prefab, CreatureData data, Character script)
@@ -276,7 +276,7 @@ public static class CreatureDataCollector
         }
         catch (Exception)
         {
-            AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"failed to get character data of {data.name}, continuing...");
+            AlmanacPlugin.AlmanacLogger.Log(LogLevel.Info, $"failed to get character data of {data.name}, continuing...");
         }
     }
 
@@ -297,7 +297,7 @@ public static class CreatureDataCollector
         }
         catch (Exception)
         {
-            AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"failed to get humanoid data of {data.name}, continuing...");
+            AlmanacPlugin.AlmanacLogger.Log(LogLevel.Info, $"failed to get humanoid data of {data.name}, continuing...");
         }
     }
     private static void SaveAttackData(GameObject prefab, List<AttackData> array)
@@ -334,7 +334,7 @@ public static class CreatureDataCollector
         }
         catch (Exception)
         {
-            AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"failed to get attack data of {prefab.name}, continuing...");
+            AlmanacPlugin.AlmanacLogger.Log(LogLevel.Info, $"failed to get attack data of {prefab.name}, continuing...");
         }
     }
 

@@ -17,7 +17,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "1.0.7";
+        internal const string ModVersion = "1.0.8";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         private static string ConfigFileName = ModGUID + ".cfg";
@@ -49,8 +49,8 @@ namespace Almanac
             _immuneColorConfig = config("2 - Resistance Colors", "Immune", new Color(0.5f, 0.5f, 1f, 1f), "Color code for immune damages", false);
             _ignoreColorConfig = config("2 - Resistance Colors", "Ignore", new Color(0.5f, 0.5f, 1f, 1f), "Color code for ignore damages", false);
 
-            _CreatureKnowledgeLock = config("3 - Utilities", "Creature Data", Toggle.On,
-                "If on, creature data is locked behind knowledge of drops", false);
+            _CreatureKnowledgeLock = config("3 - Utilities", "Knowledge Wall", Toggle.On,
+                "If on, data is locked behind knowledge of item", false);
             Localizer.Load();
 
             Assembly assembly = Assembly.GetExecutingAssembly();

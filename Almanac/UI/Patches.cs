@@ -357,6 +357,11 @@ public static class Patches
             
             SetActiveElement(Element, "ImageElement", "craftingStation", false);
             
+            SetTextElement(Element, "setDescription", "$almanac_not_part_of_set");
+            SetTextElement(Element, "setName", "");
+            SetTextElement(Element, "modifySkill", "");
+            SetTextElement(Element, "damageMod", "");
+
             try
             {
                 // If data has a crafting station and resources
@@ -544,11 +549,6 @@ public static class Patches
                 { "value", $"{value}" },
                 { "quality", $"{maxQuality}" },
                 { "durability", $"{maxDurability}" },
-                { "healthBonus", $"{foodHealth}" },
-                { "staminaBonus", $"{foodStamina}" },
-                { "eitrBonus", $"{foodEitr}" },
-                { "foodBurn", $"{foodBurn}" },
-                { "foodRegen", $"{foodRegen}" },
                 { "movement", $"{movementMod}%" },
                 { "eitrRegen", $"{eitrRegenMod}%" },
                 { "stamMod", $"{staminaMod}%" }
@@ -558,11 +558,23 @@ public static class Patches
                 SetTextElement(Element, textData.Key, textData.Value);
             }
 
-            var prefabImage = Element.transform.Find("ImageElement (prefabImage)").gameObject;
+            GameObject prefabImage = Element.transform.Find("ImageElement (prefabImage)").gameObject;
             SetTextElement(prefabImage, "prefabName", $"{data.name}");
             SetImageElement(Element, "icon", sprite, Color.white);
             SetActiveElement(Element, "TextElement", "teleportable", !teleportable);
-            
+
+            Dictionary<string, string> foodDatas = new Dictionary<string, string>()
+            {
+                { "healthBonus", $"{foodHealth}" },
+                { "staminaBonus", $"{foodStamina}" },
+                { "eitrBonus", $"{foodEitr}" },
+                { "foodBurn", $"{foodBurn}" },
+                { "foodRegen", $"{foodRegen}" },
+            };
+            foreach (KeyValuePair<string, string> foodData in foodDatas)
+            {
+                SetTextElement(Element, foodData.Key, foodData.Value);
+            }
             SetTextElement(Element, "consumeEffectDescription", "$almanac_no_data");
             if (sharedData.m_consumeStatusEffect)
             {
@@ -594,9 +606,12 @@ public static class Patches
                     SetHoverableText(Element, $"{consumeEffectData.Key}", $"{tag}");
                 }
             }
-            
-            SetTextElement(Element, "setName", "$almanac_no_data");
-            SetTextElement(Element, "setDescription", "$almanac_no_data");
+
+            if (sharedData.m_damageModifiers.Count > 0)
+            {
+                HitData.DamageModPair gearDamageModifier = sharedData.m_damageModifiers[0];
+                SetTextElement(Element, "damageMod", $"<color=orange>{gearDamageModifier.m_modifier}</color> VS <color=orange>{gearDamageModifier.m_type}</color>");
+            }
             if (sharedData.m_setStatusEffect)
             {
                 StatusEffect setEffect = sharedData.m_setStatusEffect;
@@ -642,6 +657,239 @@ public static class Patches
                 }
             }
             SetHoverableText(Element, "armorBg", "$almanac_armor_label");
+            GameObject armorBg = Element.transform.Find("ImageElement (armorBg)").gameObject;
+            
+            SetTextElement(armorBg, "armor", "0");
+            SetTextElement(Element, "armorPerLevel", "0");
+            
+            SetTextElement(armorBg, "armor", $"{sharedData.m_armor}");
+            SetTextElement(Element, "armorPerLevel", $"{sharedData.m_armorPerLevel}");
+            Dictionary<string, string> weaponTypeTagValues = new Dictionary<string, string>()
+            {
+                { "bluntTagWeaponValue", $"{sharedData.m_damages.m_blunt}" },
+                { "slashTagWeaponValue", $"{sharedData.m_damages.m_slash}" },
+                { "pierceTagWeaponValue", $"{sharedData.m_damages.m_pierce}" },
+                { "chopTagWeaponValue", $"{sharedData.m_damages.m_chop}" },
+                { "pickaxeTagWeaponValue", $"{sharedData.m_damages.m_pickaxe}" },
+                { "fireTagWeaponValue", $"{sharedData.m_damages.m_fire}" },
+                { "frostTagWeaponValue", $"{sharedData.m_damages.m_frost}" },
+                { "lightningTagWeaponValue", $"{sharedData.m_damages.m_lightning}" },
+                { "poisonTagWeaponValue", $"{sharedData.m_damages.m_poison}" },
+                { "spiritTagWeaponValue", $"{sharedData.m_damages.m_spirit}" },
+            };
+            foreach (KeyValuePair<string, string> weaponType in weaponTypeTagValues)
+            {
+                SetTextElement(Element, weaponType.Key, $"<color=yellow>{weaponType.Value}</color>");
+            }
+            Dictionary<string, string> weaponTypeTagPerLevel = new Dictionary<string, string>()
+            {
+                { "bluntTagWeaponPerLevel", $"{sharedData.m_damagesPerLevel.m_blunt}" },
+                { "slashTagWeaponPerLevel", $"{sharedData.m_damagesPerLevel.m_slash}" },
+                { "pierceTagWeaponPerLevel", $"{sharedData.m_damagesPerLevel.m_pierce}" },
+                { "chopTagWeaponPerLevel", $"{sharedData.m_damagesPerLevel.m_chop}" },
+                { "pickaxeTagWeaponPerLevel", $"{sharedData.m_damagesPerLevel.m_pickaxe}" },
+                { "fireTagWeaponPerLevel", $"{sharedData.m_damagesPerLevel.m_fire}" },
+                { "frostTagWeaponPerLevel", $"{sharedData.m_damagesPerLevel.m_frost}" },
+                { "lightningTagWeaponPerLevel", $"{sharedData.m_damagesPerLevel.m_lightning}" },
+                { "poisonTagWeaponPerLevel", $"{sharedData.m_damagesPerLevel.m_poison}" },
+                { "spiritTagWeaponPerLevel", $"{sharedData.m_damagesPerLevel.m_spirit}" },
+            };
+            foreach (KeyValuePair<string, string> weaponPerLevel in weaponTypeTagPerLevel)
+            {
+                SetTextElement(Element, weaponPerLevel.Key, $"+<color=orange>{weaponPerLevel.Value}</color>/level");
+            }
+
+            // Reorganize panel based on topic
+            Dictionary<string, string> foodElements = new Dictionary<string, string>()
+            {
+                { "foodTitle", "TextElement" },
+                
+                { "healthBonusLabel", "TextElement" },
+                { "healthBonus", "TextElement" },
+                
+                { "staminaBonusLabel", "TextElement" },
+                { "staminaBonus", "TextElement" },
+                
+                { "eitrBonusLabel", "TextElement" },
+                { "eitrBonus", "TextElement" },
+
+                { "foodBurnLabel", "TextElement" },
+                { "foodBurn", "TextElement" },
+                
+                { "foodRegenLabel", "TextElement" },
+                { "foodRegen", "TextElement" },
+                
+                { "consumeEffectDescription", "TextElement" },
+
+                { "consumeEffectBlunt", "ImageElement" },
+                { "consumeEffectSlash", "ImageElement" },
+                { "consumeEffectPierce", "ImageElement" },
+                { "consumeEffectChop", "ImageElement" },
+                { "consumeEffectPickaxe", "ImageElement" },
+                { "consumeEffectFire", "ImageElement" },
+                { "consumeEffectIce", "ImageElement" },
+                { "consumeEffectLightning", "ImageElement" },
+                { "consumeEffectPoison", "ImageElement" },
+                { "consumeEffectSpirit", "ImageElement" },
+            };
+
+            Dictionary<string, string> modifierElements = new Dictionary<string, string>()
+            {
+                { "statModifiersTitle", "TextElement" },
+                
+                { "movementLabel", "TextElement" },
+                { "movement", "TextElement" },
+                
+                { "eitrRegenLabel", "TextElement" },
+                { "eitrRegen", "TextElement" },
+                
+                { "stamModLabel", "TextElement" },
+                { "stamMod", "TextElement" },
+                
+                { "damageMod", "TextElement" },
+                
+                { "setName", "TextElement" },
+                { "setDescription", "TextElement" },
+                
+                { "setEffectBlunt", "ImageElement" },
+                { "setEffectSlash", "ImageElement" },
+                { "setEffectPierce", "ImageElement" },
+                { "setEffectChop", "ImageElement" },
+                { "setEffectPickaxe", "ImageElement" },
+                { "setEffectFire", "ImageElement" },
+                { "setEffectIce", "ImageElement" },
+                { "setEffectLightning", "ImageElement" },
+                { "setEffectPoison", "ImageElement" },
+                { "setEffectSpirit", "ImageElement" },
+                
+                { "modifySkill", "TextElement" },
+            };
+
+            Dictionary<string, string> equipmentElements = new Dictionary<string, string>()
+            {
+                { "armorBg", "ImageElement" },
+                
+                { "equipmentStats", "TextElement" },
+                
+                { "armorPerLevelLabel", "TextElement" },
+                { "armorPerLevel", "TextElement" },
+            };
+
+            Dictionary<string, string> weaponElements = new Dictionary<string, string>()
+            {
+                { "weaponBlunt", "ImageElement" },
+                { "weaponSlash", "ImageElement" },
+                { "weaponPierce", "ImageElement" },
+                { "weaponChop", "ImageElement" },
+                { "weaponPickaxe", "ImageElement" },
+                { "weaponFire", "ImageElement" },
+                { "weaponIce", "ImageElement" },
+                { "weaponLightning", "ImageElement" },
+                { "weaponPoison", "ImageElement" },
+                { "weaponSpirit", "ImageElement" },
+                
+                { "bluntTag", "TextElement" },
+                { "slashTag", "TextElement" },
+                { "pierceTag", "TextElement" },
+                { "chopTag", "TextElement" },
+                { "pickaxeTag", "TextElement" },
+                { "fireTag", "TextElement" },
+                { "frostTag", "TextElement" },
+                { "lightningTag", "TextElement" },
+                { "poisonTag", "TextElement" },
+                { "spiritTag", "TextElement" },
+                
+                { "bluntTagWeaponValue", "TextElement" },
+                { "slashTagWeaponValue", "TextElement" },
+                { "pierceTagWeaponValue", "TextElement" },
+                { "chopTagWeaponValue", "TextElement" },
+                { "pickaxeTagWeaponValue", "TextElement" },
+                { "fireTagWeaponValue", "TextElement" },
+                { "frostTagWeaponValue", "TextElement" },
+                { "lightningTagWeaponValue", "TextElement" },
+                { "poisonTagWeaponValue", "TextElement" },
+                { "spiritTagWeaponValue", "TextElement" },
+                
+                { "bluntTagWeaponPerLevel", "TextElement" },
+                { "slashTagWeaponPerLevel", "TextElement" },
+                { "pierceTagWeaponPerLevel", "TextElement" },
+                { "chopTagWeaponPerLevel", "TextElement" },
+                { "pickaxeTagWeaponPerLevel", "TextElement" },
+                { "fireTagWeaponPerLevel", "TextElement" },
+                { "frostTagWeaponPerLevel", "TextElement" },
+                { "lightningTagWeaponPerLevel", "TextElement" },
+                { "poisonTagWeaponPerLevel", "TextElement" },
+                { "spiritTagWeaponPerLevel", "TextElement" },
+            };
+
+            var ItemType = sharedData.m_itemType;
+            
+            foreach (KeyValuePair<string, string> foodElement in foodElements) SetActiveElement(Element, foodElement.Value, foodElement.Key, true);
+            foreach (KeyValuePair<string, string> modiferElement in modifierElements) SetActiveElement(Element, modiferElement.Value, modiferElement.Key, true);
+            foreach (KeyValuePair<string, string> equipmentElement in equipmentElements) SetActiveElement(Element, equipmentElement.Value, equipmentElement.Key, true);
+            foreach (KeyValuePair<string, string> weaponElement in weaponElements) SetActiveElement(Element, weaponElement.Value, weaponElement.Key, true);
+            
+            if (ItemType is ItemDrop.ItemData.ItemType.Material)
+            {
+                foreach (KeyValuePair<string, string> foodElement in foodElements) SetActiveElement(Element, foodElement.Value, foodElement.Key, false);
+                foreach (KeyValuePair<string, string> modiferElement in modifierElements) SetActiveElement(Element, modiferElement.Value, modiferElement.Key, false);
+                foreach (KeyValuePair<string, string> equipmentElement in equipmentElements) SetActiveElement(Element, equipmentElement.Value, equipmentElement.Key, false);
+            }
+            
+            if (ItemType is ItemDrop.ItemData.ItemType.Consumable)
+            {
+                foreach (KeyValuePair<string, string> modiferElement in modifierElements) SetActiveElement(Element, modiferElement.Value, modiferElement.Key, false);
+                foreach (KeyValuePair<string, string> equipmentElement in equipmentElements) SetActiveElement(Element, equipmentElement.Value, equipmentElement.Key, false);
+            }
+            
+            if (ItemType 
+                is ItemDrop.ItemData.ItemType.Chest 
+                or ItemDrop.ItemData.ItemType.Helmet 
+                or ItemDrop.ItemData.ItemType.Legs
+                or ItemDrop.ItemData.ItemType.Shoulder
+                or ItemDrop.ItemData.ItemType.Misc
+                or ItemDrop.ItemData.ItemType.Customization
+                or ItemDrop.ItemData.ItemType.Utility
+                )
+            {
+                foreach (KeyValuePair<string, string> foodElement in foodElements) SetActiveElement(Element, foodElement.Value, foodElement.Key, false);
+                foreach (KeyValuePair<string, string> weaponElement in weaponElements) SetActiveElement(Element, weaponElement.Value, weaponElement.Key, false);
+            }
+            
+            if (ItemType
+                is ItemDrop.ItemData.ItemType.Bow
+                or ItemDrop.ItemData.ItemType.Hands
+                or ItemDrop.ItemData.ItemType.Shield
+                or ItemDrop.ItemData.ItemType.Tool
+                or ItemDrop.ItemData.ItemType.Torch
+                or ItemDrop.ItemData.ItemType.Attach_Atgeir
+                or ItemDrop.ItemData.ItemType.OneHandedWeapon
+                or ItemDrop.ItemData.ItemType.TwoHandedWeapon
+                or ItemDrop.ItemData.ItemType.TwoHandedWeaponLeft
+               )
+            {
+                foreach (KeyValuePair<string, string> foodElement in foodElements) SetActiveElement(Element, foodElement.Value, foodElement.Key, false);
+            }
+            
+            if (ItemType is ItemDrop.ItemData.ItemType.Fish)
+            {
+                foreach (KeyValuePair<string, string> foodElement in foodElements) SetActiveElement(Element, foodElement.Value, foodElement.Key, false);
+                foreach (KeyValuePair<string, string> modiferElement in modifierElements) SetActiveElement(Element, modiferElement.Value, modiferElement.Key, false);
+                foreach (KeyValuePair<string, string> equipmentElement in equipmentElements) SetActiveElement(Element, equipmentElement.Value, equipmentElement.Key, false);
+                foreach (KeyValuePair<string, string> weaponElement in weaponElements) SetActiveElement(Element, weaponElement.Value, weaponElement.Key, false);
+            }
+
+            if (ItemType 
+                is ItemDrop.ItemData.ItemType.Ammo 
+                or ItemDrop.ItemData.ItemType.AmmoNonEquipable
+                )
+            {
+                foreach (KeyValuePair<string, string> foodElement in foodElements) SetActiveElement(Element, foodElement.Value, foodElement.Key, false);
+                foreach (KeyValuePair<string, string> modiferElement in modifierElements) SetActiveElement(Element, modiferElement.Value, modiferElement.Key, false);
+                foreach (KeyValuePair<string, string> equipmentElement in equipmentElements) SetActiveElement(Element, equipmentElement.Value, equipmentElement.Key, false);
+                foreach (KeyValuePair<string, string> weaponElement in weaponElements) SetActiveElement(Element, weaponElement.Value, weaponElement.Key, false);
+            }
+            AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"{Player.m_localPlayer.GetPlayerID()}");
             
         }
 
@@ -963,7 +1211,7 @@ public static class Patches
 
             return conversionMap.ContainsKey(originalContent)
                 ? Localization.instance.Localize(conversionMap[originalContent])
-                : originalContent;
+                : Localization.instance.Localize(originalContent);
         }
 
         private static Color SetColorCodes(string context, Color defaultColor)

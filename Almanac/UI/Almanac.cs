@@ -1158,18 +1158,18 @@ public static class Almanac
             {
                 creatureRectTransform.anchoredPosition =
                     e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
-                materialRectTransform.anchoredPosition = 
-                    e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
-                consumeRectTransform.anchoredPosition =
-                    e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
+                // materialRectTransform.anchoredPosition = 
+                //     e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
+                // consumeRectTransform.anchoredPosition =
+                //     e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
                 equipmentRectTransform.anchoredPosition = 
-                    e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
+                    e < 0.5f ? new Vector2(0f, (e - 0.5f) * -760f) : new Vector2(0f, (e - 0.5f) * 1f);
                 weaponRectTransform.anchoredPosition = 
-                    e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
-                projectileRectTransform.anchoredPosition =
-                    e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
-                fishRectTransform.anchoredPosition = 
-                    e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
+                    e < 0.5f ? new Vector2(0f, (e - 0.5f) * -800f) : new Vector2(0f, (e - 0.5f) * 1f);
+                // projectileRectTransform.anchoredPosition =
+                //     e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
+                // fishRectTransform.anchoredPosition = 
+                //     e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
             });
 
             return scrollbar;
@@ -1240,7 +1240,7 @@ public static class Almanac
             );
             
             CreateTextElement(
-                DummyElement, "stats", $"$almanac_general_stats", 
+                DummyElement, "stats", $"$almanac_general_title", 
                 0f, 250f, 
                 200f, 100f, 
                 Color.white, 20
@@ -1284,7 +1284,6 @@ public static class Almanac
             };
             
             prefabImageButton.onClick = new Button.ButtonClickedEvent();
-            
             
             CreateTextElement(
                 prefabImage.transform, "prefabName", "$almanac_no_data",
@@ -1330,7 +1329,7 @@ public static class Almanac
                 225f, 25f,
                 orange, 18
             );
-            
+
             CreateTextElement(
                 DummyElement, "recipeTitle", "$almanac_recipe_title",
                 0f, 0f,
@@ -1455,7 +1454,7 @@ public static class Almanac
             
             CreateTextElement(
                 DummyElement, "statModifiersTitle", "$almanac_stat_modifiers_title",
-                0f, -395f,
+                0f, -110f,
                 150f, 25f,
                 Color.white, 20
             );
@@ -1464,29 +1463,36 @@ public static class Almanac
                 DummyElement,
                 "movementLabel", "$almanac_movement_modifier_label",
                 "movement", "0",
-                leftAlignment, -425f
+                leftAlignment, -140f
                 );
             CreateItemDataSet(
                 DummyElement,
                 "eitrRegenLabel", "$almanac_eitr_regen_label",
                 "eitrRegen", "0",
-                leftAlignment, -450f
+                leftAlignment, -165f
                 );
             CreateItemDataSet(
                 DummyElement, 
                 "stamModLabel", "$almanac_base_items_stamina_modifier_label",
                 "stamMod", "0",
-                leftAlignment, -475f
+                leftAlignment, -190f
                 );
-
+            CreateTextElement(
+                DummyElement,
+                "damageMod", "$almanac_equipment_normal_damage_modifier",
+                0f, -215f,
+                200f, 25f,
+                Color.white, 18
+            );
+            
             CreateTextElement(DummyElement, "setName", "$almanac_no_data",
-                0f, -500f,
+                0f, -250f,
                 350f, 50f,
                 Color.white, 16
                 );
             CreateTextElement(
                 DummyElement, "setDescription", "$almanac_no_data",
-                0f, -550f,
+                0f, -300f,
                 350f, 50f,
                 orange, 16
                 );
@@ -1509,7 +1515,7 @@ public static class Almanac
             {
                 CreateCustomImageElement(
                     DummyElement, setIconList[index].Key,
-                    -110f + (index * 25f), -600f,
+                    -110f + (index * 25f), -350f,
                     25f, 25f,
                     setIconList[index].Value,
                     true,
@@ -1520,14 +1526,14 @@ public static class Almanac
             CreateTextElement(
                 DummyElement,
                 "modifySkill", "$almanac_no_data",
-                0f, -650f,
+                0f, -400f,
                 350f, 25f,
                 Color.white, 16
                 );
 
             GameObject ArmorIconBG = CreateImageElement(
                 DummyElement, "armorBg",
-                -125f, -700f,
+                -125f, -450f,
                 40f, 40f,
                 true,
                 true,
@@ -1543,7 +1549,7 @@ public static class Almanac
             CreateTextElement(
                 DummyElement,
                 "equipmentStats", "$almanac_equipment_title",
-                0f, -700f,
+                0f, -450f,
                 150f, 25f,
                 Color.white, 20
                 );
@@ -1551,7 +1557,7 @@ public static class Almanac
                 DummyElement, 
                 "armorPerLevelLabel", "$almanac_armor_per_level_label",
                 "armorPerLevel", "0",
-                leftAlignment, -730f
+                leftAlignment, -500f
                 );
             
             var weaponTypeIcons = new Dictionary<string, string>()
@@ -1573,11 +1579,11 @@ public static class Almanac
             {
                 CreateCustomImageElement(
                     DummyElement, weaponTypeList[index].Key,
-                    leftAlignment - 30f, -755f - (index * 25f),
+                    leftAlignment - 85f, -525f - (index * 25f),
                     25f, 25f,
                     weaponTypeList[index].Value,
                     true,
-                    true
+                    false
                 );
             }
             
@@ -1600,14 +1606,29 @@ public static class Almanac
                 var localizedValue = Localization.instance.Localize(weaponTagList[index].Value);
                 CreateTextElement(
                     DummyElement, weaponTagList[index].Key, localizedValue,
-                    leftAlignment + 30f, -755f - (index * 25f),
+                    leftAlignment - 15f, -525f - (index * 25f),
                     100f, 25f,
                     Color.white, 16,
                     horizontalAlignment: HorizontalAlignmentOptions.Left
                 );
+                
+                CreateTextElement(
+                    DummyElement, $"{weaponTagList[index].Key}WeaponValue", "0",
+                    leftAlignment + 90f, -525f - (index * 25f),
+                    100f, 25f,
+                    Color.white, 16,
+                    horizontalAlignment: HorizontalAlignmentOptions.Right
+                );
+                
+                CreateTextElement(
+                    DummyElement, $"{weaponTagList[index].Key}WeaponPerLevel", "+0/level",
+                    leftAlignment + 155f, -525f - (index * 25f),
+                    100f, 25f,
+                    Color.white, 16,
+                    horizontalAlignment: HorizontalAlignmentOptions.Right
+                );
             }
-
-
+            
             return DummyPanel;
         }
 

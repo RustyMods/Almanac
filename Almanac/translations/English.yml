@@ -10,7 +10,7 @@ almanac_tolerate_smoke: "Tolerate Smoke"
 almanac_tolerate_tar: "Tolerate Tar"
 # Almanac Regenerate Button
 almanac_regenerate_almanac: "Regenerate Almanac"
-# Almanac Category Titles
+# Almanac Creature Titles
 almanac_untitled: "Untitled"
 almanac_factionless: "Factionless"
 almanac_creature_resistances: "Creature Resistances"
@@ -76,33 +76,37 @@ enemy_dverger_mage_fire: "Fire Mage Dverger"
 enemy_dverger_mage_ice: "Ice Mage Dverger"
 enemy_dverger_mage_support: "Support Mage Dverger"
 # Almanac Items
-almanac_material_stats: "Information"
-almanac_general_stats: "General Data"
+almanac_general_title: "General"
+almanac_recipe_title: "Crafting"
+almanac_food_title: "Food"
+almanac_stat_modifiers_title: "Modifiers"
+almanac_equipment_title: "Equipment"
 
 almanac_not_teleportable: "Can't be teleported"
 almanac_locked: "???"
 almanac_weight: "Weight"
 almanac_prefab_name_label: "Prefab Name"
+
 almanac_stack_size_label: "Stack Size"
 almanac_value_label: "Value Price"
 almanac_quality_label: "Max Quality"
-almanac_recipe_title: "Crafting Data"
+almanac_durability_label: "Durability"
+
 almanac_crafting_station_label: "Crafting Station"
 almanac_copy_to_clipboard: "Copied prefab name to clipboard"
 almanac_no_recipe: "Not available to craft"
-almanac_durability_label: "Durability"
-almanac_food_title: "Food Data"
+
 almanac_health_bonus_label: "Health Bonus"
 almanac_stamina_bonus_label: "Stamina Bonus"
 almanac_eitr_bonus_label: "Eitr Bonus"
 almanac_food_burn_label: "Burn Time"
 almanac_food_regen_label: "Heal per Tick"
 
-almanac_stat_modifiers_title: "Modifiers Data"
 almanac_movement_modifier_label: "Movement Modifier"
 almanac_eitr_regen_label: "Eitr Regen Modifier"
 almanac_base_items_stamina_modifier_label: "Stamina Modifier"
+almanac_equipment_normal_damage_modifier: "Item does not provide any benefits"
+almanac_not_part_of_set: "Item is not part of a set"
 
-almanac_equipment_title: "Equipment Data"
 almanac_armor_label: "Armor"
 almanac_armor_per_level_label: "Armor Per Level"

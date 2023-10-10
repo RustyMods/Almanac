@@ -163,6 +163,7 @@
         <Content Include="Libs\ServerSync.dll" />
         <Content Include="LICENSE.md" />
         <EmbeddedResource Include="translations\English.yml" />
+        <EmbeddedResource Include="translations\French.yml" />
         <Content Include="UpdateManifest.ps1" />
     </ItemGroup>
     <ItemGroup>

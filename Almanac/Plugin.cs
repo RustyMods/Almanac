@@ -17,7 +17,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "1.0.8";
+        internal const string ModVersion = "2.0.1";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         private static string ConfigFileName = ModGUID + ".cfg";
@@ -27,11 +27,13 @@ namespace Almanac
 
         public static readonly ManualLogSource AlmanacLogger =
             BepInEx.Logging.Logger.CreateLogSource(ModName);
-
-        // To set requirements of install
         
         private static readonly ConfigSync ConfigSync = new(ModGUID)
-            { DisplayName = ModName, CurrentVersion = ModVersion, ModRequired = false};
+            { 
+                DisplayName = ModName, 
+                ModRequired = false,
+                CurrentVersion = ModVersion
+            };
         
         public enum Toggle
         {
@@ -41,6 +43,10 @@ namespace Almanac
 
         public void Awake()
         {
+            _serverConfigLocked = config("1 - General", "Lock Configuration", Toggle.On,
+                "If on, the configuration is locked and can be changed by server admins only.");
+            _ = ConfigSync.AddLockingConfigEntry(_serverConfigLocked);
+            
             _normalColorConfig = config("2 - Resistance Colors", "Normal", Color.white, "Color code for normal damages", false);
             _weakColorConfig = config("2 - Resistance Colors", "Weak", new Color(1f, 0.7f, 0f, 1f), "Color code for weak damages", false);
             _veryWeakColorConfig = config("2 - Resistance Colors", "Very Weak", new Color(1f, 0.8f, 0f, 1f), "Color code for very weak damages", false);
@@ -50,7 +56,7 @@ namespace Almanac
             _ignoreColorConfig = config("2 - Resistance Colors", "Ignore", new Color(0.5f, 0.5f, 1f, 1f), "Color code for ignore damages", false);
 
             _CreatureKnowledgeLock = config("3 - Utilities", "Knowledge Wall", Toggle.On,
-                "If on, data is locked behind knowledge of item", false);
+                "If on, data is locked behind knowledge of item", true);
             Localizer.Load();
 
             Assembly assembly = Assembly.GetExecutingAssembly();
@@ -91,6 +97,7 @@ namespace Almanac
 
 
         #region ConfigOptions
+        private static ConfigEntry<Toggle> _serverConfigLocked = null!;
         
         public static ConfigEntry<Color> _normalColorConfig = null!;
         public static ConfigEntry<Color> _weakColorConfig = null!;

@@ -40,7 +40,6 @@ public static class Patches
             {
                 var trophyName = trophy.transform.Find("name");
                 var trophyPos = trophy.transform.position;
-                // var panelDisplayName = trophyName.gameObject.GetComponent<Text>().text;
                 var panelDisplayName = trophyName.gameObject.GetComponent<TextMeshProUGUI>().text;
                 
                 if (Localization.instance.Localize(panelDisplayName).ToLower().Contains("troll"))
@@ -55,10 +54,13 @@ public static class Patches
             foreach (var trophy in trophyList)
             {
                 var trophyPos = trophy.transform.position;
-                // var trophyName = trophy.transform.Find("name").gameObject.GetComponent<Text>().text;
                 var trophyName = trophy.transform.Find("name").gameObject.GetComponent<TextMeshProUGUI>().text;
         
-                if (uniqueVectorSet.Contains(trophyPos) && Localization.instance.Localize(trophyName).ToLower() != Localization.instance.Localize("draugr") && !bossNames.Contains(trophyName))
+                if (
+                    uniqueVectorSet.Contains(trophyPos) 
+                    && Localization.instance.Localize(trophyName).ToLower() != Localization.instance.Localize("draugr") 
+                    && !bossNames.Contains(trophyName)
+                    )
                 {
                     trophyPos = TryMoveTrophy(trophyPos, uniqueVectorSet);
                 }
@@ -73,7 +75,9 @@ public static class Patches
             var currentX = position.x;
             var currentY = position.y;
     
-            position = currentX + increment >= 1190f ? new Vector3(110f, currentY - increment, 0.0f) : new Vector3(position.x + increment, currentY, 0.0f);
+            position = currentX + increment >= 1190f 
+                ? new Vector3(110f, currentY - increment, 0.0f) 
+                : new Vector3(position.x + increment, currentY, 0.0f);
             if (uniqueVectors.Contains(position)) position = TryMoveTrophy(position, uniqueVectors);
             
             return position;
@@ -165,7 +169,7 @@ public static class Patches
                 bool isWise = true;
                 if (toggle == AlmanacPlugin.Toggle.On)
                 {
-                    var globalKeys = Player.m_localPlayer.m_uniques;
+                    HashSet<string> globalKeys = Player.m_localPlayer.m_uniques;
                     Dictionary<string, string> requiredKeys = new Dictionary<string, string>
                     {
                         { "ForestMonsters", "defeated_gdking" },
@@ -335,13 +339,9 @@ public static class Patches
             float movementMod = sharedData.m_movementModifier * 100f;
             float eitrRegenMod = sharedData.m_eitrRegenModifier * 100f;
             float staminaMod = sharedData.m_baseItemsStaminaModifier * 100f;
-            
-
             bool teleportable = sharedData.m_teleportable;
 
             GameObject item = data.gameObject;
-            Fish fishScript;
-            item.TryGetComponent(out fishScript);
             Floating floatingScript;
             item.TryGetComponent(out floatingScript);
             
@@ -576,7 +576,7 @@ public static class Patches
             {
                 SetTextElement(Element, foodData.Key, foodData.Value);
             }
-            SetTextElement(Element, "consumeEffectDescription", "$almanac_no_data");
+            SetTextElement(Element, "consumeEffectDescription", "$almanac_no_consume_bonus");
             if (sharedData.m_consumeStatusEffect)
             {
                 StatusEffect consumeEffect = sharedData.m_consumeStatusEffect;

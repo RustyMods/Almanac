@@ -51,7 +51,11 @@ public static class Almanac
         private static RectTransform projectileRectTransform = null!;
         private static RectTransform fishRectTransform = null!;
 
-        public static Scrollbar AlmanacScrollbar = null!;
+        private static GameObject materialPanel = null!;
+        private static GameObject consumablePanel = null!;
+        private static GameObject equipmentPanel = null!;
+        private static GameObject WeaponPanel = null!;
+        private static GameObject projectilePanel = null!;
 
         public static void Postfix(InventoryGui __instance)
         {
@@ -154,13 +158,13 @@ public static class Almanac
 
             RepositionTrophyPanel(-220f, 0f);
             CreateAlmanacPanel();
-            // CreateRegenerateFileButton();
+            // CreateAddNewItemsButton();
             CreateCreaturesPanel();
             CreateMaterialPanel();
-            CreatePanel("consummable", consummables);
-            CreatePanel("gear", gear);
-            CreatePanel("weapon", weapons);
-            CreatePanel("ammo", ammunitions);
+            consumablePanel = CreatePanel("consummable", consummables);
+            equipmentPanel = CreatePanel("gear", gear);
+            WeaponPanel = CreatePanel("weapon", weapons);
+            projectilePanel = CreatePanel("ammo", ammunitions);
             CreatePanel("fish", fish);
             
             CreateTabs("fishButton", "fish", -760f, 425f);
@@ -191,9 +195,9 @@ public static class Almanac
             }
             return output;
         }
-        private static void CreateRegenerateFileButton()
+        private static void CreateAddNewItemsButton()
         {
-            GameObject RegenerateButton = new GameObject("RegenerateButton");
+            GameObject RegenerateButton = new GameObject("AddNewButton");
             RectTransform buttonRectTransform = RegenerateButton.AddComponent<RectTransform>();
             buttonRectTransform.SetParent(TrophiesPanel);
             buttonRectTransform.anchoredPosition = new Vector2(660f, -425f);
@@ -223,10 +227,149 @@ public static class Almanac
             button.onClick = new Button.ButtonClickedEvent();
             button.onClick.AddListener(() =>
             {
-                CreatureDataCollector.CollectAndSaveCreatureData();
+                var currentAmmo = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Ammo, "");
+                var currentAmmoNonEquip = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.AmmoNonEquipable, "");
+                var currentConsumables = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Consumable, "");
+                var currentCustamizations = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Customization, "");
+                var currentBow = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Bow, "");
+                var currentChest = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Chest, "");
+                var currentFish = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Fish, "");
+                var currentHands = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Hands, "");
+                var currentHelmets = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Helmet, "");
+                var currentLegs = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Legs, "");
+                var currentMaterials = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Material, "");
+                var currentMisc = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Misc, "");
+                var currentNone = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.None, "");
+                var currentShield = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Shield, "");
+                var currentShoulders = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Shoulder, "");
+                var currentTools = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Tool, "");
+                var currentTorches = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Torch, "");
+                var currentUtilities = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Utility, "");
+                var currentAttachAtgeirs = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Attach_Atgeir, "");
+                var currentOneHanded = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.OneHandedWeapon, "");
+                var currentTwoHanded = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.TwoHandedWeapon, "");
+                var currentTwoHandedLeft = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.TwoHandedWeaponLeft, "");
+                
+                List<ItemDrop> gearList = new List<ItemDrop>();
+                gearList.AddRange(currentHelmets);
+                gearList.AddRange(currentChest);
+                gearList.AddRange(currentLegs);
+                gearList.AddRange(currentShoulders);
+                gearList.AddRange(currentUtilities);
+                gearList.AddRange(currentCustamizations);
+                gearList.AddRange(currentMisc);
+
+                List<ItemDrop> weaponList = new List<ItemDrop>();
+                weaponList.AddRange(currentOneHanded);
+                weaponList.AddRange(currentBow);
+                weaponList.AddRange(currentShield);
+                weaponList.AddRange(currentTwoHanded);
+                weaponList.AddRange(currentHands);
+                weaponList.AddRange(currentTorches);
+                weaponList.AddRange(currentTools);
+                weaponList.AddRange(currentAttachAtgeirs);
+                weaponList.AddRange(currentTwoHandedLeft);
+            
+                List<ItemDrop> ammunition = new List<ItemDrop>();
+                ammunition.AddRange(currentAmmo);
+                ammunition.AddRange(currentAmmoNonEquip);
+
+                var currentGearList = GetValidItemDropList(gearList);
+                var currentAmmoList = GetValidItemDropList(ammunition);
+                var currentWeaponList = GetValidItemDropList(weaponList);
+
+                if (currentGearList.Count != gear.Count)
+                {
+                    AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"equipment : {currentGearList.Count} vs {gear.Count})");
+                    var differences = currentGearList.Except(gear);
+                    foreach (var difference in differences)
+                    {
+                        var name = difference.m_itemData.m_shared.m_name;
+                        AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"{name}");
+                        TryAddContainerToPanel(
+                            equipmentPanel, 
+                            "gear", 
+                            difference, 
+                            currentGearList, 
+                            currentGearList.Count - gear.Count
+                        );
+                    }
+                }
+
+                if (currentWeaponList.Count != weapons.Count)
+                {
+                    AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"weapons : {currentWeaponList.Count} vs {weapons.Count})");
+                    var differences = currentWeaponList.Except(weapons);
+                    foreach (var difference in differences)
+                    {
+                        var name = difference.m_itemData.m_shared.m_name;
+                        AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"{name}");
+                        TryAddContainerToPanel(
+                            WeaponPanel, 
+                            "weapon", 
+                            difference, 
+                            currentWeaponList, 
+                            currentWeaponList.Count - weapons.Count
+                        );
+                    }
+                }
+
+                if (currentAmmoList.Count != ammunitions.Count)
+                {
+                    AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"ammo : {currentAmmo.Count} vs {ammunitions.Count})");
+                    var differences = currentAmmo.Except(ammunitions);
+                    foreach (var difference in differences)
+                    {
+                        var name = difference.m_itemData.m_shared.m_name;
+                        AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"{name}");
+                        TryAddContainerToPanel(
+                            projectilePanel, 
+                            "ammo", 
+                            difference, 
+                            currentAmmo, 
+                            currentAmmo.Count - ammunitions.Count
+                        );
+                    }
+                }
+
+                if (currentMaterials.Count != materials.Count)
+                {
+                    AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"materials : {currentMaterials.Count} vs {materials.Count})");
+                    var differences = currentMaterials.Except(materials);
+                    foreach (var difference in differences)
+                    {
+                        var name = difference.m_itemData.m_shared.m_name;
+                        AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"{name}");
+                        TryAddContainerToPanel(
+                            materialPanel, 
+                            "material", 
+                            difference, 
+                            currentMaterials, 
+                            currentMaterials.Count - materials.Count
+                        );
+                    }
+                }
+
+                if (currentConsumables.Count != consummables.Count)
+                {
+                    AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"consumables : {currentConsumables.Count} vs {consummables.Count})");
+                    var differences = currentConsumables.Except(consummables);
+                    foreach (var difference in differences)
+                    {
+                        var name = difference.m_itemData.m_shared.m_name;
+                        AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"{name}");
+                        TryAddContainerToPanel(
+                            consumablePanel, 
+                            "consummable", 
+                            difference, 
+                            currentConsumables, 
+                            currentConsumables.Count - consummables.Count
+                        );
+                    }
+                }
             });
 
-            GameObject text = new GameObject("RegenerateText");
+            GameObject text = new GameObject("RefreshText");
             RectTransform textRect = text.AddComponent<RectTransform>();
             textRect.SetParent(RegenerateButton.transform);
             textRect.anchoredPosition = new Vector2(0f, 0f);
@@ -234,13 +377,18 @@ public static class Almanac
 
             TextMeshProUGUI textContent = text.AddComponent<TextMeshProUGUI>();
             textContent.font = font;
-            textContent.text = Localization.instance.Localize("$almanac_regenerate_almanac");
+            textContent.text = Localization.instance.Localize("Refresh");
             textContent.fontSize = 17;
             textContent.autoSizeTextContainer = false;
-            textContent.alignment = TextAlignmentOptions.MidlineJustified;
+            textContent.horizontalAlignment = HorizontalAlignmentOptions.Center;
+            textContent.verticalAlignment = VerticalAlignmentOptions.Middle;
             textContent.color = new Color(0.8f, 0.5f, 0f, 1f);
             textContent.overflowMode = TextOverflowModes.ScrollRect;
             textContent.textWrappingMode = TextWrappingModes.Normal;
+
+            textContent.fontSizeMin = 2;
+            textContent.fontSizeMax = 17;
+            textContent.enableAutoSizing = true;
 
             var sfx = RegenerateButton.AddComponent<ButtonSfx>();
             sfx.m_sfxPrefab = closeButtonSfx.m_sfxPrefab;
@@ -325,7 +473,7 @@ public static class Almanac
             fishPanel.gameObject.SetActive(name == "fish");
         }
         
-        private static void CreatePanel(string id, List<ItemDrop> list)
+        private static GameObject CreatePanel(string id, List<ItemDrop> list)
         {
             var trophies = TrophiesFrame.Find("Trophies");
             
@@ -369,7 +517,6 @@ public static class Almanac
                 }
                 catch (IndexOutOfRangeException)
                 {
-                    // AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"index out of range: {i}");
                     CreateContainerWithoutSprite(panel.transform, data, i, pos, id);
                 }
             }
@@ -378,6 +525,43 @@ public static class Almanac
             {
                 CreatePageButtons(panel.transform, i, 72, $"{id}Container", list);
             }
+
+            return panel;
+        }
+
+        private static void TryAddContainerToPanel(GameObject panel, string id, ItemDrop data, List<ItemDrop> newList, int differenceCount)
+        {
+            
+            int pages = Mathf.CeilToInt(newList.Count / 72f);
+
+            for (int i = newList.Count - differenceCount; i < newList.Count; ++i)
+            {
+                int wrappedIndex = i % 72;
+                int rowIndex = wrappedIndex / 12;
+                int colIndex = wrappedIndex % 12;
+
+                float x = -577f + colIndex * 105f;
+                float y = 275f - rowIndex * 110f;
+                Vector2 pos = new Vector2(x, y);
+
+                try
+                {
+                    Transform? possibleContainer = panel.transform.Find($"{id}Container ({i})");
+                }
+                catch (Exception e)
+                {
+                    try
+                    {
+                        CreateContainer(panel.transform, data, i, pos, id);
+                    }
+                    catch (IndexOutOfRangeException)
+                    {
+                        CreateContainerWithoutSprite(panel.transform, data, i, pos, id);
+                    }
+                }
+
+            }
+            
         }
         private static void CreatePageButtons(Transform parentElement, int index, int pageSize, string id, List<ItemDrop> list)
         {
@@ -582,18 +766,18 @@ public static class Almanac
         {
             var trophies = TrophiesFrame.Find("Trophies");
 
-            var materialPanel = new GameObject("materialPanel") { layer = 5 };
+            var newMaterialPanel = new GameObject("materialPanel") { layer = 5 };
 
-            RectTransform panelRect = materialPanel.AddComponent<RectTransform>();
+            RectTransform panelRect = newMaterialPanel.AddComponent<RectTransform>();
             panelRect.SetParent(TrophiesFrame);
             panelRect.anchoredPosition = new Vector2(0f, 10f);
             panelRect.sizeDelta = new Vector2(1310f, 800f);
 
-            materialPanel.SetActive(false);
+            newMaterialPanel.SetActive(false);
 
             var background = new GameObject("materialBackground");
             RectTransform rectTransform = background.AddComponent<RectTransform>();
-            rectTransform.SetParent(materialPanel.transform);
+            rectTransform.SetParent(newMaterialPanel.transform);
             rectTransform.anchoredPosition = new Vector2(0f, 0f);
             rectTransform.sizeDelta = new Vector2(1260f, 650f);
             
@@ -617,12 +801,12 @@ public static class Almanac
                 
                 ItemDrop data = materials[i];
                 Vector2 pos = new Vector2(x, y);
-                CreateMaterialContainer(materialPanel.transform, data, i, pos);
+                CreateMaterialContainer(newMaterialPanel.transform, data, i, pos);
             }
 
             for (int i = 0; i < pages; ++i)
             {
-                CreateMaterialPageButtons(materialPanel.transform, i, 72);
+                CreateMaterialPageButtons(newMaterialPanel.transform, i, 72);
             }
         }
         private static void CreateMaterialPageButtons(Transform parentElement, int index, int pageSize)
@@ -870,31 +1054,35 @@ public static class Almanac
             var AlmanacList = contentPanel.Find("AlmanacList");
             var AlmanacElement = AlmanacList.Find("AlmanacElement (0)");
             
-            int pages = Mathf.CeilToInt(creatures.Count / 100f);
+            float xSpacing = 250f;
+            float ySpacing = 32f;
+            
+            int creaturesPerPage = 100;
+            int pages = Mathf.CeilToInt((float)creatures.Count / creaturesPerPage);
+            
             for (var i = 0; i < pages; ++i)
             {
                 CreateCreaturePageButtons(parentElement, i);
             }
-
-            float xSpacing = 250f;
-            float ySpacing = 32f;
             
-            for (int i = 0; i < creatures.Count; i++)
+            for (int page = 0; page < pages; page++)
             {
-                var name = creatures[i].display_name;
-                float x = -500f + (i / 20) * xSpacing;
-                float y = 305f - (i % 20) * ySpacing;
-
-                if (i > 99)
+                for (int i = 0; i < creaturesPerPage; i++)
                 {
-                    x = -500f + ((i - 100) / 20) * xSpacing;
-                    y = 305f - ((i - 100) % 20) * ySpacing;
+                    int index = page * creaturesPerPage + i;
+                    if (index >= creatures.Count)
+                    {
+                        break;
+                    }
+
+                    var name = creatures[index].display_name;
+                    float x = -500f + (i / 20) * xSpacing;
+                    float y = 305f - (i % 20) * ySpacing;
+
+                    Vector2 position = new Vector2(x, y);
+                    CreateCreatureButton(AlmanacElement, parentElement, position, index, Localization.instance.Localize(name), page == 0);
                 }
-                
-                Vector2 position = new Vector2(x, y);
-                CreateCreatureButton(AlmanacElement, parentElement, position, i, Localization.instance.Localize(name), !(i > 99f));
             }
-            
         }
 
         private static void CreateCreatureButton(
@@ -1011,8 +1199,6 @@ public static class Almanac
 
             AddListScrollRect(AlmanacList, AlmanacListRoot, scrollbar);
 
-            AlmanacScrollbar = scrollbar;
-            
             CreateWelcomePanel(AlmanacContentPanel.transform);
         }
 
@@ -1346,7 +1532,9 @@ public static class Almanac
                 0f, 0f,
                 200f, 100f,
                 orange, 18,
-                active: false
+                active: false,
+                wrapMode: TextWrappingModes.NoWrap,
+                overflowModes: TextOverflowModes.Overflow
             );
 
             GameObject craftingStation = CreateImageElement(
@@ -1778,8 +1966,9 @@ public static class Almanac
                 50f, 345f,
                 250f, 50f,
                 Color.yellow, 25,
-                overflowModes: TextOverflowModes.ScrollRect,
-                horizontalAlignment: HorizontalAlignmentOptions.Left
+                overflowModes: TextOverflowModes.Overflow,
+                horizontalAlignment: HorizontalAlignmentOptions.Left,
+                wrapMode: TextWrappingModes.NoWrap
             );
             CreateTextElement(
                 DummyElement, "faction", "$almanac_factionless", 
@@ -1814,7 +2003,8 @@ public static class Almanac
                 200f, 50f,
                 Color.white, 20,
                 active: true,
-                overflowModes: TextOverflowModes.Overflow
+                overflowModes: TextOverflowModes.Overflow,
+                wrapMode: TextWrappingModes.NoWrap
             );
 
             float iconXPos = anchorX - 50f;
@@ -1902,7 +2092,8 @@ public static class Almanac
                 0f, -55f,
                 200f, 50f,
                 Color.white, 20,
-                overflowModes: TextOverflowModes.Overflow
+                overflowModes: TextOverflowModes.Overflow,
+                wrapMode: TextWrappingModes.NoWrap
             );
 
             for (var index = 0; index < 7; index++)
@@ -1929,7 +2120,8 @@ public static class Almanac
                 0f, -170f,
                 200f, 50f,
                 Color.white, 20,
-                overflowModes: TextOverflowModes.Overflow
+                overflowModes: TextOverflowModes.Overflow,
+                wrapMode: TextWrappingModes.NoWrap
             );
 
             for (var index = 0; index < 4; index++)
@@ -1943,7 +2135,8 @@ public static class Almanac
                 0f, -1015f,
                 200f, 50f,
                 Color.white, 20,
-                overflowModes: TextOverflowModes.Overflow
+                overflowModes: TextOverflowModes.Overflow,
+                wrapMode: TextWrappingModes.NoWrap
             );
 
             CreateAIStats(
@@ -2093,9 +2286,10 @@ public static class Almanac
             CreateTextElement(
                 parentElement, "consumeItemsTag", "$almanac_taming_food_items",
                 0f, y - 275f,
-                200f, 50f,
+                250f, 50f,
                 Color.white, 20,
-                overflowModes: TextOverflowModes.Overflow
+                overflowModes: TextOverflowModes.Overflow,
+                wrapMode: TextWrappingModes.NoWrap
             );
             CreateTextElement(
                 parentElement, "consumeItems (no data)", "$almanac_creature_not_tamable",

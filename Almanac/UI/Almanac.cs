@@ -91,25 +91,25 @@ public static class Almanac
             consummables = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Consumable, "");
             fish = fish = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Fish, "");
             
-            var oneHanded = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.OneHandedWeapon, "");
-            var bow = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Bow, "");
-            var shield = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Shield, "");
-            var helmet = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Helmet, "");
-            var chest = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Chest, "");
-            var ammo = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Ammo, "");
-            var customization = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Customization, "");
-            var legs = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Legs, "");
-            var hands = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Hands, "");
-            var twoHanded = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.TwoHandedWeapon, "");
-            var torch = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Torch, "");
-            var misc = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Misc, "");
-            var shoulder = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Shoulder, "");
-            var utility = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Utility, "");
-            var tool = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Tool, "");
-            var attachAtgeir = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Attach_Atgeir, "");
-            var twoHandedLeft = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.TwoHandedWeaponLeft, "");
-            var ammoNonEquip = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.AmmoNonEquipable, "");
-            // var noneItems = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.None, "");
+            List<ItemDrop> oneHanded = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.OneHandedWeapon, "");
+            List<ItemDrop> bow = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Bow, "");
+            List<ItemDrop> shield = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Shield, "");
+            List<ItemDrop> helmet = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Helmet, "");
+            List<ItemDrop> chest = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Chest, "");
+            List<ItemDrop> ammo = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Ammo, "");
+            List<ItemDrop> customization = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Customization, "");
+            List<ItemDrop> legs = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Legs, "");
+            List<ItemDrop> hands = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Hands, "");
+            List<ItemDrop> twoHanded = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.TwoHandedWeapon, "");
+            List<ItemDrop> torch = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Torch, "");
+            List<ItemDrop> misc = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Misc, "");
+            List<ItemDrop> shoulder = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Shoulder, "");
+            List<ItemDrop> utility = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Utility, "");
+            List<ItemDrop> tool = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Tool, "");
+            List<ItemDrop> attachAtgeir = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Attach_Atgeir, "");
+            List<ItemDrop> twoHandedLeft = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.TwoHandedWeaponLeft, "");
+            List<ItemDrop> ammoNonEquip = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.AmmoNonEquipable, "");
+            // List<ItemDrop> noneItems = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.None, "");
             
             List<ItemDrop> gearList = new List<ItemDrop>();
             gearList.AddRange(helmet);
@@ -878,7 +878,7 @@ public static class Almanac
             iconImage.color = new Color(1f, 1f, 1f, 1f);
             iconImage.pixelsPerUnitMultiplier = 1f;
             
-            AddHoverableText(container, name, 16, anchoredY: -45f);
+            AddHoverableText(container, name, 16, anchoredY: -50f);
             
             if (index > 71) container.SetActive(false);
             
@@ -939,7 +939,7 @@ public static class Almanac
             iconImage.color = new Color(1f, 1f, 1f, 1f);
             iconImage.pixelsPerUnitMultiplier = 1f;
             
-            AddHoverableText(container, name, 16, anchoredY: -45f);
+            AddHoverableText(container, name, 16, anchoredY: -50f);
             
             if (index > 71) container.SetActive(false);
             
@@ -1176,7 +1176,7 @@ public static class Almanac
             iconImage.color = new Color(1f, 1f, 1f, 1f);
             iconImage.pixelsPerUnitMultiplier = 1f;
             
-            AddHoverableText(container, name, 18, anchoredY: -45f);
+            AddHoverableText(container, name, 18, anchoredY: -50f);
             
             if (index > 71) container.SetActive(false);
             
@@ -3735,7 +3735,6 @@ public static class Almanac
             Color color, 
             int fontSize = 10,
             bool active = true,
-            bool shadow = false,
             TextOverflowModes overflowModes = TextOverflowModes.ScrollRect,
             HorizontalAlignmentOptions horizontalAlignment = HorizontalAlignmentOptions.Center,
             VerticalAlignmentOptions verticalAlignment = VerticalAlignmentOptions.Middle,

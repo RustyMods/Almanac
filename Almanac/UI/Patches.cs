@@ -202,8 +202,12 @@ public static class Patches
             for (int i = 0; i < creatures.Count; ++i)
             {
                 Transform container = creaturePanel.Find($"CreatureContainer ({i})");
+                Button button = container.gameObject.GetComponent<Button>();
+                TextMeshProUGUI text = container.Find($"CreatureContainer Text ({i})").gameObject.GetComponent<TextMeshProUGUI>();
+                
                 string? faction = creatures[i].faction;
                 bool isWise = true;
+                
                 if (toggle == AlmanacPlugin.Toggle.On)
                 {
                     HashSet<string> globalKeys = Player.m_localPlayer.m_uniques;
@@ -225,10 +229,7 @@ public static class Patches
                         if (!globalKeys.Contains(requiredKey)) isWise = false;
                     }
                 }
-
-                Button button = container.gameObject.GetComponent<Button>();
-                TextMeshProUGUI text = container.Find($"CreatureContainer Text ({i})").gameObject.GetComponent<TextMeshProUGUI>();
-
+                
                 button.interactable = isWise;
                 text.text = isWise
                     ? Localization.instance.Localize(creatures[i].display_name)
@@ -269,36 +270,34 @@ public static class Patches
         private static void SetUnknownItems(AlmanacPlugin.Toggle toggle, string id,
             List<ItemDrop> list)
         {
-            // var trophyPanel = __instance.m_trophiesPanel;
-            // var trophyFrame = trophyPanel.transform.Find("TrophiesFrame");
-            // var materialPanel = trophyFrame.transform.Find($"{id}Panel");
             for (int i = 0; i < list.Count; ++i)
             {
-                try
+                Transform panel = trophyFrame.Find($"{id}Panel");
+                Transform container = panel.Find($"{id}Container ({i})");
+                Transform icon = container.Find("iconObj");
+                Image iconImage = icon.gameObject.GetComponent<Image>();
+                Transform hoverText = container.Find("hoverTextElement");
+                TextMeshProUGUI text = hoverText.gameObject.GetComponent<TextMeshProUGUI>();
+                Button button = container.GetComponent<Button>();
+
+                ItemDrop? data = list[i];
+                if (!data) continue;
+                
+                string name = list[i].m_itemData.m_shared.m_name;
+                string localizedName = Localization.instance.Localize(name);
+                bool isKnown = Player.m_localPlayer.IsMaterialKnown(name);
+                    
+                if (toggle == AlmanacPlugin.Toggle.On)
                 {
-                    Transform container = materialPanel.Find($"{id}Container ({i})");
-                    Transform icon = container.Find("iconObj");
-                    Image iconImage = icon.gameObject.GetComponent<Image>();
-                    Transform hoverText = container.Find("hoverTextElement");
-                    TextMeshProUGUI text = hoverText.gameObject.GetComponent<TextMeshProUGUI>();
-                    Button button = container.GetComponent<Button>();
-                    if (!Player.m_localPlayer.IsMaterialKnown(list[i].m_itemData.m_shared.m_name) &&
-                        toggle == AlmanacPlugin.Toggle.On)
-                    {
-                        iconImage.color = new Color(0f, 0f, 0f, 1f);
-                        text.text = "???";
-                        button.interactable = false;
-                    }
-                    else
-                    {
-                        iconImage.color = new Color(1f, 1f, 1f, 1f);
-                        text.text = Localization.instance.Localize(list[i].m_itemData.m_shared.m_name);
-                        button.interactable = true;
-                    }
+                    iconImage.color = isKnown ? Color.white : Color.black;
+                    text.text = isKnown ? localizedName : "???";
+                    button.interactable = isKnown;
                 }
-                catch (NullReferenceException)
+                else
                 {
-                    // AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"null reference: {id}");
+                    iconImage.color = Color.white;
+                    text.text = localizedName;
+                    button.interactable = true;
                 }
             }
         }
@@ -711,14 +710,14 @@ public static class Patches
                 Sprite resourceIcon = resources[i].m_resItem.m_itemData.m_shared.m_icons[0];
                 GameObject ResourceBackground =
                     Element.transform.Find($"ImageElement (recipe ({i}))").gameObject;
-
+                string localizedName = Localization.instance.Localize(resourceName);
                 SetActiveElement(Element, "ImageElement", $"recipe ({i})", true);
                 SetHoverableText(
                     Element,
                     $"recipe ({i})",
                     isKnown 
-                        ? Localization.instance.Localize(resourceName) 
-                        : "???"
+                        ? localizedName
+                        : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : localizedName 
                 );
                 SetImageElement(
                     ResourceBackground,
@@ -726,7 +725,7 @@ public static class Patches
                     resourceIcon, 
                     isKnown 
                         ? Color.white 
-                        : Color.black
+                        : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ?Color.black : Color.white
                 );
                 SetTextElement(ResourceBackground, $"recipeAmount", $"{resourceAmount}");
             }
@@ -862,12 +861,13 @@ public static class Patches
     
                         string elementName = $"containerDrops ({i})";
                         GameObject ResourceBackground = Element.transform.Find($"ImageElement ({elementName})").gameObject;
-    
+                        string localizedContent =
+                            Localization.instance.Localize($"{dropName} (<color=orange>{dropChance}%</color>)");
                         SetActiveElement(Element, "ImageElement", elementName, true);
                         SetHoverableText(Element, elementName, isKnown 
-                            ? Localization.instance.Localize($"{dropName} (<color=orange>{dropChance}%</color>)") 
-                            : "???");
-                        SetImageElement(ResourceBackground, "item", dropIcon, isKnown ? Color.white : Color.black);
+                            ? localizedContent
+                            : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : localizedContent);
+                        SetImageElement(ResourceBackground, "item", dropIcon, isKnown ? Color.white : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white);
                         SetTextElement(ResourceBackground, $"recipeAmount", $"{dropMin}<color=white>-</color>{dropMax}");
                     }
                 };
@@ -923,15 +923,15 @@ public static class Patches
                     float cookTime = cookingConversion.m_cookTime;
         
                     bool isKnown = Player.m_localPlayer.IsMaterialKnown(cookingItemName);
-        
+                    
                     string elementName = $"cookingConversion ({i})";
                     GameObject ResourceBackground = Element.transform.Find($"ImageElement ({elementName})").gameObject;
-        
+                    string localizedName = Localization.instance.Localize($"{cookingItemName}");
                     SetActiveElement(Element, "ImageElement", elementName, true);
                     SetHoverableText(Element, elementName, isKnown 
-                        ? Localization.instance.Localize($"{cookingItemName}") 
-                        : "???");
-                    SetImageElement(ResourceBackground, "item", cookingItemIcon, isKnown ? Color.white : Color.black);
+                        ? localizedName
+                        : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : localizedName);
+                    SetImageElement(ResourceBackground, "item", cookingItemIcon, isKnown ? Color.white : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white);
                     SetTextElement(ResourceBackground, $"cookTime", $"{cookTime}<color=white>s</color>");
                 }
             }
@@ -1015,12 +1015,12 @@ public static class Patches
                     string elementName = $"fireplaceFireworks ({i})";
                     bool isKnown = Player.m_localPlayer.IsMaterialKnown(fireworkName);
                     GameObject ResourceBackground = Element.transform.Find($"ImageElement ({elementName})").gameObject;
-                    
+                    string localizedName = Localization.instance.Localize($"{fireworkName}");
                     SetActiveElement(Element, "ImageElement", elementName, true);
                     SetHoverableText(Element, elementName, isKnown 
-                        ? Localization.instance.Localize($"{fireworkName}") 
-                        : "???");
-                    SetImageElement(ResourceBackground, "item", fireworkIcon, isKnown ? Color.white : Color.black);
+                        ? localizedName
+                        : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : localizedName);
+                    SetImageElement(ResourceBackground, "item", fireworkIcon, isKnown ? Color.white : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white);
                     SetTextElement(ResourceBackground, $"itemCount", $"{fireworkCount}");
                     
                 }
@@ -1055,12 +1055,12 @@ public static class Patches
                     string FromElementId = $"smelterConversion from ({i})";
                     bool fromIsKnown = Player.m_localPlayer.IsMaterialKnown(fromItemName);
                     GameObject smelterFrom = Element.transform.Find($"ImageElement ({FromElementId})").gameObject;
-                    
+                    string fromLocalizedName = Localization.instance.Localize($"{fromItemName}");
                     SetActiveElement(Element, "ImageElement", FromElementId, true);
                     SetHoverableText(Element, FromElementId, fromIsKnown 
-                        ? Localization.instance.Localize($"{fromItemName}") 
-                        : "???");
-                    SetImageElement(smelterFrom, "item", FromItemIcon, fromIsKnown ? Color.white : Color.black);
+                        ? fromLocalizedName
+                        : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : fromLocalizedName);
+                    SetImageElement(smelterFrom, "item", FromItemIcon, fromIsKnown ? Color.white : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white);
                     
                     string toItemName = smelterItem.m_to.m_itemData.m_shared.m_name;
                     Sprite? toItemIcon = smelterItem.m_to.m_itemData.GetIcon();
@@ -1068,12 +1068,12 @@ public static class Patches
                     string toElementId = $"smelterConversion to ({i})";
                     bool toIsKnown = Player.m_localPlayer.IsMaterialKnown(toItemName);
                     GameObject smelterTo = Element.transform.Find($"ImageElement ({toElementId})").gameObject;
-                    
+                    string toLocalizedName = Localization.instance.Localize($"{toItemName}");
                     SetActiveElement(Element, "ImageElement", toElementId, true);
                     SetHoverableText(Element, toElementId, toIsKnown 
-                        ? Localization.instance.Localize($"{toItemName}") 
-                        : "???");
-                    SetImageElement(smelterTo, "item", toItemIcon, toIsKnown ? Color.white : Color.black);
+                        ? toLocalizedName
+                        : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : toLocalizedName);
+                    SetImageElement(smelterTo, "item", toItemIcon, toIsKnown ? Color.white : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white);
                     
                     SetActiveElement(Element, "TextElement", $"smelterConversionSymbol ({i})", true);
                 }
@@ -1150,12 +1150,12 @@ public static class Patches
 
                         string elementId = $"turretAmmo ({i})";
                         GameObject resourceBackground = Element.transform.Find($"ImageElement ({elementId})").gameObject;
-                        
+                        string localizedName = Localization.instance.Localize($"{ammoName}");
                         SetActiveElement(Element, "ImageElement", elementId, true);
                         SetHoverableText(Element, elementId, isKnown 
-                            ? Localization.instance.Localize($"{ammoName}") 
-                            : "???");
-                        SetImageElement(resourceBackground, "item", ammoIcon, isKnown ? Color.white : Color.black);
+                            ? localizedName
+                            : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : localizedName );
+                        SetImageElement(resourceBackground, "item", ammoIcon, isKnown ? Color.white : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white);
                     }
                 }
             }
@@ -1197,20 +1197,21 @@ public static class Patches
 
                     GameObject fromBackground = Element.transform.Find($"ImageElement ({fromElementId})").gameObject;
                     GameObject toBackground = Element.transform.Find($"ImageElement ({toElementId})").gameObject;
-                    
+                    string fromLocalizedName = Localization.instance.Localize($"{fromName}");
+                    string toLocalizedName = Localization.instance.Localize($"{toName}");
                     SetActiveElement(Element, "ImageElement", fromElementId, true);
                     SetHoverableText(Element, fromElementId, isFromKnown 
-                        ? Localization.instance.Localize($"{fromName}") 
-                        : "???");
-                    SetImageElement(fromBackground, "item", fromIcon, isFromKnown ? Color.white : Color.black);
+                        ? fromLocalizedName
+                        : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : fromLocalizedName);
+                    SetImageElement(fromBackground, "item", fromIcon, isFromKnown ? Color.white : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white);
                     
                     SetActiveElement(Element, "TextElement", $"fermentConversionSymbol ({i})", true);
                     
                     SetActiveElement(Element, "ImageElement", toElementId, true);
                     SetHoverableText(Element, toElementId, isToKnown 
-                        ? Localization.instance.Localize($"{toName}") 
-                        : "???");
-                    SetImageElement(toBackground, "item", toIcon, isToKnown ? Color.white : Color.black);
+                        ? toLocalizedName
+                        : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : toLocalizedName);
+                    SetImageElement(toBackground, "item", toIcon, isToKnown ? Color.white : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white);
                     
                     SetTextElement(toBackground, "produceAmount", $"{producedItems}");
                 }
@@ -1286,14 +1287,14 @@ public static class Patches
                         Sprite resourceIcon = resources[i].m_resItem.m_itemData.m_shared.m_icons[0];
                         GameObject ResourceBackground =
                             Element.transform.Find($"ImageElement (recipe ({i}))").gameObject;
-
+                        string localizedName = Localization.instance.Localize(resourceName);
                         SetActiveElement(Element, "ImageElement", $"recipe ({i})", true);
                         SetHoverableText(
                             Element,
                             $"recipe ({i})",
                              isKnown 
-                                 ? Localization.instance.Localize(resourceName) 
-                                 : "???"
+                                 ? localizedName
+                                 : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : localizedName
                             );
                         SetImageElement(
                             ResourceBackground,
@@ -1301,7 +1302,7 @@ public static class Patches
                             resourceIcon, 
                             isKnown 
                                 ? Color.white 
-                                : Color.black
+                                : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white
                             );
                         SetTextElement(ResourceBackground, $"recipeAmount", $"{resourceAmount}");
                     }
@@ -1706,16 +1707,17 @@ public static class Patches
                     string dropItemName = itemDrop.m_itemData.m_shared.m_name;
                     bool isKnown = Player.m_localPlayer.IsMaterialKnown(dropItemName);
                     GameObject fishDropBg = Element.transform.Find($"ImageElement (fishDrops ({i}))").gameObject;
+                    string locaizedName = Localization.instance.Localize(dropItemName);
                     SetImageElement(
                         fishDropBg,
                         "fishDropItemIcon",
                         itemDrop.m_itemData.m_shared.m_icons[0],
-                        isKnown ? Color.white : Color.black
+                        isKnown ? Color.white : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white
                         );
                     SetHoverableText(
                         Element,
                         $"fishDrops ({i})",
-                        isKnown ? Localization.instance.Localize(dropItemName) : "???");
+                        isKnown ? locaizedName : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : locaizedName);
                     SetActiveElement(Element, "ImageElement", $"fishDrops ({i})", true);
                 }
             }
@@ -2123,30 +2125,29 @@ public static class Patches
 
             for (var index = 0; index < 7; ++index)
             {
-                var dropBgElement = dummyElement.transform.Find($"ImageElement (dropIconBg ({index}))");
+                Transform dropBgElement = dummyElement.transform.Find($"ImageElement (dropIconBg ({index}))");
                 try
                 {
-                    var item = ObjectDB.instance.GetItemPrefab(creature.drops[index]);
+                    GameObject? item = ObjectDB.instance.GetItemPrefab(creature.drops[index]);
                     if (!item)
                     {
                         SetActiveElement(dummyElement, "ImageElement", $"dropIconBg ({index})", false);
                     }
                     else
                     {
-                        var icon = item.GetComponent<ItemDrop>().m_itemData.m_shared.m_icons[0];
-                        var itemName = item.GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
-                        if (player.IsKnownMaterial(itemName))
-                        {
-                            SetImageElement(dropBgElement.gameObject, $"creatureDrop ({index})", icon,
-                                new Color(1f, 1f, 1f, 1f));
-                            SetHoverableText(dropBgElement.gameObject, $"creatureDrop ({index})", itemName);
-                        }
-                        else
-                        {
-                            SetImageElement(dropBgElement.gameObject, $"creatureDrop ({index})", icon,
-                                new Color(0f, 0f, 0f, 1f));
-                            SetHoverableText(dropBgElement.gameObject, $"creatureDrop ({index})", "???");
-                        }
+                        Sprite icon = item.GetComponent<ItemDrop>().m_itemData.m_shared.m_icons[0];
+                        string itemName = item.GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
+                        bool isKnown = player.IsMaterialKnown(itemName);
+                        SetImageElement(
+                            dropBgElement.gameObject,
+                            $"creatureDrop ({index})", icon,
+                            isKnown ? Color.white : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white
+                        );
+                        SetHoverableText(
+                            dropBgElement.gameObject,
+                            $"creatureDrop ({index})",
+                            isKnown ? itemName : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : itemName
+                            );
 
                         SetActiveElement(dummyElement, "ImageElement", $"dropIconBg ({index})", true);
                     }
@@ -2201,20 +2202,19 @@ public static class Patches
                     }
                     else
                     {
-                        var icon = item.GetComponent<ItemDrop>().m_itemData.m_shared.m_icons[0];
-                        var itemName = item.GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
-                        if (player.IsKnownMaterial(item.GetComponent<ItemDrop>().m_itemData.m_shared.m_name))
-                        {
-                            SetImageElement(bgElement.gameObject, $"consumeItem ({index})", icon,
-                                new Color(1f, 1f, 1f, 1f));
-                            SetHoverableText(bgElement.gameObject, $"consumeItem ({index})", itemName);
-                        }
-                        else
-                        {
-                            SetImageElement(bgElement.gameObject, $"consumeItem ({index})", icon,
-                                new Color(0f, 0f, 0f, 1f));
-                            SetHoverableText(bgElement.gameObject, $"consumeItem ({index})", "???");
-                        }
+                        Sprite icon = item.GetComponent<ItemDrop>().m_itemData.m_shared.m_icons[0];
+                        string itemName = item.GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
+                        bool isKnown = player.IsKnownMaterial(itemName);
+                        
+                        SetImageElement(
+                            bgElement.gameObject, $"consumeItem ({index})", icon,
+                            isKnown ? Color.white : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white
+                            );
+                        SetHoverableText(
+                            bgElement.gameObject,
+                            $"consumeItem ({index})",
+                            isKnown ? itemName : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : itemName
+                            );
 
                         SetActiveElement(dummyElement, "ImageElement", $"iconBg ({index})", true);
                     }

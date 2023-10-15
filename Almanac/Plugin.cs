@@ -41,8 +41,8 @@ namespace Almanac
             Off = 0
         }
 
-        public static Sprite questionMarkIcon = null!;
-        public static Sprite AlmanacIconButton = null!;
+        public static Sprite? questionMarkIcon;
+        public static Sprite? AlmanacIconButton;
 
         public void Awake()
         {

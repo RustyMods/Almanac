@@ -122,6 +122,7 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="Managers\LocalizationManager.cs" />
+        <Compile Include="Managers\SpriteManager.cs" />
         <Compile Include="MonoBehaviors\CreateSprite.cs" />
         <Compile Include="MonoBehaviors\ElementHover.cs" />
         <Compile Include="Plugin.cs" />
@@ -156,6 +157,7 @@
         <EmbeddedResource Include="icons\spiritIcon.png" />
         <EmbeddedResource Include="icons\emptyCheckmark.png" />
         <EmbeddedResource Include="icons\fillCheckmark.png" />
+        <EmbeddedResource Include="icons\AlmanacIconButton.png" />
         <Content Include="ILRepack.targets" />
         <Content Include="Libs\LocalizationManager.dll">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

@@ -24,8 +24,8 @@ public static class Patches
         {
             if (!__instance) return;
         
-            var trophyList = __instance.m_trophyList;
-            var bossNames = new List<string>()
+            List<GameObject> trophyList = __instance.m_trophyList;
+            List<string> bossNames = new List<string>()
             {
                 Localization.instance.Localize("$enemy_eikthyr"),
                 Localization.instance.Localize("$enemy_gdking"),
@@ -36,7 +36,7 @@ public static class Patches
             };
             var uniqueVectorSet = new HashSet<Vector3>();
             
-            foreach (var trophy in trophyList)
+            foreach (GameObject trophy in trophyList)
             {
                 var trophyName = trophy.transform.Find("name");
                 var trophyPos = trophy.transform.position;
@@ -51,10 +51,10 @@ public static class Patches
                 
             }
             
-            foreach (var trophy in trophyList)
+            foreach (GameObject trophy in trophyList)
             {
-                var trophyPos = trophy.transform.position;
-                var trophyName = trophy.transform.Find("name").gameObject.GetComponent<TextMeshProUGUI>().text;
+                Vector3 trophyPos = trophy.transform.position;
+                string trophyName = trophy.transform.Find("name").gameObject.GetComponent<TextMeshProUGUI>().text;
         
                 if (
                     uniqueVectorSet.Contains(trophyPos) 
@@ -72,8 +72,8 @@ public static class Patches
         {
             float increment = 180f;
     
-            var currentX = position.x;
-            var currentY = position.y;
+            float currentX = position.x;
+            float currentY = position.y;
     
             position = currentX + increment >= 1190f 
                 ? new Vector3(110f, currentY - increment, 0.0f) 
@@ -90,13 +90,14 @@ public static class Patches
         private static void Postfix(InventoryGui __instance)
         {
             if (!__instance) return;
-            var trophyFrame = __instance.m_trophiesPanel.transform.Find("TrophiesFrame");
-            var contentPanel = trophyFrame.transform.Find("ContentPanel");
-            var welcomePanel = contentPanel.transform.Find("WelcomePanel (0)");
-            var almanacList = contentPanel.transform.Find("AlmanacList");
-            var dummyElement = almanacList.transform.Find("AlmanacElement (0)");
+            Transform trophyFrame = __instance.m_trophiesPanel.transform.Find("TrophiesFrame");
+            Transform contentPanel = trophyFrame.transform.Find("ContentPanel");
+            Transform almanacList = contentPanel.transform.Find("AlmanacList");
             
-            dummyElement.gameObject.SetActive(false);
+            Transform welcomePanel = contentPanel.transform.Find("WelcomePanel (0)");
+            Transform AlmanacElement = almanacList.transform.Find("AlmanacElement (0)");
+            
+            AlmanacElement.gameObject.SetActive(false);
             welcomePanel.gameObject.SetActive(true);
         }
     }
@@ -104,68 +105,104 @@ public static class Patches
     [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.OnOpenTrophies))]
     public static class OnOpenTrophiesPatch
     {
+        private static List<GameObject> trophyList = null!;
+        private static Transform trophyFrame = null!;
+        private static Transform contentPanel = null!;
+        private static Transform AlmanacList = null!;
+        private static Transform closeButton = null!;
+
+        private static readonly List<CreatureDataCollector.CreatureData> creatures = new(Almanac.CreateAlmanac.creatures);
+        private static readonly List<ItemDrop> materials = new(Almanac.CreateAlmanac.materials);
+        
+        // private static GameObject trophyPanel = null!;
+        private static Transform creaturePanel = null!;
+        private static Transform materialPanel = null!;
+
+        private static Transform AlmanacElement = null!;
+
+        private static ButtonSfx buttonSfx = null!;
+        private static readonly List<string> modifiersTags = new() { "blunt", "slash", "pierce", "chop", "pickaxe", "fire", "frost", "lightning", "poison", "spirit" };
         private static void Postfix(InventoryGui __instance)
         {
-            SetUnknownCreatures(
-                __instance,
-                AlmanacPlugin._CreatureKnowledgeLock.Value == AlmanacPlugin.Toggle.On
-                    ? AlmanacPlugin.Toggle.On
-                    : AlmanacPlugin.Toggle.Off
-            );
-            SetUnknownMaterials(__instance,
-                AlmanacPlugin._CreatureKnowledgeLock.Value == AlmanacPlugin.Toggle.On
-                    ? AlmanacPlugin.Toggle.On
-                    : AlmanacPlugin.Toggle.Off);
-            SetUnknownItems(__instance,
-                AlmanacPlugin._CreatureKnowledgeLock.Value == AlmanacPlugin.Toggle.On
-                    ? AlmanacPlugin.Toggle.On
-                    : AlmanacPlugin.Toggle.Off,
-                "consummable", Almanac.CreateAlmanac.consummables);
-            SetUnknownItems(__instance,
-                AlmanacPlugin._CreatureKnowledgeLock.Value == AlmanacPlugin.Toggle.On
-                    ? AlmanacPlugin.Toggle.On
-                    : AlmanacPlugin.Toggle.Off,
-                "weapon", Almanac.CreateAlmanac.weapons);
-            SetUnknownItems(__instance,
-                AlmanacPlugin._CreatureKnowledgeLock.Value == AlmanacPlugin.Toggle.On
-                    ? AlmanacPlugin.Toggle.On
-                    : AlmanacPlugin.Toggle.Off,
-                "gear", Almanac.CreateAlmanac.gear);
-            SetUnknownItems(__instance,
-                AlmanacPlugin._CreatureKnowledgeLock.Value == AlmanacPlugin.Toggle.On
-                    ? AlmanacPlugin.Toggle.On
-                    : AlmanacPlugin.Toggle.Off,
-                "ammo", Almanac.CreateAlmanac.ammunitions);
-            SetUnknownItems(__instance,
-                AlmanacPlugin._CreatureKnowledgeLock.Value == AlmanacPlugin.Toggle.On
-                    ? AlmanacPlugin.Toggle.On
-                    : AlmanacPlugin.Toggle.Off,
-                "fish", Almanac.CreateAlmanac.fish);
-        
-            var trophyList = __instance.m_trophyList;
-            var trophyFrame = __instance.m_trophiesPanel.transform.Find("TrophiesFrame");
-            var contentPanel = trophyFrame.Find("ContentPanel");
+            trophyList = __instance.m_trophyList;
+            trophyFrame = __instance.m_trophiesPanel.transform.Find("TrophiesFrame");
+            contentPanel = trophyFrame.Find("ContentPanel");
 
-            var AlmanacList = contentPanel.Find("AlmanacList");
-            var closeButton = trophyFrame.Find("Closebutton");
+            AlmanacList = contentPanel.Find("AlmanacList");
+            closeButton = trophyFrame.Find("Closebutton");
         
-            ButtonSfx buttonSfx = closeButton.gameObject.GetComponent<ButtonSfx>();
-        
-            if (trophyList == null || !trophyFrame || !contentPanel || !AlmanacList) return;
-        
-            foreach (var trophy in trophyList) AddButtonComponent(trophy, AlmanacList, contentPanel, buttonSfx);
+            buttonSfx = closeButton.gameObject.GetComponent<ButtonSfx>();
+
+            // trophyPanel = __instance.m_trophiesPanel;
+            
+            creaturePanel = trophyFrame.transform.Find("creaturePanel");
+            materialPanel = trophyFrame.transform.Find("materialPanel");
+            
+            AlmanacElement = AlmanacList.transform.Find("AlmanacElement (0)");
+            
+            foreach (GameObject trophy in trophyList) AddButtonComponent(trophy);
+            
+            SetUnknownCreatures(AlmanacPlugin._KnowledgeLock.Value);
+            SetUnknownMaterials(AlmanacPlugin._KnowledgeLock.Value);
+            SetUnknownItems(
+                AlmanacPlugin._KnowledgeLock.Value,
+                "consummable", Almanac.CreateAlmanac.consummables);
+            SetUnknownItems(
+                AlmanacPlugin._KnowledgeLock.Value,
+                "weapon", Almanac.CreateAlmanac.weapons);
+            SetUnknownItems(
+                AlmanacPlugin._KnowledgeLock.Value,
+                "gear", Almanac.CreateAlmanac.gear);
+            SetUnknownItems(
+                AlmanacPlugin._KnowledgeLock.Value,
+                "ammo", Almanac.CreateAlmanac.ammunitions);
+            SetUnknownItems(
+                AlmanacPlugin._KnowledgeLock.Value,
+                "fish", Almanac.CreateAlmanac.fish);
+            
+            SetUnknownPieces(AlmanacPlugin._KnowledgeLock.Value,
+                "miscPieces", Almanac.CreateAlmanac.miscPieces);
+            SetUnknownPieces(AlmanacPlugin._KnowledgeLock.Value,
+                "craftingPieces", Almanac.CreateAlmanac.craftingPieces);
+            SetUnknownPieces(AlmanacPlugin._KnowledgeLock.Value,
+                "buildPieces", Almanac.CreateAlmanac.buildPieces);
+            SetUnknownPieces(AlmanacPlugin._KnowledgeLock.Value,
+                "furniturePieces", Almanac.CreateAlmanac.furniturePieces);
+            // SetUnknownPieces(AlmanacPlugin._CreatureKnowledgeLock.Value,
+            //     "pieces", Almanac.CreateAlmanac.defaultPieces);
+            SetUnknownPieces(AlmanacPlugin._KnowledgeLock.Value,
+                "plantPieces", Almanac.CreateAlmanac.plantPieces);
         }
 
-        private static void SetUnknownCreatures(InventoryGui __instance, AlmanacPlugin.Toggle toggle)
+        private static void SetUnknownPieces(AlmanacPlugin.Toggle toggle, string id, List<GameObject> list)
         {
-            var creatures = Almanac.CreateAlmanac.creatures;
-            var trophyPanel = __instance.m_trophiesPanel;
-            var trophyFrame = trophyPanel.transform.Find("TrophiesFrame");
-            var creaturePanel = trophyFrame.transform.Find("creaturePanel");
+            Transform panel = trophyFrame.Find($"{id}Panel");
+            for (int i = 0; i < list.Count; ++i)
+            {
+                Transform container = panel.Find($"{id}Container ({i})");
+                Transform icon = container.Find("iconObj");
+                Image iconImage = icon.gameObject.GetComponent<Image>();
+                Transform hoverText = container.Find("hoverTextElement");
+                TextMeshProUGUI textMesh = hoverText.GetComponent<TextMeshProUGUI>();
+                Button button = container.GetComponent<Button>();
+                
+                string name = list[i].GetComponent<Piece>().m_name;
+                bool isRecipeKnown = Player.m_localPlayer.IsRecipeKnown(name);
+                string localizedName = Localization.instance.Localize(name);
+                
+                button.interactable = toggle != AlmanacPlugin.Toggle.On || isRecipeKnown;
+                textMesh.text = toggle == AlmanacPlugin.Toggle.On ? isRecipeKnown ? localizedName : "???" : localizedName;
+                iconImage.color = toggle == AlmanacPlugin.Toggle.On
+                    ? isRecipeKnown ? Color.white : Color.black
+                    : Color.white;
+            }
+        }
+        private static void SetUnknownCreatures(AlmanacPlugin.Toggle toggle)
+        {
             for (int i = 0; i < creatures.Count; ++i)
             {
-                var container = creaturePanel.Find($"CreatureContainer ({i})");
-                var faction = creatures[i].faction;
+                Transform container = creaturePanel.Find($"CreatureContainer ({i})");
+                string? faction = creatures[i].faction;
                 bool isWise = true;
                 if (toggle == AlmanacPlugin.Toggle.On)
                 {
@@ -202,19 +239,14 @@ public static class Patches
             }
         }
 
-        private static void SetUnknownMaterials(InventoryGui __instance, AlmanacPlugin.Toggle toggle)
+        private static void SetUnknownMaterials(AlmanacPlugin.Toggle toggle)
         {
-            var materials = Almanac.CreateAlmanac.materials;
-            var trophyPanel = __instance.m_trophiesPanel;
-            var trophyFrame = trophyPanel.transform.Find("TrophiesFrame");
-            var materialPanel = trophyFrame.transform.Find("materialPanel");
             for (int i = 0; i < materials.Count; ++i)
             {
-                var container = materialPanel.Find($"materialContainer ({i})");
-                var icon = container.Find("iconObj");
+                Transform container = materialPanel.Find($"materialContainer ({i})");
+                Transform icon = container.Find("iconObj");
                 Image iconImage = icon.gameObject.GetComponent<Image>();
-                var hoverText = container.Find("hoverTextElement");
-                // Text text = hoverText.gameObject.GetComponent<Text>();
+                Transform hoverText = container.Find("hoverTextElement");
                 TextMeshProUGUI text = hoverText.gameObject.GetComponent<TextMeshProUGUI>();
 
                 Button button = container.GetComponent<Button>();
@@ -234,20 +266,20 @@ public static class Patches
             }
         }
 
-        private static void SetUnknownItems(InventoryGui __instance, AlmanacPlugin.Toggle toggle, string id,
+        private static void SetUnknownItems(AlmanacPlugin.Toggle toggle, string id,
             List<ItemDrop> list)
         {
-            var trophyPanel = __instance.m_trophiesPanel;
-            var trophyFrame = trophyPanel.transform.Find("TrophiesFrame");
-            var materialPanel = trophyFrame.transform.Find($"{id}Panel");
+            // var trophyPanel = __instance.m_trophiesPanel;
+            // var trophyFrame = trophyPanel.transform.Find("TrophiesFrame");
+            // var materialPanel = trophyFrame.transform.Find($"{id}Panel");
             for (int i = 0; i < list.Count; ++i)
             {
                 try
                 {
-                    var container = materialPanel.Find($"{id}Container ({i})");
-                    var icon = container.Find("iconObj");
+                    Transform container = materialPanel.Find($"{id}Container ({i})");
+                    Transform icon = container.Find("iconObj");
                     Image iconImage = icon.gameObject.GetComponent<Image>();
-                    var hoverText = container.Find("hoverTextElement");
+                    Transform hoverText = container.Find("hoverTextElement");
                     TextMeshProUGUI text = hoverText.gameObject.GetComponent<TextMeshProUGUI>();
                     Button button = container.GetComponent<Button>();
                     if (!Player.m_localPlayer.IsMaterialKnown(list[i].m_itemData.m_shared.m_name) &&
@@ -271,19 +303,18 @@ public static class Patches
             }
         }
 
-        private static void AddButtonComponent(GameObject trophyPanelIconPrefab, Transform parentElement,
-            Transform contentPanel, ButtonSfx buttonSfx)
+        private static void AddButtonComponent(GameObject trophyPanelIconPrefab)
         {
-            var trophyName = trophyPanelIconPrefab.transform.Find("name").GetComponent<TextMeshProUGUI>().text;
-
-            var localizedName = Localization.instance.Localize(trophyName);
-            var TrophyIcon = trophyPanelIconPrefab.transform.Find("icon_bkg").transform.Find("icon")
+            string trophyName = trophyPanelIconPrefab.transform.Find("name").GetComponent<TextMeshProUGUI>().text;
+            string localizedName = Localization.instance.Localize(trophyName);
+            
+            Image TrophyIcon = trophyPanelIconPrefab.transform.Find("icon_bkg").transform.Find("icon")
                 .GetComponent<Image>();
 
-            var sfx = trophyPanelIconPrefab.AddComponent<ButtonSfx>();
+            ButtonSfx sfx = trophyPanelIconPrefab.AddComponent<ButtonSfx>();
             sfx.m_sfxPrefab = buttonSfx.m_sfxPrefab;
 
-            var button = trophyPanelIconPrefab.AddComponent<Button>();
+            Button button = trophyPanelIconPrefab.AddComponent<Button>();
             button.interactable = true;
             button.transition = Selectable.Transition.ColorTint;
             button.targetGraphic = TrophyIcon;
@@ -300,26 +331,891 @@ public static class Patches
             button.onClick = new Button.ButtonClickedEvent();
             button.onClick.AddListener(() =>
             {
-                var dummyElement = parentElement.transform.Find("AlmanacElement (0)");
-                if (!dummyElement) return;
-                setAlmanacData(dummyElement.gameObject, localizedName, TrophyIcon);
+                setAlmanacData(AlmanacElement.gameObject, localizedName, TrophyIcon);
+                SetActiveElement(AlmanacList.gameObject, "AlmanacElement", "0", true);
+                
                 SetActiveElement(contentPanel.gameObject, "WelcomePanel", "0", false);
-                SetActiveElement(parentElement.gameObject, "AlmanacElement", "0", true);
-                SetActiveElement(parentElement.gameObject, "materialElement", "0", false);
-                SetActiveElement(parentElement.gameObject, "consummableElement", "0", false);
-                SetActiveElement(parentElement.gameObject, "gearElement", "0", false);
-                SetActiveElement(parentElement.gameObject, "weaponElement", "0", false);
-                SetActiveElement(parentElement.gameObject, "ammoElement", "0", false);
-                SetActiveElement(parentElement.gameObject, "fishElement", "0", false);
+                SetActiveElement(AlmanacList.gameObject, "materialElement", "0", false);
+                SetActiveElement(AlmanacList.gameObject, "consummableElement", "0", false);
+                SetActiveElement(AlmanacList.gameObject, "gearElement", "0", false);
+                SetActiveElement(AlmanacList.gameObject, "weaponElement", "0", false);
+                SetActiveElement(AlmanacList.gameObject, "ammoElement", "0", false);
+                SetActiveElement(AlmanacList.gameObject, "fishElement", "0", false);
+                
+                SetActiveElement(AlmanacList.gameObject, "piecesElement", "0", false);
             });
         }
 
         private static void SetActiveElement(GameObject parentElement, string type, string id, bool active)
         {
-            var element = parentElement.transform.Find($"{type} ({id})");
+            Transform element = parentElement.transform.Find($"{type} ({id})");
             element.gameObject.SetActive(active);
         }
 
+        public static void SetPiecesData(GameObject Element, GameObject data)
+        {
+            // Set unknowns back to default
+            SetActiveElement(Element, "ImageElement", "craftingStation", false);
+            for (int i = 0; i < 5; ++i)
+            {
+                SetActiveElement(Element, "ImageElement", $"recipe ({i})", false);
+            }
+            SetImageElement(Element, "craftingStation", AlmanacPlugin.questionMarkIcon, Color.white);
+            SetHoverableText(Element, "craftingStation", "$almanac_no_data");
+            SetActiveElement(Element, "ImageElement", "craftingStation", false);
+            // Plants
+            List<string> plantIds = new List<string>()
+            {
+                "growTimeLabel",
+                "growTime",
+                "growTimeMaxLabel",
+                "growTimeMax"
+            };
+            foreach (string plantId in plantIds)
+            {
+                SetActiveElement(Element, "TextElement", plantId, false);
+            }
+            // WearNTear
+            SetTextElement(Element, "health", "$almanac_na");
+            SetTextElement(Element, "material", "$almanac_na");
+            for (int index = 0; index < modifiersTags.Count; ++index)
+            {
+                SetTextElement(Element, $"{modifiersTags[index]}", "$almanac_no_data");
+            }
+            // Container
+            List<string> containerIds = new List<string>()
+            {
+                "containerSizeLabel",
+                "containerSize",
+                "checkGuardLabel",
+                "checkGuard",
+                "autoDestroyLabel",
+                "autoDestroy"
+            };
+            foreach (string containerId in containerIds)
+            {
+                SetActiveElement(Element, "TextElement", containerId, false);
+            }
+
+            for (int i = 0; i < 12; ++i)
+            {
+                SetActiveElement(Element, "ImageElement", $"containerDrops ({i})", false);
+            }
+            // Crafting station
+            List<string> craftingStationIds = new List<string>()
+            {
+                "discoverRangeLabel",
+                "discoverRange",
+                "rangeBuildLabel",
+                "rangeBuild",
+                "extraRangePerLevelLabel",
+                "extraRange",
+                "requireRoofLabel",
+                "requireRoof",
+                "requireFireLabel",
+                "requireFire",
+                "showBasicRecipesLabel",
+                "basicRecipes",
+                "animationIndexLabel",
+                "animationIndex"
+            };
+            foreach (string craftingStationId in craftingStationIds)
+            {
+                SetActiveElement(Element, "TextElement", craftingStationId, false);
+            }
+            // Cooking Station
+            List<string> cookingStationIds = new List<string>()
+            {
+                "cookingTooltip",
+                "overCookedItemLabel",
+                "overCooked",
+                "availableSlotsLabel",
+                "availableSlots",
+                "cookingRequireFireLabel",
+                "cookingRequireFire",
+                "cookingUseFuelLabel",
+                "cookingUseFuel",
+                "cookingFuelItemLabel",
+                "cookingFuelItem",
+                "cookingMaxFuelLabel",
+                "cookingMaxFuel",
+                "cookingSecPerFuelLabel",
+                "cookingSecPerFuel"
+            };
+            foreach (string cookingStationId in cookingStationIds)
+            {
+                SetActiveElement(Element, "TextElement", cookingStationId, false);
+            }
+
+            for (int i = 0; i < 12; ++i)
+            {
+                SetActiveElement(Element, "ImageElement", $"cookingConversion ({i})", false);
+            }
+            // Station Extension
+            SetActiveElement(Element, "ImageElement", "extensionCraftingStation", false);
+            List<string> extensionStationIds = new List<string>()
+            {
+                "maxStationDistanceLabel",
+                "stationDistance",
+                "extensionStationStackLabel",
+                "extensionStack"
+                
+            };
+            foreach (string extensionStationId in extensionStationIds)
+            {
+                SetActiveElement(Element, "TextElement", extensionStationId, false);
+            }
+            // Door
+            List<string> doorLabelIds = new List<string>()
+            {
+                "doorKeyItemLabel",
+                "doorCanBeClosedLabel",
+                "doorCheckGuardLabel"
+            };
+            List<string> doorValueIds = new List<string>()
+            {
+                "doorKey",
+                "doorCanClose",
+                "doorGuard"
+            };
+            List<string> allDoorIds = new List<string>();
+            allDoorIds.AddRange(doorLabelIds);
+            allDoorIds.AddRange(doorValueIds);
+            foreach (string doorId in allDoorIds)
+            {
+                SetActiveElement(Element, "TextElement", doorId, false);
+            }
+            // Fireplace
+            List<string> fireplaceLabelIds = new List<string>()
+            {
+                "fireplaceMaxFuelLabel",
+                "fireplaceSecPerFuelLabel",
+                "infiniteFuelLabel",
+                "fireplaceFuelItemLabel",
+            };
+            List<string> fireplaceValueIds = new List<string>()
+            {
+                "fireplaceMaxFuel",
+                "fireplaceSecPerFuel",
+                "fireplaceInfiniteFuel",
+                "fireplaceFuelItem"
+            };
+            List<string> allFireplaceIds = new List<string>();
+            allFireplaceIds.AddRange(fireplaceLabelIds);
+            allFireplaceIds.AddRange(fireplaceValueIds);
+            foreach (string fireplaceId in allFireplaceIds)
+            {
+                SetActiveElement(Element, "TextElement", fireplaceId, false);
+            }
+
+            for (int i = 0; i < 11; ++i)
+            {
+                SetActiveElement(Element, "ImageElement", $"fireplaceFireworks ({i})", false);
+            }
+            // Smelter
+            List<string> smelterLabelIds = new List<string>()
+            {
+                "smelterFuelItemLabel",
+                "smelterMaxOreLabel",
+                "smelterMaxFuelLabel",
+                "smelterFuelPerProductLabel",
+                "smelterSecPerProductLabel",
+                "smelterRequiresRoofLabel"
+            };
+            List<string> smelterValueIds = new List<string>()
+            {
+                "smelterFuelItem",
+                "smelterMaxOre",
+                "smelterMaxFuel",
+                "smelterFuelPerProduct",
+                "smelterSecPerProduct",
+                "smelterRequireRoof"
+            };
+            List<string> allSmelterIds = new List<string>();
+            allSmelterIds.AddRange(smelterLabelIds);
+            allSmelterIds.AddRange(smelterValueIds);
+            foreach (string smelterId in allSmelterIds)
+            {
+                SetActiveElement(Element, "TextElement", smelterId, false);
+            }
+
+            for (int i = 0; i < 8; ++i)
+            {
+                SetActiveElement(Element, "ImageElement", $"smelterConversion from ({i})", false);
+                SetActiveElement(Element, "ImageElement", $"smelterConversion to ({i})", false);
+                SetActiveElement(Element, "TextElement", $"smelterConversionSymbol ({i})", false);
+            }
+            // Wisp Spawner
+            List<string> wispLabelIds = new List<string>()
+            {
+                "wispSpawnIntervalLabel",
+                "wispSpawnChanceLabel",
+                "wispMaxSpawnedLabel",
+                "wispSpawnAtNightLabel",
+                "wispSpawnInCoverLabel",
+                "wispSpawnDistanceLabel",
+                "wispMaxSpawnAreaLabel",
+            };
+            List<string> wispValueIds = new List<string>()
+            {
+                "wispInterval",
+                "wispSpawnChance",
+                "wispMaxSpawn",
+                "wispSpawnAtNight",
+                "wispSpawnCover",
+                "wispSpawnDistance",
+                "wispSpawnArea"
+            };
+            List<string> allWispIds = new List<string>();
+            allWispIds.AddRange(wispLabelIds);
+            allWispIds.AddRange(wispValueIds);
+            foreach (string wispId in allWispIds)
+            {
+                SetActiveElement(Element, "TextElement", wispId, false);
+            }
+            SetActiveElement(Element, "ImageElement", "wispPrefab", false);
+            // Turret
+            List<string> turretLabelIds = new List<string>()
+            {
+                "turretTurnRateLabel",
+                "turretHorizontalAngleLabel",
+                "turretVerticalAngleLabel",
+                "turretViewDistanceLabel",
+                "turretNoTargetRateLabel",
+                "turretLookAccelerationLabel",
+                "turretLookDecelerationLabel",
+                "turretLookMinDegreesLabel",
+                "turretMaxAmmoLabel", 
+            };
+            List<string> turretValueIds = new List<string>()
+            {
+                "turnRate",
+                "horizontalAngle",
+                "verticalAngle",
+                "viewDistance",
+                "noTargetRate",
+                "lookAcceleration",
+                "lookDeceleration",
+                "lookDegrees",
+                "turretMaxAmmo"
+                
+            };
+            List<string> allTurretIds = new List<string>();
+            allTurretIds.AddRange(turretLabelIds);
+            allTurretIds.AddRange(turretValueIds);
+            foreach (string turretId in allTurretIds)
+            {
+                SetActiveElement(Element, "TextElement", turretId, false);
+            }
+
+            for (int i = 0; i < 11; ++i)
+            {
+                SetActiveElement(Element, "ImageElement", $"turretAmmo ({i})", false);
+            }
+            // Ferment
+            List<string> fermentLabelIds = new List<string>()
+            {
+                "fermentDurationLabel",
+            };
+            List<string> fermentValueIds = new List<string>()
+            {
+                "fermentDuration"
+            };
+            List<string> allFermentIds = new List<string>();
+            allFermentIds.AddRange(fermentLabelIds);
+            allFermentIds.AddRange(fermentValueIds);
+            foreach (string fermentId in allFermentIds)
+            {
+                SetActiveElement(Element, "TextElement", fermentId, false);
+            }
+
+            for (int i = 0; i < 12; ++i)
+            {
+                SetActiveElement(Element, "ImageElement", $"ferment from ({i})", false);
+                SetActiveElement(Element, "ImageElement", $"ferment to ({i})", false);
+                SetActiveElement(Element, "TextElement", $"fermentConversionSymbol ({i})", false);
+            }
+            // Get data from Game Object
+            data.TryGetComponent(out Piece piece);
+            data.TryGetComponent(out CraftingStation craftingStation);
+            data.TryGetComponent(out WearNTear wearNTear);
+            data.TryGetComponent(out Door door);
+            data.TryGetComponent(out Container container);
+            data.TryGetComponent(out Fireplace fireplace);
+            data.TryGetComponent(out StationExtension stationExtension);
+            data.TryGetComponent(out Smelter smelter);
+            data.TryGetComponent(out WispSpawner wispSpawner);
+            data.TryGetComponent(out Turret turret);
+            data.TryGetComponent(out Fermenter fermenter);
+            data.TryGetComponent(out ItemStand itemStand);
+            data.TryGetComponent(out Ship ship);
+            data.TryGetComponent(out Plant plant);
+            data.TryGetComponent(out Destructible destructible);
+            data.TryGetComponent(out CookingStation cookingStation);
+
+            if (!piece) return;
+            Sprite icon = piece.m_icon;
+            string name = Localization.instance.Localize($"{piece.m_name}");
+            string prefabName = piece.name;
+            string description = Localization.instance.Localize($"{piece.m_description}");
+            bool isExtension = piece.m_isUpgrade;
+            var category = piece.m_category;
+
+            int comfort = piece.m_comfort;
+            var comfortGroup = piece.m_comfortGroup;
+            bool groundPiece = piece.m_groundPiece;
+            bool cultivatedGroundOnly = piece.m_cultivatedGroundOnly;
+            bool allowedInDungeons = piece.m_allowedInDungeons;
+            Heightmap.Biome onlyInBiome = piece.m_onlyInBiome;
+
+            CraftingStation? pieceCraftingStation = piece.m_craftingStation;
+            Piece.Requirement[] resources = piece.m_resources;
+
+            GameObject prefabImage = Element.transform.Find("ImageElement (prefabImage)").gameObject;
+            Button prefabImageButton = prefabImage.GetComponent<Button>();
+            prefabImageButton.onClick.AddListener(() =>
+            {
+                TextEditor textEditor = new TextEditor
+                {
+                    text = prefabName
+                };
+                textEditor.SelectAll();
+                textEditor.Copy();
+                
+                MessageHud.instance.ShowMessage(
+                    MessageHud.MessageType.Center, 
+                    Localization.instance.Localize("$almanac_copy_to_clipboard"));
+            });
+
+            #region set general data
+            SetTextElement(Element, "Name", $"{name}");
+            SetTextElement(Element, "Description", $"{description}");
+            SetImageElement(Element, "icon", icon, Color.white);
+            
+            SetTextElement(prefabImage, "prefabName", $"{prefabName}");
+            SetTextElement(Element, "category", $"{category.ToString()}");
+            SetTextElement(Element, "comfort", $"{comfort}");
+            SetTextElement(Element, "extension", isExtension ? "$almanac_true" : "$almanac_false");
+            SetTextElement(Element, "groundPiece", groundPiece ? "$almanac_true" : "$almanac_false");
+            SetTextElement(Element, "cultivated", cultivatedGroundOnly ? "$almanac_true" : "$almanac_false");
+            SetTextElement(Element, "dungeon", allowedInDungeons ? "$almanac_true" : "$almanac_false");
+            SetTextElement(Element, "comfortGroup", $"{comfortGroup.ToString()}");
+            
+            for (int i = 0; i < resources.Length; ++i)
+            {
+                if (i >= 5) continue;
+                string resourceName = resources[i].m_resItem.m_itemData.m_shared.m_name;
+                bool isKnown = Player.m_localPlayer.IsMaterialKnown(resourceName);
+                
+                int resourceAmount = resources[i].m_amount;
+                Sprite resourceIcon = resources[i].m_resItem.m_itemData.m_shared.m_icons[0];
+                GameObject ResourceBackground =
+                    Element.transform.Find($"ImageElement (recipe ({i}))").gameObject;
+
+                SetActiveElement(Element, "ImageElement", $"recipe ({i})", true);
+                SetHoverableText(
+                    Element,
+                    $"recipe ({i})",
+                    isKnown 
+                        ? Localization.instance.Localize(resourceName) 
+                        : "???"
+                );
+                SetImageElement(
+                    ResourceBackground,
+                    "item", 
+                    resourceIcon, 
+                    isKnown 
+                        ? Color.white 
+                        : Color.black
+                );
+                SetTextElement(ResourceBackground, $"recipeAmount", $"{resourceAmount}");
+            }
+            #endregion
+            
+            if (wearNTear)
+            {
+                float health = wearNTear.m_health;
+                var materialType = wearNTear.m_materialType;
+                var modifiers = wearNTear.m_damages;
+                var modifierConversionMap = new Dictionary<string, HitData.DamageModifier>()
+                {
+                    { "blunt", modifiers.m_blunt},
+                    { "slash", modifiers.m_slash},
+                    { "pierce", modifiers.m_pierce},
+                    { "chop", modifiers.m_chop},
+                    { "pickaxe", modifiers.m_pickaxe},
+                    { "fire", modifiers.m_fire},
+                    { "frost", modifiers.m_frost},
+                    { "lightning", modifiers.m_lightning},
+                    { "poison", modifiers.m_poison},
+                    { "spirit", modifiers.m_spirit}
+                };
+                List<KeyValuePair<string, HitData.DamageModifier>> modifierMap =
+                    new List<KeyValuePair<string, HitData.DamageModifier>>(modifierConversionMap); 
+                foreach (KeyValuePair<string, HitData.DamageModifier> wearNTearMod in modifierMap)
+                {
+                    SetTextElement(Element, $"{wearNTearMod.Key}", $"{wearNTearMod.Value}");
+                }
+                
+                SetTextElement(Element, "health", $"{health}<color=white>HP</color>");
+                SetTextElement(Element, "material", $"{materialType.ToString()}");
+            }
+            
+            if (destructible)
+            {
+                float health = destructible.m_health;
+                var modifiers = destructible.m_damages;
+                var modifierConversionMap = new Dictionary<string, HitData.DamageModifier>()
+                {
+                    { "blunt", modifiers.m_blunt},
+                    { "slash", modifiers.m_slash},
+                    { "pierce", modifiers.m_pierce},
+                    { "chop", modifiers.m_chop},
+                    { "pickaxe", modifiers.m_pickaxe},
+                    { "fire", modifiers.m_fire},
+                    { "frost", modifiers.m_frost},
+                    { "lightning", modifiers.m_lightning},
+                    { "poison", modifiers.m_poison},
+                    { "spirit", modifiers.m_spirit}
+                };
+                List<KeyValuePair<string, HitData.DamageModifier>> modifierMap =
+                    new List<KeyValuePair<string, HitData.DamageModifier>>(modifierConversionMap); 
+                for (int index = 0; index < modifierMap.Count; ++index)
+                {
+                    SetTextElement(Element, $"{modifierMap[index].Key}", $"{modifierMap[index].Value}");
+                }
+                
+                SetTextElement(Element, "health", $"{health}<color=white>HP</color>");
+            }
+            
+            if (plant)
+            {
+                SetTextElement(Element, "growTime", $"{plant.m_growTime}");
+                SetTextElement(Element, "growTimeMax", $"{plant.m_growTimeMax}");
+                SetActiveElement(Element, "TextElement", "growTimeLabel", true);
+                SetActiveElement(Element, "TextElement", "growTimeMaxLabel", true);
+            }
+            
+            if (pieceCraftingStation)
+            {
+                SetImageElement(Element, "craftingStation", pieceCraftingStation.m_icon, Color.white);
+                SetHoverableText(Element, "craftingStation", $"{pieceCraftingStation.m_name}");
+                SetActiveElement(Element, "ImageElement", "craftingStation", true);
+            }
+            
+            if (craftingStation)
+            {
+                Dictionary<string, string> stationInfoMap = new Dictionary<string, string>
+                {
+                    { "discoverRange", craftingStation.m_discoverRange.ToString(CultureInfo.CurrentCulture) },
+                    { "rangeBuild", craftingStation.m_rangeBuild.ToString(CultureInfo.CurrentCulture) },
+                    { "extraRange", craftingStation.m_extraRangePerLevel.ToString(CultureInfo.CurrentCulture) },
+                    { "requireRoof", craftingStation.m_craftRequireRoof.ToString() },
+                    { "requireFire", craftingStation.m_craftRequireFire.ToString() },
+                    { "basicRecipes", craftingStation.m_showBasicRecipies.ToString() },
+                    { "animationIndex", craftingStation.m_useAnimation.ToString() }
+                };
+
+                foreach (KeyValuePair<string, string> stationInfo in stationInfoMap)
+                {
+                    SetTextElement(Element, stationInfo.Key, stationInfo.Value);
+                }
+
+                List<string> craftingStationLabels = new List<string>()
+                {
+                    "discoverRangeLabel",
+                    "rangeBuildLabel",
+                    "extraRangePerLevelLabel",
+                    "requireRoofLabel",
+                    "requireFireLabel",
+                    "showBasicRecipesLabel",
+                    "animationIndexLabel"
+                };
+                foreach (string craftingStationLabel in craftingStationLabels)
+                {
+                    SetActiveElement(Element, "TextElement", craftingStationLabel, true);
+                }
+            }
+            
+            if (container && !craftingStation)
+            {
+                SetTextElement(Element, "containerSize", $"{container.m_width}<color=white>x</color>{container.m_height}");
+                SetTextElement(Element, "checkGuard", $"{container.m_checkGuardStone}");
+                SetTextElement(Element, "autoDestroy", $"{container.m_autoDestroyEmpty}");
+                
+                List<DropTable.DropData>? defaultItems = container.m_defaultItems.m_drops;
+                if (defaultItems != null)
+                {
+                    float totalWeight = defaultItems.Sum(item => item.m_weight);
+                    for (int i = 0; i < defaultItems.Count; i++)
+                    {
+                        if (i >= 12) continue;
+                        ItemDrop itemDropData = defaultItems[i].m_item.GetComponent<ItemDrop>();
+                        string dropName = itemDropData.m_itemData.m_shared.m_name;
+                        Sprite dropIcon = itemDropData.m_itemData.GetIcon();
+                        float weight = defaultItems[i].m_weight;
+                        float dropChance = Mathf.Round((weight / totalWeight) * 100f);
+                        int dropMin = defaultItems[i].m_stackMin;
+                        int dropMax = defaultItems[i].m_stackMax;
+    
+                        bool isKnown = Player.m_localPlayer.IsMaterialKnown(dropName);
+    
+                        string elementName = $"containerDrops ({i})";
+                        GameObject ResourceBackground = Element.transform.Find($"ImageElement ({elementName})").gameObject;
+    
+                        SetActiveElement(Element, "ImageElement", elementName, true);
+                        SetHoverableText(Element, elementName, isKnown 
+                            ? Localization.instance.Localize($"{dropName} (<color=orange>{dropChance}%</color>)") 
+                            : "???");
+                        SetImageElement(ResourceBackground, "item", dropIcon, isKnown ? Color.white : Color.black);
+                        SetTextElement(ResourceBackground, $"recipeAmount", $"{dropMin}<color=white>-</color>{dropMax}");
+                    }
+                };
+                SetActiveElement(Element, "TextElement", "containerSizeLabel", true);
+                SetActiveElement(Element, "TextElement", "checkGuardLabel", true);
+                SetActiveElement(Element, "TextElement", "autoDestroyLabel", true);
+            }
+
+            if (cookingStation)
+            {
+                ItemDrop? overCookedItem = cookingStation.m_overCookedItem;
+                ItemDrop? fuelItem = cookingStation.m_fuelItem;
+                
+                Dictionary<string, string> cookingConversionMap = new Dictionary<string, string>()
+                {
+                    { "cookingTooltip", $"{cookingStation.m_addItemTooltip}" },
+                    { "overCooked", overCookedItem ? $"{overCookedItem.m_itemData.m_shared.m_name}" : "$almanac_na" },
+                    { "availableSlots", $"{cookingStation.m_slots.Length}" },
+                    { "cookingRequireFire", $"{cookingStation.m_requireFire}" },
+                    { "cookingUseFuel", $"{cookingStation.m_useFuel}" },
+                    { "cookingFuelItem", fuelItem ? $"{fuelItem.m_itemData.m_shared.m_name}" : "$almanac_na" },
+                    { "cookingMaxFuel", $"{cookingStation.m_maxFuel}" },
+                    { "cookingSecPerFuel", $"{cookingStation.m_secPerFuel}" },
+                    
+                };
+                foreach (KeyValuePair<string, string> cookingConversion in cookingConversionMap)
+                {
+                    SetTextElement(Element, cookingConversion.Key, cookingConversion.Value);
+                }
+
+                List<string> cookingLabelIds = new List<string>()
+                {
+                    "overCookedItemLabel",
+                    "availableSlotsLabel",
+                    "cookingRequireFireLabel",
+                    "cookingUseFuelLabel",
+                    "cookingFuelItemLabel",
+                    "cookingMaxFuelLabel",
+                    "cookingSecPerFuelLabel"
+                };
+                foreach (string cookingLabelId in cookingLabelIds)
+                {
+                    SetActiveElement(Element, "TextElement", cookingLabelId, true);
+                }
+
+                List<CookingStation.ItemConversion> cookingConversions = cookingStation.m_conversion;
+                for (int i = 0; i < cookingConversions.Count; ++i)
+                {
+                    if (i >= 12) continue;
+                    CookingStation.ItemConversion cookingConversion = cookingConversions[i];
+                    string cookingItemName = cookingConversion.m_from.m_itemData.m_shared.m_name;
+                    Sprite cookingItemIcon = cookingConversion.m_from.m_itemData.GetIcon();
+                    float cookTime = cookingConversion.m_cookTime;
+        
+                    bool isKnown = Player.m_localPlayer.IsMaterialKnown(cookingItemName);
+        
+                    string elementName = $"cookingConversion ({i})";
+                    GameObject ResourceBackground = Element.transform.Find($"ImageElement ({elementName})").gameObject;
+        
+                    SetActiveElement(Element, "ImageElement", elementName, true);
+                    SetHoverableText(Element, elementName, isKnown 
+                        ? Localization.instance.Localize($"{cookingItemName}") 
+                        : "???");
+                    SetImageElement(ResourceBackground, "item", cookingItemIcon, isKnown ? Color.white : Color.black);
+                    SetTextElement(ResourceBackground, $"cookTime", $"{cookTime}<color=white>s</color>");
+                }
+            }
+
+            if (stationExtension)
+            {
+                CraftingStation? extensionCraftingStation = stationExtension.m_craftingStation;
+                Sprite extCraftIcon = extensionCraftingStation.m_icon;
+                SetImageElement(Element, "extensionCraftingStation", extCraftIcon, Color.white);
+                SetHoverableText(Element, "extensionCraftingStation", $"{extensionCraftingStation.m_name}");
+
+                Dictionary<string, string> stationExtensionConversionMap = new Dictionary<string, string>()
+                {
+                    { "stationDistance", $"{stationExtension.m_maxStationDistance}" },
+                    { "extensionStack", $"{stationExtension.m_stack}"}
+                };
+                foreach (KeyValuePair<string, string> extensionConversion in stationExtensionConversionMap)
+                {
+                    SetTextElement(Element, extensionConversion.Key, extensionConversion.Value);
+                }
+                List<string> extensionLabels = new List<string>()
+                {
+                    "maxStationDistanceLabel",
+                    "extensionStationStackLabel"
+                };
+                foreach (string extensionLabel in extensionLabels)
+                {
+                    SetActiveElement(Element, "TextElement", extensionLabel, true);
+                }
+            }
+
+            if (door)
+            {
+                ItemDrop? key = door.m_keyItem;
+                Dictionary<string, string> doorConversionMap = new Dictionary<string, string>()
+                {
+                    { "doorKey", key ? $"{door.m_keyItem.m_itemData.m_shared.m_name}" : "$almanac_na" },
+                    { "doorCanClose", $"{!door.m_canNotBeClosed}" },
+                    { "doorGuard", $"{door.m_checkGuardStone}" }
+                };
+                foreach (string doorLabelId in doorLabelIds)
+                {
+                    SetActiveElement(Element, "TextElement", doorLabelId, true);
+                }
+
+                foreach (KeyValuePair<string, string> doorConversion in doorConversionMap)
+                {
+                    SetTextElement(Element, doorConversion.Key, doorConversion.Value);
+                }
+            }
+
+            if (fireplace)
+            {
+                foreach (string fireplaceLabelId in fireplaceLabelIds)
+                {
+                    SetActiveElement(Element, "TextElement", fireplaceLabelId, true);
+                }
+
+                ItemDrop? fuelItem = fireplace.m_fuelItem;
+                
+                Dictionary<string, string> fireplaceConversionMap = new Dictionary<string, string>()
+                {
+                    { "fireplaceMaxFuel", $"{fireplace.m_maxFuel}" },
+                    { "fireplaceSecPerFuel", $"{fireplace.m_secPerFuel}" },
+                    { "fireplaceInfiniteFuel", $"{fireplace.m_infiniteFuel}" },
+                    { "fireplaceFuelItem", fuelItem ? $"{fuelItem.m_itemData.m_shared.m_name}" : "$almanac_na" },
+                };
+                foreach (KeyValuePair<string, string> fireplaceConversion in fireplaceConversionMap)
+                {
+                    SetTextElement(Element, fireplaceConversion.Key, fireplaceConversion.Value);
+                }
+
+                for (int i = 0; i < fireplace.m_fireworkItemList.Length; ++i)
+                {
+                    if (i >= 11) continue;
+                    Fireplace.FireworkItem firework = fireplace.m_fireworkItemList[i];
+                    string fireworkName = firework.m_fireworkItem.m_itemData.m_shared.m_name;
+                    Sprite? fireworkIcon = firework.m_fireworkItem.m_itemData.GetIcon();
+                    int fireworkCount = firework.m_fireworkItemCount;
+                    
+                    string elementName = $"fireplaceFireworks ({i})";
+                    bool isKnown = Player.m_localPlayer.IsMaterialKnown(fireworkName);
+                    GameObject ResourceBackground = Element.transform.Find($"ImageElement ({elementName})").gameObject;
+                    
+                    SetActiveElement(Element, "ImageElement", elementName, true);
+                    SetHoverableText(Element, elementName, isKnown 
+                        ? Localization.instance.Localize($"{fireworkName}") 
+                        : "???");
+                    SetImageElement(ResourceBackground, "item", fireworkIcon, isKnown ? Color.white : Color.black);
+                    SetTextElement(ResourceBackground, $"itemCount", $"{fireworkCount}");
+                    
+                }
+            }
+
+            if (smelter && !craftingStation)
+            {
+                foreach (string smelterLabelId in smelterLabelIds) SetActiveElement(Element, "TextElement", smelterLabelId, true);
+                ItemDrop? fuelItem = smelter.m_fuelItem;
+                Dictionary<string, string> smelterConversionMap = new Dictionary<string, string>()
+                {
+                    { "smelterFuelItem", fuelItem ? $"{fuelItem.m_itemData.m_shared.m_name}" : "$almanac_na" },
+                    { "smelterMaxOre", $"{smelter.m_maxOre}" },
+                    { "smelterMaxFuel", $"{smelter.m_maxFuel}" },
+                    { "smelterFuelPerProduct", $"{smelter.m_fuelPerProduct}" },
+                    { "smelterSecPerProduct", $"{smelter.m_secPerProduct}" },
+                    { "smelterRequireRoof", $"{smelter.m_requiresRoof}" },
+                };
+                foreach (KeyValuePair<string, string> smelterConversion in smelterConversionMap)
+                {
+                    SetTextElement(Element, smelterConversion.Key, smelterConversion.Value);
+                }
+
+                for (int i = 0; i < smelter.m_conversion.Count; ++i)
+                {
+                    if (i >= 7) continue;
+                    Smelter.ItemConversion smelterItem = smelter.m_conversion[i];
+
+                    string fromItemName = smelterItem.m_from.m_itemData.m_shared.m_name;
+                    Sprite? FromItemIcon = smelterItem.m_from.m_itemData.GetIcon();
+                    
+                    string FromElementId = $"smelterConversion from ({i})";
+                    bool fromIsKnown = Player.m_localPlayer.IsMaterialKnown(fromItemName);
+                    GameObject smelterFrom = Element.transform.Find($"ImageElement ({FromElementId})").gameObject;
+                    
+                    SetActiveElement(Element, "ImageElement", FromElementId, true);
+                    SetHoverableText(Element, FromElementId, fromIsKnown 
+                        ? Localization.instance.Localize($"{fromItemName}") 
+                        : "???");
+                    SetImageElement(smelterFrom, "item", FromItemIcon, fromIsKnown ? Color.white : Color.black);
+                    
+                    string toItemName = smelterItem.m_to.m_itemData.m_shared.m_name;
+                    Sprite? toItemIcon = smelterItem.m_to.m_itemData.GetIcon();
+                    
+                    string toElementId = $"smelterConversion to ({i})";
+                    bool toIsKnown = Player.m_localPlayer.IsMaterialKnown(toItemName);
+                    GameObject smelterTo = Element.transform.Find($"ImageElement ({toElementId})").gameObject;
+                    
+                    SetActiveElement(Element, "ImageElement", toElementId, true);
+                    SetHoverableText(Element, toElementId, toIsKnown 
+                        ? Localization.instance.Localize($"{toItemName}") 
+                        : "???");
+                    SetImageElement(smelterTo, "item", toItemIcon, toIsKnown ? Color.white : Color.black);
+                    
+                    SetActiveElement(Element, "TextElement", $"smelterConversionSymbol ({i})", true);
+                }
+            }
+
+            if (wispSpawner)
+            {
+                GameObject? wispPrefab = wispSpawner.m_wispPrefab;
+                foreach (string wispLabelId in wispLabelIds)
+                {
+                    SetActiveElement(Element, "TextElement", wispLabelId, true);
+                }
+
+                Dictionary<string, string> wispConversionMap = new Dictionary<string, string>()
+                {
+                    { "wispInterval", $"{wispSpawner.m_spawnInterval}" },
+                    { "wispSpawnChance", $"{wispSpawner.m_spawnChance * 100}<color=white>%</color>" },
+                    { "wispMaxSpawn", $"{wispSpawner.m_maxSpawned}" },
+                    { "wispSpawnAtNight", $"{wispSpawner.m_onlySpawnAtNight}" },
+                    { "wispSpawnCover", $"{wispSpawner.m_dontSpawnInCover}" },
+                    { "wispSpawnDistance", $"{wispSpawner.m_spawnDistance}" },
+                };
+                foreach (KeyValuePair<string, string> wispConversion in wispConversionMap)
+                {
+                    SetTextElement(Element, wispConversion.Key, wispConversion.Value);
+                }
+
+                if (wispPrefab)
+                {
+                    Pickable pickable = wispPrefab.GetComponent<Pickable>();
+                    ItemDrop pickableGO = pickable.m_itemPrefab.GetComponent<ItemDrop>();
+                    Sprite wispPrefabIcon = pickableGO.m_itemData.GetIcon();
+                    SetImageElement(Element, "wispPrefab", wispPrefabIcon, Color.white);
+                    SetHoverableText(Element, "wispPrefab", $"{pickableGO.m_itemData.m_shared.m_name}");
+                }
+            }
+
+            if (turret)
+            {
+                foreach(string turretLabelId in turretLabelIds)
+                {
+                    SetActiveElement(Element, "TextElement", turretLabelId, true);
+                }
+
+                Dictionary<string, string> turretConversionMap = new Dictionary<string, string>()
+                {
+                    { "turnRate", $"{turret.m_turnRate}" },
+                    { "horizontalAngle", $"{turret.m_horizontalAngle}<color=white>°</color>" },
+                    { "verticalAngle", $"{turret.m_verticalAngle}<color=white>°</color>" },
+                    { "viewDistance", $"{turret.m_viewDistance}" },
+                    { "noTargetRate", $"{turret.m_noTargetScanRate}" },
+                    { "lookAcceleration", $"{turret.m_lookAcceleration * 100}<color=white>%</color>" },
+                    { "lookDeceleration", $"{turret.m_lookDeacceleration * 100}<color=white>%</color>" },
+                    { "lookDegrees", $"{turret.m_lookMinDegreesDelta * 100}<color=white>%</color>" },
+                    { "turretMaxAmmo", $"{turret.m_maxAmmo}" }
+                };
+                foreach (KeyValuePair<string, string> turretConversion in turretConversionMap)
+                {
+                    SetTextElement(Element, turretConversion.Key, turretConversion.Value);
+                }
+
+                List<Turret.AmmoType>? allowedAmmo = turret.m_allowedAmmo;
+                if (allowedAmmo != null)
+                {
+                    for (int i = 0; i < allowedAmmo.Count; ++i)
+                    {
+                        if (i >= 11) return;
+                        Turret.AmmoType ammoType = allowedAmmo[i];
+                        ItemDrop ammoItemDrop = ammoType.m_ammo;
+                        string ammoName = ammoItemDrop.m_itemData.m_shared.m_name;
+                        Sprite? ammoIcon = ammoItemDrop.m_itemData.GetIcon();
+                        
+                        bool isKnown = Player.m_localPlayer.IsMaterialKnown(ammoName);
+
+                        string elementId = $"turretAmmo ({i})";
+                        GameObject resourceBackground = Element.transform.Find($"ImageElement ({elementId})").gameObject;
+                        
+                        SetActiveElement(Element, "ImageElement", elementId, true);
+                        SetHoverableText(Element, elementId, isKnown 
+                            ? Localization.instance.Localize($"{ammoName}") 
+                            : "???");
+                        SetImageElement(resourceBackground, "item", ammoIcon, isKnown ? Color.white : Color.black);
+                    }
+                }
+            }
+
+            if (fermenter)
+            {
+                foreach (string fermentLabelId in fermentLabelIds)
+                {
+                    SetActiveElement(Element, "TextElement", fermentLabelId, true);
+                }
+
+                Dictionary<string, string> fermentConversionMap = new Dictionary<string, string>()
+                {
+                    { "fermentDuration", $"{fermenter.m_fermentationDuration}" }
+                };
+                foreach (KeyValuePair<string, string> fermentConversion in fermentConversionMap)
+                {
+                    SetTextElement(Element, fermentConversion.Key, fermentConversion.Value);
+                }
+
+                for (int i = 0; i < fermenter.m_conversion.Count; ++i)
+                {
+                    if (i >= 12) continue;
+                    Fermenter.ItemConversion itemConversion = fermenter.m_conversion[i];
+                    ItemDrop fromItemDrop = itemConversion.m_from;
+                    ItemDrop toItemDrop = itemConversion.m_to;
+                    string fromName = fromItemDrop.m_itemData.m_shared.m_name;
+                    string toName = toItemDrop.m_itemData.m_shared.m_name;
+                    int producedItems = itemConversion.m_producedItems;
+
+                    Sprite? fromIcon = fromItemDrop.m_itemData.GetIcon();
+                    Sprite? toIcon = toItemDrop.m_itemData.GetIcon();
+
+                    bool isFromKnown = Player.m_localPlayer.IsMaterialKnown(fromName);
+                    bool isToKnown = Player.m_localPlayer.IsMaterialKnown(toName);
+
+                    string fromElementId = $"ferment from ({i})";
+                    string toElementId = $"ferment to ({i})";
+
+                    GameObject fromBackground = Element.transform.Find($"ImageElement ({fromElementId})").gameObject;
+                    GameObject toBackground = Element.transform.Find($"ImageElement ({toElementId})").gameObject;
+                    
+                    SetActiveElement(Element, "ImageElement", fromElementId, true);
+                    SetHoverableText(Element, fromElementId, isFromKnown 
+                        ? Localization.instance.Localize($"{fromName}") 
+                        : "???");
+                    SetImageElement(fromBackground, "item", fromIcon, isFromKnown ? Color.white : Color.black);
+                    
+                    SetActiveElement(Element, "TextElement", $"fermentConversionSymbol ({i})", true);
+                    
+                    SetActiveElement(Element, "ImageElement", toElementId, true);
+                    SetHoverableText(Element, toElementId, isToKnown 
+                        ? Localization.instance.Localize($"{toName}") 
+                        : "???");
+                    SetImageElement(toBackground, "item", toIcon, isToKnown ? Color.white : Color.black);
+                    
+                    SetTextElement(toBackground, "produceAmount", $"{producedItems}");
+                }
+            }
+        }
         public static void SetItemsData(GameObject Element, ItemDrop data)
         {
             var sharedData = data.m_itemData.m_shared;
@@ -331,6 +1227,7 @@ public static class Patches
             int value = sharedData.m_value;
             int maxQuality = sharedData.m_maxQuality;
             float maxDurability = sharedData.m_maxDurability;
+            float durabilityPerLevel = sharedData.m_durabilityPerLevel;
             float foodHealth = sharedData.m_food;
             float foodStamina = sharedData.m_foodStamina;
             float foodEitr = sharedData.m_foodEitr;
@@ -340,11 +1237,12 @@ public static class Patches
             float eitrRegenMod = sharedData.m_eitrRegenModifier * 100f;
             float staminaMod = sharedData.m_baseItemsStaminaModifier * 100f;
             bool teleportable = sharedData.m_teleportable;
-
-            GameObject item = data.gameObject;
-            Floating floatingScript;
-            item.TryGetComponent(out floatingScript);
             
+            GameObject item = data.gameObject;
+            item.TryGetComponent(out Floating floatingScript);
+
+            bool itemFloats = floatingScript != null;
+
             Recipe recipe = ObjectDB.instance.GetRecipe(data.m_itemData);
             
             // Set all data to default
@@ -362,6 +1260,9 @@ public static class Patches
             SetTextElement(Element, "setName", "");
             SetTextElement(Element, "modifySkill", "");
             SetTextElement(Element, "damageMod", "");
+            SetTextElement(Element, "floating", "$almanac_item_can_float");
+            
+            if (!itemFloats) SetTextElement(Element, "floating", "$almanac_item_can_not_float");
 
             try
             {
@@ -379,14 +1280,29 @@ public static class Patches
                     try
                     {
                         string resourceName = resources[i].m_resItem.m_itemData.m_shared.m_name;
+                        bool isKnown = Player.m_localPlayer.IsMaterialKnown(resourceName);
+                        
                         var resourceAmount = resources[i].m_amount;
                         Sprite resourceIcon = resources[i].m_resItem.m_itemData.m_shared.m_icons[0];
                         GameObject ResourceBackground =
                             Element.transform.Find($"ImageElement (recipe ({i}))").gameObject;
 
                         SetActiveElement(Element, "ImageElement", $"recipe ({i})", true);
-                        SetHoverableText(Element, $"recipe ({i})", Localization.instance.Localize(resourceName));
-                        SetImageElement(ResourceBackground, "item", resourceIcon, Color.white);
+                        SetHoverableText(
+                            Element,
+                            $"recipe ({i})",
+                             isKnown 
+                                 ? Localization.instance.Localize(resourceName) 
+                                 : "???"
+                            );
+                        SetImageElement(
+                            ResourceBackground,
+                            "item", 
+                            resourceIcon, 
+                            isKnown 
+                                ? Color.white 
+                                : Color.black
+                            );
                         SetTextElement(ResourceBackground, $"recipeAmount", $"{resourceAmount}");
                     }
                     catch (IndexOutOfRangeException)
@@ -540,7 +1456,7 @@ public static class Patches
                     MessageHud.MessageType.Center, 
                     Localization.instance.Localize("$almanac_copy_to_clipboard"));
             });
-
+            
             Dictionary<string, string> staticTextData = new Dictionary<string, string>
             {
                 { "Name", name },
@@ -549,7 +1465,7 @@ public static class Patches
                 { "maxStackSize", $"1/{maxStackSize}" },
                 { "value", $"{value}" },
                 { "quality", $"{maxQuality}" },
-                { "durability", $"{maxDurability}" },
+                { "durability", $"{maxDurability} <color=white>+</color>{durabilityPerLevel}<color=white>/level</color>" },
                 { "movement", $"{movementMod}%" },
                 { "eitrRegen", $"{eitrRegenMod}%" },
                 { "stamMod", $"{staminaMod}%" }
@@ -577,6 +1493,26 @@ public static class Patches
                 SetTextElement(Element, foodData.Key, foodData.Value);
             }
             SetTextElement(Element, "consumeEffectDescription", "$almanac_no_consume_bonus");
+            Dictionary<string, Color> consumeEffectDefault = new Dictionary<string, Color>()
+            {
+                { "consumeEffectBlunt", Color.white },
+                { "consumeEffectSlash", Color.white },
+                { "consumeEffectPierce", Color.white },
+                { "consumeEffectChop", Color.white },
+                { "consumeEffectPickaxe", Color.white },
+                { "consumeEffectFire", Color.white },
+                { "consumeEffectIce", Color.white },
+                { "consumeEffectLightning", Color.white },
+                { "consumeEffectPoison", Color.white },
+                { "consumeEffectSpirit", Color.white }
+            };
+            List<KeyValuePair<string, Color>> consumeEffectDefaultList = consumeEffectDefault.ToList();
+            foreach (var consumeEffectData in consumeEffectDefaultList)
+            {
+                ColorizeImageElement(Element, consumeEffectData.Key, consumeEffectData.Value);
+                string tag = Localization.instance.Localize(GetTagFromID(consumeEffectData.Key));
+                SetHoverableText(Element, $"{consumeEffectData.Key}", $"{tag}");
+            }
             if (sharedData.m_consumeStatusEffect)
             {
                 StatusEffect consumeEffect = sharedData.m_consumeStatusEffect;
@@ -612,6 +1548,26 @@ public static class Patches
             {
                 HitData.DamageModPair gearDamageModifier = sharedData.m_damageModifiers[0];
                 SetTextElement(Element, "damageMod", $"<color=orange>{gearDamageModifier.m_modifier}</color> VS <color=orange>{gearDamageModifier.m_type}</color>");
+            }
+            Dictionary<string, Color> defaultEffects = new Dictionary<string, Color>()
+            {
+                { "setEffectBlunt", Color.white },
+                { "setEffectSlash", Color.white },
+                { "setEffectPierce", Color.white },
+                { "setEffectChop", Color.white },
+                { "setEffectPickaxe", Color.white },
+                { "setEffectFire", Color.white },
+                { "setEffectIce", Color.white },
+                { "setEffectLightning", Color.white },
+                { "setEffectPoison", Color.white },
+                { "setEffectSpirit", Color.white }
+            };
+            List<KeyValuePair<string, Color>> defaultEffectList = defaultEffects.ToList();
+            foreach (var setEffectData in defaultEffectList)
+            {
+                ColorizeImageElement(Element, setEffectData.Key, setEffectData.Value);
+                string tag = Localization.instance.Localize(GetTagFromID(setEffectData.Key));
+                SetHoverableText(Element, $"{setEffectData.Key}", $"{tag}");
             }
             if (sharedData.m_setStatusEffect)
             {
@@ -726,6 +1682,44 @@ public static class Patches
             {
                 SetTextElement(Element, weaponAttackInfo.Key, weaponAttackInfo.Value);
             }
+            // Fish
+            item.TryGetComponent(out Fish fishScript);
+            if (fishScript != null)
+            {
+                SetImageElement(
+                    Element, "baitIcon", 
+                    fishScript.m_baits[0].m_bait.m_itemData.m_shared.m_icons[0],
+                    Color.white
+                    );
+                SetHoverableText(
+                    Element, "baitIcon",
+                    $"{fishScript.m_baits[0].m_bait.m_itemData.m_shared.m_name}"
+                    );
+                for (int i =0; i < 3; ++i)
+                {
+                    SetActiveElement(Element, "ImageElement", $"fishDrops ({i})", false);
+                }
+                for (int i = 0; i < fishScript.m_extraDrops.m_drops.Count; ++i)
+                {
+                    GameObject drop = fishScript.m_extraDrops.m_drops[i].m_item;
+                    ItemDrop itemDrop = drop.GetComponent<ItemDrop>();
+                    string dropItemName = itemDrop.m_itemData.m_shared.m_name;
+                    bool isKnown = Player.m_localPlayer.IsMaterialKnown(dropItemName);
+                    GameObject fishDropBg = Element.transform.Find($"ImageElement (fishDrops ({i}))").gameObject;
+                    SetImageElement(
+                        fishDropBg,
+                        "fishDropItemIcon",
+                        itemDrop.m_itemData.m_shared.m_icons[0],
+                        isKnown ? Color.white : Color.black
+                        );
+                    SetHoverableText(
+                        Element,
+                        $"fishDrops ({i})",
+                        isKnown ? Localization.instance.Localize(dropItemName) : "???");
+                    SetActiveElement(Element, "ImageElement", $"fishDrops ({i})", true);
+                }
+            }
+            
 
             // Reorganize panel based on topic
             Dictionary<string, string> foodElements = new Dictionary<string, string>()
@@ -902,6 +1896,18 @@ public static class Patches
                 { "reloadStaminaDrain", "TextElement" },
             };
 
+            Dictionary<string, string> generalElements = new Dictionary<string, string>()
+            {
+                { "floating",  "TextElement"},
+                { "teleportable", "TextElement" }
+            };
+            Dictionary<string, string> fishElements = new Dictionary<string, string>()
+            {
+                { "FishBaitLabel", "TextElement" },
+                { "baitIcon", "ImageElement" },
+                { "FishDropsTitle", "TextElement" },
+            };
+
             var ItemType = sharedData.m_itemType;
             
             foreach (KeyValuePair<string, string> foodElement in foodElements) SetActiveElement(Element, foodElement.Value, foodElement.Key, true);
@@ -909,6 +1915,8 @@ public static class Patches
             foreach (KeyValuePair<string, string> equipmentElement in equipmentElements) SetActiveElement(Element, equipmentElement.Value, equipmentElement.Key, true);
             foreach (KeyValuePair<string, string> weaponElement in weaponElements) SetActiveElement(Element, weaponElement.Value, weaponElement.Key, true);
             foreach (KeyValuePair<string, string> bowElement in bowElements) SetActiveElement(Element, bowElement.Value, bowElement.Key, true);
+            foreach (KeyValuePair<string, string> generalElement in generalElements) SetActiveElement(Element, generalElement.Value, generalElement.Key, true);
+            foreach (KeyValuePair<string, string> fishElement in fishElements) SetActiveElement(Element, fishElement.Value, fishElement.Key, true);
             
             if (ItemType is ItemDrop.ItemData.ItemType.Material)
             {
@@ -917,6 +1925,8 @@ public static class Patches
                 foreach (KeyValuePair<string, string> equipmentElement in equipmentElements) SetActiveElement(Element, equipmentElement.Value, equipmentElement.Key, false);
                 foreach (KeyValuePair<string, string> weaponElement in weaponElements) SetActiveElement(Element, weaponElement.Value, weaponElement.Key, false);
                 foreach (KeyValuePair<string, string> bowElement in bowElements) SetActiveElement(Element, bowElement.Value, bowElement.Key, false);
+                // foreach (KeyValuePair<string, string> generalElement in generalElements) SetActiveElement(Element, generalElement.Value, generalElement.Key, true);
+                foreach (KeyValuePair<string, string> fishElement in fishElements) SetActiveElement(Element, fishElement.Value, fishElement.Key, false);
             }
             
             if (ItemType is ItemDrop.ItemData.ItemType.Consumable)
@@ -926,6 +1936,8 @@ public static class Patches
                 foreach (KeyValuePair<string, string> equipmentElement in equipmentElements) SetActiveElement(Element, equipmentElement.Value, equipmentElement.Key, false);
                 foreach (KeyValuePair<string, string> weaponElement in weaponElements) SetActiveElement(Element, weaponElement.Value, weaponElement.Key, false);
                 foreach (KeyValuePair<string, string> bowElement in bowElements) SetActiveElement(Element, bowElement.Value, bowElement.Key, false);
+                // foreach (KeyValuePair<string, string> generalElement in generalElements) SetActiveElement(Element, generalElement.Value, generalElement.Key, true);
+                foreach (KeyValuePair<string, string> fishElement in fishElements) SetActiveElement(Element, fishElement.Value, fishElement.Key, false);
             }
             
             if (ItemType 
@@ -943,6 +1955,8 @@ public static class Patches
                 // foreach (KeyValuePair<string, string> equipmentElement in equipmentElements) SetActiveElement(Element, equipmentElement.Value, equipmentElement.Key, true);
                 foreach (KeyValuePair<string, string> weaponElement in weaponElements) SetActiveElement(Element, weaponElement.Value, weaponElement.Key, false);
                 foreach (KeyValuePair<string, string> bowElement in bowElements) SetActiveElement(Element, bowElement.Value, bowElement.Key, false);
+                // foreach (KeyValuePair<string, string> generalElement in generalElements) SetActiveElement(Element, generalElement.Value, generalElement.Key, true);
+                foreach (KeyValuePair<string, string> fishElement in fishElements) SetActiveElement(Element, fishElement.Value, fishElement.Key, false);
             }
             
             if (ItemType
@@ -961,6 +1975,8 @@ public static class Patches
                 // foreach (KeyValuePair<string, string> equipmentElement in equipmentElements) SetActiveElement(Element, equipmentElement.Value, equipmentElement.Key, true);
                 // foreach (KeyValuePair<string, string> weaponElement in weaponElements) SetActiveElement(Element, weaponElement.Value, weaponElement.Key, true);
                 foreach (KeyValuePair<string, string> bowElement in bowElements) SetActiveElement(Element, bowElement.Value, bowElement.Key, false);
+                // foreach (KeyValuePair<string, string> generalElement in generalElements) SetActiveElement(Element, generalElement.Value, generalElement.Key, true);
+                foreach (KeyValuePair<string, string> fishElement in fishElements) SetActiveElement(Element, fishElement.Value, fishElement.Key, false);
             }
 
             if (ItemType is ItemDrop.ItemData.ItemType.Bow)
@@ -970,6 +1986,8 @@ public static class Patches
                 // foreach (KeyValuePair<string, string> equipmentElement in equipmentElements) SetActiveElement(Element, equipmentElement.Value, equipmentElement.Key, true);
                 // foreach (KeyValuePair<string, string> weaponElement in weaponElements) SetActiveElement(Element, weaponElement.Value, weaponElement.Key, true);
                 // foreach (KeyValuePair<string, string> bowElement in bowElements) SetActiveElement(Element, bowElement.Value, bowElement.Key, true);
+                // foreach (KeyValuePair<string, string> generalElement in generalElements) SetActiveElement(Element, generalElement.Value, generalElement.Key, true);
+                foreach (KeyValuePair<string, string> fishElement in fishElements) SetActiveElement(Element, fishElement.Value, fishElement.Key, false);
             }
             
             if (ItemType is ItemDrop.ItemData.ItemType.Fish)
@@ -979,6 +1997,9 @@ public static class Patches
                 foreach (KeyValuePair<string, string> equipmentElement in equipmentElements) SetActiveElement(Element, equipmentElement.Value, equipmentElement.Key, false);
                 foreach (KeyValuePair<string, string> weaponElement in weaponElements) SetActiveElement(Element, weaponElement.Value, weaponElement.Key, false);
                 foreach (KeyValuePair<string, string> bowElement in bowElements) SetActiveElement(Element, bowElement.Value, bowElement.Key, false);
+                foreach (KeyValuePair<string, string> generalElement in generalElements) SetActiveElement(Element, generalElement.Value, generalElement.Key, false);
+                // foreach (KeyValuePair<string, string> generalElement in generalElements) SetActiveElement(Element, generalElement.Value, generalElement.Key, true);
+                foreach (KeyValuePair<string, string> fishElement in fishElements) SetActiveElement(Element, fishElement.Value, fishElement.Key, true);
             }
 
             if (ItemType 
@@ -991,10 +2012,10 @@ public static class Patches
                 // foreach (KeyValuePair<string, string> equipmentElement in equipmentElements) SetActiveElement(Element, equipmentElement.Value, equipmentElement.Key, true);
                 // foreach (KeyValuePair<string, string> weaponElement in weaponElements) SetActiveElement(Element, weaponElement.Value, weaponElement.Key, true);
                 foreach (KeyValuePair<string, string> bowElement in bowElements) SetActiveElement(Element, bowElement.Value, bowElement.Key, false);
+                // foreach (KeyValuePair<string, string> generalElement in generalElements) SetActiveElement(Element, generalElement.Value, generalElement.Key, true);
+                foreach (KeyValuePair<string, string> fishElement in fishElements) SetActiveElement(Element, fishElement.Value, fishElement.Key, false);
             }
         }
-        
-
         private static string GetTagFromID(string id)
         {
             switch (id)
@@ -1365,7 +2386,7 @@ public static class Patches
         {
             TextInfo textInfo = CultureInfo.CurrentCulture.TextInfo;
             var result = new CreatureDataCollector.CreatureData();
-            for (var i = data.Count - 1; i >= 0; --i)
+            for (int i = data.Count - 1; i >= 0; --i)
             {
                 var creature = data[i];
                 var displayName = Localization.instance.Localize(creature.display_name);
@@ -1410,25 +2431,6 @@ public static class Patches
 
         private static List<CreatureDataCollector.CreatureData> GetAllCreatureData()
         {
-            // string yamlFilePath = CreatureDataCollector.outputFilePath;
-            // List<CreatureDataCollector.CreatureData> CreatureData;
-            // if (File.Exists(yamlFilePath))
-            // {
-            //     string yamlContents = File.ReadAllText(yamlFilePath);
-            //     Deserializer deserializer = new Deserializer();
-            //     CreatureData = deserializer.Deserialize<List<CreatureDataCollector.CreatureData>>(yamlContents);
-            // }
-            // else
-            // {
-            //     AlmanacPlugin.AlmanacLogger.Log(LogLevel.Message,
-            //         "Almanac Creature Data YAML file missing, generating...");
-            //     CreatureDataCollector.CollectAndSaveCreatureData();
-            //     string yamlContents = File.ReadAllText(yamlFilePath);
-            //     Deserializer deserializer = new Deserializer();
-            //     CreatureData = deserializer.Deserialize<List<CreatureDataCollector.CreatureData>>(yamlContents);
-            // }
-            //
-            // return CreatureData;
             return Almanac.CreateAlmanac.creatures;
         }
     }

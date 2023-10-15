@@ -10,7 +10,7 @@ using HarmonyLib;
 using JetBrains.Annotations;
 using YamlDotNet.Serialization;
 
-namespace LocalizationManager;
+namespace Almanac.Managers;
 
 [PublicAPI]
 public class Localizer

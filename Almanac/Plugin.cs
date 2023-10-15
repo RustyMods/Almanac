@@ -1,12 +1,12 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
+using Almanac.Managers;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 using JetBrains.Annotations;
-using LocalizationManager;
 using ServerSync;
 using UnityEngine;
 
@@ -41,6 +41,9 @@ namespace Almanac
             Off = 0
         }
 
+        public static Sprite questionMarkIcon = null!;
+        public static Sprite AlmanacIconButton = null!;
+
         public void Awake()
         {
             _serverConfigLocked = config("1 - General", "Lock Configuration", Toggle.On,
@@ -55,10 +58,13 @@ namespace Almanac
             _immuneColorConfig = config("2 - Resistance Colors", "Immune", new Color(0.5f, 0.5f, 1f, 1f), "Color code for immune damages", false);
             _ignoreColorConfig = config("2 - Resistance Colors", "Ignore", new Color(0.5f, 0.5f, 1f, 1f), "Color code for ignore damages", false);
 
-            _CreatureKnowledgeLock = config("3 - Utilities", "Knowledge Wall", Toggle.On,
+            _KnowledgeLock = config("3 - Utilities", "Knowledge Wall", Toggle.On,
                 "If on, data is locked behind knowledge of item", true);
             Localizer.Load();
 
+            questionMarkIcon = SpriteManager.RegisterSprite("QuestionMark.png");
+            AlmanacIconButton = SpriteManager.RegisterSprite("AlmanacIconButton.png");
+            
             Assembly assembly = Assembly.GetExecutingAssembly();
             _harmony.PatchAll(assembly);
             SetupWatcher();
@@ -107,7 +113,7 @@ namespace Almanac
         public static ConfigEntry<Color> _ignoreColorConfig = null!;
         public static ConfigEntry<Color> _immuneColorConfig = null!;
 
-        public static ConfigEntry<Toggle> _CreatureKnowledgeLock = null!;
+        public static ConfigEntry<Toggle> _KnowledgeLock = null!;
 
 
         private ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description,

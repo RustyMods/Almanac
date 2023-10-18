@@ -34,13 +34,14 @@ public static class Patches
                 Localization.instance.Localize("$enemy_goblinking"),
                 Localization.instance.Localize("$enemy_seekerqueen")
             };
-            var uniqueVectorSet = new HashSet<Vector3>();
+            HashSet<Vector3> uniqueVectorSet = new HashSet<Vector3>();
             
             foreach (GameObject trophy in trophyList)
             {
-                var trophyName = trophy.transform.Find("name");
-                var trophyPos = trophy.transform.position;
-                var panelDisplayName = trophyName.gameObject.GetComponent<TextMeshProUGUI>().text;
+                Transform? trophyName = trophy.transform.Find("name");
+                Vector3 trophyPos = trophy.transform.position;
+                trophyName.TryGetComponent(out TextMeshProUGUI textMesh);
+                string panelDisplayName = textMesh.text;
                 
                 if (Localization.instance.Localize(panelDisplayName).ToLower().Contains("troll"))
                 {
@@ -132,8 +133,6 @@ public static class Patches
             closeButton = trophyFrame.Find("Closebutton");
         
             buttonSfx = closeButton.gameObject.GetComponent<ButtonSfx>();
-
-            // trophyPanel = __instance.m_trophiesPanel;
             
             creaturePanel = trophyFrame.transform.Find("creaturePanel");
             materialPanel = trophyFrame.transform.Find("materialPanel");
@@ -936,33 +935,6 @@ public static class Patches
                 }
             }
 
-            if (stationExtension)
-            {
-                CraftingStation? extensionCraftingStation = stationExtension.m_craftingStation;
-                Sprite extCraftIcon = extensionCraftingStation.m_icon;
-                SetImageElement(Element, "extensionCraftingStation", extCraftIcon, Color.white);
-                SetHoverableText(Element, "extensionCraftingStation", $"{extensionCraftingStation.m_name}");
-
-                Dictionary<string, string> stationExtensionConversionMap = new Dictionary<string, string>()
-                {
-                    { "stationDistance", $"{stationExtension.m_maxStationDistance}" },
-                    { "extensionStack", $"{stationExtension.m_stack}"}
-                };
-                foreach (KeyValuePair<string, string> extensionConversion in stationExtensionConversionMap)
-                {
-                    SetTextElement(Element, extensionConversion.Key, extensionConversion.Value);
-                }
-                List<string> extensionLabels = new List<string>()
-                {
-                    "maxStationDistanceLabel",
-                    "extensionStationStackLabel"
-                };
-                foreach (string extensionLabel in extensionLabels)
-                {
-                    SetActiveElement(Element, "TextElement", extensionLabel, true);
-                }
-            }
-
             if (door)
             {
                 ItemDrop? key = door.m_keyItem;
@@ -1214,6 +1186,33 @@ public static class Patches
                     SetImageElement(toBackground, "item", toIcon, isToKnown ? Color.white : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white);
                     
                     SetTextElement(toBackground, "produceAmount", $"{producedItems}");
+                }
+            }
+            
+            if (stationExtension && !fermenter)
+            {
+                CraftingStation? extensionCraftingStation = stationExtension.m_craftingStation;
+                Sprite extCraftIcon = extensionCraftingStation.m_icon;
+                SetImageElement(Element, "extensionCraftingStation", extCraftIcon, Color.white);
+                SetHoverableText(Element, "extensionCraftingStation", $"{extensionCraftingStation.m_name}");
+
+                Dictionary<string, string> stationExtensionConversionMap = new Dictionary<string, string>()
+                {
+                    { "stationDistance", $"{stationExtension.m_maxStationDistance}" },
+                    { "extensionStack", $"{stationExtension.m_stack}"}
+                };
+                foreach (KeyValuePair<string, string> extensionConversion in stationExtensionConversionMap)
+                {
+                    SetTextElement(Element, extensionConversion.Key, extensionConversion.Value);
+                }
+                List<string> extensionLabels = new List<string>()
+                {
+                    "maxStationDistanceLabel",
+                    "extensionStationStackLabel"
+                };
+                foreach (string extensionLabel in extensionLabels)
+                {
+                    SetActiveElement(Element, "TextElement", extensionLabel, true);
                 }
             }
         }
@@ -2192,7 +2191,7 @@ public static class Patches
 
             for (var index = 0; index < 7; ++index)
             {
-                var bgElement = dummyElement.transform.Find($"ImageElement (iconBg ({index}))");
+                Transform bgElement = dummyElement.transform.Find($"ImageElement (iconBg ({index}))");
                 try
                 {
                     GameObject item = ObjectDB.instance.GetItemPrefab(creature.consumeItems[index]);

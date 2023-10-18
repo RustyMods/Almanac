@@ -71,18 +71,7 @@ public static class CreatureDataCollector
     {
         List<CreatureData> creatureData = GetCreatureData();
         creatureData.RemoveAt(0);
-        
-        foreach (var data in creatureData)
-        { 
-            RenameCreatureData(data);
-        }
-        
-        // Serializer serializer = new Serializer();
-        // string yamlData = serializer.Serialize(creatureData);
-        //
-        // File.WriteAllText(outputFilePath, yamlData);
-        // AlmanacPlugin.AlmanacLogger.Log(LogLevel.Info, "Creature data collected and saved YAML file to " + outputFilePath);
-
+        foreach (var data in creatureData) RenameCreatureData(data);
         return creatureData;
     }
 
@@ -114,10 +103,10 @@ public static class CreatureDataCollector
         foreach (GameObject obj in array)
         {
             CreatureData creatureData = new CreatureData();
-            Character characterScript = obj.GetComponent<Character>();
-            Humanoid humanoidScript = obj.GetComponent<Humanoid>();
-            MonsterAI monsterAIScript = obj.GetComponent<MonsterAI>();
-            AnimalAI animalAI = obj.GetComponent<AnimalAI>();
+            obj.TryGetComponent(out Character characterScript);
+            obj.TryGetComponent(out Humanoid humanoidScript);
+            obj.TryGetComponent(out MonsterAI monsterAIScript);
+            obj.TryGetComponent(out AnimalAI animalAI);
             if (obj.name.Contains("(Clone)") || obj.name is "DvergerTest" or "TheHive" or "Hive") continue;
             if (humanoidScript)
             {
@@ -179,20 +168,18 @@ public static class CreatureDataCollector
         try
         {
             var characterDrop = prefab.GetComponent<CharacterDrop>();
-            if (characterDrop)
+            if (!characterDrop) return;
+            List<string> dropList = new List<string>(); 
+            List<CharacterDrop.Drop> drops = characterDrop.m_drops;
+            foreach (CharacterDrop.Drop drop in drops)
             {
-                List<string> dropList = new List<string>();
-                var drops = characterDrop.m_drops;
-                foreach (var drop in drops)
+                dropList.Add(drop.m_prefab.name);
+                if (drop.m_prefab.name.Contains("Trophy") && drop.m_prefab.name != "TrophyAmber_coe")
                 {
-                    dropList.Add(drop.m_prefab.name);
-                    if (drop.m_prefab.name.Contains("Trophy") && drop.m_prefab.name != "TrophyAmber_coe")
-                    {
-                        data.trophyName = drop.m_prefab.GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
-                    }
+                    data.trophyName = drop.m_prefab.GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
                 }
-                data.drops = dropList;
             }
+            data.drops = dropList;
         }
         catch (Exception)
         {
@@ -267,9 +254,9 @@ public static class CreatureDataCollector
             data.staggerDamageFactor = script.m_staggerDamageFactor;
             
             List<string> weakSpots = new List<string>();
-            foreach (var weakspot in script.m_weakSpots)
+            foreach (WeakSpot weakSpot in script.m_weakSpots)
             {
-                weakSpots.Add(weakspot.name);
+                weakSpots.Add(weakSpot.name);
             }
 
             data.weakSpot = weakSpots;
@@ -284,15 +271,19 @@ public static class CreatureDataCollector
     {
         try
         {
-            var defaultItems = script.m_defaultItems;
-            var randomWeapons = script.m_randomWeapon;
-            var randomSets = script.m_randomSets;
+            GameObject[] defaultItems = script.m_defaultItems;
+            GameObject[] randomWeapons = script.m_randomWeapon;
+            Humanoid.ItemSet[]? randomSets = script.m_randomSets;
                         
             List<AttackData> creatureAttackData = new List<AttackData>();
                         
-            if (defaultItems != null) foreach (var item in defaultItems) SaveAttackData(item, creatureAttackData);
-            if (randomWeapons != null) foreach (var weapon in randomWeapons) SaveAttackData(weapon, creatureAttackData);
-            if (randomSets != null) foreach (var set in randomSets) foreach (var attackItem in set.m_items) SaveAttackData(attackItem, creatureAttackData);
+            if (defaultItems != null) foreach (GameObject item in defaultItems) SaveAttackData(item, creatureAttackData);
+            if (randomWeapons != null) foreach (GameObject weapon in randomWeapons) SaveAttackData(weapon, creatureAttackData);
+            if (randomSets != null)
+                foreach (Humanoid.ItemSet set in randomSets)
+                {
+                    foreach (GameObject? attackItem in set.m_items) SaveAttackData(attackItem, creatureAttackData);
+                }
             data.defaultItems = creatureAttackData;
         }
         catch (Exception)
@@ -307,8 +298,8 @@ public static class CreatureDataCollector
         if (!itemDrop) return;
         try
         {
-            var sharedData = itemDrop.m_itemData.m_shared;
-            var damages = sharedData.m_damages;
+            ItemDrop.ItemData.SharedData? sharedData = itemDrop.m_itemData.m_shared;
+            HitData.DamageTypes damages = sharedData.m_damages;
             attackData.name = prefab.name;
             attackData.damage = damages.m_damage;
             attackData.blunt = damages.m_blunt;

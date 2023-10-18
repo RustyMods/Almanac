@@ -3755,7 +3755,7 @@ public static class Almanac
             text.overflowMode = overflowModes;
             text.color = color;
             text.isOverlay = true;
-            text.enableAutoSizing = true; // makes text invisible ?
+            text.enableAutoSizing = true; 
             text.autoSizeTextContainer = false;
             text.horizontalAlignment = horizontalAlignment;
             text.verticalAlignment = verticalAlignment;

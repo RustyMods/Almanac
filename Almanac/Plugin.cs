@@ -1,7 +1,13 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Net.WebSockets;
 using System.Reflection;
 using Almanac.Managers;
+using Almanac.UI;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
@@ -9,6 +15,9 @@ using HarmonyLib;
 using JetBrains.Annotations;
 using ServerSync;
 using UnityEngine;
+using UnityEngine.Rendering;
+using YamlDotNet.Serialization;
+using CompressionLevel = UnityEngine.CompressionLevel;
 
 
 namespace Almanac
@@ -27,8 +36,8 @@ namespace Almanac
 
         public static readonly ManualLogSource AlmanacLogger =
             BepInEx.Logging.Logger.CreateLogSource(ModName);
-        
-        private static readonly ConfigSync ConfigSync = new(ModGUID)
+
+        public static readonly ConfigSync ConfigSync = new(ModGUID)
             { 
                 DisplayName = ModName, 
                 ModRequired = false,
@@ -43,6 +52,15 @@ namespace Almanac
 
         public static Sprite? questionMarkIcon;
         public static Sprite? AlmanacIconButton;
+
+        public enum WorkingAs
+        {
+            Client,
+            Server,
+            Both
+        }
+
+        public static WorkingAs WorkingAsType;
 
         public void Awake()
         {
@@ -60,6 +78,10 @@ namespace Almanac
 
             _KnowledgeLock = config("3 - Utilities", "Knowledge Wall", Toggle.On,
                 "If on, data is locked behind knowledge of item", true);
+            
+            WorkingAsType = SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null
+                ? WorkingAs.Server : WorkingAs.Client;
+            
             Localizer.Load();
 
             questionMarkIcon = SpriteManager.RegisterSprite("QuestionMark.png");
@@ -68,6 +90,8 @@ namespace Almanac
             Assembly assembly = Assembly.GetExecutingAssembly();
             _harmony.PatchAll(assembly);
             SetupWatcher();
+            
+            BlackList.InitBlackList();
         }
 
         private void OnDestroy()
@@ -101,10 +125,8 @@ namespace Almanac
             }
         }
 
-
         #region ConfigOptions
         private static ConfigEntry<Toggle> _serverConfigLocked = null!;
-        
         public static ConfigEntry<Color> _normalColorConfig = null!;
         public static ConfigEntry<Color> _weakColorConfig = null!;
         public static ConfigEntry<Color> _veryWeakColorConfig = null!;
@@ -112,9 +134,7 @@ namespace Almanac
         public static ConfigEntry<Color> _veryResistantColorConfig = null!;
         public static ConfigEntry<Color> _ignoreColorConfig = null!;
         public static ConfigEntry<Color> _immuneColorConfig = null!;
-
         public static ConfigEntry<Toggle> _KnowledgeLock = null!;
-
 
         private ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description,
             bool synchronizedSetting = true)

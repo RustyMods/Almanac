@@ -82,6 +82,9 @@
         <Reference Include="System" />
         <Reference Include="System.Core" />
         <Reference Include="System.Data" />
+        <Reference Include="System.Net.WebSockets">
+          <HintPath>..\..\..\..\..\..\..\Windows\Microsoft.NET\Framework64\v4.0.30319\System.Net.WebSockets.dll</HintPath>
+        </Reference>
         <Reference Include="System.Xml" />
         <Reference Include="Unity.TextMeshPro">
           <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Valheim\unstripped_corlib\Unity.TextMeshPro.dll</HintPath>
@@ -128,6 +131,7 @@
         <Compile Include="Plugin.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="UI\Almanac.cs" />
+        <Compile Include="UI\BlackList.cs" />
         <Compile Include="UI\CreatureDataCollector.cs" />
         <Compile Include="UI\Patches.cs" />
         <Compile Include="VersionHandshake.cs" />

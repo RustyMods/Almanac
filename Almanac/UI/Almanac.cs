@@ -78,7 +78,8 @@ public static class Almanac
 
             Transform closeButton = TrophiesFrame.Find("Closebutton");
             Transform closeButtonText = closeButton.Find("Text");
-            TextMeshProUGUI TextMeshProUGui = closeButtonText.GetComponent<TextMeshProUGUI>();
+            
+            closeButtonText.TryGetComponent(out TextMeshProUGUI TextMeshProUGui);
             
             cloneTextMesh = TextMeshProUGui;
             font = TextMeshProUGui.font;
@@ -221,7 +222,6 @@ public static class Almanac
             EditInventoryGUI();
             RepositionTrophyPanel(-220f, 0f);
             CreateAlmanacPanel();
-            // CreateAddNewItemsButton();
             CreateCreaturesPanel();
             CreateMaterialPanel();
             consumablePanel = CreatePanel("consummable", consummables);
@@ -285,204 +285,7 @@ public static class Almanac
             }
             return output;
         }
-        private static void CreateAddNewItemsButton()
-        {
-            GameObject RegenerateButton = new GameObject("AddNewButton");
-            RectTransform buttonRectTransform = RegenerateButton.AddComponent<RectTransform>();
-            buttonRectTransform.SetParent(TrophiesPanel);
-            buttonRectTransform.anchoredPosition = new Vector2(660f, -425f);
-            buttonRectTransform.sizeDelta = new Vector2(170f, 46f);
-
-            Image regenerateImage = RegenerateButton.AddComponent<Image>();
-            regenerateImage.sprite = closeButtonImage.sprite;
-            regenerateImage.color = closeButtonImage.color;
-            regenerateImage.material = closeButtonImage.material;
-            regenerateImage.raycastTarget = true;
-            regenerateImage.maskable = true;
-            regenerateImage.type = closeButtonImage.type;
-            regenerateImage.fillCenter = true;
-            regenerateImage.pixelsPerUnitMultiplier = 1f;
-
-            Button button = RegenerateButton.AddComponent<Button>();
-            button.interactable = true;
-            button.targetGraphic = regenerateImage;
-            button.transition = Selectable.Transition.SpriteSwap;
-            button.spriteState = new SpriteState()
-            {
-                highlightedSprite = closeButtonScript.spriteState.highlightedSprite,
-                pressedSprite = closeButtonScript.spriteState.pressedSprite,
-                selectedSprite = closeButtonScript.spriteState.selectedSprite,
-                disabledSprite = closeButtonScript.spriteState.disabledSprite
-            };
-            button.onClick = new Button.ButtonClickedEvent();
-            button.onClick.AddListener(() =>
-            {
-                var currentAmmo = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Ammo, "");
-                var currentAmmoNonEquip = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.AmmoNonEquipable, "");
-                var currentConsumables = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Consumable, "");
-                var currentCustamizations = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Customization, "");
-                var currentBow = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Bow, "");
-                var currentChest = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Chest, "");
-                var currentFish = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Fish, "");
-                var currentHands = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Hands, "");
-                var currentHelmets = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Helmet, "");
-                var currentLegs = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Legs, "");
-                var currentMaterials = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Material, "");
-                var currentMisc = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Misc, "");
-                var currentNone = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.None, "");
-                var currentShield = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Shield, "");
-                var currentShoulders = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Shoulder, "");
-                var currentTools = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Tool, "");
-                var currentTorches = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Torch, "");
-                var currentUtilities = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Utility, "");
-                var currentAttachAtgeirs = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Attach_Atgeir, "");
-                var currentOneHanded = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.OneHandedWeapon, "");
-                var currentTwoHanded = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.TwoHandedWeapon, "");
-                var currentTwoHandedLeft = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.TwoHandedWeaponLeft, "");
-                
-                List<ItemDrop> gearList = new List<ItemDrop>();
-                gearList.AddRange(currentHelmets);
-                gearList.AddRange(currentChest);
-                gearList.AddRange(currentLegs);
-                gearList.AddRange(currentShoulders);
-                gearList.AddRange(currentUtilities);
-                gearList.AddRange(currentCustamizations);
-                gearList.AddRange(currentMisc);
-
-                List<ItemDrop> weaponList = new List<ItemDrop>();
-                weaponList.AddRange(currentOneHanded);
-                weaponList.AddRange(currentBow);
-                weaponList.AddRange(currentShield);
-                weaponList.AddRange(currentTwoHanded);
-                weaponList.AddRange(currentHands);
-                weaponList.AddRange(currentTorches);
-                weaponList.AddRange(currentTools);
-                weaponList.AddRange(currentAttachAtgeirs);
-                weaponList.AddRange(currentTwoHandedLeft);
-            
-                List<ItemDrop> ammunition = new List<ItemDrop>();
-                ammunition.AddRange(currentAmmo);
-                ammunition.AddRange(currentAmmoNonEquip);
-
-                var currentGearList = GetValidItemDropList(gearList);
-                var currentAmmoList = GetValidItemDropList(ammunition);
-                var currentWeaponList = GetValidItemDropList(weaponList);
-
-                if (currentGearList.Count != gear.Count)
-                {
-                    AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"equipment : {currentGearList.Count} vs {gear.Count})");
-                    var differences = currentGearList.Except(gear);
-                    foreach (var difference in differences)
-                    {
-                        var name = difference.m_itemData.m_shared.m_name;
-                        AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"{name}");
-                        TryAddContainerToPanel(
-                            equipmentPanel, 
-                            "gear", 
-                            difference, 
-                            currentGearList, 
-                            currentGearList.Count - gear.Count
-                        );
-                    }
-                }
-
-                if (currentWeaponList.Count != weapons.Count)
-                {
-                    AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"weapons : {currentWeaponList.Count} vs {weapons.Count})");
-                    var differences = currentWeaponList.Except(weapons);
-                    foreach (var difference in differences)
-                    {
-                        var name = difference.m_itemData.m_shared.m_name;
-                        AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"{name}");
-                        TryAddContainerToPanel(
-                            WeaponPanel, 
-                            "weapon", 
-                            difference, 
-                            currentWeaponList, 
-                            currentWeaponList.Count - weapons.Count
-                        );
-                    }
-                }
-
-                if (currentAmmoList.Count != ammunitions.Count)
-                {
-                    AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"ammo : {currentAmmo.Count} vs {ammunitions.Count})");
-                    var differences = currentAmmo.Except(ammunitions);
-                    foreach (var difference in differences)
-                    {
-                        var name = difference.m_itemData.m_shared.m_name;
-                        AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"{name}");
-                        TryAddContainerToPanel(
-                            projectilePanel, 
-                            "ammo", 
-                            difference, 
-                            currentAmmo, 
-                            currentAmmo.Count - ammunitions.Count
-                        );
-                    }
-                }
-
-                if (currentMaterials.Count != materials.Count)
-                {
-                    AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"materials : {currentMaterials.Count} vs {materials.Count})");
-                    var differences = currentMaterials.Except(materials);
-                    foreach (var difference in differences)
-                    {
-                        var name = difference.m_itemData.m_shared.m_name;
-                        AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"{name}");
-                        TryAddContainerToPanel(
-                            materialPanel, 
-                            "material", 
-                            difference, 
-                            currentMaterials, 
-                            currentMaterials.Count - materials.Count
-                        );
-                    }
-                }
-
-                if (currentConsumables.Count != consummables.Count)
-                {
-                    AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"consumables : {currentConsumables.Count} vs {consummables.Count})");
-                    var differences = currentConsumables.Except(consummables);
-                    foreach (var difference in differences)
-                    {
-                        var name = difference.m_itemData.m_shared.m_name;
-                        AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"{name}");
-                        TryAddContainerToPanel(
-                            consumablePanel, 
-                            "consummable", 
-                            difference, 
-                            currentConsumables, 
-                            currentConsumables.Count - consummables.Count
-                        );
-                    }
-                }
-            });
-
-            GameObject text = new GameObject("RefreshText");
-            RectTransform textRect = text.AddComponent<RectTransform>();
-            textRect.SetParent(RegenerateButton.transform);
-            textRect.anchoredPosition = new Vector2(0f, 0f);
-            textRect.sizeDelta = new Vector2(150f, 40f);
-
-            TextMeshProUGUI textContent = text.AddComponent<TextMeshProUGUI>();
-            textContent.font = font;
-            textContent.text = Localization.instance.Localize("Refresh");
-            textContent.fontSize = 17;
-            textContent.autoSizeTextContainer = false;
-            textContent.horizontalAlignment = HorizontalAlignmentOptions.Center;
-            textContent.verticalAlignment = VerticalAlignmentOptions.Middle;
-            textContent.color = new Color(0.8f, 0.5f, 0f, 1f);
-            textContent.overflowMode = TextOverflowModes.ScrollRect;
-            textContent.textWrappingMode = TextWrappingModes.Normal;
-
-            textContent.fontSizeMin = 2;
-            textContent.fontSizeMax = 17;
-            textContent.enableAutoSizing = true;
-
-            var sfx = RegenerateButton.AddComponent<ButtonSfx>();
-            sfx.m_sfxPrefab = closeButtonSfx.m_sfxPrefab;
-        }
+        
         private static void CreateTabs(string id, string name, float anchorX, float anchorY)
         {
             GameObject TrophiesButton = new GameObject(id);
@@ -618,9 +421,9 @@ public static class Almanac
         }
         private static GameObject CreatePanel(string id, List<ItemDrop> list)
         {
-            var trophies = TrophiesFrame.Find("Trophies");
+            Transform trophies = TrophiesFrame.Find("Trophies");
             
-            var panel = new GameObject($"{id}Panel") { layer = 5 };
+            GameObject panel = new GameObject($"{id}Panel") { layer = 5 };
 
             RectTransform panelRect = panel.AddComponent<RectTransform>();
             panelRect.SetParent(TrophiesFrame);
@@ -629,7 +432,7 @@ public static class Almanac
 
             panel.SetActive(false);
 
-            var background = new GameObject($"{id}Background");
+            GameObject background = new GameObject($"{id}Background");
             RectTransform rectTransform = background.AddComponent<RectTransform>();
             rectTransform.SetParent(panel.transform);
             rectTransform.anchoredPosition = new Vector2(0f, 0f);
@@ -671,41 +474,7 @@ public static class Almanac
 
             return panel;
         }
-
-        private static void TryAddContainerToPanel(GameObject panel, string id, ItemDrop data, List<ItemDrop> newList, int differenceCount)
-        {
-            
-            int pages = Mathf.CeilToInt(newList.Count / 72f);
-
-            for (int i = newList.Count - differenceCount; i < newList.Count; ++i)
-            {
-                int wrappedIndex = i % 72;
-                int rowIndex = wrappedIndex / 12;
-                int colIndex = wrappedIndex % 12;
-
-                float x = -577f + colIndex * 105f;
-                float y = 275f - rowIndex * 110f;
-                Vector2 pos = new Vector2(x, y);
-
-                try
-                {
-                    Transform? possibleContainer = panel.transform.Find($"{id}Container ({i})");
-                }
-                catch (Exception e)
-                {
-                    try
-                    {
-                        CreateContainer(panel.transform, data, i, pos, id);
-                    }
-                    catch (IndexOutOfRangeException)
-                    {
-                        CreateContainerWithoutSprite(panel.transform, data, i, pos, id);
-                    }
-                }
-
-            }
-            
-        }
+        
         private static void CreatePageButtons(Transform parentElement, int index, int pageSize, string id, List<GameObject> list)
         {
             GameObject obj = new GameObject($"Button ({index})") { layer = 5 };
@@ -758,12 +527,14 @@ public static class Almanac
                 {
                     try
                     {
-                        var element = parentElement.Find($"{id} ({i})");
+                        Transform element = parentElement.Find($"{id} ({i})");
+                        string prefab = list[i].name;
                         float min = (index * pageSize);
                         float max = min + pageSize;
                         if (i >= min && i < max)
                         {
-                            element.gameObject.SetActive(true);
+                            // element.gameObject.SetActive(true);
+                            element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
                         }
                         else
                         {
@@ -829,12 +600,57 @@ public static class Almanac
                 {
                     try
                     {
-                        var element = parentElement.Find($"{id} ({i})");
+                        Transform element = parentElement.Find($"{id} ({i})");
+                        string prefab = list[i].name;
                         float min = (index * pageSize);
                         float max = min + pageSize;
                         if (i >= min && i < max)
                         {
-                            element.gameObject.SetActive(true);
+                            // element.gameObject.SetActive(true);
+                            switch (id)
+                            {
+                                case "creatureContainer": 
+                                    element.gameObject.SetActive(!BlackList.CreatureBlackList.Value.Contains(prefab));
+                                    break;
+                                case "materialContainer": 
+                                    element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
+                                    break;
+                                case "consummableContainer": 
+                                    element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
+                                    break;
+                                case "weaponContainer": 
+                                    element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
+                                    break;
+                                case "gearContainer": 
+                                    element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
+                                    break;
+                                case "ammoContainer": 
+                                    element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
+                                    break;
+                                case "fishContainer": 
+                                    element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
+                                    break;
+                                case "miscPiecesContainer":
+                                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
+                                    break;
+                                case "craftingPiecesContainer":
+                                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
+                                    break;
+                                case "buildPiecesContainer":
+                                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
+                                    break;
+                                case "furniturePiecesContainer":
+                                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
+                                    break;
+                                case "piecesContainer":
+                                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
+                                    break;
+                                case "plantPieces":
+                                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
+                                    break;
+                                default:
+                                    break;
+                            }
                         }
                         else
                         {
@@ -962,9 +778,9 @@ public static class Almanac
             containerButton.onClick = new Button.ButtonClickedEvent();
             containerButton.onClick.AddListener(() =>
             {
-                var AlmanacPanel = TrophiesFrame.Find("ContentPanel");
-                var AlmanacList = AlmanacPanel.Find("AlmanacList");
-                var element = AlmanacList.Find($"{id}Element (0)");
+                Transform AlmanacPanel = TrophiesFrame.Find("ContentPanel");
+                Transform AlmanacList = AlmanacPanel.Find("AlmanacList");
+                Transform element = AlmanacList.Find($"{id}Element (0)");
                 SetActiveElement(id);
                 Patches.OnOpenTrophiesPatch.SetItemsData(element.gameObject, data);
             });
@@ -1028,9 +844,9 @@ public static class Almanac
             containerButton.onClick = new Button.ButtonClickedEvent();
             containerButton.onClick.AddListener(() =>
             {
-                var AlmanacPanel = TrophiesFrame.Find("ContentPanel");
-                var AlmanacList = AlmanacPanel.Find("AlmanacList");
-                var element = AlmanacList.Find($"{id}Element (0)");
+                Transform AlmanacPanel = TrophiesFrame.Find("ContentPanel");
+                Transform AlmanacList = AlmanacPanel.Find("AlmanacList");
+                Transform element = AlmanacList.Find($"{id}Element (0)");
                 SetActiveElement(id);
                 Patches.OnOpenTrophiesPatch.SetItemsData(element.gameObject, data);
             });
@@ -1132,12 +948,15 @@ public static class Almanac
             {
                 for (int i = 0; i < materials.Count; ++i)
                 {
-                    var element = parentElement.Find($"materialContainer ({i})");
+                    Transform element = parentElement.Find($"materialContainer ({i})");
+                    string prefab = materials[i].name;
                     float min = (index * pageSize);
                     float max = min + pageSize;
                     if (i >= min && i < max)
                     {
-                        element.gameObject.SetActive(true);
+                        // element.gameObject.SetActive(true);
+                        element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
+
                     }
                     else
                     {
@@ -1199,9 +1018,9 @@ public static class Almanac
             containerButton.onClick = new Button.ButtonClickedEvent();
             containerButton.onClick.AddListener(() =>
             {
-                var AlmanacPanel = TrophiesFrame.Find("ContentPanel");
-                var AlmanacList = AlmanacPanel.Find("AlmanacList");
-                var MaterialElement = AlmanacList.Find("materialElement (0)");
+                Transform AlmanacPanel = TrophiesFrame.Find("ContentPanel");
+                Transform AlmanacList = AlmanacPanel.Find("AlmanacList");
+                Transform MaterialElement = AlmanacList.Find("materialElement (0)");
                 SetActiveElement("material");
                 Patches.OnOpenTrophiesPatch.SetItemsData(MaterialElement.gameObject, data);
             });
@@ -1209,17 +1028,17 @@ public static class Almanac
 
         private static void SetActiveElement(string name)
         {
-            var AlmanacPanel = TrophiesFrame.Find("ContentPanel");
-            var AlmanacList = AlmanacPanel.Find("AlmanacList");
-            var MaterialElement = AlmanacList.Find("materialElement (0)");
-            var AlmanacElement = AlmanacList.Find("AlmanacElement (0)");
-            var ConsumableElement = AlmanacList.Find("consummableElement (0)");
-            var GearElement = AlmanacList.Find("gearElement (0)");
-            var WelcomePanel = AlmanacPanel.Find("WelcomePanel (0)");
-            var AmmoElement = AlmanacList.Find("ammoElement (0)");
-            var weaponElement = AlmanacList.Find("weaponElement (0)");
-            var fishElement = AlmanacList.Find("fishElement (0)");
-            var piecesElement = AlmanacList.Find("piecesElement (0)");
+            Transform AlmanacPanel = TrophiesFrame.Find("ContentPanel");
+            Transform AlmanacList = AlmanacPanel.Find("AlmanacList");
+            Transform MaterialElement = AlmanacList.Find("materialElement (0)");
+            Transform AlmanacElement = AlmanacList.Find("AlmanacElement (0)");
+            Transform ConsumableElement = AlmanacList.Find("consummableElement (0)");
+            Transform GearElement = AlmanacList.Find("gearElement (0)");
+            Transform WelcomePanel = AlmanacPanel.Find("WelcomePanel (0)");
+            Transform AmmoElement = AlmanacList.Find("ammoElement (0)");
+            Transform weaponElement = AlmanacList.Find("weaponElement (0)");
+            Transform fishElement = AlmanacList.Find("fishElement (0)");
+            Transform piecesElement = AlmanacList.Find("piecesElement (0)");
 
             WelcomePanel.gameObject.SetActive(name == "welcome");
             MaterialElement.gameObject.SetActive(name == "material");
@@ -1319,12 +1138,14 @@ public static class Almanac
             {
                 for (int i = 0; i < creatures.Count; ++i)
                 {
-                    var element = parentElement.Find($"CreatureContainer ({i})");
+                    Transform element = parentElement.Find($"CreatureContainer ({i})");
+                    string prefab = creatures[i].name;
                     float min = (index * 100);
                     float max = min + 100;
                     if (i >= min && i < max)
                     {
-                        element.gameObject.SetActive(true);
+                        // Check against blacklist
+                        element.gameObject.SetActive(!BlackList.CreatureBlackList.Value.Contains(prefab));
                     }
                     else
                     {

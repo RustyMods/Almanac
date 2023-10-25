@@ -82,6 +82,7 @@ almanac_food_title: "Nourriture"
 almanac_stat_modifiers_title: "Modifieurs"
 almanac_equipment_title: "Équipement"
 
+almanac_teleportable: "Peut être téléporté"
 almanac_not_teleportable: "Ne peut pas être téléporté"
 almanac_locked: "???"
 almanac_weight: "Poids"
@@ -135,7 +136,12 @@ almanac_item_can_not_float: "Item n'est pas flottant"
 
 almanac_fish_bait_label: "Appâts pour la pêche"
 almanac_fish_drops_title: "Gouttes supplémentaires"
-# Pieces
+
+# Build Pieces
+almanac_other_button: "Other"
+almanac_biomes_all: "Disponible dans tous les biomes"
+
+# General
 almanac_name: "Almanach"
 almanac_comfort_label: "Bonus de confort"
 almanac_extension_label: "Bonus de station d'extension"
@@ -196,3 +202,4 @@ almanac_buildPieces_button: "Construction"
 almanac_craftingPieces_button: "Artisanat"
 almanac_miscPieces_button: "Divers"
 almanac_plantPieces_button: "Plantes"
+almanac_modPieces_button: "Extra"

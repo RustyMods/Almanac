@@ -134,7 +134,7 @@ public static class Patches
 
         private static ButtonSfx buttonSfx = null!;
         private static readonly List<string> modifiersTags = new() { "blunt", "slash", "pierce", "chop", "pickaxe", "fire", "frost", "lightning", "poison", "spirit" };
-        private static AlmanacPlugin.Toggle toggle;
+        private static AlmanacPlugin.Toggle knowledgeLockToggle;
         
         private static void Postfix(InventoryGui __instance)
         {
@@ -152,7 +152,7 @@ public static class Patches
             
             AlmanacElement = AlmanacList.transform.Find("AlmanacElement (0)");
 
-            toggle = AlmanacPlugin._KnowledgeLock.Value;
+            knowledgeLockToggle = AlmanacPlugin._KnowledgeLock.Value;
             
             foreach (GameObject trophy in trophyList) AddButtonComponent(trophy);
             
@@ -169,8 +169,9 @@ public static class Patches
             SetUnknownPieces("craftingPieces", Almanac.CreateAlmanac.craftingPieces);
             SetUnknownPieces("buildPieces", Almanac.CreateAlmanac.buildPieces);
             SetUnknownPieces("furniturePieces", Almanac.CreateAlmanac.furniturePieces);
-            // SetUnknownPieces("pieces", Almanac.CreateAlmanac.defaultPieces);
+            // SetUnknownPieces("other", Almanac.CreateAlmanac.defaultPieces);
             SetUnknownPieces("plantPieces", Almanac.CreateAlmanac.plantPieces);
+            SetUnknownPieces("modPieces", Almanac.CreateAlmanac.modPieces);
         }
 
         private static void SetUnknownPieces(string id, List<GameObject> list)
@@ -192,9 +193,9 @@ public static class Patches
                 bool isRecipeKnown = Player.m_localPlayer.IsRecipeKnown(name);
                 string localizedName = Localization.instance.Localize(name);
                 
-                button.interactable = toggle != AlmanacPlugin.Toggle.On || isRecipeKnown;
-                textMesh.text = toggle == AlmanacPlugin.Toggle.On ? isRecipeKnown ? localizedName : "???" : localizedName;
-                iconImage.color = toggle == AlmanacPlugin.Toggle.On
+                button.interactable = knowledgeLockToggle != AlmanacPlugin.Toggle.On || isRecipeKnown;
+                textMesh.text = knowledgeLockToggle == AlmanacPlugin.Toggle.On ? isRecipeKnown ? localizedName : "???" : localizedName;
+                iconImage.color = knowledgeLockToggle == AlmanacPlugin.Toggle.On
                     ? isRecipeKnown ? Color.white : Color.black
                     : Color.white;
             }
@@ -216,7 +217,7 @@ public static class Patches
                 string? faction = creatures[i].faction;
                 bool isWise = true;
                 
-                if (toggle == AlmanacPlugin.Toggle.On)
+                if (knowledgeLockToggle == AlmanacPlugin.Toggle.On)
                 {
                     HashSet<string> globalKeys = Player.m_localPlayer.m_uniques;
                     Dictionary<string, string> requiredKeys = new Dictionary<string, string>
@@ -271,9 +272,9 @@ public static class Patches
                 string localizedName = Localization.instance.Localize(name);
                 bool isKnown = Player.m_localPlayer.IsMaterialKnown(name);
                     
-                iconImage.color = toggle == AlmanacPlugin.Toggle.On ? (isKnown ? Color.white : Color.black) : Color.white;
-                text.text = toggle == AlmanacPlugin.Toggle.On ? (isKnown ? localizedName : "???") : localizedName;
-                button.interactable = toggle != AlmanacPlugin.Toggle.On || isKnown;
+                iconImage.color = knowledgeLockToggle == AlmanacPlugin.Toggle.On ? (isKnown ? Color.white : Color.black) : Color.white;
+                text.text = knowledgeLockToggle == AlmanacPlugin.Toggle.On ? (isKnown ? localizedName : "???") : localizedName;
+                button.interactable = knowledgeLockToggle != AlmanacPlugin.Toggle.On || isKnown;
                 // Check against blacklist
                 if (container.gameObject.activeSelf) container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
             }
@@ -826,7 +827,9 @@ public static class Patches
                     for (int i = 0; i < defaultItems.Count; i++)
                     {
                         if (i >= 12) continue;
-                        ItemDrop itemDropData = defaultItems[i].m_item.GetComponent<ItemDrop>();
+                        GameObject item = defaultItems[i].m_item;
+                        item.TryGetComponent(out ItemDrop itemDropData);
+                        
                         string dropName = itemDropData.m_itemData.m_shared.m_name;
                         Sprite dropIcon = itemDropData.m_itemData.GetIcon();
                         float weight = defaultItems[i].m_weight;
@@ -1314,7 +1317,7 @@ public static class Patches
                     }
                 }
 
-                var targetElement = Element.transform.Find("ImageElement (craftingStation)");
+                Transform targetElement = Element.transform.Find("ImageElement (craftingStation)");
                 
                 if (!targetElement.gameObject.activeInHierarchy)
                 {
@@ -1347,7 +1350,7 @@ public static class Patches
                 if (!targetElement.gameObject.activeInHierarchy)
                 {
                     // if crafting station is a smelter
-                    foreach (var station in Almanac.CreateAlmanac.smelterStations)
+                    foreach (GameObject station in Almanac.CreateAlmanac.smelterStations)
                     {
                         Piece piece = station.GetComponent<Piece>();
                         Smelter script = station.GetComponent<Smelter>();
@@ -1456,7 +1459,7 @@ public static class Patches
             GameObject prefabImage = Element.transform.Find("ImageElement (prefabImage)").gameObject;
             SetTextElement(prefabImage, "prefabName", $"{data.name}");
             SetImageElement(Element, "icon", sprite, Color.white);
-            SetActiveElement(Element, "TextElement", "teleportable", !teleportable);
+            SetTextElement(Element, "teleportable", teleportable ? "$almanac_teleportable" : "$almanac_not_teleportable");
 
             Dictionary<string, string> foodDatas = new Dictionary<string, string>()
             {
@@ -1994,6 +1997,8 @@ public static class Patches
                 // foreach (KeyValuePair<string, string> generalElement in generalElements) SetActiveElement(Element, generalElement.Value, generalElement.Key, true);
                 foreach (KeyValuePair<string, string> fishElement in fishElements) SetActiveElement(Element, fishElement.Value, fishElement.Key, false);
             }
+            
+            SetActiveElement(Element, "TextElement", "teleportable", !teleportable);
         }
         private static string GetTagFromID(string id)
         {

@@ -1,7 +1,8 @@
 ﻿    using System;
 using System.Collections.Generic;
 using System.Linq;
-using Almanac.MonoBehaviors;
+    using System.Text.RegularExpressions;
+    using Almanac.MonoBehaviors;
     using BepInEx.Logging;
     using HarmonyLib;
     using TMPro;
@@ -38,7 +39,6 @@ public static class Almanac
         private static Image iconBg = null!;
         private static Image weightIcon = null!;
         private static Image armorIcon = null!;
-        private static TextMeshProUGUI cloneTextMesh = null!;
         
         private static List<GameObject> buildables = new();
         
@@ -52,6 +52,7 @@ public static class Almanac
         public static List<GameObject> furniturePieces = new();
         public static List<GameObject> plantPieces = new();
         public static List<GameObject> defaultPieces = new();
+        public static List<GameObject> modPieces = new();
 
         private static RectTransform creatureRectTransform = null!;
         private static RectTransform materialRectTransform = null!;
@@ -78,20 +79,33 @@ public static class Almanac
 
             Transform closeButton = TrophiesFrame.Find("Closebutton");
             Transform closeButtonText = closeButton.Find("Text");
+            Transform iconBkg = trophyElement.transform.Find("icon_bkg");
+            Transform border = TrophiesFrame.Find("border (1)");
+            Transform weightIconElement = __instance.m_player.Find("Weight").Find("weight_icon");
+            Transform armorIconElement = __instance.m_player.Find("Armor").Find("armor_icon");
             
-            closeButtonText.TryGetComponent(out TextMeshProUGUI TextMeshProUGui);
+            closeButtonText.TryGetComponent(out TextMeshProUGUI textMesh);
+            closeButton.TryGetComponent(out Button button);
+            closeButton.TryGetComponent(out ButtonSfx buttonSfx);
+            closeButton.TryGetComponent(out Image buttonImage);
+            iconBkg.TryGetComponent(out Image iconImage);
+            border.TryGetComponent(out Image borderImg);
+            weightIconElement.TryGetComponent(out Image weightImg);
+            armorIconElement.TryGetComponent(out Image armorImg);
+
+            if (!textMesh || !button || !buttonSfx || !buttonImage || !iconImage || !borderImg || !weightImg || !armorImg) return;
             
-            cloneTextMesh = TextMeshProUGui;
-            font = TextMeshProUGui.font;
-            closeButtonScript = closeButton.GetComponent<Button>();
-            closeButtonSfx = closeButton.GetComponent<ButtonSfx>();
-            closeButtonImage = closeButton.GetComponent<Image>();
-            iconBg = trophyElement.transform.Find("icon_bkg").gameObject.GetComponent<Image>();
-            materials = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Material, "");
+            font = textMesh.font;
+            closeButtonScript = button;
+            closeButtonSfx = buttonSfx;
+            closeButtonImage = buttonImage;
+            iconBg = iconImage;
             creatures = CreatureDataCollector.CollectAndSaveCreatureData();
-            consummables = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Consumable, "");
-            fish = fish = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Fish, "");
+            borderImage = borderImg;
+            weightIcon = weightImg;
+            armorIcon = armorImg;
             
+            // Get data from ObjectDB
             List<ItemDrop> oneHanded = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.OneHandedWeapon, "");
             List<ItemDrop> bow = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Bow, "");
             List<ItemDrop> shield = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Shield, "");
@@ -111,6 +125,29 @@ public static class Almanac
             List<ItemDrop> twoHandedLeft = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.TwoHandedWeaponLeft, "");
             List<ItemDrop> ammoNonEquip = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.AmmoNonEquipable, "");
             // List<ItemDrop> noneItems = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.None, "");
+            List<ItemDrop> normalMaterials = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Material, "");
+            
+            // Create filtered Lists to re-organize data
+            List<ItemDrop> filteredMisc = new List<ItemDrop>();
+            List<ItemDrop> MiscToMaterials = new List<ItemDrop>();
+            foreach (ItemDrop drop in misc)
+            {
+                List<string> toMaterialsMap = new List<string>()
+                {
+                    "DragonEgg",
+                    "ChickenEgg",
+                    "Turnip"
+                };
+                if (toMaterialsMap.Contains(drop.name))
+                {
+                    MiscToMaterials.Add(drop);
+                }
+                else
+                {
+                    filteredMisc.Add(drop);
+                }
+            }
+            normalMaterials.AddRange(MiscToMaterials);
             
             List<ItemDrop> gearList = new List<ItemDrop>();
             gearList.AddRange(helmet);
@@ -119,7 +156,7 @@ public static class Almanac
             gearList.AddRange(shoulder);
             gearList.AddRange(utility);
             gearList.AddRange(customization);
-            gearList.AddRange(misc);
+            gearList.AddRange(filteredMisc);
             
             List<ItemDrop> weaponList = new List<ItemDrop>();
             weaponList.AddRange(oneHanded);
@@ -136,13 +173,13 @@ public static class Almanac
             ammunition.AddRange(ammo);
             ammunition.AddRange(ammoNonEquip);
             
+            materials = normalMaterials;
+            fish = fish = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Fish, "");
+            consummables = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Consumable, "");
             weapons = GetValidItemDropList(weaponList);
             gear = new List<ItemDrop>(GetValidItemDropList(gearList).OrderBy(name => Localization.instance.Localize(name.m_itemData.m_shared.m_name)));
             ammunitions = GetValidItemDropList(ammunition);
-            borderImage = TrophiesFrame.Find("border (1)").GetComponent<Image>();
-            weightIcon = __instance.m_player.Find("Weight").Find("weight_icon").GetComponent<Image>();
-            armorIcon = __instance.m_player.Find("Armor").Find("armor_icon").GetComponent<Image>();
-
+            
             GameObject[] AllObjects = Resources.FindObjectsOfTypeAll<GameObject>();
             foreach (GameObject GO in AllObjects)
             {
@@ -160,6 +197,8 @@ public static class Almanac
             foreach (GameObject piece in buildables)
             {
                 piece.TryGetComponent(out Piece pieceScript);
+                if (!pieceScript) continue;
+                
                 List<string> exclusionMap = new List<string>()
                 {
                     "ship_construction",
@@ -176,7 +215,9 @@ public static class Almanac
                     "raise_v2",
                     "raise",
                     "fire_pit_haldor",
-                    "fire_pit_hildir"
+                    "fire_pit_hildir",
+                    "dverger_guardstone",
+                    "guard_stone_test"
                 };
                 if (
                     exclusionMap.Contains(pieceScript.name) 
@@ -192,6 +233,14 @@ public static class Almanac
                          )
                 {
                     plantPieces.Add(piece);
+                }
+                else if (pieceScript.m_comfort > 0)
+                {
+                    furniturePieces.Add((piece));
+                }
+                else if (Regex.IsMatch(pieceScript.m_category.ToString(), @"^[-]?\d+$"))
+                {
+                    modPieces.Add(piece);
                 }
                 else
                 {
@@ -234,8 +283,9 @@ public static class Almanac
             CreatePiecesPanel("craftingPieces", craftingPieces);
             CreatePiecesPanel("buildPieces", buildPieces);
             CreatePiecesPanel("furniturePieces", furniturePieces);
-            CreatePiecesPanel("pieces", defaultPieces);
+            CreatePiecesPanel("other", defaultPieces);
             CreatePiecesPanel("plantPieces", plantPieces);
+            CreatePiecesPanel("modPieces", modPieces);
 
             CreateTabs("fishButton", "fish", -760f, 425f);
             CreateTabs("ammoButton", "ammo", -605f, 425f);
@@ -246,13 +296,15 @@ public static class Almanac
             CreateTabs("TrophiesButton", "trophies", 170f, 425f);
             CreateTabs("CreatureButton", "creature", 325f, 425f);
             
-            CreateTabs("miscPiecesButton", "miscPieces", 325f, -425f);
-            CreateTabs("craftingPiecesButton", "craftingPieces", 170f, -425f);
-            CreateTabs("buildPiecesButton", "buildPieces", 15f, -425f);
-            CreateTabs("furniturePiecesButton", "furniturePieces", -140f, -425f);
-            CreateTabs("defaultPiecesButton", "pieces", -295f, -425f);
-            CreateTabs("plantPiecesButton", "plantPieces", -450f, -425f);
-
+            CreateTabs("miscPiecesButton", "miscPieces", -760f, -425f);
+            CreateTabs("craftingPiecesButton", "craftingPieces", -605f, -425f);
+            CreateTabs("buildPiecesButton", "buildPieces", -450f, -425f);
+            CreateTabs("furniturePiecesButton", "furniturePieces", -295f, -425f);
+            CreateTabs("plantPiecesButton", "plantPieces", -140f, -425f);
+            
+            CreateTabs("defaultPiecesButton", "other", 15f, -425f);
+            
+            if (modPieces.Count > 0) CreateTabs("modPiecesButton", "modPieces", 170f, -425f);
         }
 
         private static void EditInventoryGUI()
@@ -288,13 +340,13 @@ public static class Almanac
         
         private static void CreateTabs(string id, string name, float anchorX, float anchorY)
         {
-            GameObject TrophiesButton = new GameObject(id);
-            RectTransform buttonRectTransform = TrophiesButton.AddComponent<RectTransform>();
+            GameObject tabButton = new GameObject(id);
+            RectTransform buttonRectTransform = tabButton.AddComponent<RectTransform>();
             buttonRectTransform.SetParent(TrophiesPanel);
             buttonRectTransform.anchoredPosition = new Vector2(anchorX, anchorY);
             buttonRectTransform.sizeDelta = new Vector2(150f, 46f);
 
-            Image backgroundImage = TrophiesButton.AddComponent<Image>();
+            Image backgroundImage = tabButton.AddComponent<Image>();
             backgroundImage.sprite = closeButtonImage.sprite;
             backgroundImage.color = closeButtonImage.color;
             backgroundImage.material = closeButtonImage.material;
@@ -304,7 +356,7 @@ public static class Almanac
             backgroundImage.fillCenter = true;
             backgroundImage.pixelsPerUnitMultiplier = 1f;
 
-            Button button = TrophiesButton.AddComponent<Button>();
+            Button button = tabButton.AddComponent<Button>();
             button.interactable = true;
             button.targetGraphic = backgroundImage;
             button.transition = Selectable.Transition.SpriteSwap;
@@ -323,7 +375,7 @@ public static class Almanac
 
             GameObject text = new GameObject($"{name}ButtonText");
             RectTransform textRect = text.AddComponent<RectTransform>();
-            textRect.SetParent(TrophiesButton.transform);
+            textRect.SetParent(tabButton.transform);
             textRect.anchoredPosition = new Vector2(0f, 0f);
             textRect.sizeDelta = new Vector2(150f, 30f);
 
@@ -338,7 +390,7 @@ public static class Almanac
             textContent.horizontalAlignment = HorizontalAlignmentOptions.Center;
             textContent.verticalAlignment = VerticalAlignmentOptions.Middle;
 
-            var sfx = TrophiesButton.AddComponent<ButtonSfx>();
+            var sfx = tabButton.AddComponent<ButtonSfx>();
             sfx.m_sfxPrefab = closeButtonSfx.m_sfxPrefab;
         }
         private static void SetTopic(string name)
@@ -359,12 +411,14 @@ public static class Almanac
                 "craftingPieces",
                 "buildPieces",
                 "furniturePieces",
-                "pieces",
-                "plantPieces"
+                "other",
+                "plantPieces",
+                "modPieces"
             };
             foreach (string topicName in topicNames)
             {
                 Transform panel = TrophiesFrame.Find($"{topicName}Panel");
+                if (!panel) continue;
                 panel.gameObject.SetActive(topicName == name);
             }
             
@@ -373,9 +427,10 @@ public static class Almanac
         }
         private static GameObject CreatePiecesPanel(string id, List<GameObject> list)
         {
-            var trophies = TrophiesFrame.Find("Trophies");
+            Transform trophies = TrophiesFrame.Find("Trophies");
+            trophies.TryGetComponent(out Image trophiesImage);
             
-            var panel = new GameObject($"{id}Panel") { layer = 5 };
+            GameObject panel = new GameObject($"{id}Panel") { layer = 5 };
 
             RectTransform panelRect = panel.AddComponent<RectTransform>();
             panelRect.SetParent(TrophiesFrame);
@@ -392,7 +447,6 @@ public static class Almanac
             
             Image backgroundImage = background.AddComponent<Image>();
             
-            Image trophiesImage = trophies.gameObject.GetComponent<Image>();
             backgroundImage.color = trophiesImage.color;
             backgroundImage.raycastTarget = true;
             backgroundImage.maskable = true;
@@ -533,7 +587,6 @@ public static class Almanac
                         float max = min + pageSize;
                         if (i >= min && i < max)
                         {
-                            // element.gameObject.SetActive(true);
                             element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
                         }
                         else
@@ -648,6 +701,9 @@ public static class Almanac
                                 case "plantPieces":
                                     element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
                                     break;
+                                case "modPieces":
+                                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
+                                    break;
                                 default:
                                     break;
                             }
@@ -666,9 +722,10 @@ public static class Almanac
         }
         private static void CreatePiecesContainer(Transform parentElement, GameObject data, int index, Vector2 position, string id)
         {
-            Piece pieceScript = data.GetComponent<Piece>();
+            data.TryGetComponent(out Piece pieceScript);
+            if (!pieceScript) return;
+            
             Sprite iconSprite = pieceScript.m_icon;
-
             string name = pieceScript.m_name;
 
             GameObject container = new GameObject($"{id}Container ({index})");
@@ -720,7 +777,7 @@ public static class Almanac
                 Transform AlmanacPanel = TrophiesFrame.Find("ContentPanel");
                 Transform AlmanacList = AlmanacPanel.Find("AlmanacList");
                 Transform element = AlmanacList.Find("piecesElement (0)");
-                SetActiveElement(id);
+                SetActivePanelElement(id);
                 Patches.OnOpenTrophiesPatch.SetPiecesData(element.gameObject, data);
             });
         }
@@ -781,7 +838,7 @@ public static class Almanac
                 Transform AlmanacPanel = TrophiesFrame.Find("ContentPanel");
                 Transform AlmanacList = AlmanacPanel.Find("AlmanacList");
                 Transform element = AlmanacList.Find($"{id}Element (0)");
-                SetActiveElement(id);
+                SetActivePanelElement(id);
                 Patches.OnOpenTrophiesPatch.SetItemsData(element.gameObject, data);
             });
         }
@@ -847,7 +904,7 @@ public static class Almanac
                 Transform AlmanacPanel = TrophiesFrame.Find("ContentPanel");
                 Transform AlmanacList = AlmanacPanel.Find("AlmanacList");
                 Transform element = AlmanacList.Find($"{id}Element (0)");
-                SetActiveElement(id);
+                SetActivePanelElement(id);
                 Patches.OnOpenTrophiesPatch.SetItemsData(element.gameObject, data);
             });
         }
@@ -1021,12 +1078,12 @@ public static class Almanac
                 Transform AlmanacPanel = TrophiesFrame.Find("ContentPanel");
                 Transform AlmanacList = AlmanacPanel.Find("AlmanacList");
                 Transform MaterialElement = AlmanacList.Find("materialElement (0)");
-                SetActiveElement("material");
+                SetActivePanelElement("material");
                 Patches.OnOpenTrophiesPatch.SetItemsData(MaterialElement.gameObject, data);
             });
         }
 
-        private static void SetActiveElement(string name)
+        private static void SetActivePanelElement(string name)
         {
             Transform AlmanacPanel = TrophiesFrame.Find("ContentPanel");
             Transform AlmanacList = AlmanacPanel.Find("AlmanacList");
@@ -1055,8 +1112,9 @@ public static class Almanac
                 "craftingPieces",
                 "buildPieces",
                 "furniturePieces",
-                "pieces",
-                "plantPieces"
+                "other",
+                "plantPieces",
+                "modPieces"
             };
             piecesElement.gameObject.SetActive(piecesNames.Contains(name));
         }
@@ -1260,7 +1318,7 @@ public static class Almanac
             button.onClick = new Button.ButtonClickedEvent();
             button.onClick.AddListener(() =>
             {
-                SetActiveElement("creature");
+                SetActivePanelElement("creature");
                 Patches.OnOpenTrophiesPatch.setAlmanacData(AlmanacElement.gameObject, content);
             });
         }
@@ -2495,7 +2553,7 @@ public static class Almanac
             durabilityRect.sizeDelta = new Vector2(120f, 40f);
             
             CreateTextElement(
-                DummyElement, "teleportable", "$almanac_not_teleportable",
+                DummyElement, "teleportable", "$almanac_no_data",
                 0f, 25f,
                 225f, 25f,
                 orange, 18

@@ -82,6 +82,7 @@ almanac_food_title: "Food"
 almanac_stat_modifiers_title: "Modifiers"
 almanac_equipment_title: "Equipment"
 
+almanac_teleportable: "Can be teleported"
 almanac_not_teleportable: "Can't be teleported"
 almanac_locked: "???"
 almanac_weight: "Weight"
@@ -136,7 +137,7 @@ almanac_item_can_not_float: "Item does not float on water"
 almanac_fish_bait_label: "Fishing Bait"
 almanac_fish_drops_title: "Extra Drops"
 # Build Pieces
-almanac_pieces_button: "Pieces"
+almanac_other_button: "Other"
 almanac_biomes_all: "Available in all biomes"
 
 #General
@@ -200,3 +201,4 @@ almanac_buildPieces_button: "Build"
 almanac_craftingPieces_button: "Crafting"
 almanac_miscPieces_button: "Miscellaneous"
 almanac_plantPieces_button: "Plants"
+almanac_modPieces_button: "Extra"

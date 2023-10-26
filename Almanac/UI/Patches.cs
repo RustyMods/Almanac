@@ -300,12 +300,17 @@ public static class Patches
 
         private static void AddButtonComponent(GameObject trophyPanelIconPrefab)
         {
-            string trophyName = trophyPanelIconPrefab.transform.Find("name").GetComponent<TextMeshProUGUI>().text;
+            Transform nameElement = trophyPanelIconPrefab.transform.Find("name");
+            Transform iconBkg = trophyPanelIconPrefab.transform.Find("icon_bkg");
+            Transform iconElement = iconBkg.Find("icon");
+
+            iconElement.TryGetComponent(out Image TrophyIcon);
+            nameElement.TryGetComponent(out TextMeshProUGUI textMesh);
+            if (!textMesh || !TrophyIcon) return;
+            
+            string trophyName = textMesh.text;
             string localizedName = Localization.instance.Localize(trophyName);
             
-            Image TrophyIcon = trophyPanelIconPrefab.transform.Find("icon_bkg").transform.Find("icon")
-                .GetComponent<Image>();
-
             ButtonSfx sfx = trophyPanelIconPrefab.AddComponent<ButtonSfx>();
             sfx.m_sfxPrefab = buttonSfx.m_sfxPrefab;
 
@@ -2078,12 +2083,12 @@ public static class Patches
             image.color = color;
         }
 
-        public static void setAlmanacData(GameObject dummyElement, string creatureName, Image trophyIcon = null!)
+        public static void setAlmanacData(GameObject dummyElement, string creatureName, Image trophyIcon = null!, string prefabName = "")
         {
             Player player = Player.m_localPlayer;
-            List<CreatureDataCollector.CreatureData> creatureData = GetAllCreatureData();
-            CreatureDataCollector.CreatureData creature = getCreature(creatureData, creatureName);
+            List<CreatureDataCollector.CreatureData> creatureData = Almanac.CreateAlmanac.creatures;
             
+            CreatureDataCollector.CreatureData creature = getCreature(creatureData, creatureName, prefabName);
             SetActiveElement(dummyElement, "ImageElement", "questionMark", false);
             SetTextElement(dummyElement, "displayName", Localization.instance.Localize(creature.display_name));
             SetTextElement(dummyElement, "faction", creature.faction ?? "no data");
@@ -2397,31 +2402,75 @@ public static class Patches
         }
 
         private static CreatureDataCollector.CreatureData getCreature(List<CreatureDataCollector.CreatureData> data,
-            string creatureName)
+            string creatureName, string prefabName)
         {
             TextInfo textInfo = CultureInfo.CurrentCulture.TextInfo;
             var result = new CreatureDataCollector.CreatureData();
+
+            if (prefabName != "")
+            {
+                foreach (var creature in data)
+                {
+                    if (creature.name == prefabName)
+                    {
+                        return creature;
+                    }
+                }
+            }
             for (int i = data.Count - 1; i >= 0; --i)
             {
                 var creature = data[i];
+                string prefab = creature.name;
+
                 string displayName = Localization.instance.Localize(creature.display_name);
                 if (displayName == "The Queen") displayName = "Queen";
                 if (displayName == "Dvergr rogue") displayName = "Dvergr";
-
+                if (creatureName == "Draugr" && prefab is "TrainingDummy" or "Draugr_Elite" or "ML_Draugr_Spawn" or "Draugr_Ranged") continue;
+                if (creatureName == "MolluscanLand" && prefab is "Molluscan") continue;
+                if (textInfo.ToTitleCase(displayName) != textInfo.ToTitleCase(creatureName)) continue;
+                return creature;
+            }
+            
+            foreach (var creature in data)
+            {
+                string prefab = creature.name;
                 string trophyName = Localization.instance.Localize(creature.trophyName);
-
-                if (textInfo.ToTitleCase(displayName) == textInfo.ToTitleCase(creatureName)) return creature;
+                string displayName = Localization.instance.Localize(creature.display_name);
+                if (displayName == "The Queen") displayName = "Queen";
+                if (displayName == "Dvergr rogue") displayName = "Dvergr";
+                
+                // Get exact match for draugr
+                if (creatureName == "Draugr" && prefab is "TrainingDummy" or "Draugr_Elite" or "ML_Draugr_Spawn" or "Draugr_Ranged") continue;
+                if (creatureName == "MolluscanLand" && prefab is "Molluscan") continue;
 
                 if (trophyName == creatureName)
                 {
-                    if (creatureName.ToLower().Contains(displayName.ToLower())) return creature;
-                    if (trophyName.ToLower().Contains(displayName.ToLower())) return creature;
-                    if (SubstringExistsInAnyOrder(trophyName, creatureName)) return creature;
+                    if (creatureName.ToLower().Contains(displayName.ToLower()))
+                    {
+                        result = creature;
+                        break;
+                    }
+
+                    if (trophyName.ToLower().Contains(displayName.ToLower()))
+                    {
+                        result = creature;
+                        break;
+                    }
+
+                    if (SubstringExistsInAnyOrder(trophyName, creatureName))
+                    {
+                        result = creature;
+                        break;
+                    }
                 }
 
-                if (trophyName.Contains(creatureName)) return creature;
+                if (trophyName.Contains(creatureName))
+                {
+                    result = creature;
+                    break;
+                }
             }
-
+            Debug.Log($"{result.name} : {Localization.instance.Localize(result.display_name)}");
             return result;
         }
 

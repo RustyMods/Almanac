@@ -1335,6 +1335,8 @@ public static class Almanac
             {
                 CreateCreaturePageButtons(parentElement, i);
             }
+
+            HashSet<string> uniquePrefabs = new HashSet<string>();
             
             for (int page = 0; page < pages; page++)
             {
@@ -1347,18 +1349,31 @@ public static class Almanac
                     }
 
                     string name = creatures[index].display_name;
-                    float x = -500f + (i / 20) * xSpacing;
-                    float y = 305f - (i % 20) * ySpacing;
+                    string prefab = creatures[index].name;
+                    if (!uniquePrefabs.Contains(prefab))
+                    {
+                        uniquePrefabs.Add(prefab);
+                        float x = -500f + (i / 20) * xSpacing;
+                        float y = 305f - (i % 20) * ySpacing;
 
-                    Vector2 position = new Vector2(x, y);
-                    CreateCreatureButton(AlmanacElement, parentElement, position, index, Localization.instance.Localize(name), page == 0);
+                        Vector2 position = new Vector2(x, y);
+                        CreateCreatureButton(
+                            AlmanacElement, 
+                            parentElement, 
+                            position, 
+                            index, 
+                            Localization.instance.Localize(name), 
+                            page == 0,
+                            prefab
+                            );
+                    }
                 }
             }
         }
 
         private static void CreateCreatureButton(
             Transform AlmanacElement, Transform parentElement, Vector2 position, int i,
-            string content, bool active)
+            string content, bool active, string prefabName)
         {
             float width = 250f;
             float height = 32f;
@@ -1426,7 +1441,7 @@ public static class Almanac
             button.onClick.AddListener(() =>
             {
                 SetActivePanelElement("creature");
-                Patches.OnOpenTrophiesPatch.setAlmanacData(AlmanacElement.gameObject, content);
+                Patches.OnOpenTrophiesPatch.setAlmanacData(AlmanacElement.gameObject, content, prefabName: prefabName);
             });
         }
 

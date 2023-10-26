@@ -73,7 +73,10 @@ public static class CreatureDataCollector
         List<CreatureData> creatureData = GetCreatureData();
         creatureData.RemoveAt(0);
         foreach (var data in creatureData) RenameCreatureData(data);
-        return creatureData;
+
+        List<CreatureData> sortedList = creatureData.OrderBy(item => 
+            Localization.instance.Localize(item.display_name)).ToList();
+        return sortedList;
     }
 
     private static void RenameCreatureData(CreatureData creatureData)
@@ -83,7 +86,65 @@ public static class CreatureDataCollector
             { "Leech_cave", "$enemy_leech_cave" },
             { "DvergerMageFire", "$enemy_dverger_mage_fire" },
             { "DvergerMageIce", "$enemy_dverger_mage_ice" },
-            { "DvergerMageSupport", "$enemy_dverger_mage_support" }
+            { "DvergerMageSupport", "$enemy_dverger_mage_support" },
+            { "BRV_SkeletonEnemy", "$almanac_summoned $brv_summoned_skeleton" },
+            { "BRV_BatEnemy", "$almanac_summoned $brv_summoned_bat" },
+            { "BLV_NeutralVikings", "$almanac_neutral $blv_renegademeadows"},
+            { "BLV_OverlordVikingT6Summoner", "$blv_overlordsummoner" },
+            { "BLV_TraderViking", "$blv_tradername" },
+            { "BLV_OverlordVikingT6", "$blv_overlordmistlands" },
+            { "BLV_RenegadeVikingT6Magic", "$almanac_mistlands $almanac_renegade_sorcerer" },
+            { "BLV_RenegadeVikingT6Melee", "$almanac_mistlands $blv_renegademistlandsmelee" },
+            { "BLV_OverlordVikingT5", "$blv_overlordplains" },
+            { "BLV_RenegadeVikingT5", "$almanac_plains $blv_renegadeplains" },
+            { "BLV_OverlordVikingT4", "$blv_overlordmountains" },
+            { "BLV_RenegadeVikingT4", "$almanac_mountains $blv_renegademountains" },
+            { "BLV_OverlordVikingT3", "$blv_overlordswamps" },
+            { "BLV_RenegadeVikingT3", "$almanac_swamps $blv_renegadeswamps" },
+            { "BLV_OverlordVikingT2", "$blv_overlordblackforest" },
+            { "BLV_RenegadeVikingT2", "$almanac_blackforest $blv_renegadeblackforest" },
+            { "BLV_OverlordVikingT1", "$blv_overlordmeadows" },
+            { "BLV_RenegadeVikingT1", "$almanac_meadows $blv_renegademeadows" },
+            { "ML_Draugr_Spawn", "$almanac_spawned $enemy_draugr" },
+            { "Draugr_Ranged", "$almanac_ranged $enemy_draugr" },
+            { "ML_Draugr_Boat", "$enemy_draugr $almanac_boat" },
+            { "ML_FrostHatchling_Spawn", "$almanac_spawned $enemy_drake" },
+            { "ML_FrostHatchling", "$almanac_frost $enemy_drake" },
+            { "MolluscanLand", "$almanac_land $enemy_molluscanland" },
+            { "ML_DraugrBomber_Boat", "$enemy_draugr $almanac_bomber" },
+            { "NightmareDragonEV", "$enemy_nightmaredragon EV" },
+            { "GoblinLox", "$enemy_goblin $enemy_lox" },
+            { "DwarfGoblin_Spawn", "$almanac_spawned $enemy_goblindwarf" },
+            { "GhostWarrior", "$enemy_ghost $almanac_warrior" },
+            { "NormalGhostWarrior", "$almanac_normal $enemy_ghost $almanac_warrior" },
+            { "PoisonSkeletonWarrior", "$enemy_skeletonpoison $almanac_warrior" },
+            { "NormalSkeletonWarrior", "$enemy_skeleton $almanac_warrior" },
+            { "MLabz1_DummyTest", "$enemy_skeleton $almanac_dummy" },
+            { "ML_Surtling", "$enemy_surtling ML" },
+            { "WraithWarrior", "$enemy_wraith $almanac_warrior" },
+            { "ML_AshHuldraQueen2", "$enemy_ashhuldra_queen I" },
+            { "ML_AshHuldraQueen3", "$enemy_ashhuldra_queen III" },
+            { "BrownSpider_Spawn", "$almanac_spawned $enemy_brownspider" },
+            { "DwarfGoblin_NoAttack", "$almanac_passive $enemy_goblindwarf" },
+            { "DwarfGoblin_Boat", "$enemy_goblindwarf $almanac_boat $almanac_rider" },
+            { "GoblinArcher", "$almanac_ranged $enemy_goblin" },
+            { "DwarfGoblinShaman_Boat", "$enemy_goblindwarf $almanac_boat $almanac_shaman" },
+            { "ML_BlueMistile_Aggressive", "$almanac_blue $enemy_mistile" },
+            { "ML_RedMistile_Aggressive", "$almanac_red $enemy_mistile" },
+            { "ML_BlueMistile_Passive", "$almanac_passive $almanac_blue $enemy_mistile" },
+            { "ML_RedMistile_Passive", "$almanac_passive $almanac_red $enemy_mistile" },
+            { "MLNPC_Female1", "$enemy_npc_female1" },
+            { "Skeleton_NoArcher", "$enemy_skeleton $almanac_melee" },
+            { "ML_Sword_Frigga_Spider_2", "$ally_brownspider_spawn 2" },
+            { "ML_Sword_Frigga_Spider_3_Light", "$ally_brownspider_spawn $almanac_spirit" },
+            { "ML_Sword_Frigga_Spider_3_Fire", "$ally_brownspider_spawn $almanac_fire" },
+            { "ML_Sword_Frigga_Spider_3_Cold", "$ally_brownspider_spawn $almanac_frost" },
+            { "TreeSpider_Spawn", "$almanac_spawned $enemy_treespider" },
+            { "Skeleton_Hildir_nochest", "$enemy_skeletonfire $almanac_nochest" },
+            { "Fenring_Cultist_Hildr_nochest", "$enemy_fenringcultist_hildir $almanac_nochest" },
+            { "GoblinBruteBros_nochest", "$enemy_goblinbrute_hildircombined $almanac_nochest" },
+            { "GoblinShaman_Hildir_nochest", "$enemy_goblin_hildir $almanac_nochest" }
+            
         };
         if (conversion.ContainsKey(creatureData.name)) creatureData.display_name = conversion[creatureData.name];
     }

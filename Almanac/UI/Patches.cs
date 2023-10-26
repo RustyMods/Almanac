@@ -64,19 +64,21 @@ public static class Patches
                 // Check if trophy positions are within the expected ranges
                 if ((trophyPos.x - 110f) % 180f != 0f || (trophyPos.y - 154f) % 180f != 0f)
                 {
-                    trophyPos.x = Mathf.Round(trophyPos.x / 180f) * 180f - 70f;
-                    trophyPos.y = Mathf.Round(trophyPos.y / 180f) * 180f - 56f;
+                    // If false, then set it to forest troll position to then be moved
+                    trophy.transform.position = new Vector3(830f, 874f, 0.0f);
                 }
-        
-                if (
-                    uniqueVectorSet.Contains(trophyPos) 
+                // Check if position is unique
+                if (uniqueVectorSet.Contains(trophyPos) 
                     && Localization.instance.Localize(trophyName).ToLower() != Localization.instance.Localize("draugr") 
                     && !bossNames.Contains(trophyName)
                     )
                 {
+                    // If false, then try to move trophy to empty slot
                     trophyPos = TryMoveTrophy(trophyPos, uniqueVectorSet);
                 }
+                // Add position to hash set
                 uniqueVectorSet.Add(trophyPos);
+                // Set trophy position
                 trophy.transform.position = trophyPos;
             }
         }
@@ -87,11 +89,13 @@ public static class Patches
             float currentX = position.x;
             float currentY = position.y;
     
+            // Increment position of trophy to next slot
             position = currentX + increment >= 1190f 
                 ? new Vector3(110f, currentY - increment, 0.0f) 
                 : new Vector3(position.x + increment, currentY, 0.0f);
+            // Check if slot is taken
             if (uniqueVectors.Contains(position)) position = TryMoveTrophy(position, uniqueVectors);
-            
+            // If slot is available, return position
             return position;
         }
     }
@@ -105,7 +109,6 @@ public static class Patches
             Transform trophyFrame = __instance.m_trophiesPanel.transform.Find("TrophiesFrame");
             Transform contentPanel = trophyFrame.transform.Find("ContentPanel");
             Transform almanacList = contentPanel.transform.Find("AlmanacList");
-            
             Transform welcomePanel = contentPanel.transform.Find("WelcomePanel (0)");
             Transform AlmanacElement = almanacList.transform.Find("AlmanacElement (0)");
             
@@ -124,9 +127,7 @@ public static class Patches
         private static Transform closeButton = null!;
 
         private static readonly List<CreatureDataCollector.CreatureData> creatures = new(Almanac.CreateAlmanac.creatures);
-        private static readonly List<ItemDrop> materials = new(Almanac.CreateAlmanac.materials);
         
-        // private static GameObject trophyPanel = null!;
         private static Transform creaturePanel = null!;
         private static Transform materialPanel = null!;
 
@@ -157,7 +158,6 @@ public static class Patches
             foreach (GameObject trophy in trophyList) AddButtonComponent(trophy);
             
             SetUnknownCreatures();
-            // SetUnknownMaterials();
             SetUnknownItems("material", Almanac.CreateAlmanac.materials);
             SetUnknownItems("consummable", Almanac.CreateAlmanac.consummables);
             SetUnknownItems("weapon", Almanac.CreateAlmanac.weapons);
@@ -169,12 +169,12 @@ public static class Patches
             SetUnknownPieces("craftingPieces", Almanac.CreateAlmanac.craftingPieces);
             SetUnknownPieces("buildPieces", Almanac.CreateAlmanac.buildPieces);
             SetUnknownPieces("furniturePieces", Almanac.CreateAlmanac.furniturePieces);
-            // SetUnknownPieces("other", Almanac.CreateAlmanac.defaultPieces);
+            SetUnknownPieces("other", Almanac.CreateAlmanac.defaultPieces);
             SetUnknownPieces("plantPieces", Almanac.CreateAlmanac.plantPieces);
             SetUnknownPieces("modPieces", Almanac.CreateAlmanac.modPieces);
         }
 
-        private static void SetUnknownPieces(string id, List<GameObject> list)
+        public static void SetUnknownPieces(string id, List<GameObject> list)
         {
             Transform panel = trophyFrame.Find($"{id}Panel");
             for (int i = 0; i < list.Count; ++i)
@@ -189,7 +189,11 @@ public static class Patches
 
                 if (!iconImage || !textMesh || !button) continue;
 
-                string name = list[i].GetComponent<Piece>().m_name;
+                list[i].TryGetComponent(out Piece piece);
+                if (!piece) continue;
+
+                string prefab = piece.name;
+                string name = piece.m_name;
                 bool isRecipeKnown = Player.m_localPlayer.IsRecipeKnown(name);
                 string localizedName = Localization.instance.Localize(name);
                 
@@ -198,9 +202,11 @@ public static class Patches
                 iconImage.color = knowledgeLockToggle == AlmanacPlugin.Toggle.On
                     ? isRecipeKnown ? Color.white : Color.black
                     : Color.white;
+                
+                if (container.gameObject.activeSelf) container.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
             }
         }
-        private static void SetUnknownCreatures()
+        public static void SetUnknownCreatures()
         {
             for (int i = 0; i < creatures.Count; ++i)
             {
@@ -251,32 +257,44 @@ public static class Patches
             }
         }
 
-        private static void SetUnknownItems(string id, List<ItemDrop> list)
+        public static void SetUnknownItems(string id, List<ItemDrop> list)
         {
             for (int i = 0; i < list.Count; ++i)
             {
-                Transform panel = trophyFrame.Find($"{id}Panel");
-                Transform container = panel.Find($"{id}Container ({i})");
-                Transform icon = container.Find("iconObj");
-                Transform hoverText = container.Find("hoverTextElement");
-                
-                icon.TryGetComponent(out Image iconImage);
-                hoverText.TryGetComponent(out TextMeshProUGUI text);
-                container.TryGetComponent(out Button button);
+                try
+                {
+                    Transform panel = trophyFrame.Find($"{id}Panel");
+                    Transform container = panel.Find($"{id}Container ({i})");
+                    Transform icon = container.Find("iconObj");
+                    Transform hoverText = container.Find("hoverTextElement");
 
-                ItemDrop? data = list[i];
-                if (!iconImage || !text || !button || !data) continue;
+                    icon.TryGetComponent(out Image iconImage);
+                    hoverText.TryGetComponent(out TextMeshProUGUI text);
+                    container.TryGetComponent(out Button button);
 
-                string prefab = list[i].name;
-                string name = list[i].m_itemData.m_shared.m_name;
-                string localizedName = Localization.instance.Localize(name);
-                bool isKnown = Player.m_localPlayer.IsMaterialKnown(name);
-                    
-                iconImage.color = knowledgeLockToggle == AlmanacPlugin.Toggle.On ? (isKnown ? Color.white : Color.black) : Color.white;
-                text.text = knowledgeLockToggle == AlmanacPlugin.Toggle.On ? (isKnown ? localizedName : "???") : localizedName;
-                button.interactable = knowledgeLockToggle != AlmanacPlugin.Toggle.On || isKnown;
-                // Check against blacklist
-                if (container.gameObject.activeSelf) container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
+                    ItemDrop? data = list[i];
+                    if (!iconImage || !text || !button || !data) continue;
+
+                    string prefab = list[i].name;
+                    string name = list[i].m_itemData.m_shared.m_name;
+                    string localizedName = Localization.instance.Localize(name);
+                    bool isKnown = Player.m_localPlayer.IsMaterialKnown(name);
+
+                    iconImage.color = knowledgeLockToggle == AlmanacPlugin.Toggle.On
+                        ? (isKnown ? Color.white : Color.black)
+                        : Color.white;
+                    text.text = knowledgeLockToggle == AlmanacPlugin.Toggle.On
+                        ? (isKnown ? localizedName : "???")
+                        : localizedName;
+                    button.interactable = knowledgeLockToggle != AlmanacPlugin.Toggle.On || isKnown;
+                    // Check against blacklist
+                    if (container.gameObject.activeSelf)
+                        container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
+                }
+                catch (NullReferenceException)
+                {
+                    // Debug.Log(list[i].name);
+                }
             }
         }
 
@@ -1196,6 +1214,8 @@ public static class Patches
                     SetActiveElement(Element, "TextElement", extensionLabel, true);
                 }
             }
+            
+            
         }
         public static void SetItemsData(GameObject Element, ItemDrop data)
         {
@@ -2060,9 +2080,9 @@ public static class Patches
 
         public static void setAlmanacData(GameObject dummyElement, string creatureName, Image trophyIcon = null!)
         {
-            var player = Player.m_localPlayer;
-            var creatureData = GetAllCreatureData();
-            var creature = getCreature(creatureData, creatureName);
+            Player player = Player.m_localPlayer;
+            List<CreatureDataCollector.CreatureData> creatureData = GetAllCreatureData();
+            CreatureDataCollector.CreatureData creature = getCreature(creatureData, creatureName);
             
             SetActiveElement(dummyElement, "ImageElement", "questionMark", false);
             SetTextElement(dummyElement, "displayName", Localization.instance.Localize(creature.display_name));
@@ -2074,16 +2094,19 @@ public static class Patches
             }
             else
             {
-                var trophy = creature.trophyName;
-                foreach (var item in creature.drops)
+                string trophy = creature.trophyName;
+                foreach (string item in creature.drops)
                 {
                     if (item.Contains("Trophy")) trophy = item;
                 }
 
-                var trophyObj = ObjectDB.instance.GetItemPrefab(trophy);
+                GameObject trophyObj = ObjectDB.instance.GetItemPrefab(trophy);
                 if (trophyObj)
                 {
-                    var icon = trophyObj.GetComponent<ItemDrop>().m_itemData.m_shared.m_icons[0];
+                    trophyObj.TryGetComponent(out ItemDrop itemDrop);
+                    if (!itemDrop) return;
+
+                    Sprite icon = itemDrop.m_itemData.GetIcon();
                     SetImageElement(dummyElement, "icon", icon, new Color(1f, 1f, 1f, 1f));
                 }
                 else
@@ -2117,9 +2140,13 @@ public static class Patches
                     }
                     else
                     {
-                        Sprite icon = item.GetComponent<ItemDrop>().m_itemData.m_shared.m_icons[0];
-                        string itemName = item.GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
+                        item.TryGetComponent(out ItemDrop itemDrop);
+                        if (!itemDrop) continue;
+                        float dropChance = creature.dropChance[creature.drops[index]];
+                        Sprite icon = itemDrop.m_itemData.GetIcon();
+                        string itemName = itemDrop.m_itemData.m_shared.m_name;
                         bool isKnown = player.IsMaterialKnown(itemName);
+                        string content = $"{itemName} (<color=orange>{dropChance}%</color>)";
                         SetImageElement(
                             dropBgElement.gameObject,
                             $"creatureDrop ({index})", icon,
@@ -2128,7 +2155,7 @@ public static class Patches
                         SetHoverableText(
                             dropBgElement.gameObject,
                             $"creatureDrop ({index})",
-                            isKnown ? itemName : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : itemName
+                            isKnown ? content : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : content
                             );
 
                         SetActiveElement(dummyElement, "ImageElement", $"dropIconBg ({index})", true);
@@ -2184,8 +2211,10 @@ public static class Patches
                     }
                     else
                     {
-                        Sprite icon = item.GetComponent<ItemDrop>().m_itemData.m_shared.m_icons[0];
-                        string itemName = item.GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
+                        item.TryGetComponent(out ItemDrop itemDrop);
+                        if (!itemDrop) return;
+                        Sprite icon = itemDrop.m_itemData.GetIcon();
+                        string itemName = itemDrop.m_itemData.m_shared.m_name;
                         bool isKnown = player.IsKnownMaterial(itemName);
                         
                         SetImageElement(
@@ -2259,20 +2288,23 @@ public static class Patches
 
         private static void SetHoverableText(GameObject dummyElement, string id, string content)
         {
-            var element = dummyElement.transform.Find($"ImageElement ({id})");
-            var hoverElement = element.transform.Find("hoverTextElement");
+            Transform element = dummyElement.transform.Find($"ImageElement ({id})");
+            Transform hoverElement = element.transform.Find("hoverTextElement");
             if (!hoverElement) return;
-            var text = hoverElement.GetComponent<TextMeshProUGUI>();
-
+            hoverElement.TryGetComponent(out TextMeshProUGUI text);
+            if (!text) return;
+            
             text.text = Localization.instance.Localize(content);
         }
 
         private static void SetTextElement(GameObject dummyElement, string id, string content = "Unknown")
         {
-            var element = dummyElement.transform.Find($"TextElement ({id})");
+            Transform element = dummyElement.transform.Find($"TextElement ({id})");
             if (!element) return;
 
-            var text = element.gameObject.GetComponent<TextMeshProUGUI>();
+            element.TryGetComponent(out TextMeshProUGUI text);
+            if (!text) return;
+            
             element.gameObject.SetActive(true);
 
             text.text = SetLocalizedText(content);
@@ -2337,7 +2369,7 @@ public static class Patches
 
         private static void SetImageElement(GameObject dummyElement, string id, Image inputImage)
         {
-            var element = dummyElement.transform.Find($"ImageElement ({id})");
+            Transform element = dummyElement.transform.Find($"ImageElement ({id})");
             element.gameObject.SetActive(true);
             Image image = element.gameObject.GetComponent<Image>();
             image.sprite = inputImage.sprite;
@@ -2348,17 +2380,18 @@ public static class Patches
 
         private static void SetImageElement(GameObject dummyElement, string id, Sprite sprite, Color color)
         {
-            var element = dummyElement.transform.Find($"ImageElement ({id})");
+            Transform element = dummyElement.transform.Find($"ImageElement ({id})");
             if (!element) return;
             element.gameObject.SetActive(true);
-            Image image = element.gameObject.GetComponent<Image>();
+            element.TryGetComponent(out Image image);
+            if (!image) return;
             image.sprite = sprite;
             image.color = color;
         }
 
         private static void SetImageDefault(GameObject dummyElement, string id)
         {
-            var element = dummyElement.transform.Find($"ImageElement ({id})");
+            Transform element = dummyElement.transform.Find($"ImageElement ({id})");
             if (!element) return;
             element.gameObject.SetActive(false);
         }
@@ -2371,11 +2404,11 @@ public static class Patches
             for (int i = data.Count - 1; i >= 0; --i)
             {
                 var creature = data[i];
-                var displayName = Localization.instance.Localize(creature.display_name);
+                string displayName = Localization.instance.Localize(creature.display_name);
                 if (displayName == "The Queen") displayName = "Queen";
                 if (displayName == "Dvergr rogue") displayName = "Dvergr";
 
-                var trophyName = Localization.instance.Localize(creature.trophyName);
+                string trophyName = Localization.instance.Localize(creature.trophyName);
 
                 if (textInfo.ToTitleCase(displayName) == textInfo.ToTitleCase(creatureName)) return creature;
 

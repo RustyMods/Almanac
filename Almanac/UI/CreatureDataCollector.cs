@@ -32,6 +32,7 @@ public static class CreatureDataCollector
         public string spirit = "N/A";
         public List<AttackData> defaultItems = new List<AttackData>();
         public List<string> drops = new List<string>();
+        public Dictionary<string, float> dropChance = new Dictionary<string, float>();
         public bool avoidFire = false;
         public bool afraidOfFire = false;
         public bool avoidWater = false;
@@ -167,12 +168,14 @@ public static class CreatureDataCollector
     {
         try
         {
-            var characterDrop = prefab.GetComponent<CharacterDrop>();
+            prefab.TryGetComponent(out CharacterDrop characterDrop);
             if (!characterDrop) return;
-            List<string> dropList = new List<string>(); 
+            List<string> dropList = new List<string>();
+            Dictionary<string, float> dropChance = new Dictionary<string, float>();
             List<CharacterDrop.Drop> drops = characterDrop.m_drops;
             foreach (CharacterDrop.Drop drop in drops)
             {
+                dropChance[drop.m_prefab.name] = drop.m_chance * 100;
                 dropList.Add(drop.m_prefab.name);
                 if (drop.m_prefab.name.Contains("Trophy") && drop.m_prefab.name != "TrophyAmber_coe")
                 {
@@ -180,6 +183,7 @@ public static class CreatureDataCollector
                 }
             }
             data.drops = dropList;
+            data.dropChance = dropChance;
         }
         catch (Exception)
         {

@@ -174,13 +174,17 @@ public static class Almanac
             ammunition.AddRange(ammoNonEquip);
             
             materials = normalMaterials;
-            fish = fish = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Fish, "");
+            fish = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Fish, "");
             consummables = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Consumable, "");
             weapons = GetValidItemDropList(weaponList);
             gear = new List<ItemDrop>(GetValidItemDropList(gearList).OrderBy(name => Localization.instance.Localize(name.m_itemData.m_shared.m_name)));
             ammunitions = GetValidItemDropList(ammunition);
             
             GameObject[] AllObjects = Resources.FindObjectsOfTypeAll<GameObject>();
+            buildables.Clear();
+            cookingStations.Clear();
+            fermentingStations.Clear();
+            smelterStations.Clear();
             foreach (GameObject GO in AllObjects)
             {
                 GO.TryGetComponent(out Piece pieceScript);
@@ -193,81 +197,9 @@ public static class Almanac
                 if (fermenterScript != null) fermentingStations.Add(GO);
                 if (smelterScript != null) smelterStations.Add(GO);
             }
+            
+            CategorizeBuildables();
 
-            foreach (GameObject piece in buildables)
-            {
-                piece.TryGetComponent(out Piece pieceScript);
-                if (!pieceScript) continue;
-                
-                List<string> exclusionMap = new List<string>()
-                {
-                    "ship_construction",
-                    "paved_road_v2",
-                    "paved_road",
-                    "cultivate_v2",
-                    "cultivate",
-                    "mud_road",
-                    "mud_road_v2",
-                    "path_v2",
-                    "path",
-                    "replant_v2",
-                    "replant",
-                    "raise_v2",
-                    "raise",
-                    "fire_pit_haldor",
-                    "fire_pit_hildir",
-                    "dverger_guardstone",
-                    "guard_stone_test"
-                };
-                if (
-                    exclusionMap.Contains(pieceScript.name) 
-                    || pieceScript.name.StartsWith("TreasureChest")
-                    || pieceScript.name.StartsWith("loot_chest")
-                    || pieceScript.name.StartsWith("Jewelcrafting"))
-                {
-                    defaultPieces.Add(piece);
-                }
-                else if (pieceScript.name.StartsWith("sapling") 
-                         || pieceScript.name.EndsWith("Sapling")
-                         || pieceScript.name.StartsWith("Sapling")
-                         )
-                {
-                    plantPieces.Add(piece);
-                }
-                else if (pieceScript.m_comfort > 0)
-                {
-                    furniturePieces.Add((piece));
-                }
-                else if (Regex.IsMatch(pieceScript.m_category.ToString(), @"^[-]?\d+$"))
-                {
-                    modPieces.Add(piece);
-                }
-                else
-                {
-                    switch (pieceScript.m_category)
-                    {
-                        case Piece.PieceCategory.Misc:
-                            miscPieces.Add(piece);
-                            break;
-
-                        case Piece.PieceCategory.Building:
-                            buildPieces.Add(piece);
-                            break;
-                        
-                        case Piece.PieceCategory.Crafting:
-                            craftingPieces.Add(piece);
-                            break;
-                        
-                        case Piece.PieceCategory.Furniture:
-                            furniturePieces.Add(piece);
-                            break;
-                        
-                        default:
-                            defaultPieces.Add(piece);
-                            break;
-                    }
-                }
-            }
             EditInventoryGUI();
             RepositionTrophyPanel(-220f, 0f);
             CreateAlmanacPanel();
@@ -307,6 +239,127 @@ public static class Almanac
             if (modPieces.Count > 0) CreateTabs("modPiecesButton", "modPieces", 170f, -425f);
         }
 
+        private static void CategorizeBuildables()
+        {
+            plantPieces.Clear();
+            furniturePieces.Clear();
+            modPieces.Clear();
+            miscPieces.Clear();
+            buildPieces.Clear();
+            craftingPieces.Clear();
+            defaultPieces.Clear();
+
+            HashSet<string> plantNames = new HashSet<string>();
+            HashSet<string> furnitureNames = new HashSet<string>();
+            HashSet<string> modNames = new HashSet<string>();
+            HashSet<string> miscNames = new HashSet<string>();
+            HashSet<string> buildNames = new HashSet<string>();
+            HashSet<string> craftNames = new HashSet<string>();
+            HashSet<string> defaultNames = new HashSet<string>();
+
+            foreach (GameObject piece in buildables)
+            {
+                piece.TryGetComponent(out Piece pieceScript);
+                piece.TryGetComponent(out WearNTear wearNTear);
+                piece.TryGetComponent(out Plant plant);
+                
+                if (!pieceScript) continue;
+
+                string name = pieceScript.name;
+                string hoverName = pieceScript.m_name;
+                
+                List<string> exclusionMap = new List<string>()
+                {
+                    "ship_construction",
+                    "paved_road_v2",
+                    "paved_road",
+                    "cultivate_v2",
+                    "cultivate",
+                    "mud_road",
+                    "mud_road_v2",
+                    "path_v2",
+                    "path",
+                    "replant_v2",
+                    "replant",
+                    "raise_v2",
+                    "raise",
+                    "fire_pit_haldor",
+                    "fire_pit_hildir",
+                    "dverger_guardstone",
+                    "guard_stone_test",
+                    "ML_TreasureChestOcean"
+                };
+                
+                if (plant)
+                {
+                    if (plantNames.Contains(hoverName)) continue;
+                    plantPieces.Add(piece);
+                    plantNames.Add(hoverName);
+                }
+                else
+                {
+                    if (!wearNTear) continue;
+                    if (
+                        exclusionMap.Contains(name) 
+                        || name.StartsWith("TreasureChest")
+                        || name.StartsWith("loot_chest")
+                        || name.StartsWith("Jewelcrafting"))
+                    {
+                        if (defaultNames.Contains(name)) continue;
+                        defaultPieces.Add(piece);
+                        defaultNames.Add(name);
+                    }
+                    else if (pieceScript.m_comfort > 0)
+                    {
+                        if (furnitureNames.Contains(hoverName)) continue;
+                        furniturePieces.Add((piece));
+                        furnitureNames.Add(hoverName);
+                    }
+                    else if (Regex.IsMatch(pieceScript.m_category.ToString(), @"^[-]?\d+$"))
+                    {
+                        if (modNames.Contains(hoverName)) continue;
+                        modPieces.Add(piece);
+                        modNames.Add(hoverName);
+                    }
+                    else
+                    {
+                        switch (pieceScript.m_category)
+                        {
+                            case Piece.PieceCategory.Misc:
+                                if (miscNames.Contains(hoverName)) break;
+                                miscPieces.Add(piece);
+                                miscNames.Add(hoverName);
+                                break;
+
+                            case Piece.PieceCategory.Building:
+                                if (buildNames.Contains(hoverName)) break;
+                                buildPieces.Add(piece);
+                                buildNames.Add(hoverName);
+                                break;
+                            
+                            case Piece.PieceCategory.Crafting:
+                                if (craftNames.Contains(hoverName)) break;
+                                craftingPieces.Add(piece);
+                                craftNames.Add(hoverName);
+                                break;
+                            
+                            case Piece.PieceCategory.Furniture:
+                                if (furnitureNames.Contains(hoverName)) break;
+                                furniturePieces.Add(piece);
+                                furnitureNames.Add(hoverName);
+                                break;
+                            
+                            default:
+                                if (defaultNames.Contains(hoverName)) break;
+                                defaultPieces.Add(piece);
+                                defaultNames.Add(hoverName);
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+
         private static void EditInventoryGUI()
         {
             Transform info = root.transform.Find("Info");
@@ -327,7 +380,8 @@ public static class Almanac
                 try
                 {
                     ItemDrop data = list[i];
-                    var sprite = data.m_itemData.m_shared.m_icons[0];
+                    Sprite sprite = data.m_itemData.GetIcon();
+                    if (!sprite) continue;
                     output.Add(data);
                 }
                 catch (IndexOutOfRangeException)
@@ -371,6 +425,7 @@ public static class Almanac
             button.onClick.AddListener(() =>
             {
                 SetTopic(name);
+                SetUnknown(name);
             });
 
             GameObject text = new GameObject($"{name}ButtonText");
@@ -390,14 +445,60 @@ public static class Almanac
             textContent.horizontalAlignment = HorizontalAlignmentOptions.Center;
             textContent.verticalAlignment = VerticalAlignmentOptions.Middle;
 
-            var sfx = tabButton.AddComponent<ButtonSfx>();
+            ButtonSfx sfx = tabButton.AddComponent<ButtonSfx>();
             sfx.m_sfxPrefab = closeButtonSfx.m_sfxPrefab;
+        }
+
+        private static void SetUnknown(string name)
+        {
+            switch (name)
+            {
+                case "material":
+                    Patches.OnOpenTrophiesPatch.SetUnknownItems(name, materials);
+                    break;
+                case "consummable":
+                    Patches.OnOpenTrophiesPatch.SetUnknownItems(name, consummables);
+                    break;
+                case "weapon":
+                    Patches.OnOpenTrophiesPatch.SetUnknownItems(name, weapons);
+                    break;
+                case "gear":
+                    Patches.OnOpenTrophiesPatch.SetUnknownItems(name, gear);
+                    break;
+                case "miscPieces":
+                    Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, miscPieces);
+                    break;
+                case "craftingPieces":
+                    Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, craftingPieces);
+                    break;
+                case "buildPieces":
+                    Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, buildPieces);
+                    break;
+                case "furniturePieces":
+                    Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, furniturePieces);
+                    break;
+                case "other":
+                    Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, defaultPieces);
+                    break;
+                case "plantPieces":
+                    Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, plantPieces);
+                    break;
+                case "modPieces":
+                    Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, modPieces);
+                    break;
+                case "creature":
+                    Patches.OnOpenTrophiesPatch.SetUnknownCreatures();
+                    break;
+            }
         }
         private static void SetTopic(string name)
         {
             Transform topic = TrophiesFrame.Find("topic");
-            topic.gameObject.GetComponent<TextMeshProUGUI>().text = Localization.instance.Localize($"$almanac_{name}_button");
+            Transform trophies = TrophiesFrame.Find("Trophies");
 
+            topic.TryGetComponent(out TextMeshProUGUI textMesh);
+            if (!textMesh) return;
+            
             List<string> topicNames = new List<string>()
             {
                 "material",
@@ -415,20 +516,24 @@ public static class Almanac
                 "plantPieces",
                 "modPieces"
             };
+            // Set panels active based on topic name
             foreach (string topicName in topicNames)
             {
                 Transform panel = TrophiesFrame.Find($"{topicName}Panel");
                 if (!panel) continue;
                 panel.gameObject.SetActive(topicName == name);
             }
-            
-            Transform trophies = TrophiesFrame.Find("Trophies");
+            // Set trophy panel
             trophies.gameObject.SetActive(name == "trophies");
+            // Set topic title
+            textMesh.text = Localization.instance.Localize($"$almanac_{name}_button");
+
         }
-        private static GameObject CreatePiecesPanel(string id, List<GameObject> list)
+        private static void CreatePiecesPanel(string id, List<GameObject> list)
         {
             Transform trophies = TrophiesFrame.Find("Trophies");
             trophies.TryGetComponent(out Image trophiesImage);
+            if (!trophiesImage) return;
             
             GameObject panel = new GameObject($"{id}Panel") { layer = 5 };
 
@@ -439,7 +544,7 @@ public static class Almanac
 
             panel.SetActive(false);
 
-            var background = new GameObject($"{id}Background");
+            GameObject background = new GameObject($"{id}Background");
             RectTransform rectTransform = background.AddComponent<RectTransform>();
             rectTransform.SetParent(panel.transform);
             rectTransform.anchoredPosition = new Vector2(0f, 0f);
@@ -452,6 +557,7 @@ public static class Almanac
             backgroundImage.maskable = true;
 
             int pages = Mathf.CeilToInt(list.Count / 72f);
+            
             for (int i = 0; i < list.Count; ++i)
             {
                 int wrappedIndex = i % 72;
@@ -470,8 +576,6 @@ public static class Almanac
             {
                 CreatePageButtons(panel.transform, i, 72, $"{id}Container", list);
             }
-
-            return panel;
         }
         private static GameObject CreatePanel(string id, List<ItemDrop> list)
         {
@@ -587,7 +691,7 @@ public static class Almanac
                         float max = min + pageSize;
                         if (i >= min && i < max)
                         {
-                            element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
+                            SetBlackList(element, prefab, id);
                         }
                         else
                         {
@@ -600,6 +704,61 @@ public static class Almanac
                     }
                 }
             });
+        }
+
+        private static void SetBlackList(Transform element, string prefab, string id)
+        {
+            switch (id)
+            {
+                case "CreatureContainer": 
+                    element.gameObject.SetActive(!BlackList.CreatureBlackList.Value.Contains(prefab));
+                    break;
+                case "materialContainer": 
+                    element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
+                    break;
+                case "consummableContainer": 
+                    element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
+                    break;
+                case "weaponContainer": 
+                    element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
+                    break;
+                case "gearContainer": 
+                    element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
+                    break;
+                case "ammoContainer": 
+                    element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
+                    break;
+                case "fishContainer": 
+                    element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
+                    break;
+                case "miscPiecesContainer":
+                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
+                    break;
+                case "craftingPiecesContainer":
+                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
+                    break;
+                case "buildPiecesContainer":
+                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
+                    break;
+                case "furniturePiecesContainer":
+                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
+                    break;
+                case "piecesContainer":
+                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
+                    break;
+                case "plantPiecesContainer":
+                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
+                    break;
+                case "otherContainer":
+                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
+                    break;
+                case "modPiecesContainer":
+                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
+                    break;
+                default:
+                    element.gameObject.SetActive(true);
+                    break;
+            }
         }
         private static void CreatePageButtons(Transform parentElement, int index, int pageSize, string id, List<ItemDrop> list)
         {
@@ -659,54 +818,7 @@ public static class Almanac
                         float max = min + pageSize;
                         if (i >= min && i < max)
                         {
-                            // element.gameObject.SetActive(true);
-                            switch (id)
-                            {
-                                case "creatureContainer": 
-                                    element.gameObject.SetActive(!BlackList.CreatureBlackList.Value.Contains(prefab));
-                                    break;
-                                case "materialContainer": 
-                                    element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
-                                    break;
-                                case "consummableContainer": 
-                                    element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
-                                    break;
-                                case "weaponContainer": 
-                                    element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
-                                    break;
-                                case "gearContainer": 
-                                    element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
-                                    break;
-                                case "ammoContainer": 
-                                    element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
-                                    break;
-                                case "fishContainer": 
-                                    element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
-                                    break;
-                                case "miscPiecesContainer":
-                                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
-                                    break;
-                                case "craftingPiecesContainer":
-                                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
-                                    break;
-                                case "buildPiecesContainer":
-                                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
-                                    break;
-                                case "furniturePiecesContainer":
-                                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
-                                    break;
-                                case "piecesContainer":
-                                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
-                                    break;
-                                case "plantPieces":
-                                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
-                                    break;
-                                case "modPieces":
-                                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
-                                    break;
-                                default:
-                                    break;
-                            }
+                            SetBlackList(element, prefab, id);
                         }
                         else
                         {
@@ -783,11 +895,9 @@ public static class Almanac
         }
          private static void CreateContainer(Transform parentElement, ItemDrop data, int index, Vector2 position, string id)
         {
-            var sharedData = data.m_itemData.m_shared;
-            if (!sharedData.m_icons[0]) return;
-            Sprite iconSprite = sharedData.m_icons[0];
-
-            string name = sharedData.m_name;
+            Sprite iconSprite = data.m_itemData.GetIcon();
+            if (!iconSprite) return;
+            string name = data.m_itemData.m_shared.m_name;
 
             GameObject container = new GameObject($"{id}Container ({index})");
             RectTransform containerRect = container.AddComponent<RectTransform>();
@@ -910,9 +1020,9 @@ public static class Almanac
         }
         private static void CreateMaterialPanel()
         {
-            var trophies = TrophiesFrame.Find("Trophies");
+            Transform trophies = TrophiesFrame.Find("Trophies");
 
-            var newMaterialPanel = new GameObject("materialPanel") { layer = 5 };
+            GameObject newMaterialPanel = new GameObject("materialPanel") { layer = 5 };
 
             RectTransform panelRect = newMaterialPanel.AddComponent<RectTransform>();
             panelRect.SetParent(TrophiesFrame);
@@ -921,7 +1031,7 @@ public static class Almanac
 
             newMaterialPanel.SetActive(false);
 
-            var background = new GameObject("materialBackground");
+            GameObject background = new GameObject("materialBackground");
             RectTransform rectTransform = background.AddComponent<RectTransform>();
             rectTransform.SetParent(newMaterialPanel.transform);
             rectTransform.anchoredPosition = new Vector2(0f, 0f);
@@ -1011,9 +1121,7 @@ public static class Almanac
                     float max = min + pageSize;
                     if (i >= min && i < max)
                     {
-                        // element.gameObject.SetActive(true);
-                        element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
-
+                        SetBlackList(element, prefab, "materialContainer");
                     }
                     else
                     {
@@ -1120,9 +1228,9 @@ public static class Almanac
         }
         private static void CreateCreaturesPanel()
         {
-            var trophies = TrophiesFrame.Find("Trophies");
+            Transform trophies = TrophiesFrame.Find("Trophies");
             
-            var creaturePanel = new GameObject("creaturePanel") { layer = 5 };
+            GameObject creaturePanel = new GameObject("creaturePanel") { layer = 5 };
 
             RectTransform panelRect = creaturePanel.AddComponent<RectTransform>();
             panelRect.SetParent(TrophiesFrame);
@@ -1131,7 +1239,7 @@ public static class Almanac
 
             creaturePanel.SetActive(false);
 
-            var background = new GameObject("creaturesBackground");
+            GameObject background = new GameObject("creaturesBackground");
             RectTransform rectTransform = background.AddComponent<RectTransform>();
             rectTransform.SetParent(creaturePanel.transform);
             rectTransform.anchoredPosition = new Vector2(0f, 0f);
@@ -1202,8 +1310,7 @@ public static class Almanac
                     float max = min + 100;
                     if (i >= min && i < max)
                     {
-                        // Check against blacklist
-                        element.gameObject.SetActive(!BlackList.CreatureBlackList.Value.Contains(prefab));
+                        SetBlackList(element, prefab, "CreatureContainer");
                     }
                     else
                     {
@@ -1214,9 +1321,9 @@ public static class Almanac
         }
         private static void CreateCreatureContainers(Transform parentElement)
         {
-            var contentPanel = TrophiesFrame.Find("ContentPanel");
-            var AlmanacList = contentPanel.Find("AlmanacList");
-            var AlmanacElement = AlmanacList.Find("AlmanacElement (0)");
+            Transform contentPanel = TrophiesFrame.Find("ContentPanel");
+            Transform AlmanacList = contentPanel.Find("AlmanacList");
+            Transform AlmanacElement = AlmanacList.Find("AlmanacElement (0)");
             
             float xSpacing = 250f;
             float ySpacing = 32f;
@@ -1239,7 +1346,7 @@ public static class Almanac
                         break;
                     }
 
-                    var name = creatures[index].display_name;
+                    string name = creatures[index].display_name;
                     float x = -500f + (i / 20) * xSpacing;
                     float y = 305f - (i % 20) * ySpacing;
 
@@ -1253,8 +1360,8 @@ public static class Almanac
             Transform AlmanacElement, Transform parentElement, Vector2 position, int i,
             string content, bool active)
         {
-            var width = 250f;
-            var height = 32f;
+            float width = 250f;
+            float height = 32f;
             
             GameObject CreatureContainer = new GameObject($"CreatureContainer ({i})") { layer = 5 };
             CreatureContainer.SetActive(active);
@@ -3601,6 +3708,7 @@ public static class Almanac
             text.horizontalAlignment = HorizontalAlignmentOptions.Center;
             text.verticalAlignment = VerticalAlignmentOptions.Middle;
             text.textWrappingMode = TextWrappingModes.NoWrap;
+            text.maskable = false;
         }
 
         private static GameObject CreateTextElement(

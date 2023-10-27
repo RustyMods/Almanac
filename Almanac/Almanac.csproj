@@ -137,7 +137,7 @@
         <Compile Include="Almanac\Almanac.cs" />
         <Compile Include="Almanac\BlackList.cs" />
         <Compile Include="Almanac\CreatureDataCollector.cs" />
-        <Compile Include="Almanac\Patches.cs" />
+        <Compile Include="Almanac\OnOpenAlmanac.cs" />
         <Compile Include="VersionHandshake.cs" />
     </ItemGroup>
     <ItemGroup>

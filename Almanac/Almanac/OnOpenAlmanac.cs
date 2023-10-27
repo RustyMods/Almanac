@@ -21,7 +21,7 @@ public static class Patches
         private static Transform AlmanacList = null!;
         private static Transform closeButton = null!;
         private static Transform creaturePanel = null!;
-        private static Transform materialPanel = null!;
+        // private static Transform materialPanel = null!;
         private static Transform AlmanacElement = null!;
         private static ButtonSfx buttonSfx = null!;
         private static readonly List<CreatureDataCollector.CreatureData> creatures = new(Almanac.CreateAlmanac.creatures);
@@ -59,7 +59,7 @@ public static class Patches
             contentPanel = trophyFrame.Find("ContentPanel");
             AlmanacList = contentPanel.Find("AlmanacList");
             creaturePanel = trophyFrame.transform.Find("creaturePanel");
-            materialPanel = trophyFrame.transform.Find("materialPanel");
+            // materialPanel = trophyFrame.transform.Find("materialPanel");
             AlmanacElement = AlmanacList.transform.Find("AlmanacElement (0)");
             knowledgeLockToggle = AlmanacPlugin._KnowledgeLock.Value;
             
@@ -323,6 +323,10 @@ public static class Patches
             
             string trophyName = textMesh.text;
             string localizedName = Localization.instance.Localize(trophyName);
+
+            trophyPanelIconPrefab.TryGetComponent(out Button possibleButton);
+            trophyPanelIconPrefab.TryGetComponent(out ButtonSfx possibleButtonSfx);
+            if (possibleButton && possibleButtonSfx) return;
             
             ButtonSfx sfx = trophyPanelIconPrefab.AddComponent<ButtonSfx>();
             sfx.m_sfxPrefab = buttonSfx.m_sfxPrefab;

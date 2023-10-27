@@ -107,7 +107,16 @@ public static class ItemDataCollector
                 {
                     "DragonEgg",
                     "ChickenEgg",
-                    "Turnip"
+                    "Turnip",
+                    "GoblinTotem",
+                    "DvergrKey",
+                    "chest_hildir1",
+                    "HildirKey_forestcrypt",
+                    "chest_hildir3",
+                    "HildirKey_plainsfortress",
+                    "chest_hildir2",
+                    "HildirKey_mountaincave",
+                    "CryptKey"
                 };
                 if (toMaterialsMap.Contains(drop.name))
                 {
@@ -123,9 +132,16 @@ public static class ItemDataCollector
         }
         private static List<ItemDrop> GetValidItemDropList(List<ItemDrop> list)
         {
+            List<string> exclusionMap = new()
+            {
+                "DvergerArbalest_shoot",
+                "DvergerArbalest",
+                "CapeTest"
+            };
             List<ItemDrop> output = new List<ItemDrop>();
             foreach (var itemDrop in list)
             {
+                if (exclusionMap.Contains(itemDrop.name)) continue;
                 try
                 {
                     ItemDrop data = itemDrop;

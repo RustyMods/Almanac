@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using BepInEx;
 using UnityEngine;
 
 namespace Almanac.Almanac;
 
 public static class ItemDataCollector
 {
+    private static readonly List<string> exclusionMap = AlmanacPlugin._IgnoredPrefabs.Value.Split(',').ToList();
     public static class IndexedItemData
     {
         public static List<ItemDrop> GetNoneItems()
@@ -16,11 +18,21 @@ public static class ItemDataCollector
 
         public static List<ItemDrop> GetFishes()
         {
-            return ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Fish, "");
+            List<ItemDrop> fishes = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Fish, "");
+            List<ItemDrop> filteredFishes = new();
+            foreach (ItemDrop item in fishes)
+            {
+                if (exclusionMap.Contains(item.name)) continue;
+                filteredFishes.Add(item);
+            }
+
+            return filteredFishes;
         }
         public static List<ItemDrop> GetConsumables()
         {
-            return ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Consumable, "");
+            List<ItemDrop> consumables = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Consumable, "");
+
+            return GetValidItemDropList(consumables);
         }
         
         public static List<ItemDrop> GetAmmunition()
@@ -37,9 +49,12 @@ public static class ItemDataCollector
         public static List<ItemDrop> GetMaterials()
         {
             List<ItemDrop> materials = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Material, "");
-            materials.AddRange(GetFilteredMisc(filterOption.toMaterials));
 
-            return materials;
+            List<ItemDrop> output = new List<ItemDrop>();
+            output.AddRange(materials);
+            output.AddRange(GetFilteredMisc(filterOption.toMaterials));
+
+            return GetValidItemDropList(output);
         }
 
         public static List<ItemDrop> GetWeapons()
@@ -98,46 +113,30 @@ public static class ItemDataCollector
         private static List<ItemDrop> GetFilteredMisc(filterOption option)
         {
             List<ItemDrop> misc = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Misc, "");
-
+            
+            List<string> toMaterialsMap = new List<string>()
+            {
+                "Turnip",
+                "GoblinTotem",
+            };
+            
             List<ItemDrop> filteredMisc = new List<ItemDrop>();
             List<ItemDrop> MiscToMaterials = new List<ItemDrop>();
+            
             foreach (ItemDrop drop in misc)
             {
-                List<string> toMaterialsMap = new List<string>()
-                {
-                    "DragonEgg",
-                    "ChickenEgg",
-                    "Turnip",
-                    "GoblinTotem",
-                    "DvergrKey",
-                    "chest_hildir1",
-                    "HildirKey_forestcrypt",
-                    "chest_hildir3",
-                    "HildirKey_plainsfortress",
-                    "chest_hildir2",
-                    "HildirKey_mountaincave",
-                    "CryptKey"
-                };
-                if (toMaterialsMap.Contains(drop.name))
-                {
-                    MiscToMaterials.Add(drop);
-                }
-                else
-                {
-                    filteredMisc.Add(drop);
-                }
+                if (drop.name.Contains("Egg")) MiscToMaterials.Add(drop);
+                else if (drop.name.Contains("chest")) MiscToMaterials.Add(drop);
+                else if (drop.name.Contains("Chest")) MiscToMaterials.Add(drop);
+                else if (drop.name.Contains("Key")) MiscToMaterials.Add(drop);
+                else if (toMaterialsMap.Contains(drop.name)) MiscToMaterials.Add(drop);
+                else filteredMisc.Add(drop);
             }
             
             return option == filterOption.toMisc ? filteredMisc : MiscToMaterials;
         }
         private static List<ItemDrop> GetValidItemDropList(List<ItemDrop> list)
         {
-            List<string> exclusionMap = new()
-            {
-                "DvergerArbalest_shoot",
-                "DvergerArbalest",
-                "CapeTest"
-            };
             List<ItemDrop> output = new List<ItemDrop>();
             foreach (var itemDrop in list)
             {

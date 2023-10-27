@@ -14,7 +14,8 @@ static class FixTrophiesPositions
         private static void Postfix(InventoryGui __instance)
         {
             if (!__instance) return;
-        
+            if (AlmanacPlugin.WorkingAsType == AlmanacPlugin.WorkingAs.Server) return;
+            
             List<GameObject> trophyList = __instance.m_trophyList;
             List<string> bossNames = new List<string>()
             {

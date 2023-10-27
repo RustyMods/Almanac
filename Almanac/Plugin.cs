@@ -26,7 +26,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "2.1.3";
+        internal const string ModVersion = "2.1.4";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         private static string ConfigFileName = ModGUID + ".cfg";
@@ -78,7 +78,35 @@ namespace Almanac
 
             _KnowledgeLock = config("3 - Utilities", "Knowledge Wall", Toggle.On,
                 "If on, data is locked behind knowledge of item", true);
-            
+
+            List<string> IgnoredList = new()
+            {
+                "StaminaUpgrade_Greydwarf",
+                "StaminaUpgrade_Troll",
+                "StaminaUpgrade_Wraith",
+                "IronOre",
+                "DvergerArbalest_shoot",
+                "DvergerArbalest",
+                "CapeTest",
+                "SledgeCheat",
+                "SwordCheat",
+                "HealthUpgrade_Bonemass",
+                "HealthUpgrade_GDKing",
+                "guard_stone_test",
+                "Trailership",
+                "Player",
+                "TorchMist",
+                "NPC_HelmetIron_Worn0",
+                "NPC_HelmetBronze_Worn0",
+                "NPC_ArmorIronChest_Worn",
+                "NPC_ArmorIronLegs_Worn",
+                "TrainingDummy"
+            };
+            string ignoredPrefabs = string.Join(",", IgnoredList);
+
+            _IgnoredPrefabs = config("3 - Utilities", "Ignored Prefabs", ignoredPrefabs,
+                "List of prefabs ignored by almanac upon launch");
+
             WorkingAsType = SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null
                 ? WorkingAs.Server : WorkingAs.Client;
             
@@ -135,6 +163,7 @@ namespace Almanac
         public static ConfigEntry<Color> _ignoreColorConfig = null!;
         public static ConfigEntry<Color> _immuneColorConfig = null!;
         public static ConfigEntry<Toggle> _KnowledgeLock = null!;
+        public static ConfigEntry<string> _IgnoredPrefabs = null!;
 
         private ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description,
             bool synchronizedSetting = true)

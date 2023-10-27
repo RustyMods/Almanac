@@ -41,6 +41,7 @@ public static class CreatureDataCollector
         public bool tolerateTar = false;
         public string trophyName = "unknown";
         public string defeatedKey = null!;
+        public int PlayerKills = 0;
     }
     [Serializable] [CanBeNull]
     public class AttackData
@@ -64,15 +65,32 @@ public static class CreatureDataCollector
         public string statusEffect = "None";
         public string statusEffectTooltip = "";
     }
-    
+
+    private static readonly List<string> exclusionMap = AlmanacPlugin._IgnoredPrefabs.Value.Split(',').ToList();
     public static List<CreatureData> CollectAndSaveCreatureData()
     {
         List<CreatureData> creatureData = GetCreatureData();
         creatureData.RemoveAt(0);
-        foreach (var data in creatureData) RenameCreatureData(data);
+        List<CreatureData> filteredCreatures = new();
+        
+        foreach (var data in creatureData)
+        {
+            RenameCreatureData(data);
+            if (exclusionMap.Contains(data.name)) continue;
+            filteredCreatures.Add(data);
+        }
 
-        List<CreatureData> sortedList = creatureData.OrderBy(item => 
+        List<CreatureData> sortedList = filteredCreatures.OrderBy(item =>
             Localization.instance.Localize(item.display_name)).ToList();
+        
+        TrackPlayerKills.PlayerTracker.SetInitialData(sortedList);
+        Dictionary<string, int> currentKilledMonsters = TrackPlayerKills.PlayerTracker.GetCurrentKilledMonsters();
+        foreach (var creature in sortedList)
+        {
+            currentKilledMonsters.TryGetValue(creature.defeatedKey, out int value);
+            creature.PlayerKills = value;
+        }
+        
         return sortedList;
     }
 

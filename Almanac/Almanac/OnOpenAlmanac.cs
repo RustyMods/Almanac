@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using Almanac.MonoBehaviors;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
@@ -29,6 +30,9 @@ public static class Patches
         
         private static void Postfix(InventoryGui __instance)
         {
+            if (!__instance) return;
+            if (AlmanacPlugin.WorkingAsType == AlmanacPlugin.WorkingAs.Server) return;
+            
             SetInitialData(__instance);
             
             foreach (GameObject trophy in trophyList) AddButtonComponent(trophy);
@@ -711,7 +715,7 @@ public static class Patches
                 if (i >= 5) continue;
                 string resourceName = resources[i].m_resItem.m_itemData.m_shared.m_name;
                 bool isKnown = Player.m_localPlayer.IsMaterialKnown(resourceName);
-                
+                if (CheckCheats.PlayerWatcher.noCost) isKnown = true;
                 int resourceAmount = resources[i].m_amount;
                 Sprite resourceIcon = resources[i].m_resItem.m_itemData.m_shared.m_icons[0];
                 GameObject ResourceBackground =
@@ -866,7 +870,7 @@ public static class Patches
                         int dropMax = defaultItems[i].m_stackMax;
     
                         bool isKnown = Player.m_localPlayer.IsMaterialKnown(dropName);
-    
+                        if (CheckCheats.PlayerWatcher.noCost) isKnown = true;
                         string elementName = $"containerDrops ({i})";
                         GameObject ResourceBackground = Element.transform.Find($"ImageElement ({elementName})").gameObject;
                         string localizedContent =
@@ -931,7 +935,7 @@ public static class Patches
                     float cookTime = cookingConversion.m_cookTime;
         
                     bool isKnown = Player.m_localPlayer.IsMaterialKnown(cookingItemName);
-                    
+                    if (CheckCheats.PlayerWatcher.noCost) isKnown = true;
                     string elementName = $"cookingConversion ({i})";
                     GameObject ResourceBackground = Element.transform.Find($"ImageElement ({elementName})").gameObject;
                     string localizedName = Localization.instance.Localize($"{cookingItemName}");
@@ -995,6 +999,7 @@ public static class Patches
                     
                     string elementName = $"fireplaceFireworks ({i})";
                     bool isKnown = Player.m_localPlayer.IsMaterialKnown(fireworkName);
+                    if (CheckCheats.PlayerWatcher.noCost) isKnown = true;
                     GameObject ResourceBackground = Element.transform.Find($"ImageElement ({elementName})").gameObject;
                     string localizedName = Localization.instance.Localize($"{fireworkName}");
                     SetActiveElement(Element, "ImageElement", elementName, true);
@@ -1035,6 +1040,7 @@ public static class Patches
                     
                     string FromElementId = $"smelterConversion from ({i})";
                     bool fromIsKnown = Player.m_localPlayer.IsMaterialKnown(fromItemName);
+                    if (CheckCheats.PlayerWatcher.noCost) fromIsKnown = true;
                     GameObject smelterFrom = Element.transform.Find($"ImageElement ({FromElementId})").gameObject;
                     string fromLocalizedName = Localization.instance.Localize($"{fromItemName}");
                     SetActiveElement(Element, "ImageElement", FromElementId, true);
@@ -1048,6 +1054,7 @@ public static class Patches
                     
                     string toElementId = $"smelterConversion to ({i})";
                     bool toIsKnown = Player.m_localPlayer.IsMaterialKnown(toItemName);
+                    if (CheckCheats.PlayerWatcher.noCost) toIsKnown = true;
                     GameObject smelterTo = Element.transform.Find($"ImageElement ({toElementId})").gameObject;
                     string toLocalizedName = Localization.instance.Localize($"{toItemName}");
                     SetActiveElement(Element, "ImageElement", toElementId, true);
@@ -1128,7 +1135,7 @@ public static class Patches
                         Sprite? ammoIcon = ammoItemDrop.m_itemData.GetIcon();
                         
                         bool isKnown = Player.m_localPlayer.IsMaterialKnown(ammoName);
-
+                        if (CheckCheats.PlayerWatcher.noCost) isKnown = true;
                         string elementId = $"turretAmmo ({i})";
                         GameObject resourceBackground = Element.transform.Find($"ImageElement ({elementId})").gameObject;
                         string localizedName = Localization.instance.Localize($"{ammoName}");
@@ -1292,8 +1299,8 @@ public static class Patches
                     {
                         string resourceName = resources[i].m_resItem.m_itemData.m_shared.m_name;
                         bool isKnown = Player.m_localPlayer.IsMaterialKnown(resourceName);
-                        
-                        var resourceAmount = resources[i].m_amount;
+                        if (CheckCheats.PlayerWatcher.noCost) isKnown = true;
+                        int resourceAmount = resources[i].m_amount;
                         Sprite resourceIcon = resources[i].m_resItem.m_itemData.m_shared.m_icons[0];
                         GameObject ResourceBackground =
                             Element.transform.Find($"ImageElement (recipe ({i}))").gameObject;
@@ -1716,8 +1723,9 @@ public static class Patches
                     ItemDrop itemDrop = drop.GetComponent<ItemDrop>();
                     string dropItemName = itemDrop.m_itemData.m_shared.m_name;
                     bool isKnown = Player.m_localPlayer.IsMaterialKnown(dropItemName);
+                    if (CheckCheats.PlayerWatcher.noCost) isKnown = true;
                     GameObject fishDropBg = Element.transform.Find($"ImageElement (fishDrops ({i}))").gameObject;
-                    string locaizedName = Localization.instance.Localize(dropItemName);
+                    string localizedName = Localization.instance.Localize(dropItemName);
                     SetImageElement(
                         fishDropBg,
                         "fishDropItemIcon",
@@ -1727,7 +1735,7 @@ public static class Patches
                     SetHoverableText(
                         Element,
                         $"fishDrops ({i})",
-                        isKnown ? locaizedName : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : locaizedName);
+                        isKnown ? localizedName : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : localizedName);
                     SetActiveElement(Element, "ImageElement", $"fishDrops ({i})", true);
                 }
             }
@@ -2092,8 +2100,13 @@ public static class Patches
         {
             Player player = Player.m_localPlayer;
             List<CreatureDataCollector.CreatureData> creatureData = Almanac.CreateAlmanac.creatures;
-            
             CreatureDataCollector.CreatureData creature = getCreature(creatureData, creatureName, prefabName);
+
+            Transform? clipBoard = dummyElement.transform.Find("ImageElement (Clipboard)");
+            Transform? clipBoardHover = clipBoard.Find("hoverTextElement");
+            clipBoardHover.TryGetComponent(out TextMeshProUGUI clipBoardTextMesh);
+            clipBoardTextMesh.text = creature.name;
+            
             SetActiveElement(dummyElement, "ImageElement", "questionMark", false);
             SetTextElement(dummyElement, "displayName", Localization.instance.Localize(creature.display_name));
             SetTextElement(dummyElement, "faction", creature.faction ?? "no data");
@@ -2156,6 +2169,7 @@ public static class Patches
                         Sprite icon = itemDrop.m_itemData.GetIcon();
                         string itemName = itemDrop.m_itemData.m_shared.m_name;
                         bool isKnown = player.IsMaterialKnown(itemName);
+                        if (CheckCheats.PlayerWatcher.noCost) isKnown = true;
                         string content = $"{itemName} (<color=orange>{dropChance}%</color>)";
                         SetImageElement(
                             dropBgElement.gameObject,
@@ -2226,6 +2240,7 @@ public static class Patches
                         Sprite icon = itemDrop.m_itemData.GetIcon();
                         string itemName = itemDrop.m_itemData.m_shared.m_name;
                         bool isKnown = player.IsKnownMaterial(itemName);
+                        if (CheckCheats.PlayerWatcher.noCost) isKnown = true;
                         
                         SetImageElement(
                             bgElement.gameObject, $"consumeItem ({index})", icon,
@@ -2245,6 +2260,9 @@ public static class Patches
                     SetActiveElement(dummyElement, "ImageElement", $"iconBg ({index})", false);
                 }
             }
+            
+            // Set killed by values
+            SetTextElement(dummyElement, "KilledBy", $"<color=orange>{creature.PlayerKills}</color>");
 
             dummyElement.SetActive(true);
         }

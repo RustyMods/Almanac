@@ -27,10 +27,11 @@ public static class BlackList
             {
                 Directory.CreateDirectory(folderPath);
             }
-            
+
             CreateDefaultFile("ItemBlackList.yml", "#List out item prefabs to blacklist:\n#SwordCheat");
             CreateDefaultFile("CreatureBlackList.yml", "#List out creature prefabs to blacklist:\n#Player");
             CreateDefaultFile("PieceBlackList.yml", "#List out pieces prefabs to blacklist:\n#piece_workbench");
+            
             
             FileSystemWatcher blacklistWatcher = new FileSystemWatcher(folderPath)
             {
@@ -98,16 +99,13 @@ public static class BlackList
             case "PieceBlackList.yml":
                 PieceBlackList.Value = blacklist;
                 break;
-            
-            default:
-                // Handle other cases or provide a default action
-                break;
         }
     }
 
     private static void CreateDefaultFile(string fileName, string contents)
     {
         string filePath = Path.Combine(folderPath, fileName);
+        
         if (!File.Exists(filePath))
         {
             File.WriteAllText(filePath, contents);

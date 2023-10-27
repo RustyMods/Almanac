@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
@@ -8,6 +9,7 @@ public static class PieceDataCollector
 {
     public static class IndexedPieces
     {
+        private static readonly List<string> exclusionMap = AlmanacPlugin._IgnoredPrefabs.Value.Split(',').ToList();
         public enum categories
         {
             plants,
@@ -38,7 +40,7 @@ public static class PieceDataCollector
             HashSet<string> craftNames = new HashSet<string>();
             HashSet<string> defaultNames = new HashSet<string>();
 
-            List<string> exclusionMap = new List<string>()
+            List<string> toDefaultMap = new List<string>()
             {
                 "ship_construction",
                 "paved_road_v2",
@@ -65,9 +67,11 @@ public static class PieceDataCollector
                 piece.TryGetComponent(out Piece pieceScript);
                 piece.TryGetComponent(out WearNTear wearNTear);
                 piece.TryGetComponent(out Plant plant);
-                
+
                 if (!pieceScript) continue;
 
+                if (exclusionMap.Contains(piece.name)) continue;
+                
                 string name = pieceScript.name;
                 string hoverName = pieceScript.m_name;
                 
@@ -81,7 +85,7 @@ public static class PieceDataCollector
                 {
                     if (!wearNTear) continue;
                     if (
-                        exclusionMap.Contains(name) 
+                        toDefaultMap.Contains(name) 
                         || name.StartsWith("TreasureChest")
                         || name.StartsWith("loot_chest")
                         || name.StartsWith("Jewelcrafting"))

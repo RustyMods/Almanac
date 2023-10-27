@@ -129,6 +129,7 @@
         <Compile Include="Almanac\ItemDataCollector.cs" />
         <Compile Include="Almanac\OnCloseAlmanac.cs" />
         <Compile Include="Almanac\PieceDataCollector.cs" />
+        <Compile Include="Almanac\TrackPlayerKills.cs" />
         <Compile Include="Managers\LocalizationManager.cs" />
         <Compile Include="Managers\SpriteManager.cs" />
         <Compile Include="MonoBehaviors\CreateSprite.cs" />
@@ -164,9 +165,8 @@
         <EmbeddedResource Include="icons\lightningIcon.png" />
         <EmbeddedResource Include="icons\poisonIcon.png" />
         <EmbeddedResource Include="icons\spiritIcon.png" />
-        <EmbeddedResource Include="icons\emptyCheckmark.png" />
-        <EmbeddedResource Include="icons\fillCheckmark.png" />
         <EmbeddedResource Include="icons\AlmanacIconButton.png" />
+        <EmbeddedResource Include="icons\AlmanacUnknownIcon.png" />
         <Content Include="ILRepack.targets" />
         <Content Include="Libs\LocalizationManager.dll">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

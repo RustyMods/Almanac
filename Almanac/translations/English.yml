@@ -251,3 +251,5 @@ ML_HailStorm: "Hail Storm"
 ML_LightningStorm: "Lightning Storm"
 ML_MeteorShower: "Meteor Shower"
 enemy_molluscanland: "Molluscan"
+# Player Tracker
+almanac_killed_by_label: "Recorded Kill Count"

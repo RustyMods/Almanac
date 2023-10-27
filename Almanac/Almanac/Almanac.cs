@@ -6,6 +6,7 @@ using Almanac.MonoBehaviors;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using GameObject = UnityEngine.GameObject;
 using Vector2 = UnityEngine.Vector2;
@@ -70,13 +71,12 @@ public static class Almanac
         public static int furniturePage;
         public static int plantsPage;
         public static int otherPage;
-        public static int extraPage;
         public static int modPage;
         
         public static void Postfix(InventoryGui __instance)
         {
             if (!__instance) return;
-            
+            if (AlmanacPlugin.WorkingAsType == AlmanacPlugin.WorkingAs.Server) return;
             SetInitialData(__instance);
             EditInventoryGUI();
             RepositionTrophyPanel(-220f, 0f);
@@ -246,17 +246,23 @@ public static class Almanac
         {
             switch (name)
             {
-                case "material":
-                    Patches.OnOpenTrophiesPatch.SetUnknownItems(name, materials);
+                case "fish":
+                    Patches.OnOpenTrophiesPatch.SetUnknownItems(name, fish);
                     break;
-                case "consummable":
-                    Patches.OnOpenTrophiesPatch.SetUnknownItems(name, consumables);
+                case "ammo":
+                    Patches.OnOpenTrophiesPatch.SetUnknownItems(name, ammunition);
                     break;
                 case "weapon":
                     Patches.OnOpenTrophiesPatch.SetUnknownItems(name, weapons);
                     break;
                 case "gear":
                     Patches.OnOpenTrophiesPatch.SetUnknownItems(name, gear);
+                    break;
+                case "material":
+                    Patches.OnOpenTrophiesPatch.SetUnknownItems(name, materials);
+                    break;
+                case "consummable":
+                    Patches.OnOpenTrophiesPatch.SetUnknownItems(name, consumables);
                     break;
                 case "miscPieces":
                     Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, miscPieces);
@@ -981,7 +987,7 @@ public static class Almanac
         private static void CreateMaterialContainer(Transform parentElement, ItemDrop data, int index, Vector2 position)
         {
             var sharedData = data.m_itemData.m_shared;
-            Sprite iconSprite = sharedData.m_icons[0];
+            Sprite iconSprite = data.m_itemData.GetIcon();
             string name = sharedData.m_name;
 
             GameObject container = new GameObject($"materialContainer ({index})");
@@ -1486,7 +1492,7 @@ public static class Almanac
             scrollbar.onValueChanged.AddListener(call: (e) =>
             {
                 creatureRectTransform.anchoredPosition =
-                    e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
+                    e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2125f) : new Vector2(0f, (e - 0.5f) * 1f);
                 // materialRectTransform.anchoredPosition = 
                 //     e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
                 // consumeRectTransform.anchoredPosition =
@@ -3022,6 +3028,58 @@ public static class Almanac
                 horizontalAlignment: HorizontalAlignmentOptions.Left,
                 wrapMode: TextWrappingModes.NoWrap
             );
+
+            GameObject clipBoard = CreateImageElement(
+                DummyElement, "Clipboard",
+                170f, 370f,
+                25f, 25f,
+                true,
+                sprite: closeButtonImage.sprite
+            );
+
+            CreateImageElement(clipBoard.transform, "ClipBoard Icon",
+                0f, 0f,
+                20f, 20f,
+                true,
+                sprite: AlmanacPlugin.AlmanacIconButton,
+                alpha: 0.7f
+                );
+            
+            clipBoard.TryGetComponent(out Image clipBoardImage);
+            
+            AddHoverableText(clipBoard, "", anchoredY: 20f);
+            Transform? clipBoardHover = clipBoard.transform.Find("hoverTextElement");
+            clipBoardHover.TryGetComponent(out TextMeshProUGUI clipBoardTextMesh);
+            
+            ButtonSfx clipBoardButtonSfx = clipBoard.AddComponent<ButtonSfx>();
+            clipBoardButtonSfx.m_sfxPrefab = closeButtonSfx.m_sfxPrefab;
+            
+            Button clipBoardButton = clipBoard.AddComponent<Button>();
+            clipBoardButton.interactable = true;
+            clipBoardButton.transition = Selectable.Transition.SpriteSwap;
+            clipBoardButton.spriteState = new SpriteState()
+            {
+                highlightedSprite = closeButtonScript.spriteState.highlightedSprite,
+                pressedSprite = closeButtonScript.spriteState.pressedSprite,
+                selectedSprite = closeButtonScript.spriteState.selectedSprite,
+                disabledSprite = closeButtonScript.spriteState.disabledSprite
+            };
+            clipBoardButton.targetGraphic = clipBoardImage;
+            clipBoardButton.onClick = new Button.ButtonClickedEvent();
+            clipBoardButton.onClick.AddListener(() =>
+            {
+                TextEditor textEditor = new TextEditor
+                {
+                    text = clipBoardTextMesh.text
+                };
+                textEditor.SelectAll();
+                textEditor.Copy();
+                
+                MessageHud.instance.ShowMessage(
+                    MessageHud.MessageType.Center, 
+                    Localization.instance.Localize("$almanac_copy_to_clipboard"));
+            });
+
             CreateTextElement(
                 DummyElement, "faction", "$almanac_factionless", 
                 0f, 310f, 
@@ -3045,7 +3103,8 @@ public static class Almanac
                 DummyElement, "questionMark",
                 -145f, 340f,
                 120f, 120f,
-                "Almanac.icons.QuestionMark.png");
+                "Almanac.icons.AlmanacUnknownIcon.png",
+                alpha: 0.5f);
 
             float anchorX = -110f;
 
@@ -3196,6 +3255,17 @@ public static class Almanac
                 anchorX - 5f, -1050f,
                 iconBackground
                 );
+
+            CreateTextElement(DummyElement, "KilledByLabel", "$almanac_killed_by_label",
+                -80f, -1425f,
+                200f, 50f,
+                Color.white, 16
+                );
+            CreateTextElement(DummyElement, "KilledBy", "0",
+                150f, -1425f,
+                100f, 50f,
+                Color.white, 18
+            );
 
             return DummyPanel;
         }
@@ -3537,7 +3607,7 @@ public static class Almanac
 
             var createSprite = imageElement.AddComponent<CreateSprite>();
             createSprite.path = imagePath;
-
+            
             image.sprite = null;
             image.material = null;
             image.fillCenter = true;

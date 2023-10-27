@@ -124,16 +124,20 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Almanac\FixTrophiesPositions.cs" />
+        <Compile Include="Almanac\ItemDataCollector.cs" />
+        <Compile Include="Almanac\OnCloseAlmanac.cs" />
+        <Compile Include="Almanac\PieceDataCollector.cs" />
         <Compile Include="Managers\LocalizationManager.cs" />
         <Compile Include="Managers\SpriteManager.cs" />
         <Compile Include="MonoBehaviors\CreateSprite.cs" />
         <Compile Include="MonoBehaviors\ElementHover.cs" />
         <Compile Include="Plugin.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
-        <Compile Include="UI\Almanac.cs" />
-        <Compile Include="UI\BlackList.cs" />
-        <Compile Include="UI\CreatureDataCollector.cs" />
-        <Compile Include="UI\Patches.cs" />
+        <Compile Include="Almanac\Almanac.cs" />
+        <Compile Include="Almanac\BlackList.cs" />
+        <Compile Include="Almanac\CreatureDataCollector.cs" />
+        <Compile Include="Almanac\Patches.cs" />
         <Compile Include="VersionHandshake.cs" />
     </ItemGroup>
     <ItemGroup>

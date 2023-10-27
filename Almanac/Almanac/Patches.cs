@@ -1,168 +1,45 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
-using System.Security.Policy;
-using Almanac.MonoBehaviors;
-using BepInEx;
-using BepInEx.Logging;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using YamlDotNet.Serialization;
-using Object = UnityEngine.Object;
 
-namespace Almanac.UI;
+namespace Almanac.Almanac;
 
 public static class Patches
 {
-    [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.UpdateTrophyList))]
-    static class UpdateTrophyListPatch
-    {
-        private static void Postfix(InventoryGui __instance)
-        {
-            if (!__instance) return;
-        
-            List<GameObject> trophyList = __instance.m_trophyList;
-            List<string> bossNames = new List<string>()
-            {
-                Localization.instance.Localize("$enemy_eikthyr"),
-                Localization.instance.Localize("$enemy_gdking"),
-                Localization.instance.Localize("$enemy_bonemass"),
-                Localization.instance.Localize("$enemy_dragon"),
-                Localization.instance.Localize("$enemy_goblinking"),
-                Localization.instance.Localize("$enemy_seekerqueen")
-            };
-            HashSet<Vector3> uniqueVectorSet = new HashSet<Vector3>();
-            
-            foreach (GameObject trophy in trophyList)
-            {
-                Transform? trophyName = trophy.transform.Find("name");
-                Vector3 trophyPos = trophy.transform.position;
-                trophyName.TryGetComponent(out TextMeshProUGUI textMesh);
-                if (!textMesh) continue;
-                string panelDisplayName = textMesh.text;
-                
-                if (Localization.instance.Localize(panelDisplayName).ToLower().Contains("troll"))
-                {
-                    if (!(Math.Abs(trophyPos.x - 1010f) < 5f) || !(Math.Abs(trophyPos.y - 694f) < 5f)) continue;
-                    trophy.transform.position = new Vector3(830f, 874f, 0.0f);
-                };
-                if (bossNames.Contains(Localization.instance.Localize(panelDisplayName))) uniqueVectorSet.Add(trophyPos);
-                
-            }
-            
-            foreach (GameObject trophy in trophyList)
-            {
-                Vector3 trophyPos = trophy.transform.position;
-                Transform nameElement = trophy.transform.Find("name");
-                nameElement.TryGetComponent(out TextMeshProUGUI textMesh);
-                if (!textMesh) continue;
-                string trophyName = textMesh.text;
-                // Check if trophy positions are within the expected ranges
-                if ((trophyPos.x - 110f) % 180f != 0f || (trophyPos.y - 154f) % 180f != 0f)
-                {
-                    // If false, then set it to forest troll position to then be moved
-                    trophy.transform.position = new Vector3(830f, 874f, 0.0f);
-                }
-                // Check if position is unique
-                if (uniqueVectorSet.Contains(trophyPos) 
-                    && Localization.instance.Localize(trophyName).ToLower() != Localization.instance.Localize("draugr") 
-                    && !bossNames.Contains(trophyName)
-                    )
-                {
-                    // If false, then try to move trophy to empty slot
-                    trophyPos = TryMoveTrophy(trophyPos, uniqueVectorSet);
-                }
-                // Add position to hash set
-                uniqueVectorSet.Add(trophyPos);
-                // Set trophy position
-                trophy.transform.position = trophyPos;
-            }
-        }
-        private static Vector2 TryMoveTrophy(Vector3 position, HashSet<Vector3> uniqueVectors)
-        {
-            float increment = 180f;
-    
-            float currentX = position.x;
-            float currentY = position.y;
-    
-            // Increment position of trophy to next slot
-            position = currentX + increment >= 1190f 
-                ? new Vector3(110f, currentY - increment, 0.0f) 
-                : new Vector3(position.x + increment, currentY, 0.0f);
-            // Check if slot is taken
-            if (uniqueVectors.Contains(position)) position = TryMoveTrophy(position, uniqueVectors);
-            // If slot is available, return position
-            return position;
-        }
-    }
-
-    [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.OnCloseTrophies))]
-    static class OnCloseTrophiesPatch
-    {
-        private static void Postfix(InventoryGui __instance)
-        {
-            if (!__instance) return;
-            Transform trophyFrame = __instance.m_trophiesPanel.transform.Find("TrophiesFrame");
-            Transform contentPanel = trophyFrame.transform.Find("ContentPanel");
-            Transform almanacList = contentPanel.transform.Find("AlmanacList");
-            Transform welcomePanel = contentPanel.transform.Find("WelcomePanel (0)");
-            Transform AlmanacElement = almanacList.transform.Find("AlmanacElement (0)");
-            
-            AlmanacElement.gameObject.SetActive(false);
-            welcomePanel.gameObject.SetActive(true);
-        }
-    }
-
     [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.OnOpenTrophies))]
     public static class OnOpenTrophiesPatch
     {
+        private static AlmanacPlugin.Toggle knowledgeLockToggle;
         private static List<GameObject> trophyList = null!;
         private static Transform trophyFrame = null!;
         private static Transform contentPanel = null!;
         private static Transform AlmanacList = null!;
         private static Transform closeButton = null!;
-
-        private static readonly List<CreatureDataCollector.CreatureData> creatures = new(Almanac.CreateAlmanac.creatures);
-        
         private static Transform creaturePanel = null!;
         private static Transform materialPanel = null!;
-
         private static Transform AlmanacElement = null!;
-
         private static ButtonSfx buttonSfx = null!;
+        private static readonly List<CreatureDataCollector.CreatureData> creatures = new(Almanac.CreateAlmanac.creatures);
         private static readonly List<string> modifiersTags = new() { "blunt", "slash", "pierce", "chop", "pickaxe", "fire", "frost", "lightning", "poison", "spirit" };
-        private static AlmanacPlugin.Toggle knowledgeLockToggle;
         
         private static void Postfix(InventoryGui __instance)
         {
-            trophyList = __instance.m_trophyList;
-            trophyFrame = __instance.m_trophiesPanel.transform.Find("TrophiesFrame");
-            contentPanel = trophyFrame.Find("ContentPanel");
-
-            AlmanacList = contentPanel.Find("AlmanacList");
-            closeButton = trophyFrame.Find("Closebutton");
-        
-            buttonSfx = closeButton.gameObject.GetComponent<ButtonSfx>();
-            
-            creaturePanel = trophyFrame.transform.Find("creaturePanel");
-            materialPanel = trophyFrame.transform.Find("materialPanel");
-            
-            AlmanacElement = AlmanacList.transform.Find("AlmanacElement (0)");
-
-            knowledgeLockToggle = AlmanacPlugin._KnowledgeLock.Value;
+            SetInitialData(__instance);
             
             foreach (GameObject trophy in trophyList) AddButtonComponent(trophy);
             
             SetUnknownCreatures();
+            
             SetUnknownItems("material", Almanac.CreateAlmanac.materials);
-            SetUnknownItems("consummable", Almanac.CreateAlmanac.consummables);
+            SetUnknownItems("consummable", Almanac.CreateAlmanac.consumables);
             SetUnknownItems("weapon", Almanac.CreateAlmanac.weapons);
             SetUnknownItems("gear", Almanac.CreateAlmanac.gear);
-            SetUnknownItems("ammo", Almanac.CreateAlmanac.ammunitions);
+            SetUnknownItems("ammo", Almanac.CreateAlmanac.ammunition);
             SetUnknownItems("fish", Almanac.CreateAlmanac.fish);
             
             SetUnknownPieces("miscPieces", Almanac.CreateAlmanac.miscPieces);
@@ -172,6 +49,23 @@ public static class Patches
             SetUnknownPieces("other", Almanac.CreateAlmanac.defaultPieces);
             SetUnknownPieces("plantPieces", Almanac.CreateAlmanac.plantPieces);
             SetUnknownPieces("modPieces", Almanac.CreateAlmanac.modPieces);
+        }
+
+        private static void SetInitialData(InventoryGui __instance)
+        {
+            trophyList = __instance.m_trophyList;
+            trophyFrame = __instance.m_trophiesPanel.transform.Find("TrophiesFrame");
+            closeButton = trophyFrame.Find("Closebutton");
+            contentPanel = trophyFrame.Find("ContentPanel");
+            AlmanacList = contentPanel.Find("AlmanacList");
+            creaturePanel = trophyFrame.transform.Find("creaturePanel");
+            materialPanel = trophyFrame.transform.Find("materialPanel");
+            AlmanacElement = AlmanacList.transform.Find("AlmanacElement (0)");
+            knowledgeLockToggle = AlmanacPlugin._KnowledgeLock.Value;
+            
+            closeButton.TryGetComponent(out ButtonSfx buttonSfxScript);
+            if (!buttonSfxScript) return;
+            buttonSfx = buttonSfxScript;
         }
 
         public static void SetUnknownPieces(string id, List<GameObject> list)
@@ -196,14 +90,132 @@ public static class Patches
                 string name = piece.m_name;
                 bool isRecipeKnown = Player.m_localPlayer.IsRecipeKnown(name);
                 string localizedName = Localization.instance.Localize(name);
-                
+
                 button.interactable = knowledgeLockToggle != AlmanacPlugin.Toggle.On || isRecipeKnown;
-                textMesh.text = knowledgeLockToggle == AlmanacPlugin.Toggle.On ? isRecipeKnown ? localizedName : "???" : localizedName;
+                textMesh.text = knowledgeLockToggle == AlmanacPlugin.Toggle.On
+                    ? isRecipeKnown ? localizedName : "???"
+                    : localizedName;
                 iconImage.color = knowledgeLockToggle == AlmanacPlugin.Toggle.On
                     ? isRecipeKnown ? Color.white : Color.black
                     : Color.white;
-                
-                if (container.gameObject.activeSelf) container.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
+
+                if (BlackList.PieceBlackList.Value.Count == 0) continue;
+                SetBlackListByPage(container, id, prefab, i, BlackListTypes.pieces);
+            }
+        }
+
+        private enum BlackListTypes{
+            items,
+            creatures,
+            pieces
+        }
+        private static void SetBlackListByPage(Transform container, string id, string prefabName, int index, BlackListTypes type)
+        {
+            int page = 0;
+            switch (type)
+            {
+                case BlackListTypes.pieces:
+                    page = Mathf.FloorToInt(index / 72f);
+                    break;
+                case BlackListTypes.creatures:
+                    page = Mathf.FloorToInt(index / 100f);
+                    break;
+                case BlackListTypes.items:
+                    page = Mathf.FloorToInt(index / 72f);
+                    break;
+            }
+            int currentPage = Int32.MaxValue;
+            switch (id)
+            {
+                case "miscPieces":
+                    currentPage = Almanac.CreateAlmanac.miscPage;
+                    break;
+                case "craftingPieces":
+                    currentPage = Almanac.CreateAlmanac.craftPage;
+                    break;
+                case "buildPieces":
+                    currentPage = Almanac.CreateAlmanac.buildPage;
+                    break;
+                case "furniturePieces":
+                    currentPage = Almanac.CreateAlmanac.furniturePage;
+                    break;
+                case "other":
+                    currentPage = Almanac.CreateAlmanac.otherPage;
+                    break;
+                case "plantPieces":
+                    currentPage = Almanac.CreateAlmanac.plantsPage;
+                    break;
+                case "modPieces":
+                    currentPage = Almanac.CreateAlmanac.modPage;
+                    break;
+                case "Creature":
+                    currentPage = Almanac.CreateAlmanac.creaturesPage;
+                    break;
+                case "material":
+                    currentPage = Almanac.CreateAlmanac.materialsPage;
+                    break;
+                case "consummable":
+                    currentPage = Almanac.CreateAlmanac.consumablesPage;
+                    break;
+                case "weapon":
+                    currentPage = Almanac.CreateAlmanac.weaponsPage;
+                    break;
+                case "gear":
+                    currentPage = Almanac.CreateAlmanac.equipmentPage;
+                    break;
+                case "ammo":
+                    currentPage = Almanac.CreateAlmanac.projectilePage;
+                    break;
+                case "fish":
+                    currentPage = Almanac.CreateAlmanac.fishPage;
+                    break;
+            }
+
+            if (currentPage != page) return;
+            switch (id)
+            {
+                case "miscPieces":
+                    container.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefabName));
+                    break;
+                case "craftingPieces":
+                    container.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefabName));
+                    break;
+                case "buildPieces":
+                    container.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefabName));
+                    break;
+                case "furniturePieces":
+                    container.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefabName));
+                    break;
+                case "other":
+                    container.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefabName));
+                    break;
+                case "plantPieces":
+                    container.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefabName));
+                    break;
+                case "modPieces":
+                    container.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefabName));
+                    break;
+                case "Creature":
+                    container.gameObject.SetActive(!BlackList.CreatureBlackList.Value.Contains(prefabName));
+                    break;
+                case "material":
+                    container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName));
+                    break;
+                case "consummable":
+                    container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName));
+                    break;
+                case "weapon":
+                    container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName));
+                    break;
+                case "gear":
+                    container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName));
+                    break;
+                case "ammo":
+                    container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName));
+                    break;
+                case "fish":
+                    container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName));
+                    break;
             }
         }
         public static void SetUnknownCreatures()
@@ -253,7 +265,8 @@ public static class Patches
                     ? Color.yellow
                     : Color.gray;
                 // Check against blacklist
-                if (container.gameObject.activeSelf) container.gameObject.SetActive(!BlackList.CreatureBlackList.Value.Contains(prefab));
+                if (BlackList.CreatureBlackList.Value.Count == 0) continue;
+                SetBlackListByPage(container, "Creature", prefab, i, BlackListTypes.creatures);
             }
         }
 
@@ -288,8 +301,8 @@ public static class Patches
                         : localizedName;
                     button.interactable = knowledgeLockToggle != AlmanacPlugin.Toggle.On || isKnown;
                     // Check against blacklist
-                    if (container.gameObject.activeSelf)
-                        container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
+                    if (BlackList.ItemBlackList.Value.Count == 0) continue;
+                    SetBlackListByPage(container, id, prefab, i, BlackListTypes.items);
                 }
                 catch (NullReferenceException)
                 {
@@ -2441,7 +2454,7 @@ public static class Patches
                 
                 // Get exact match for draugr
                 if (creatureName == "Draugr" && prefab is "TrainingDummy" or "Draugr_Elite" or "ML_Draugr_Spawn" or "Draugr_Ranged") continue;
-                if (creatureName == "MolluscanLand" && prefab is "Molluscan") continue;
+                if (creatureName == "Molluscan" && prefab is "Molluscan") continue;
 
                 if (trophyName == creatureName)
                 {
@@ -2470,7 +2483,6 @@ public static class Patches
                     break;
                 }
             }
-            Debug.Log($"{result.name} : {Localization.instance.Localize(result.display_name)}");
             return result;
         }
 

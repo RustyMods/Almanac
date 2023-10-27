@@ -1,11 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using BepInEx;
-using HarmonyLib;
 using ServerSync;
-using UnityEngine;
 
-namespace Almanac.UI;
+namespace Almanac.Almanac;
 
 public static class BlackList
 {

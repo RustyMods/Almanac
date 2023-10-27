@@ -3,12 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using BepInEx;
-using BepInEx.Logging;
 using JetBrains.Annotations;
 using UnityEngine;
-using YamlDotNet.Serialization;
 
-namespace Almanac.UI;
+namespace Almanac.Almanac;
 public static class CreatureDataCollector
 {
     public static readonly string outputFilePath = Paths.ConfigPath + Path.DirectorySeparatorChar + "AlmanacCreatureData.yml";
@@ -113,7 +111,7 @@ public static class CreatureDataCollector
             { "MolluscanLand", "$almanac_land $enemy_molluscanland" },
             { "ML_DraugrBomber_Boat", "$enemy_draugr $almanac_bomber" },
             { "NightmareDragonEV", "$enemy_nightmaredragon EV" },
-            { "GoblinLox", "$enemy_goblin $enemy_lox" },
+            { "ML_GoblinLox", "$enemy_goblin $enemy_lox" },
             { "DwarfGoblin_Spawn", "$almanac_spawned $enemy_goblindwarf" },
             { "GhostWarrior", "$enemy_ghost $almanac_warrior" },
             { "NormalGhostWarrior", "$almanac_normal $enemy_ghost $almanac_warrior" },
@@ -141,7 +139,7 @@ public static class CreatureDataCollector
             { "ML_Sword_Frigga_Spider_3_Cold", "$ally_brownspider_spawn $almanac_frost" },
             { "TreeSpider_Spawn", "$almanac_spawned $enemy_treespider" },
             { "Skeleton_Hildir_nochest", "$enemy_skeletonfire $almanac_nochest" },
-            { "Fenring_Cultist_Hildr_nochest", "$enemy_fenringcultist_hildir $almanac_nochest" },
+            { "Fenring_Cultist_Hildir_nochest", "$enemy_fenringcultist_hildir $almanac_nochest" },
             { "GoblinBruteBros_nochest", "$enemy_goblinbrute_hildircombined $almanac_nochest" },
             { "GoblinShaman_Hildir_nochest", "$enemy_goblin_hildir $almanac_nochest" }
             

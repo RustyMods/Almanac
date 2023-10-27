@@ -1,19 +1,16 @@
-﻿    using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-    using System.Text.RegularExpressions;
-    using Almanac.MonoBehaviors;
-    using BepInEx.Logging;
-    using HarmonyLib;
-    using TMPro;
-    using UnityEngine;
-using UnityEngine.Events;
+using System.Text.RegularExpressions;
+using Almanac.MonoBehaviors;
+using HarmonyLib;
+using TMPro;
+using UnityEngine;
 using UnityEngine.UI;
 using GameObject = UnityEngine.GameObject;
-    using Object = UnityEngine.Object;
-    using Vector2 = UnityEngine.Vector2;
+using Vector2 = UnityEngine.Vector2;
 
-    namespace Almanac.UI;
+    namespace Almanac.Almanac;
 
 public static class Almanac
 {
@@ -28,32 +25,10 @@ public static class Almanac
         private static ButtonSfx closeButtonSfx = null!;
         private static TMP_FontAsset font = null!;
         private static Image closeButtonImage = null!;
-        public static List<ItemDrop> materials = null!;
-        public static List<ItemDrop> consummables = null!;
-        public static List<ItemDrop> gear = null!;
-        public static List<ItemDrop> weapons = null!;
-        public static List<ItemDrop> fish = null!;
-        public static List<ItemDrop> ammunitions = null!;
-        public static List<CreatureDataCollector.CreatureData> creatures = null!;
         private static Image borderImage = null!;
         private static Image iconBg = null!;
         private static Image weightIcon = null!;
         private static Image armorIcon = null!;
-        
-        private static List<GameObject> buildables = new();
-        
-        public static List<GameObject> cookingStations = new();
-        public static List<GameObject> fermentingStations = new();
-        public static List<GameObject> smelterStations = new();
-        
-        public static List<GameObject> miscPieces = new();
-        public static List<GameObject> craftingPieces = new();
-        public static List<GameObject> buildPieces = new();
-        public static List<GameObject> furniturePieces = new();
-        public static List<GameObject> plantPieces = new();
-        public static List<GameObject> defaultPieces = new();
-        public static List<GameObject> modPieces = new();
-
         private static RectTransform creatureRectTransform = null!;
         private static RectTransform materialRectTransform = null!;
         private static RectTransform consumeRectTransform = null!;
@@ -61,17 +36,54 @@ public static class Almanac
         private static RectTransform weaponRectTransform = null!;
         private static RectTransform projectileRectTransform = null!;
         private static RectTransform fishRectTransform = null!;
-        
         private static RectTransform piecesRectTransform = null!;
 
-        private static GameObject materialPanel = null!;
-        private static GameObject consumablePanel = null!;
-        private static GameObject equipmentPanel = null!;
-        private static GameObject WeaponPanel = null!;
-        private static GameObject projectilePanel = null!;
+        public static List<ItemDrop> materials = null!;
+        public static List<ItemDrop> consumables = null!;
+        public static List<ItemDrop> gear = null!;
+        public static List<ItemDrop> weapons = null!;
+        public static List<ItemDrop> fish = null!;
+        public static List<ItemDrop> ammunition = null!;
+        public static List<CreatureDataCollector.CreatureData> creatures = null!;
+        public static List<GameObject> cookingStations = null!;
+        public static List<GameObject> fermentingStations = null!;
+        public static List<GameObject> smelterStations = null!;
+        public static List<GameObject> miscPieces = null!;
+        public static List<GameObject> craftingPieces = null!;
+        public static List<GameObject> buildPieces = null!;
+        public static List<GameObject> furniturePieces = null!;
+        public static List<GameObject> plantPieces = null!;
+        public static List<GameObject> defaultPieces = null!;
+        public static List<GameObject> modPieces = null!;
+
+        public static int fishPage;
+        public static int projectilePage;
+        public static int weaponsPage;
+        public static int equipmentPage;
+        public static int consumablesPage;
+        public static int materialsPage;
+        public static int creaturesPage;
+
+        public static int miscPage;
+        public static int craftPage;
+        public static int buildPage;
+        public static int furniturePage;
+        public static int plantsPage;
+        public static int otherPage;
+        public static int extraPage;
+        public static int modPage;
+        
         public static void Postfix(InventoryGui __instance)
         {
             if (!__instance) return;
+            
+            SetInitialData(__instance);
+            EditInventoryGUI();
+            RepositionTrophyPanel(-220f, 0f);
+            CreateAllPanels();
+        }
+        private static void SetInitialData(InventoryGui __instance)
+        {
             root = __instance.gameObject.transform.Find("root").gameObject;
             trophyElement = __instance.m_trophieElementPrefab;
             TrophiesPanel = __instance.m_trophiesPanel.transform;
@@ -100,115 +112,38 @@ public static class Almanac
             closeButtonSfx = buttonSfx;
             closeButtonImage = buttonImage;
             iconBg = iconImage;
-            creatures = CreatureDataCollector.CollectAndSaveCreatureData();
             borderImage = borderImg;
             weightIcon = weightImg;
             armorIcon = armorImg;
             
-            // Get data from ObjectDB
-            List<ItemDrop> oneHanded = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.OneHandedWeapon, "");
-            List<ItemDrop> bow = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Bow, "");
-            List<ItemDrop> shield = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Shield, "");
-            List<ItemDrop> helmet = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Helmet, "");
-            List<ItemDrop> chest = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Chest, "");
-            List<ItemDrop> ammo = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Ammo, "");
-            List<ItemDrop> customization = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Customization, "");
-            List<ItemDrop> legs = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Legs, "");
-            List<ItemDrop> hands = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Hands, "");
-            List<ItemDrop> twoHanded = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.TwoHandedWeapon, "");
-            List<ItemDrop> torch = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Torch, "");
-            List<ItemDrop> misc = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Misc, "");
-            List<ItemDrop> shoulder = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Shoulder, "");
-            List<ItemDrop> utility = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Utility, "");
-            List<ItemDrop> tool = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Tool, "");
-            List<ItemDrop> attachAtgeir = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Attach_Atgeir, "");
-            List<ItemDrop> twoHandedLeft = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.TwoHandedWeaponLeft, "");
-            List<ItemDrop> ammoNonEquip = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.AmmoNonEquipable, "");
-            // List<ItemDrop> noneItems = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.None, "");
-            List<ItemDrop> normalMaterials = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Material, "");
-            
-            // Create filtered Lists to re-organize data
-            List<ItemDrop> filteredMisc = new List<ItemDrop>();
-            List<ItemDrop> MiscToMaterials = new List<ItemDrop>();
-            foreach (ItemDrop drop in misc)
-            {
-                List<string> toMaterialsMap = new List<string>()
-                {
-                    "DragonEgg",
-                    "ChickenEgg",
-                    "Turnip"
-                };
-                if (toMaterialsMap.Contains(drop.name))
-                {
-                    MiscToMaterials.Add(drop);
-                }
-                else
-                {
-                    filteredMisc.Add(drop);
-                }
-            }
-            normalMaterials.AddRange(MiscToMaterials);
-            
-            List<ItemDrop> gearList = new List<ItemDrop>();
-            gearList.AddRange(helmet);
-            gearList.AddRange(chest);
-            gearList.AddRange(legs);
-            gearList.AddRange(shoulder);
-            gearList.AddRange(utility);
-            gearList.AddRange(customization);
-            gearList.AddRange(filteredMisc);
-            
-            List<ItemDrop> weaponList = new List<ItemDrop>();
-            weaponList.AddRange(oneHanded);
-            weaponList.AddRange(bow);
-            weaponList.AddRange(shield);
-            weaponList.AddRange(twoHanded);
-            weaponList.AddRange(hands);
-            weaponList.AddRange(torch);
-            weaponList.AddRange(tool);
-            weaponList.AddRange(attachAtgeir);
-            weaponList.AddRange(twoHandedLeft);
-            
-            List<ItemDrop> ammunition = new List<ItemDrop>();
-            ammunition.AddRange(ammo);
-            ammunition.AddRange(ammoNonEquip);
-            
-            materials = normalMaterials;
-            fish = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Fish, "");
-            consummables = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Consumable, "");
-            weapons = GetValidItemDropList(weaponList);
-            gear = new List<ItemDrop>(GetValidItemDropList(gearList).OrderBy(name => Localization.instance.Localize(name.m_itemData.m_shared.m_name)));
-            ammunitions = GetValidItemDropList(ammunition);
-            
-            GameObject[] AllObjects = Resources.FindObjectsOfTypeAll<GameObject>();
-            buildables.Clear();
-            cookingStations.Clear();
-            fermentingStations.Clear();
-            smelterStations.Clear();
-            foreach (GameObject GO in AllObjects)
-            {
-                GO.TryGetComponent(out Piece pieceScript);
-                GO.TryGetComponent(out CookingStation cookingStationScript);
-                GO.TryGetComponent(out Fermenter fermenterScript);
-                GO.TryGetComponent(out Smelter smelterScript);
-                
-                if (pieceScript != null) buildables.Add(GO);
-                if (cookingStationScript != null) cookingStations.Add(GO);
-                if (fermenterScript != null) fermentingStations.Add(GO);
-                if (smelterScript != null) smelterStations.Add(GO);
-            }
-            
-            CategorizeBuildables();
+            materials = ItemDataCollector.IndexedItemData.GetMaterials();
+            consumables = ItemDataCollector.IndexedItemData.GetConsumables();
+            gear = ItemDataCollector.IndexedItemData.GetEquipments();
+            weapons = ItemDataCollector.IndexedItemData.GetWeapons();
+            fish = ItemDataCollector.IndexedItemData.GetFishes();
+            ammunition = ItemDataCollector.IndexedItemData.GetAmmunition();
+            creatures = CreatureDataCollector.CollectAndSaveCreatureData();
+            cookingStations = PieceDataCollector.IndexedPieces.GetPieces(PieceDataCollector.IndexedPieces.pieceOptions.cookStations);
+            fermentingStations = PieceDataCollector.IndexedPieces.GetPieces(PieceDataCollector.IndexedPieces.pieceOptions.fermentStations);
+            smelterStations = PieceDataCollector.IndexedPieces.GetPieces(PieceDataCollector.IndexedPieces.pieceOptions.smeltStations);
+            miscPieces = PieceDataCollector.IndexedPieces.GetBuildPieces(PieceDataCollector.IndexedPieces.categories.misc);
+            craftingPieces = PieceDataCollector.IndexedPieces.GetBuildPieces(PieceDataCollector.IndexedPieces.categories.craft);
+            buildPieces = PieceDataCollector.IndexedPieces.GetBuildPieces(PieceDataCollector.IndexedPieces.categories.build);
+            furniturePieces = PieceDataCollector.IndexedPieces.GetBuildPieces(PieceDataCollector.IndexedPieces.categories.furniture);
+            plantPieces = PieceDataCollector.IndexedPieces.GetBuildPieces(PieceDataCollector.IndexedPieces.categories.plants);
+            defaultPieces = PieceDataCollector.IndexedPieces.GetBuildPieces(PieceDataCollector.IndexedPieces.categories.defaults);
+            modPieces = PieceDataCollector.IndexedPieces.GetBuildPieces(PieceDataCollector.IndexedPieces.categories.mod);
+        }
 
-            EditInventoryGUI();
-            RepositionTrophyPanel(-220f, 0f);
+        private static void CreateAllPanels()
+        {
             CreateAlmanacPanel();
             CreateCreaturesPanel();
             CreateMaterialPanel();
-            consumablePanel = CreatePanel("consummable", consummables);
-            equipmentPanel = CreatePanel("gear", gear);
-            WeaponPanel = CreatePanel("weapon", weapons);
-            projectilePanel = CreatePanel("ammo", ammunitions);
+            CreatePanel("consummable", consumables);
+            CreatePanel("gear", gear);
+            CreatePanel("weapon", weapons);
+            CreatePanel("ammo", ammunition);
             CreatePanel("fish", fish);
 
             CreatePiecesPanel("miscPieces", miscPieces);
@@ -218,7 +153,7 @@ public static class Almanac
             CreatePiecesPanel("other", defaultPieces);
             CreatePiecesPanel("plantPieces", plantPieces);
             CreatePiecesPanel("modPieces", modPieces);
-
+            
             CreateTabs("fishButton", "fish", -760f, 425f);
             CreateTabs("ammoButton", "ammo", -605f, 425f);
             CreateTabs("weaponButton", "weapon", -450f, 425f);
@@ -238,128 +173,6 @@ public static class Almanac
             
             if (modPieces.Count > 0) CreateTabs("modPiecesButton", "modPieces", 170f, -425f);
         }
-
-        private static void CategorizeBuildables()
-        {
-            plantPieces.Clear();
-            furniturePieces.Clear();
-            modPieces.Clear();
-            miscPieces.Clear();
-            buildPieces.Clear();
-            craftingPieces.Clear();
-            defaultPieces.Clear();
-
-            HashSet<string> plantNames = new HashSet<string>();
-            HashSet<string> furnitureNames = new HashSet<string>();
-            HashSet<string> modNames = new HashSet<string>();
-            HashSet<string> miscNames = new HashSet<string>();
-            HashSet<string> buildNames = new HashSet<string>();
-            HashSet<string> craftNames = new HashSet<string>();
-            HashSet<string> defaultNames = new HashSet<string>();
-
-            foreach (GameObject piece in buildables)
-            {
-                piece.TryGetComponent(out Piece pieceScript);
-                piece.TryGetComponent(out WearNTear wearNTear);
-                piece.TryGetComponent(out Plant plant);
-                
-                if (!pieceScript) continue;
-
-                string name = pieceScript.name;
-                string hoverName = pieceScript.m_name;
-                
-                List<string> exclusionMap = new List<string>()
-                {
-                    "ship_construction",
-                    "paved_road_v2",
-                    "paved_road",
-                    "cultivate_v2",
-                    "cultivate",
-                    "mud_road",
-                    "mud_road_v2",
-                    "path_v2",
-                    "path",
-                    "replant_v2",
-                    "replant",
-                    "raise_v2",
-                    "raise",
-                    "fire_pit_haldor",
-                    "fire_pit_hildir",
-                    "dverger_guardstone",
-                    "guard_stone_test",
-                    "ML_TreasureChestOcean"
-                };
-                
-                if (plant)
-                {
-                    if (plantNames.Contains(hoverName)) continue;
-                    plantPieces.Add(piece);
-                    plantNames.Add(hoverName);
-                }
-                else
-                {
-                    if (!wearNTear) continue;
-                    if (
-                        exclusionMap.Contains(name) 
-                        || name.StartsWith("TreasureChest")
-                        || name.StartsWith("loot_chest")
-                        || name.StartsWith("Jewelcrafting"))
-                    {
-                        if (defaultNames.Contains(name)) continue;
-                        defaultPieces.Add(piece);
-                        defaultNames.Add(name);
-                    }
-                    else if (pieceScript.m_comfort > 0)
-                    {
-                        if (furnitureNames.Contains(hoverName)) continue;
-                        furniturePieces.Add((piece));
-                        furnitureNames.Add(hoverName);
-                    }
-                    else if (Regex.IsMatch(pieceScript.m_category.ToString(), @"^[-]?\d+$"))
-                    {
-                        if (modNames.Contains(hoverName)) continue;
-                        modPieces.Add(piece);
-                        modNames.Add(hoverName);
-                    }
-                    else
-                    {
-                        switch (pieceScript.m_category)
-                        {
-                            case Piece.PieceCategory.Misc:
-                                if (miscNames.Contains(hoverName)) break;
-                                miscPieces.Add(piece);
-                                miscNames.Add(hoverName);
-                                break;
-
-                            case Piece.PieceCategory.Building:
-                                if (buildNames.Contains(hoverName)) break;
-                                buildPieces.Add(piece);
-                                buildNames.Add(hoverName);
-                                break;
-                            
-                            case Piece.PieceCategory.Crafting:
-                                if (craftNames.Contains(hoverName)) break;
-                                craftingPieces.Add(piece);
-                                craftNames.Add(hoverName);
-                                break;
-                            
-                            case Piece.PieceCategory.Furniture:
-                                if (furnitureNames.Contains(hoverName)) break;
-                                furniturePieces.Add(piece);
-                                furnitureNames.Add(hoverName);
-                                break;
-                            
-                            default:
-                                if (defaultNames.Contains(hoverName)) break;
-                                defaultPieces.Add(piece);
-                                defaultNames.Add(hoverName);
-                                break;
-                        }
-                    }
-                }
-            }
-        }
-
         private static void EditInventoryGUI()
         {
             Transform info = root.transform.Find("Info");
@@ -372,26 +185,6 @@ public static class Almanac
             trophiesOpenImage.sprite = AlmanacPlugin.AlmanacIconButton;
         }
 
-        private static List<ItemDrop> GetValidItemDropList(List<ItemDrop> list)
-        {
-            List<ItemDrop> output = new List<ItemDrop>();
-            for (int i = 0; i < list.Count; ++i)
-            {
-                try
-                {
-                    ItemDrop data = list[i];
-                    Sprite sprite = data.m_itemData.GetIcon();
-                    if (!sprite) continue;
-                    output.Add(data);
-                }
-                catch (IndexOutOfRangeException)
-                {
-                    // AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"invalid item drop data: {i}");
-                }
-            }
-            return output;
-        }
-        
         private static void CreateTabs(string id, string name, float anchorX, float anchorY)
         {
             GameObject tabButton = new GameObject(id);
@@ -457,7 +250,7 @@ public static class Almanac
                     Patches.OnOpenTrophiesPatch.SetUnknownItems(name, materials);
                     break;
                 case "consummable":
-                    Patches.OnOpenTrophiesPatch.SetUnknownItems(name, consummables);
+                    Patches.OnOpenTrophiesPatch.SetUnknownItems(name, consumables);
                     break;
                 case "weapon":
                     Patches.OnOpenTrophiesPatch.SetUnknownItems(name, weapons);
@@ -681,6 +474,7 @@ public static class Almanac
             objButton.onClick = new Button.ButtonClickedEvent();
             objButton.onClick.AddListener(() =>
             {
+                SetPageNumber(id, index);
                 for (int i = 0; i < list.Count; ++i)
                 {
                     try
@@ -808,6 +602,7 @@ public static class Almanac
             objButton.onClick = new Button.ButtonClickedEvent();
             objButton.onClick.AddListener(() =>
             {
+                SetPageNumber(id, index);
                 for (int i = 0; i < list.Count; ++i)
                 {
                     try
@@ -831,6 +626,57 @@ public static class Almanac
                     }
                 }
             });
+        }
+
+        private static void SetPageNumber(string id, int index)
+        {
+            switch (id)
+            {
+                case "materialContainer":
+                    materialsPage = index;
+                    break;
+                case "CreatureContainer":
+                    creaturesPage = index;
+                    break;
+                case "consummableContainer":
+                    consumablesPage = index;
+                    break;
+                case "gearContainer":
+                    equipmentPage = index;
+                    break;
+                case "weaponContainer":
+                    weaponsPage = index;
+                    break;
+                case "ammoContainer":
+                    projectilePage = index;
+                    break;
+                case "fishContainer":
+                    fishPage = index;
+                    break;
+                case "miscPiecesContainer":
+                    miscPage = index;
+                    break;
+                case "craftingPiecesContainer":
+                    craftPage = index;
+                    break;
+                case "buildPiecesContainer":
+                    buildPage = index;
+                    break;
+                case "furniturePiecesContainer":
+                    furniturePage = index;
+                    break;
+                case "otherContainer":
+                    otherPage = index;
+                    break;
+                case "plantPiecesContainer":
+                    plantsPage = index;
+                    break;
+                case "modPiecesContainer":
+                    modPage = index;
+                    break;
+                default:
+                    break;
+            }
         }
         private static void CreatePiecesContainer(Transform parentElement, GameObject data, int index, Vector2 position, string id)
         {
@@ -1113,6 +959,7 @@ public static class Almanac
             objButton.onClick = new Button.ButtonClickedEvent();
             objButton.onClick.AddListener(() =>
             {
+                SetPageNumber("materialContainer", index);
                 for (int i = 0; i < materials.Count; ++i)
                 {
                     Transform element = parentElement.Find($"materialContainer ({i})");
@@ -1302,6 +1149,7 @@ public static class Almanac
             objButton.onClick = new Button.ButtonClickedEvent();
             objButton.onClick.AddListener(() =>
             {
+                SetPageNumber("CreatureContainer", index);
                 for (int i = 0; i < creatures.Count; ++i)
                 {
                     Transform element = parentElement.Find($"CreatureContainer ({i})");

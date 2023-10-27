@@ -88,7 +88,7 @@ public static class Patches
 
                 string prefab = piece.name;
                 string name = piece.m_name;
-                bool isRecipeKnown = Player.m_localPlayer.IsRecipeKnown(name);
+                bool isRecipeKnown = Player.m_localPlayer.IsRecipeKnown(name) || CheckCheats.PlayerWatcher.noCost;
                 string localizedName = Localization.instance.Localize(name);
 
                 button.interactable = knowledgeLockToggle != AlmanacPlugin.Toggle.On || isRecipeKnown;
@@ -220,6 +220,8 @@ public static class Patches
         }
         public static void SetUnknownCreatures()
         {
+            List<string> globalKeys = ZoneSystem.instance.GetGlobalKeys();
+            
             for (int i = 0; i < creatures.Count; ++i)
             {
                 Transform container = creaturePanel.Find($"CreatureContainer ({i})");
@@ -228,35 +230,20 @@ public static class Patches
                 container.TryGetComponent(out Button button);
                 textMesh.TryGetComponent(out TextMeshProUGUI text);
 
-                string prefab = creatures[i].name;
-
                 if (!button || !text) continue;
-
-                string? faction = creatures[i].faction;
+                
+                string prefab = creatures[i].name;
+                string defeatedKey = creatures[i].defeatedKey;
                 bool isWise = true;
                 
                 if (knowledgeLockToggle == AlmanacPlugin.Toggle.On)
                 {
-                    HashSet<string> globalKeys = Player.m_localPlayer.m_uniques;
-                    Dictionary<string, string> requiredKeys = new Dictionary<string, string>
-                    {
-                        { "ForestMonsters", "defeated_gdking" },
-                        { "Undead", "defeated_bonemass" },
-                        { "MountainMonsters", "defeated_dragon" },
-                        { "PlainsMonsters", "defeated_goblinking" },
-                        { "MistlandsMonsters", "defeated_goblinking" },
-                        { "Dverger", "defeated_goblinking" },
-                        { "AnimalsVeg", "defeated_goblinking" },
-                        { "Boss", "defeated_goblinking" },
-                        { "SeaMonsters", "defeated_dragon" },
-                        { "Demon", "defeated_goblinking" }
-                    };
-                    if (faction != null && requiredKeys.TryGetValue(faction, out string requiredKey))
-                    {
-                        if (!globalKeys.Contains(requiredKey)) isWise = false;
-                    }
+                    isWise = globalKeys.Contains(defeatedKey);
                 }
+
+                if (CheckCheats.PlayerWatcher.noCost) isWise = true;
                 
+                // Set values
                 button.interactable = isWise;
                 text.text = isWise
                     ? Localization.instance.Localize(creatures[i].display_name)
@@ -264,6 +251,7 @@ public static class Patches
                 text.color = isWise
                     ? Color.yellow
                     : Color.gray;
+                
                 // Check against blacklist
                 if (BlackList.CreatureBlackList.Value.Count == 0) continue;
                 SetBlackListByPage(container, "Creature", prefab, i, BlackListTypes.creatures);
@@ -291,7 +279,7 @@ public static class Patches
                     string prefab = list[i].name;
                     string name = list[i].m_itemData.m_shared.m_name;
                     string localizedName = Localization.instance.Localize(name);
-                    bool isKnown = Player.m_localPlayer.IsMaterialKnown(name);
+                    bool isKnown = Player.m_localPlayer.IsMaterialKnown(name) || CheckCheats.PlayerWatcher.noCost;
 
                     iconImage.color = knowledgeLockToggle == AlmanacPlugin.Toggle.On
                         ? (isKnown ? Color.white : Color.black)

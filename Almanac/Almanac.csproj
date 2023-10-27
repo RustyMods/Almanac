@@ -124,6 +124,7 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Almanac\Commands.cs" />
         <Compile Include="Almanac\FixTrophiesPositions.cs" />
         <Compile Include="Almanac\ItemDataCollector.cs" />
         <Compile Include="Almanac\OnCloseAlmanac.cs" />

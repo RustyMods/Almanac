@@ -9,8 +9,6 @@ using UnityEngine;
 namespace Almanac.Almanac;
 public static class CreatureDataCollector
 {
-    public static readonly string outputFilePath = Paths.ConfigPath + Path.DirectorySeparatorChar + "AlmanacCreatureData.yml";
-    
     [Serializable] [CanBeNull]
     public class CreatureData
     {
@@ -42,6 +40,7 @@ public static class CreatureDataCollector
         public bool tolerateSmoke = false;
         public bool tolerateTar = false;
         public string trophyName = "unknown";
+        public string defeatedKey = null!;
     }
     [Serializable] [CanBeNull]
     public class AttackData
@@ -173,11 +172,29 @@ public static class CreatureDataCollector
                 SaveCreatureData(obj, creatureData, humanoidScript);
                 SaveDefaultItemsAttackData(creatureData, humanoidScript);
                 SaveCharacterDropData(obj, creatureData);
+                // Add defeated keys if missing
+                creatureData.defeatedKey = humanoidScript.m_defeatSetGlobalKey;
+                if (humanoidScript.m_defeatSetGlobalKey.Length < 1)
+                {
+                    string name = obj.name;
+                    string key = $"defeated_{name}";
+                    humanoidScript.m_defeatSetGlobalKey = key.ToLower();
+                    creatureData.defeatedKey = key.ToLower();
+                };
             }
             if (characterScript)
             {
                 SaveCreatureData(obj, creatureData, characterScript);
                 SaveCharacterDropData(obj, creatureData);
+
+                creatureData.defeatedKey = characterScript.m_defeatSetGlobalKey;
+                if (characterScript.m_defeatSetGlobalKey.Length < 1)
+                {
+                    string name = obj.name;
+                    string key = $"defeated_{name}";
+                    characterScript.m_defeatSetGlobalKey = key.ToLower();
+                    creatureData.defeatedKey = key.ToLower();
+                }
             }
             if (monsterAIScript)
             {

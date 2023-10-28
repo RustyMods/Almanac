@@ -22,6 +22,8 @@ public static class Patches
         private static Transform AlmanacList = null!;
         private static Transform closeButton = null!;
         private static Transform creaturePanel = null!;
+
+        private static Transform achievementsElement = null!;
         // private static Transform materialPanel = null!;
         private static Transform AlmanacElement = null!;
         private static ButtonSfx buttonSfx = null!;
@@ -53,6 +55,44 @@ public static class Patches
             SetUnknownPieces("other", Almanac.CreateAlmanac.defaultPieces);
             SetUnknownPieces("plantPieces", Almanac.CreateAlmanac.plantPieces);
             SetUnknownPieces("modPieces", Almanac.CreateAlmanac.modPieces);
+            
+            SetCustomData();
+            
+            Achievements.UpdateAchievements();
+            Achievements.SetUnknownAchievements(trophyFrame.Find("achievementsPanel"));
+
+            foreach (var achievement in Achievements.allAchievements)
+            {
+                SetAchievementsData(achievementsElement, achievement);
+            }
+        }
+
+        public static void SetAchievementsData(Transform parentElement, Achievements.Achievement data)
+        {
+            SetTextElement(parentElement.gameObject, "achievementTitle", data.isCompleted ? data.name : "???");
+            SetTextElement(parentElement.gameObject, "achievementDescription", data.description);
+            float progress = data.value * 100f / data.total;
+            progress = Mathf.Clamp(progress, 0f, 100f);
+            SetTextElement(parentElement.gameObject, "achievementProgress", $"<color=orange>{data.value}</color> / {data.total} (<color=orange>{progress}</color>%)");
+        }
+
+        private static void SetCustomData()
+        {
+            Transform playerStats = trophyFrame.Find("PlayerStats");
+
+            Dictionary<string, int> savedKills = TrackPlayerKills.GetCurrentKilledMonsters();
+            Dictionary<string, int> tempKills = TrackPlayerKills.TempMonstersKilled;
+
+            Dictionary<string, int> savedDeaths = TrackPlayerDeaths.GetCurrentPlayerDeaths();
+            Dictionary<string, int> tempDeaths = TrackPlayerDeaths.TempPlayerDeaths;
+
+            int totalKills = savedKills.Values.Sum() + tempKills.Values.Sum();
+            int totalDeaths = savedDeaths.Values.Sum() + tempDeaths.Values.Sum();
+
+            string content =
+                $"$almanac_total_kills_label : <color=orange>{totalKills}</color>   $almanac_total_deaths_label : <color=orange>{totalDeaths}</color>";
+            
+            SetTextElement(playerStats.gameObject, "totals", content);
         }
 
         private static void SetInitialData(InventoryGui __instance)
@@ -66,7 +106,8 @@ public static class Patches
             // materialPanel = trophyFrame.transform.Find("materialPanel");
             AlmanacElement = AlmanacList.transform.Find("AlmanacElement (0)");
             knowledgeLockToggle = AlmanacPlugin._KnowledgeLock.Value;
-            
+            achievementsElement = AlmanacList.Find("achievementsElement (0)");
+
             closeButton.TryGetComponent(out ButtonSfx buttonSfxScript);
             if (!buttonSfxScript) return;
             buttonSfx = buttonSfxScript;
@@ -2261,8 +2302,11 @@ public static class Patches
                 }
             }
             
-            // Set killed by values
-            SetTextElement(dummyElement, "KilledBy", $"<color=orange>{creature.PlayerKills}</color>");
+            // Set killed value
+            int tempKillCount = TrackPlayerKills.TempMonstersKilled[creature.defeatedKey];
+            int tempDeathCount = TrackPlayerDeaths.TempPlayerDeaths[creature.defeatedKey];
+            SetTextElement(dummyElement, "KilledBy", $"<color=orange>{creature.PlayerKills + tempKillCount}</color>");
+            SetTextElement(dummyElement, "KilledPlayer", $"<color=orange>{creature.PlayerDeaths + tempDeathCount}</color>");
 
             dummyElement.SetActive(true);
         }

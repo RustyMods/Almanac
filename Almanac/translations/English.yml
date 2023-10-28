@@ -253,3 +253,8 @@ ML_MeteorShower: "Meteor Shower"
 enemy_molluscanland: "Molluscan"
 # Player Tracker
 almanac_killed_by_label: "Recorded Kill Count"
+almanac_died_to_label: "Recorded Death Count"
+almanac_total_kills_label: "Total Kills"
+almanac_total_deaths_label: "Total Deaths"
+# Achievements
+almanac_achievements_button: "Achievements"

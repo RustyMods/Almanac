@@ -6,6 +6,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net.WebSockets;
 using System.Reflection;
+using System.Threading;
 using Almanac.Almanac;
 using Almanac.Managers;
 using BepInEx;
@@ -50,8 +51,37 @@ namespace Almanac
             Off = 0
         }
 
-        public static Sprite? questionMarkIcon;
-        public static Sprite? AlmanacIconButton;
+        public static readonly Sprite? questionMarkIcon = SpriteManager.RegisterSprite("AlmanacUnknownIcon.png");
+        public static readonly Sprite? AlmanacIconButton = SpriteManager.RegisterSprite("AlmanacIconButton.png");
+        public static readonly Sprite? boneSkullIcon = SpriteManager.RegisterSprite("bone_skull.png");
+        public static readonly Sprite? swordBasicBlueIcon =SpriteManager.RegisterSprite("sword_basic_blue.png");
+        public static readonly Sprite? swordBasicBrownIcon = SpriteManager.RegisterSprite("sword_basic4_blue.png");
+        public static readonly Sprite? arrowBasicIcon = SpriteManager.RegisterSprite("arrow_basic.png");
+        public static readonly Sprite? capeHoodIcon = SpriteManager.RegisterSprite("cape_hood_darkyellow.png");
+        public static readonly Sprite? bottleStandardEmptyIcon = SpriteManager.RegisterSprite("bottle_standard_empty.png");
+        public static readonly Sprite? bottleStandardBlueIcon =
+            SpriteManager.RegisterSprite("bottle_standard_blue.png");
+        public static readonly Sprite? fishGreenIcon = SpriteManager.RegisterSprite("fish_green.png");
+        public static readonly Sprite? bowWoodIcon = SpriteManager.RegisterSprite("bow_wood1.png");
+        public static readonly Sprite? necklaceSilverRed = SpriteManager.RegisterSprite("necklace_silver_red.png");
+        public static readonly Sprite? mushroomBigRedIcon = SpriteManager.RegisterSprite("mushroom_big_red.png");
+        public static readonly Sprite? goldCoinsPileIcon = SpriteManager.RegisterSprite("gold_coins_many.png");
+        public static readonly Sprite? keySilverIcon = SpriteManager.RegisterSprite("key_silver.png");
+        public static readonly Sprite? boneWhiteIcon = SpriteManager.RegisterSprite("bone_white.png");
+        public static readonly Sprite? bookClosedRedIcon = SpriteManager.RegisterSprite("book_closed_red.png");
+
+        public static readonly Sprite? bottleStandardGreenIcon =
+            SpriteManager.RegisterSprite("bottle_standard_green.png");
+
+        public static readonly Sprite? crownGoldIcon = SpriteManager.RegisterSprite("crown_gold.png");
+        public static readonly Sprite? gemDiamondRedIcon = SpriteManager.RegisterSprite("gem_diamond_red.png");
+        public static readonly Sprite? goldBarsIcon = SpriteManager.RegisterSprite("gold_bars_three.png");
+        public static readonly Sprite? scrollMapIcon = SpriteManager.RegisterSprite("scroll_map2.png");
+        public static readonly Sprite? shieldBasicIcon = SpriteManager.RegisterSprite("shield_basic_metal.png");
+        public static readonly Sprite? silverBarsIcon = SpriteManager.RegisterSprite("silver_bars.png");
+        public static readonly Sprite? silverCoinsIcon = SpriteManager.RegisterSprite("silver_coins_many.png");
+        public static readonly Sprite? woodLogIcon = SpriteManager.RegisterSprite("wood_log.png");
+        public static readonly Sprite? woodLogsIcon = SpriteManager.RegisterSprite("wood_logs_three.png");
 
         public enum WorkingAs
         {
@@ -111,10 +141,6 @@ namespace Almanac
                 ? WorkingAs.Server : WorkingAs.Client;
             
             Localizer.Load();
-
-            questionMarkIcon = SpriteManager.RegisterSprite("QuestionMark.png");
-            AlmanacIconButton = SpriteManager.RegisterSprite("AlmanacIconButton.png");
-            
             Assembly assembly = Assembly.GetExecutingAssembly();
             _harmony.PatchAll(assembly);
             SetupWatcher();

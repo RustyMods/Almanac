@@ -124,11 +124,14 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Almanac\Achievements.cs" />
         <Compile Include="Almanac\Commands.cs" />
         <Compile Include="Almanac\FixTrophiesPositions.cs" />
         <Compile Include="Almanac\ItemDataCollector.cs" />
         <Compile Include="Almanac\OnCloseAlmanac.cs" />
         <Compile Include="Almanac\PieceDataCollector.cs" />
+        <Compile Include="Almanac\SaveCustomData.cs" />
+        <Compile Include="Almanac\TrackPlayerDeaths.cs" />
         <Compile Include="Almanac\TrackPlayerKills.cs" />
         <Compile Include="Managers\LocalizationManager.cs" />
         <Compile Include="Managers\SpriteManager.cs" />
@@ -149,9 +152,6 @@
         <EmbeddedResource Include="..\..\..\..\..\Downloads\AlmanacLogo.png">
           <Link>icons\AlmanacLogo.png</Link>
         </EmbeddedResource>
-        <EmbeddedResource Include="..\..\..\..\..\Downloads\QuestionMark.png">
-          <Link>icons\QuestionMark.png</Link>
-        </EmbeddedResource>
         <Content Include=".gitignore" />
         <Content Include="assets\DropAssetBundleInThisFolder.txt" />
         <Content Include="environment.props" />
@@ -167,6 +167,32 @@
         <EmbeddedResource Include="icons\spiritIcon.png" />
         <EmbeddedResource Include="icons\AlmanacIconButton.png" />
         <EmbeddedResource Include="icons\AlmanacUnknownIcon.png" />
+        <EmbeddedResource Include="icons\arrow_basic.png" />
+        <EmbeddedResource Include="icons\bone_skull.png" />
+        <EmbeddedResource Include="icons\bone_white.png" />
+        <EmbeddedResource Include="icons\book_closed_red.png" />
+        <EmbeddedResource Include="icons\bottle_standard_blue.png" />
+        <EmbeddedResource Include="icons\bottle_standard_empty.png" />
+        <EmbeddedResource Include="icons\bottle_standard_green.png" />
+        <EmbeddedResource Include="icons\bow_wood1.png" />
+        <EmbeddedResource Include="icons\cape_hood_darkyellow.png" />
+        <EmbeddedResource Include="icons\crown_gold.png" />
+        <EmbeddedResource Include="icons\fish_green.png" />
+        <EmbeddedResource Include="icons\gem_diamond_red.png" />
+        <EmbeddedResource Include="icons\gold_bars_three.png" />
+        <EmbeddedResource Include="icons\gold_coins_many.png" />
+        <EmbeddedResource Include="icons\key_silver.png" />
+        <EmbeddedResource Include="icons\mushroom_big_red.png" />
+        <EmbeddedResource Include="icons\necklace_silver_red.png" />
+        <EmbeddedResource Include="icons\ring_gold_magic.png" />
+        <EmbeddedResource Include="icons\scroll_map2.png" />
+        <EmbeddedResource Include="icons\shield_basic_metal.png" />
+        <EmbeddedResource Include="icons\silver_bars.png" />
+        <EmbeddedResource Include="icons\silver_coins_many.png" />
+        <EmbeddedResource Include="icons\sword_basic4_blue.png" />
+        <EmbeddedResource Include="icons\sword_basic_blue.png" />
+        <EmbeddedResource Include="icons\wood_log.png" />
+        <EmbeddedResource Include="icons\wood_logs_three.png" />
         <Content Include="ILRepack.targets" />
         <Content Include="Libs\LocalizationManager.dll">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

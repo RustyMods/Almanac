@@ -42,6 +42,7 @@ public static class CreatureDataCollector
         public string trophyName = "unknown";
         public string defeatedKey = null!;
         public int PlayerKills = 0;
+        public int PlayerDeaths = 0;
     }
     [Serializable] [CanBeNull]
     public class AttackData
@@ -67,7 +68,8 @@ public static class CreatureDataCollector
     }
 
     private static readonly List<string> exclusionMap = AlmanacPlugin._IgnoredPrefabs.Value.Split(',').ToList();
-    public static List<CreatureData> CollectAndSaveCreatureData()
+    public static List<CreatureData> tempCreatureData = new();
+    public static List<CreatureData> GetSortedCreatureData()
     {
         List<CreatureData> creatureData = GetCreatureData();
         creatureData.RemoveAt(0);
@@ -83,15 +85,27 @@ public static class CreatureDataCollector
         List<CreatureData> sortedList = filteredCreatures.OrderBy(item =>
             Localization.instance.Localize(item.display_name)).ToList();
         
-        TrackPlayerKills.PlayerTracker.SetInitialData(sortedList);
-        Dictionary<string, int> currentKilledMonsters = TrackPlayerKills.PlayerTracker.GetCurrentKilledMonsters();
-        foreach (var creature in sortedList)
-        {
-            currentKilledMonsters.TryGetValue(creature.defeatedKey, out int value);
-            creature.PlayerKills = value;
-        }
-        
+        GetSetTrackingData(sortedList);
+
+        tempCreatureData = sortedList;
         return sortedList;
+    }
+
+    private static void GetSetTrackingData(List<CreatureData> list)
+    {
+        TrackPlayerKills.SetInitialData(list);
+        TrackPlayerDeaths.SetInitialData(list);
+        
+        Dictionary<string, int> currentKilledMonsters = TrackPlayerKills.GetCurrentKilledMonsters();
+        Dictionary<string, int> currentPlayerDeaths = TrackPlayerDeaths.GetCurrentPlayerDeaths();
+        
+        foreach (var creature in list)
+        {
+            currentKilledMonsters.TryGetValue(creature.defeatedKey, out int killCount);
+            currentPlayerDeaths.TryGetValue(creature.defeatedKey, out int deathCount);
+            creature.PlayerKills = killCount;
+            creature.PlayerDeaths = deathCount;
+        }
     }
 
     private static void RenameCreatureData(CreatureData creatureData)

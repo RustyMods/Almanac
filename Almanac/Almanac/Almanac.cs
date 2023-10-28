@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Almanac.MonoBehaviors;
@@ -78,9 +79,148 @@ public static class Almanac
             if (!__instance) return;
             if (AlmanacPlugin.WorkingAsType == AlmanacPlugin.WorkingAs.Server) return;
             SetInitialData(__instance);
+            Achievements.RegisterAchievements();
             EditInventoryGUI();
             RepositionTrophyPanel(-220f, 0f);
             CreateAllPanels();
+            CreatePlayerStatsPanel();
+        }
+        
+        private static GameObject CreateAchievementsPanel(string id, List<Achievements.Achievement> list)
+        {
+            Transform trophies = TrophiesFrame.Find("Trophies");
+            
+            GameObject panel = new GameObject($"{id}Panel") { layer = 5 };
+
+            RectTransform panelRect = panel.AddComponent<RectTransform>();
+            panelRect.SetParent(TrophiesFrame);
+            panelRect.anchoredPosition = new Vector2(0f, 10f);
+            panelRect.sizeDelta = new Vector2(1310f, 800f);
+
+            panel.SetActive(false);
+
+            GameObject background = new GameObject($"{id}Background");
+            RectTransform rectTransform = background.AddComponent<RectTransform>();
+            rectTransform.SetParent(panel.transform);
+            rectTransform.anchoredPosition = new Vector2(0f, 0f);
+            rectTransform.sizeDelta = new Vector2(1260f, 650f);
+            
+            Image backgroundImage = background.AddComponent<Image>();
+            
+            Image trophiesImage = trophies.gameObject.GetComponent<Image>();
+            backgroundImage.color = trophiesImage.color;
+            backgroundImage.raycastTarget = true;
+            backgroundImage.maskable = true;
+
+            int pages = Mathf.CeilToInt(list.Count / 72f);
+            for (int i = 0; i < list.Count; ++i)
+            {
+                Achievements.Achievement data = list[i];
+                int wrappedIndex = i % 72;
+                int rowIndex = wrappedIndex / 12;
+                int colIndex = wrappedIndex % 12;
+
+                float x = -577f + colIndex * 105f;
+                float y = 275f - rowIndex * 110f;
+                
+                Vector2 pos = new Vector2(x, y);
+
+                Sprite? iconSprite = data.sprite;
+                if (!iconSprite) continue;
+                string name = data.name;
+
+                GameObject container = new GameObject($"{id}Container ({i})");
+                RectTransform containerRect = container.AddComponent<RectTransform>();
+                containerRect.SetParent(panel.transform);
+                containerRect.anchoredPosition = pos;
+                containerRect.sizeDelta = new Vector2(80f, 80f);
+
+                Image image = container.AddComponent<Image>();
+                image.sprite = iconBg.sprite;
+                image.fillCenter = iconBg.fillCenter;
+                image.pixelsPerUnitMultiplier = 1f;
+                image.color = iconBg.color;
+
+                GameObject iconObj = new GameObject("iconObj");
+                RectTransform iconRect = iconObj.AddComponent<RectTransform>();
+                iconRect.SetParent(container.transform);
+                iconRect.anchoredPosition = new Vector2(0f, 0f);
+                iconRect.sizeDelta = new Vector2(65f, 65f);
+
+                Image iconImage = iconObj.AddComponent<Image>();
+                iconImage.sprite = iconSprite;
+                iconImage.color = new Color(1f, 1f, 1f, 1f);
+                iconImage.pixelsPerUnitMultiplier = 1f;
+                
+                AddHoverableText(container, name, 16, anchoredY: -50f);
+                
+                if (i > 71) container.SetActive(false);
+                
+                Button containerButton = container.AddComponent<Button>();
+                ButtonSfx containerButtonSfx = container.AddComponent<ButtonSfx>();
+                containerButtonSfx.m_sfxPrefab = closeButtonSfx.m_sfxPrefab;
+
+                containerButton.interactable = true;
+                containerButton.transition = Selectable.Transition.ColorTint;
+                containerButton.colors = new ColorBlock()
+                {
+                    normalColor = new Color(1f, 1f, 1f, 1f),
+                    highlightedColor = new Color(1f, 1f, 1f, 1f),
+                    pressedColor = new Color(0.5f, 0.5f, 0.5f, 1f),
+                    selectedColor = new Color(1f, 1f, 1f, 1f),
+                    disabledColor = new Color(0.5f, 0.5f, 0.5f, 0.5f),
+                    colorMultiplier = 1f,
+                    fadeDuration = 0.1f
+                };
+                containerButton.onClick = new Button.ButtonClickedEvent();
+                containerButton.onClick.AddListener(() =>
+                {
+                    Transform AlmanacPanel = TrophiesFrame.Find("ContentPanel");
+                    Transform AlmanacList = AlmanacPanel.Find("AlmanacList");
+                    Transform element = AlmanacList.Find($"{id}Element (0)");
+                    SetActivePanelElement(id); 
+                    Patches.OnOpenTrophiesPatch.SetAchievementsData(element, data);
+                });
+            }
+
+            for (int i = 0; i < pages; ++i)
+            {
+                CreatePageButtons(panel.transform, i, 72, $"{id}Container", list);
+            }
+
+            return panel;
+        }
+
+        private static void CreatePlayerStatsPanel()
+        {
+            GameObject container = new GameObject("PlayerStats");
+            RectTransform containerRect = container.AddComponent<RectTransform>();
+            containerRect.SetParent(TrophiesFrame);
+            containerRect.anchoredPosition = new Vector2(880f, 425f);
+            containerRect.sizeDelta = new Vector2(380f, 50f);
+
+            CreateBorderImageClone(container);
+            Shadow shadowElement = container.AddComponent<Shadow>();
+            shadowElement.effectColor = new Color(0f, 0f, 0f, 0.5f);
+            shadowElement.effectDistance = new Vector2(4f, -3f);
+            shadowElement.useGraphicAlpha = true;
+
+            GameObject overlay = new GameObject("overlay");
+            RectTransform overlayRect = overlay.AddComponent<RectTransform>();
+            overlayRect.SetParent(container.transform);
+            overlayRect.anchoredPosition = Vector2.zero;
+            overlayRect.sizeDelta = new Vector2(370f, 40f);
+
+            Image overlayImage = overlay.AddComponent<Image>();
+            overlayImage.color = new Color(0f, 0f, 0f, 0.5f);
+            
+            CreateTextElement(
+                container.transform, 
+                "totals", "$almanac_no_data",
+                0f, 0f, 
+                350f, 45f,
+                Color.white, 16
+            );
         }
         private static void SetInitialData(InventoryGui __instance)
         {
@@ -116,23 +256,23 @@ public static class Almanac
             weightIcon = weightImg;
             armorIcon = armorImg;
             
-            materials = ItemDataCollector.IndexedItemData.GetMaterials();
-            consumables = ItemDataCollector.IndexedItemData.GetConsumables();
-            gear = ItemDataCollector.IndexedItemData.GetEquipments();
-            weapons = ItemDataCollector.IndexedItemData.GetWeapons();
-            fish = ItemDataCollector.IndexedItemData.GetFishes();
-            ammunition = ItemDataCollector.IndexedItemData.GetAmmunition();
-            creatures = CreatureDataCollector.CollectAndSaveCreatureData();
-            cookingStations = PieceDataCollector.IndexedPieces.GetPieces(PieceDataCollector.IndexedPieces.pieceOptions.cookStations);
-            fermentingStations = PieceDataCollector.IndexedPieces.GetPieces(PieceDataCollector.IndexedPieces.pieceOptions.fermentStations);
-            smelterStations = PieceDataCollector.IndexedPieces.GetPieces(PieceDataCollector.IndexedPieces.pieceOptions.smeltStations);
-            miscPieces = PieceDataCollector.IndexedPieces.GetBuildPieces(PieceDataCollector.IndexedPieces.categories.misc);
-            craftingPieces = PieceDataCollector.IndexedPieces.GetBuildPieces(PieceDataCollector.IndexedPieces.categories.craft);
-            buildPieces = PieceDataCollector.IndexedPieces.GetBuildPieces(PieceDataCollector.IndexedPieces.categories.build);
-            furniturePieces = PieceDataCollector.IndexedPieces.GetBuildPieces(PieceDataCollector.IndexedPieces.categories.furniture);
-            plantPieces = PieceDataCollector.IndexedPieces.GetBuildPieces(PieceDataCollector.IndexedPieces.categories.plants);
-            defaultPieces = PieceDataCollector.IndexedPieces.GetBuildPieces(PieceDataCollector.IndexedPieces.categories.defaults);
-            modPieces = PieceDataCollector.IndexedPieces.GetBuildPieces(PieceDataCollector.IndexedPieces.categories.mod);
+            materials = ItemDataCollector.GetMaterials();
+            consumables = ItemDataCollector.GetConsumables();
+            gear = ItemDataCollector.GetEquipments();
+            weapons = ItemDataCollector.GetWeapons();
+            fish = ItemDataCollector.GetFishes();
+            ammunition = ItemDataCollector.GetAmmunition();
+            creatures = CreatureDataCollector.GetSortedCreatureData();
+            cookingStations = PieceDataCollector.GetPieces(PieceDataCollector.pieceOptions.cookStations);
+            fermentingStations = PieceDataCollector.GetPieces(PieceDataCollector.pieceOptions.fermentStations);
+            smelterStations = PieceDataCollector.GetPieces(PieceDataCollector.pieceOptions.smeltStations);
+            miscPieces = PieceDataCollector.GetBuildPieces(PieceDataCollector.categories.misc);
+            craftingPieces = PieceDataCollector.GetBuildPieces(PieceDataCollector.categories.craft);
+            buildPieces = PieceDataCollector.GetBuildPieces(PieceDataCollector.categories.build);
+            furniturePieces = PieceDataCollector.GetBuildPieces(PieceDataCollector.categories.furniture);
+            plantPieces = PieceDataCollector.GetBuildPieces(PieceDataCollector.categories.plants);
+            defaultPieces = PieceDataCollector.GetBuildPieces(PieceDataCollector.categories.defaults);
+            modPieces = PieceDataCollector.GetBuildPieces(PieceDataCollector.categories.mod);
         }
 
         private static void CreateAllPanels()
@@ -172,6 +312,10 @@ public static class Almanac
             CreateTabs("defaultPiecesButton", "other", 15f, -425f);
             
             if (modPieces.Count > 0) CreateTabs("modPiecesButton", "modPieces", 170f, -425f);
+            
+            CreateAchievementsPanel("achievements", Achievements.allAchievements);
+            CreateTabs("achievementsButton", "achievements", 325f, -425f);
+
         }
         private static void EditInventoryGUI()
         {
@@ -288,6 +432,8 @@ public static class Almanac
                 case "creature":
                     Patches.OnOpenTrophiesPatch.SetUnknownCreatures();
                     break;
+                case "achievements":
+                    break;
             }
         }
         private static void SetTopic(string name)
@@ -313,7 +459,8 @@ public static class Almanac
                 "furniturePieces",
                 "other",
                 "plantPieces",
-                "modPieces"
+                "modPieces",
+                "achievements"
             };
             // Set panels active based on topic name
             foreach (string topicName in topicNames)
@@ -430,6 +577,81 @@ public static class Almanac
             }
 
             return panel;
+        }
+        
+        private static void CreatePageButtons(Transform parentElement, int index, int pageSize, string id, List<Achievements.Achievement> list)
+        {
+            GameObject obj = new GameObject($"Button ({index})") { layer = 5 };
+            RectTransform objRect = obj.AddComponent<RectTransform>();
+            objRect.SetParent(parentElement);
+            objRect.anchoredPosition = new Vector2(-615f + (index * 50f), 355f);
+            objRect.sizeDelta = new Vector2(50f, 50f);
+
+            GameObject objText = new GameObject($"ButtonText ({index})");
+            RectTransform objTextRect = objText.AddComponent<RectTransform>();
+            objTextRect.SetParent(obj.transform);
+            objTextRect.anchoredPosition = new Vector2(0f, 0f);
+            objTextRect.sizeDelta = new Vector2(50f, 50f);
+
+            TextMeshProUGUI objTextMesh = objText.AddComponent<TextMeshProUGUI>();
+            objTextMesh.font = font;
+            objTextMesh.text = $"{index + 1}";
+            objTextMesh.autoSizeTextContainer = false;
+            objTextMesh.color = new Color(1f, 0.5f, 0f, 0.8f);
+            objTextMesh.richText = true;
+            objTextMesh.horizontalAlignment = HorizontalAlignmentOptions.Center;
+            objTextMesh.verticalAlignment = VerticalAlignmentOptions.Middle;
+
+            Image objImg = obj.AddComponent<Image>();
+            objImg.sprite = closeButtonImage.sprite;
+            objImg.color = closeButtonImage.color;
+            objImg.raycastTarget = true;
+            objImg.maskable = true;
+            objImg.type = Image.Type.Sliced;
+            objImg.fillCenter = true;
+            objImg.pixelsPerUnitMultiplier = 1f;
+
+            Button objButton = obj.AddComponent<Button>();
+            ButtonSfx objSfx = obj.AddComponent<ButtonSfx>();
+            objSfx.m_sfxPrefab = closeButtonSfx.m_sfxPrefab;
+            
+            objButton.interactable = true;
+            objButton.transition = Selectable.Transition.SpriteSwap;
+            objButton.spriteState = new SpriteState()
+            {
+                highlightedSprite = closeButtonScript.spriteState.highlightedSprite,
+                pressedSprite = closeButtonScript.spriteState.pressedSprite,
+                selectedSprite = closeButtonScript.spriteState.selectedSprite,
+                disabledSprite = closeButtonScript.spriteState.disabledSprite
+            };
+            objButton.onClick = new Button.ButtonClickedEvent();
+            objButton.onClick.AddListener(() =>
+            {
+                SetPageNumber(id, index);
+                for (int i = 0; i < list.Count; ++i)
+                {
+                    try
+                    {
+                        Transform element = parentElement.Find($"{id} ({i})");
+                        // string prefab = list[i].name;
+                        float min = (index * pageSize);
+                        float max = min + pageSize;
+                        if (i >= min && i < max)
+                        {
+                            // SetBlackList(element, prefab, id);
+                            element.gameObject.SetActive(true);
+                        }
+                        else
+                        {
+                            element.gameObject.SetActive(false);
+                        }
+                    }
+                    catch (NullReferenceException)
+                    {
+                        // AlmanacPlugin.AlmanacLogger.Log(LogLevel.Warning, $"null reference exception: {i}");
+                    }
+                }
+            });
         }
         
         private static void CreatePageButtons(Transform parentElement, int index, int pageSize, string id, List<GameObject> list)
@@ -746,7 +968,7 @@ public static class Almanac
             });
         }
          private static void CreateContainer(Transform parentElement, ItemDrop data, int index, Vector2 position, string id)
-        {
+         {
             Sprite iconSprite = data.m_itemData.GetIcon();
             if (!iconSprite) return;
             string name = data.m_itemData.m_shared.m_name;
@@ -1057,6 +1279,7 @@ public static class Almanac
             Transform weaponElement = AlmanacList.Find("weaponElement (0)");
             Transform fishElement = AlmanacList.Find("fishElement (0)");
             Transform piecesElement = AlmanacList.Find("piecesElement (0)");
+            Transform achievementsElement = AlmanacList.Find("achievementsElement (0)");
 
             WelcomePanel.gameObject.SetActive(name == "welcome");
             MaterialElement.gameObject.SetActive(name == "material");
@@ -1066,6 +1289,7 @@ public static class Almanac
             AmmoElement.gameObject.SetActive(name == "ammo");
             weaponElement.gameObject.SetActive(name == "weapon");
             fishElement.gameObject.SetActive(name == "fish");
+            achievementsElement.gameObject.SetActive(name == "achievements");
 
             List<string> piecesNames = new List<string>()
             {
@@ -1320,6 +1544,8 @@ public static class Almanac
             GameObject FishElement = CreateItemElement(AlmanacList.transform, "fish");
 
             GameObject piecesElement = CreatePiecesElement(AlmanacList.transform, "pieces");
+
+            GameObject achievementsElement = CreateAchievementsElement(AlmanacList.transform, "achievements");
             
             MaterialElement.SetActive(false);
             ConsummableElement.SetActive(false);
@@ -1328,6 +1554,7 @@ public static class Almanac
             AmmoElement.SetActive(false);
             FishElement.SetActive(false);
             piecesElement.SetActive(false);
+            achievementsElement.SetActive(false);
 
             creatureRectTransform = AlmanacElement.GetComponent<RectTransform>();
             materialRectTransform = MaterialElement.GetComponent<RectTransform>();
@@ -1492,7 +1719,7 @@ public static class Almanac
             scrollbar.onValueChanged.AddListener(call: (e) =>
             {
                 creatureRectTransform.anchoredPosition =
-                    e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2125f) : new Vector2(0f, (e - 0.5f) * 1f);
+                    e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2150f) : new Vector2(0f, (e - 0.5f) * 1f);
                 // materialRectTransform.anchoredPosition = 
                 //     e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
                 // consumeRectTransform.anchoredPosition =
@@ -2392,6 +2619,50 @@ public static class Almanac
             
             return DummyPanel;
         }
+
+        private static GameObject CreateAchievementsElement(Transform parentElement, string id)
+        {
+            GameObject DummyPanel = new GameObject($"{id}Element (0)");
+            RectTransform DummyRectTransform = DummyPanel.AddComponent<RectTransform>();
+            DummyRectTransform.SetParent(parentElement);
+            DummyRectTransform.anchoredPosition = new Vector2(0f, 0f);
+            DummyRectTransform.sizeDelta = new Vector2(390f, 750f);
+
+            Image dummyImage = DummyPanel.AddComponent<Image>();
+            dummyImage.fillCenter = true;
+            dummyImage.color = new Color(0f, 0f, 0f, 0f);
+            dummyImage.raycastTarget = true;
+            
+            Transform DummyElement = DummyPanel.transform;
+            
+            CreateTextElement(
+                DummyElement,
+                "achievementTitle", 
+                "$almanac_no_data",
+                0f, 325f,
+                200f, 100f,
+                Color.yellow, 25
+            );
+
+            CreateTextElement(
+                DummyElement,
+                "achievementDescription",
+                "$almanac_no_data",
+                0f, 225f,
+                200f, 100f,
+                Color.white, 20
+                );
+            
+            CreateTextElement(
+                DummyElement,
+                "achievementProgress", "$almanac_no_data",
+                0f, 125f,
+                200f, 100,
+                Color.white, 20
+                ); 
+                
+            return DummyPanel;
+        }
         private static GameObject CreateItemElement(Transform parentElement, string id)
         {
             GameObject DummyPanel = new GameObject($"{id}Element (0)");
@@ -3263,6 +3534,17 @@ public static class Almanac
                 );
             CreateTextElement(DummyElement, "KilledBy", "0",
                 150f, -1425f,
+                100f, 50f,
+                Color.white, 18
+            );
+            
+            CreateTextElement(DummyElement, "KilledPlayerLabel", "$almanac_died_to_label",
+                -80f, -1450f,
+                200f, 50f,
+                Color.white, 16
+            );
+            CreateTextElement(DummyElement, "KilledPlayer", "0",
+                150f, -1450f,
                 100f, 50f,
                 Color.white, 18
             );

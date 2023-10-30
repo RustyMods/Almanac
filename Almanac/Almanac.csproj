@@ -126,6 +126,7 @@
     <ItemGroup>
         <Compile Include="Almanac\Achievements.cs" />
         <Compile Include="Almanac\Commands.cs" />
+        <Compile Include="Almanac\CustomStatusEffects.cs" />
         <Compile Include="Almanac\FixTrophiesPositions.cs" />
         <Compile Include="Almanac\ItemDataCollector.cs" />
         <Compile Include="Almanac\OnCloseAlmanac.cs" />
@@ -133,8 +134,10 @@
         <Compile Include="Almanac\SaveCustomData.cs" />
         <Compile Include="Almanac\TrackPlayerDeaths.cs" />
         <Compile Include="Almanac\TrackPlayerKills.cs" />
+        <Compile Include="Almanac\TrackPlayerStats.cs" />
         <Compile Include="Managers\LocalizationManager.cs" />
         <Compile Include="Managers\SpriteManager.cs" />
+        <Compile Include="Managers\StatusEffectManager.cs" />
         <Compile Include="MonoBehaviors\CreateSprite.cs" />
         <Compile Include="MonoBehaviors\ElementHover.cs" />
         <Compile Include="Plugin.cs" />
@@ -198,6 +201,7 @@
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
         <Content Include="Libs\ServerSync.dll" />
+        <Content Include="Libs\StatusEffectManager.dll" />
         <Content Include="LICENSE.md" />
         <EmbeddedResource Include="translations\English.yml" />
         <EmbeddedResource Include="translations\French.yml" />

@@ -60,7 +60,7 @@ public static class Patches
             
             Achievements.UpdateAchievements();
             Achievements.SetUnknownAchievements(trophyFrame.Find("achievementsPanel"));
-
+            TrackPlayerStats.UpdatePlayerStats();
             foreach (var achievement in Achievements.allAchievements)
             {
                 SetAchievementsData(achievementsElement, achievement);
@@ -69,11 +69,54 @@ public static class Patches
 
         public static void SetAchievementsData(Transform parentElement, Achievements.Achievement data)
         {
-            SetTextElement(parentElement.gameObject, "achievementTitle", data.isCompleted ? data.name : "???");
-            SetTextElement(parentElement.gameObject, "achievementDescription", data.description);
+            Transform achievementIconBg = parentElement.Find("ImageElement (achievementIcon)");
+            Transform achievementIcon = achievementIconBg.Find("ImageElement (icon)");
+
+            achievementIcon.TryGetComponent(out Button button);
             float progress = data.value * 100f / data.total;
             progress = Mathf.Clamp(progress, 0f, 100f);
+
+            if (!button) return;
+            button.interactable = data.isCompleted;
+            button.onClick.AddListener(() =>
+            {
+                SetCustomGuardianPower(data);
+            });
+
+            SetHoverableText(achievementIconBg.gameObject, "icon", data.powerToolTip);
+            
+            SetTextElement(parentElement.gameObject, "achievementTitle", data.isCompleted ? data.name : "???");
+            SetTextElement(parentElement.gameObject, "achievementDescription", data.description);
+            SetImageElement(achievementIconBg.gameObject, "icon", data.sprite, data.isCompleted ? Color.white : Color.black);
             SetTextElement(parentElement.gameObject, "achievementProgress", $"<color=orange>{data.value}</color> / {data.total} (<color=orange>{progress}</color>%)");
+            SetTextElement(parentElement.gameObject, "achievementLore", data.isCompleted ? data.lore : "");
+
+        }
+
+        private static void SetCustomGuardianPower(Achievements.Achievement data)
+        {
+            Player player = Player.m_localPlayer;
+            if (data.name.StartsWith("GP"))
+            {
+                player.SetGuardianPower(data.power);
+                player.GetGuardianPowerHUD(out StatusEffect SE, out float coolDown);
+                MessageHud.instance.ShowMessage(MessageHud.MessageType.Center,
+                    $"Set Forsaken Power to {SE.m_name} Power");
+            }
+            else
+            {
+                int guardianPowerHashCode = string.IsNullOrEmpty(data.power) ? 0 : data.power.GetStableHashCode();
+                StatusEffect customPower = ObjectDB.instance.GetStatusEffect(guardianPowerHashCode);
+                
+                Game.instance.IncrementPlayerStat(PlayerStatType.SetGuardianPower);
+
+                player.m_guardianPower = customPower.m_name;
+                player.m_guardianSE = customPower;
+                player.m_guardianPowerHash = guardianPowerHashCode;
+
+                MessageHud.instance.ShowMessage(MessageHud.MessageType.Center,
+                    $"Set Forsaken Power to {customPower.m_name} Power");
+            }
         }
 
         private static void SetCustomData()
@@ -393,6 +436,8 @@ public static class Patches
                 SetActiveElement(AlmanacList.gameObject, "fishElement", "0", false);
                 
                 SetActiveElement(AlmanacList.gameObject, "piecesElement", "0", false);
+                
+                SetActiveElement(AlmanacList.gameObject, "achievementsElement", "0", false);
             });
         }
 

@@ -80,6 +80,7 @@ public static class Almanac
             if (AlmanacPlugin.WorkingAsType == AlmanacPlugin.WorkingAs.Server) return;
             SetInitialData(__instance);
             Achievements.RegisterAchievements();
+            CustomStatusEffects.AssignEffects();
             EditInventoryGUI();
             RepositionTrophyPanel(-220f, 0f);
             CreateAllPanels();
@@ -256,6 +257,8 @@ public static class Almanac
             weightIcon = weightImg;
             armorIcon = armorImg;
             
+            PieceDataCollector.GetBuildPieces();
+
             materials = ItemDataCollector.GetMaterials();
             consumables = ItemDataCollector.GetConsumables();
             gear = ItemDataCollector.GetEquipments();
@@ -263,16 +266,16 @@ public static class Almanac
             fish = ItemDataCollector.GetFishes();
             ammunition = ItemDataCollector.GetAmmunition();
             creatures = CreatureDataCollector.GetSortedCreatureData();
-            cookingStations = PieceDataCollector.GetPieces(PieceDataCollector.pieceOptions.cookStations);
-            fermentingStations = PieceDataCollector.GetPieces(PieceDataCollector.pieceOptions.fermentStations);
-            smelterStations = PieceDataCollector.GetPieces(PieceDataCollector.pieceOptions.smeltStations);
-            miscPieces = PieceDataCollector.GetBuildPieces(PieceDataCollector.categories.misc);
-            craftingPieces = PieceDataCollector.GetBuildPieces(PieceDataCollector.categories.craft);
-            buildPieces = PieceDataCollector.GetBuildPieces(PieceDataCollector.categories.build);
-            furniturePieces = PieceDataCollector.GetBuildPieces(PieceDataCollector.categories.furniture);
-            plantPieces = PieceDataCollector.GetBuildPieces(PieceDataCollector.categories.plants);
-            defaultPieces = PieceDataCollector.GetBuildPieces(PieceDataCollector.categories.defaults);
-            modPieces = PieceDataCollector.GetBuildPieces(PieceDataCollector.categories.mod);
+            cookingStations = PieceDataCollector.cookingStations;
+            fermentingStations = PieceDataCollector.fermentingStations;
+            smelterStations = PieceDataCollector.smelterStations;
+            miscPieces = PieceDataCollector.miscPieces;
+            craftingPieces = PieceDataCollector.craftingPieces;
+            buildPieces = PieceDataCollector.buildPieces;
+            furniturePieces = PieceDataCollector.furniturePieces;
+            plantPieces = PieceDataCollector.plantPieces;
+            defaultPieces = PieceDataCollector.defaultPieces;
+            modPieces = PieceDataCollector.modPieces;
         }
 
         private static void CreateAllPanels()
@@ -2640,26 +2643,82 @@ public static class Almanac
                 "achievementTitle", 
                 "$almanac_no_data",
                 0f, 325f,
-                200f, 100f,
-                Color.yellow, 25
+                250f, 75f,
+                Color.yellow, 30
             );
 
             CreateTextElement(
                 DummyElement,
                 "achievementDescription",
                 "$almanac_no_data",
-                0f, 225f,
-                200f, 100f,
+                0f, 250f,
+                250f, 100f,
                 Color.white, 20
                 );
+
+            GameObject achievementBg = CreateImageElement(
+                DummyElement, "achievementIcon",
+                0f, 125f,
+                125f, 125f,
+                true,
+                false,
+                iconBg.sprite,
+                shadow: true
+            );
+
+            GameObject icon = CreateImageElement(
+                achievementBg.transform, "icon",
+                0f, 0f,
+                100f, 100f,
+                addHoverableText: false
+            );
+
+            AddHoverableText(
+                icon, "$almanac_na", 16, 125f, 60f,
+
+                horizontalAlignment: HorizontalAlignmentOptions.Left,
+                verticalAlignment: VerticalAlignmentOptions.Top,
+                overflow: TextOverflowModes.Truncate,
+                sizeX: 50f, sizeY: 50f
+
+            );
             
+            icon.TryGetComponent(out Image iconImage);
+
+            ButtonSfx buttonSfx = icon.AddComponent<ButtonSfx>();
+            buttonSfx.m_sfxPrefab = closeButtonSfx.m_sfxPrefab;
+
+            Button button = icon.AddComponent<Button>();
+            button.interactable = true;
+            button.transition = Selectable.Transition.ColorTint;
+            button.targetGraphic = iconImage;
+            button.colors = new ColorBlock()
+            {
+                normalColor = new Color(1f, 1f, 1f, 1f),
+                highlightedColor = new Color(1f, 1f, 1f, 1f),
+                pressedColor = new Color(0.5f, 0.5f, 0.5f, 1f),
+                selectedColor = new Color(1f, 1f, 1f, 1f),
+                disabledColor = new Color(0.5f, 0.5f, 0.5f, 0.5f),
+                colorMultiplier = 1f,
+                fadeDuration = 0.1f
+            };
+            button.onClick = new Button.ButtonClickedEvent();
+
             CreateTextElement(
                 DummyElement,
                 "achievementProgress", "$almanac_no_data",
-                0f, 125f,
-                200f, 100,
+                0f, 25f,
+                200f, 50f,
                 Color.white, 20
-                ); 
+                );
+
+            CreateTextElement(
+                DummyElement,
+                "achievementLore", "$almanac_no_data",
+                0f, -175f,
+                275f, 300f,
+                Color.white, 18
+            );
                 
             return DummyPanel;
         }
@@ -3901,7 +3960,15 @@ public static class Almanac
             return imageElement;
         }
 
-        private static void AddHoverableText(GameObject obj, string content, int fontSize = 12, float anchoredX = 0f, float anchoredY = -35f)
+        private static void AddHoverableText(
+            GameObject obj, string content, int fontSize = 12, float anchoredX = 0f, float anchoredY = -35f,
+            float sizeX = 80f, float sizeY = 30f,
+            HorizontalAlignmentOptions horizontalAlignment = HorizontalAlignmentOptions.Center,
+            VerticalAlignmentOptions verticalAlignment = VerticalAlignmentOptions.Middle,
+            TextWrappingModes wrapMode = TextWrappingModes.NoWrap,
+            TextOverflowModes overflow = TextOverflowModes.Overflow,
+            bool maskable = false
+            )
         {
             obj.AddComponent<ElementHover>();
 
@@ -3911,19 +3978,19 @@ public static class Almanac
             RectTransform rectTransform = HoverTextElement.AddComponent<RectTransform>();
             rectTransform.SetParent(obj.transform);
             rectTransform.anchoredPosition = new Vector2(anchoredX, anchoredY);
-            rectTransform.sizeDelta = new Vector2(80f, 30f);
+            rectTransform.sizeDelta = new Vector2(sizeX, sizeY);
 
             TextMeshProUGUI text = HoverTextElement.AddComponent<TextMeshProUGUI>();
             text.font = font;
             text.color = Color.white;
             text.autoSizeTextContainer = false;
             text.text = content;
-            text.overflowMode = TextOverflowModes.Overflow;
+            text.overflowMode = overflow;
             text.fontSize = fontSize;
-            text.horizontalAlignment = HorizontalAlignmentOptions.Center;
-            text.verticalAlignment = VerticalAlignmentOptions.Middle;
-            text.textWrappingMode = TextWrappingModes.NoWrap;
-            text.maskable = false;
+            text.horizontalAlignment = horizontalAlignment;
+            text.verticalAlignment = verticalAlignment;
+            text.textWrappingMode = wrapMode;
+            text.maskable = maskable;
         }
 
         private static GameObject CreateTextElement(

@@ -8,28 +8,31 @@ namespace Almanac.Almanac;
 public static class PieceDataCollector
 {
     private static readonly List<string> exclusionMap = AlmanacPlugin._IgnoredPrefabs.Value.Split(',').ToList();
-    public enum categories
+    
+    public static readonly List<GameObject> plantPieces = new();
+    public static readonly List<GameObject> furniturePieces = new();
+    public static readonly List<GameObject> modPieces = new();
+    public static readonly List<GameObject> miscPieces = new();
+    public static readonly List<GameObject> buildPieces = new();
+    public static readonly List<GameObject> craftingPieces = new();
+    public static readonly List<GameObject> defaultPieces = new();
+    
+    public static readonly List<GameObject> allPieces = new ();
+    public static readonly List<GameObject> cookingStations = new ();
+    public static readonly List<GameObject> fermentingStations = new ();
+    public static readonly List<GameObject> smelterStations = new ();
+    public static void GetBuildPieces()
     {
-        plants,
-        furniture,
-        mod,
-        misc,
-        build,
-        craft,
-        defaults
-    }
-    public static List<GameObject> GetBuildPieces(categories option)
-    {
-        List<GameObject> allPieces = GetPieces(pieceOptions.allPieces);
+        GetPieces();
         
-        List<GameObject> plantPieces = new();
-        List<GameObject> furniturePieces = new();
-        List<GameObject> modPieces = new();
-        List<GameObject> miscPieces = new();
-        List<GameObject> buildPieces = new();
-        List<GameObject> craftingPieces = new();
-        List<GameObject> defaultPieces = new();
-
+        plantPieces.Clear();
+        furniturePieces.Clear();
+        modPieces.Clear();
+        miscPieces.Clear();
+        buildPieces.Clear();
+        craftingPieces.Clear();
+        defaultPieces.Clear();
+        
         HashSet<string> plantNames = new HashSet<string>();
         HashSet<string> furnitureNames = new HashSet<string>();
         HashSet<string> modNames = new HashSet<string>();
@@ -65,14 +68,14 @@ public static class PieceDataCollector
             piece.TryGetComponent(out Piece pieceScript);
             piece.TryGetComponent(out WearNTear wearNTear);
             piece.TryGetComponent(out Plant plant);
-
+            
             if (!pieceScript) continue;
 
             if (exclusionMap.Contains(piece.name)) continue;
             
             string name = pieceScript.name;
             string hoverName = pieceScript.m_name;
-            
+
             if (plant)
             {
                 if (plantNames.Contains(hoverName)) continue;
@@ -142,69 +145,28 @@ public static class PieceDataCollector
                 }
             }
         }
-
-        switch (option)
-        {
-            case categories.build:
-                return buildPieces;
-            case categories.craft:
-                return craftingPieces;
-            case categories.defaults:
-                return defaultPieces;
-            case categories.furniture:
-                return furniturePieces;
-            case categories.misc:
-                return miscPieces;
-            case categories.mod:
-                return modPieces;
-            case categories.plants:
-                return plantPieces;
-            default:
-                return allPieces;
-        }
     }
+    private static void GetPieces()
+    {
+        allPieces.Clear();
+        cookingStations.Clear();
+        fermentingStations.Clear();
+        smelterStations.Clear();
 
-    public enum pieceOptions
-    {
-        allPieces,
-        cookStations,
-        fermentStations,
-        smeltStations
-    }
-    public static List<GameObject> GetPieces(pieceOptions option)
-    {
         GameObject[] AllObjects = Resources.FindObjectsOfTypeAll<GameObject>();
-        
-        List<GameObject> allPieces = new List<GameObject>();
-        List<GameObject> cookingStations = new List<GameObject>();
-        List<GameObject> fermentingStations = new List<GameObject>();
-        List<GameObject> smelterStations = new List<GameObject>();
-        
+
         foreach (GameObject GO in AllObjects)
         {
             GO.TryGetComponent(out Piece pieceScript);
             GO.TryGetComponent(out CookingStation cookingStationScript);
             GO.TryGetComponent(out Fermenter fermentScript);
             GO.TryGetComponent(out Smelter smelterScript);
+            GO.TryGetComponent(out TimedDestruction timedDestruction);
             
             if (pieceScript != null) allPieces.Add(GO);
             if (cookingStationScript != null) cookingStations.Add(GO);
             if (fermentScript != null) fermentingStations.Add(GO);
             if (smelterScript != null) smelterStations.Add(GO);
-        }
-
-        switch (option)
-        {
-            case pieceOptions.allPieces:
-                return allPieces;
-            case pieceOptions.cookStations:
-                return cookingStations;
-            case pieceOptions.fermentStations:
-                return fermentingStations;
-            case pieceOptions.smeltStations:
-                return smelterStations;
-            default:
-                return allPieces;
         }
     }
 }

@@ -49,7 +49,9 @@ public static class TrackPlayerKills
         private static void Prefix(Character __instance)
         {
             if (!__instance) return;
-
+            if (!Player.m_localPlayer) return;
+            if (!__instance.m_lastHit.GetAttacker()) return;
+            
             string localPlayer = Player.m_localPlayer.GetHoverName();
             Character attacker = __instance.m_lastHit.GetAttacker();
             string hoverName = attacker.GetHoverName();

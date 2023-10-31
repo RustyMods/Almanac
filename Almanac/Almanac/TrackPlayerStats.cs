@@ -11,16 +11,10 @@ public static class TrackPlayerStats
         PlayerProfile playerProfile = Game.instance.GetPlayerProfile();
         PlayerStats = playerProfile.m_playerStats.m_stats;
     }
-
-    public static float GetTotalDeaths()
-    {
-        PlayerStats.TryGetValue(PlayerStatType.Deaths, out float value);
-        return value;
-    }
-
-    public static float GetCustomPlayerStat(PlayerStatType type)
+    public static float GetPlayerStat(PlayerStatType type)
     {
         PlayerStats.TryGetValue(type, out float value);
+        // Debug.LogWarning($"{type.ToString()} : {value}");
         return value;
     }
 }

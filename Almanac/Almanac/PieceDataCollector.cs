@@ -76,6 +76,12 @@ public static class PieceDataCollector
             string name = pieceScript.name;
             string hoverName = pieceScript.m_name;
 
+            if (name == "kg_EnchantmentScrollStation")
+            {
+                craftingPieces.Add(piece);
+                continue;
+            }
+
             if (plant)
             {
                 if (plantNames.Contains(hoverName)) continue;

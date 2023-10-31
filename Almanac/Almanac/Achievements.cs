@@ -86,7 +86,8 @@ public static class Achievements
             1,
             AlmanacPlugin.arrowBasicIcon,
             "$almanac_first_kill_lore",
-            "se_first_kill", "Increases base health by <color=orange>10</color>"
+            "se_first_kill",
+            "Increases base health by <color=orange>5</color>"
         );
         CreateAchievement(
             "First Death", 
@@ -94,69 +95,106 @@ public static class Achievements
             1, 
             AlmanacPlugin.capeHoodIcon,
             "$almanac_first_death_lore",
-                "se_first_death", "Increases base stamina by <color=orange>25</color>"
+                "se_first_death",
+            "Increases base stamina by <color=orange>25</color>"
             );
         CreateAchievement(
             "Undying", "Died at least 1000 times",
-            1000, AlmanacPlugin.boneSkullIcon, "$almanac_1000_death_lore",
-            "GP_Eikthyr", "");
-        CreateAchievement(
-            "Killtacular", "Killed 150 monsters",
-            101, AlmanacPlugin.swordBasicBlueIcon, 
-            "$almanac_kill_150_lore",
-            "GP_Eikthyr", "" 
+            1000,
+            AlmanacPlugin.boneSkullIcon,
+            "$almanac_1000_death_lore",
+            "",
+            ""
             );
         CreateAchievement(
-            "Amateur Chemist", "Discovered at least one mead recipe",
+            "Killtacular",
+            "Killed 150 monsters",
+            101,
+            AlmanacPlugin.swordBasicBlueIcon, 
+            "$almanac_kill_150_lore",
+            "se_apprentice",
+            "Increases base health by <color=orange>15</color>" 
+            );
+        CreateAchievement(
+            "Amateur Chemist",
+            "Discovered at least one mead recipe",
             1,
             AlmanacPlugin.bottleStandardEmptyIcon,
-            "$almanac_mead_1_lore", "GP_Eikthyr", ""
+            "$almanac_mead_1_lore",
+            "",
+            ""
             );
         CreateAchievement(
-            "Brew Master", "Discovered all mead recipes",
+            "Brew Master",
+            "Discovered all mead recipes",
             vanillaMeads.Count,
             AlmanacPlugin.bottleStandardBlueIcon, 
-            "$almanac_mead_all_lore", "GP_Eikthyr", ""
+            "$almanac_mead_all_lore",
+            "",
+            ""
             );
         CreateAchievement(
-            "Fisherman", "Discovered all the fishies",
+            "Fisherman",
+            "Discovered all the fishies",
             allFish.Count,
             AlmanacPlugin.fishGreenIcon,
-            "$almanac_fish_all_lore", "GP_Eikthyr", ""
+            "$almanac_fish_all_lore",
+            "",
+            ""
             );
         CreateAchievement(
-            "Knowledgeable", "Discovered all materials",
+            "Knowledgeable",
+            "Discovered all materials",
             allMaterials.Count,
             AlmanacPlugin.necklaceSilverRed,
-            "$almanac_materials_all_lore", "GP_Eikthyr", ""
+            "$almanac_materials_all_lore",
+            "",
+            ""
             );
         CreateAchievement(
-            "Gluttony", "Discovered all consumables",
+            "Gluttony",
+             "Discovered all consumables",
             allConsumables.Count,
             AlmanacPlugin.mushroomBigRedIcon,
             "$almanac_consumables_all_lore",
-            "GP_Eikthyr", ""
+            "",
+            ""
             );
         CreateAchievement(
-            "Barracks", "Discovered all weapons",
-            allWeapons.Count, AlmanacPlugin.swordBasicBrownIcon,
-            "$almanac_weapons_all_lore", "GP_Eikthyr", ""
+            "Barracks",
+            "Discovered all weapons",
+            allWeapons.Count,
+             AlmanacPlugin.swordBasicBrownIcon,
+            "$almanac_weapons_all_lore",
+            "",
+            ""
             );
         CreateAchievement(
-            "Master Archer", "Discovered all bows",
-            allBows.Count, AlmanacPlugin.bowWoodIcon,
-            "$almanac_bows_all_lore", "GP_Eikthyr", ""
+            "Master Archer",
+            "Discovered all bows",
+            allBows.Count,
+            AlmanacPlugin.bowWoodIcon,
+            "$almanac_bows_all_lore",
+            "",
+            ""
             );
         CreateAchievement(
-            "Salesman", "Discovered all valuables",
-            allValuables.Count, AlmanacPlugin.goldCoinsPileIcon,
-            "$almanac_valuables_all_lore", "GP_Eikthyr", ""
+            "Salesman",
+            "Discovered all valuables",
+            allValuables.Count,
+            AlmanacPlugin.goldCoinsPileIcon,
+            "$almanac_valuables_all_lore",
+            "se_pack_mule",
+            "Increases carry weight by <color=orange>25</color>"
             );
         CreateAchievement(
-            "Stag Slayer", "Killed Eikthyr over 100 times",
-            100, eikthyrSprite,
+            "Stag Slayer",
+            "Killed Eikthyr over 100 times",
+            100,
+            eikthyrSprite,
             "$almanac_eikthyr_100_lore",
-            "GP_Eikthyr", ""
+            "GP_Eikthyr",
+            "Enables access to <color=orange>Eikthyr Power</color> from Almanac"
             );
     }
 
@@ -182,11 +220,11 @@ public static class Achievements
         Player player = Player.m_localPlayer;
         Dictionary<string, int> tempMonstersKilled = TrackPlayerKills.TempMonstersKilled;
         Dictionary<string, int> currentMonstersKilled = TrackPlayerKills.GetCurrentKilledMonsters();
-        Dictionary<string, int> tempPlayerDeaths = TrackPlayerDeaths.TempPlayerDeaths;
-        Dictionary<string, int> currentPlayerDeaths = TrackPlayerDeaths.GetCurrentPlayerDeaths();
+        // Dictionary<string, int> tempPlayerDeaths = TrackPlayerDeaths.TempPlayerDeaths;
+        // Dictionary<string, int> currentPlayerDeaths = TrackPlayerDeaths.GetCurrentPlayerDeaths();
 
         int totalKills = tempMonstersKilled.Values.Sum() + currentMonstersKilled.Values.Sum();
-        int totalDeaths = tempPlayerDeaths.Values.Sum() + currentPlayerDeaths.Values.Sum();
+        int totalDeaths = Convert.ToInt32(TrackPlayerStats.GetPlayerStat(PlayerStatType.Deaths));
         int totalKnownPotions = allMaterials.Count(material => player.IsMaterialKnown(material.m_itemData.m_shared.m_name) && vanillaMeads.Contains(material.name));
         int totalKnownMaterials = allMaterials.Count(material => player.IsMaterialKnown(material.m_itemData.m_shared.m_name));
         int totalKnownConsumables = allConsumables.Count(consumable => player.IsMaterialKnown(consumable.m_itemData.m_shared.m_name));

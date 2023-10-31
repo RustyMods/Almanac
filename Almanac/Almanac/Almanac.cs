@@ -39,6 +39,7 @@ public static class Almanac
         private static RectTransform projectileRectTransform = null!;
         private static RectTransform fishRectTransform = null!;
         private static RectTransform piecesRectTransform = null!;
+        private static RectTransform playerStatsRectTransform = null!;
 
         public static List<ItemDrop> materials = null!;
         public static List<ItemDrop> consumables = null!;
@@ -80,11 +81,10 @@ public static class Almanac
             if (AlmanacPlugin.WorkingAsType == AlmanacPlugin.WorkingAs.Server) return;
             SetInitialData(__instance);
             Achievements.RegisterAchievements();
-            CustomStatusEffects.AssignEffects();
+            CustomStatusEffects.AssignSpecialEffects();
             EditInventoryGUI();
             RepositionTrophyPanel(-220f, 0f);
             CreateAllPanels();
-            CreatePlayerStatsPanel();
         }
         
         private static GameObject CreateAchievementsPanel(string id, List<Achievements.Achievement> list)
@@ -191,38 +191,7 @@ public static class Almanac
 
             return panel;
         }
-
-        private static void CreatePlayerStatsPanel()
-        {
-            GameObject container = new GameObject("PlayerStats");
-            RectTransform containerRect = container.AddComponent<RectTransform>();
-            containerRect.SetParent(TrophiesFrame);
-            containerRect.anchoredPosition = new Vector2(880f, 425f);
-            containerRect.sizeDelta = new Vector2(380f, 50f);
-
-            CreateBorderImageClone(container);
-            Shadow shadowElement = container.AddComponent<Shadow>();
-            shadowElement.effectColor = new Color(0f, 0f, 0f, 0.5f);
-            shadowElement.effectDistance = new Vector2(4f, -3f);
-            shadowElement.useGraphicAlpha = true;
-
-            GameObject overlay = new GameObject("overlay");
-            RectTransform overlayRect = overlay.AddComponent<RectTransform>();
-            overlayRect.SetParent(container.transform);
-            overlayRect.anchoredPosition = Vector2.zero;
-            overlayRect.sizeDelta = new Vector2(370f, 40f);
-
-            Image overlayImage = overlay.AddComponent<Image>();
-            overlayImage.color = new Color(0f, 0f, 0f, 0.5f);
-            
-            CreateTextElement(
-                container.transform, 
-                "totals", "$almanac_no_data",
-                0f, 0f, 
-                350f, 45f,
-                Color.white, 16
-            );
-        }
+        
         private static void SetInitialData(InventoryGui __instance)
         {
             root = __instance.gameObject.transform.Find("root").gameObject;
@@ -280,7 +249,8 @@ public static class Almanac
 
         private static void CreateAllPanels()
         {
-            CreateAlmanacPanel();
+            CreateElementPanel();
+            
             CreateCreaturesPanel();
             CreateMaterialPanel();
             CreatePanel("consummable", consumables);
@@ -317,8 +287,72 @@ public static class Almanac
             if (modPieces.Count > 0) CreateTabs("modPiecesButton", "modPieces", 170f, -425f);
             
             CreateAchievementsPanel("achievements", Achievements.allAchievements);
-            CreateTabs("achievementsButton", "achievements", 325f, -425f);
+            CreatePlayerStatsPanel("stats");
+            
+            CreateTabs("achievementsButton", "achievements", 585f, 425f);
+            CreateTabs("playerStatsButton", "stats", 740f, 425f);
 
+        }
+
+        private static void CreatePlayerStatsPanel(string id)
+        {
+            Transform trophies = TrophiesFrame.Find("Trophies");
+            
+            GameObject panel = new GameObject($"{id}Panel") { layer = 5 };
+
+            RectTransform panelRect = panel.AddComponent<RectTransform>();
+            panelRect.SetParent(TrophiesFrame);
+            panelRect.anchoredPosition = new Vector2(0f, 10f);
+            panelRect.sizeDelta = new Vector2(1310f, 800f);
+
+            panel.SetActive(false);
+
+            GameObject background = new GameObject($"{id}Background");
+            RectTransform rectTransform = background.AddComponent<RectTransform>();
+            rectTransform.SetParent(panel.transform);
+            rectTransform.anchoredPosition = new Vector2(0f, 0f);
+            rectTransform.sizeDelta = new Vector2(1260f, 650f);
+            
+            Image backgroundImage = background.AddComponent<Image>();
+            
+            Image trophiesImage = trophies.gameObject.GetComponent<Image>();
+            backgroundImage.color = trophiesImage.color;
+            backgroundImage.raycastTarget = true;
+            backgroundImage.maskable = true;
+
+            CreateTextElement(panel.transform, "almanacPowers", "$almanac_no_data",
+            -450f, 300f, 350f, 100f, Color.yellow, 30
+            );
+
+            for (int i = 0; i < 3; ++i)
+            {
+                GameObject effectBackground = CreateImageElement(panel.transform, $"activeEffects ({i})",
+                    -550f + (i * 78f), 225f, 75f, 75f, false, false,
+                    iconBg.sprite, 1f, true
+                    );
+                
+                AddHoverableText(effectBackground, "$almanac_no_data", 12, 0f, -45f);
+                GameObject icon = CreateImageElement(effectBackground.transform, "icon",
+                    0f, 0f, 65f, 65f
+                    );
+                ButtonSfx sfx = icon.AddComponent<ButtonSfx>();
+                sfx.m_sfxPrefab = closeButtonSfx.m_sfxPrefab;
+                
+                Button button = icon.AddComponent<Button>();
+                button.interactable = true;
+                button.transition = Selectable.Transition.ColorTint;
+                button.colors = new ColorBlock()
+                {
+                    normalColor = new Color(1f, 1f, 1f, 1f),
+                    highlightedColor = new Color(1f, 1f, 1f, 1f),
+                    pressedColor = new Color(0.5f, 0.5f, 0.5f, 1f),
+                    selectedColor = new Color(1f, 1f, 1f, 1f),
+                    disabledColor = new Color(0.5f, 0.5f, 0.5f, 0.5f),
+                    colorMultiplier = 1f,
+                    fadeDuration = 0.1f
+                };
+                button.onClick = new Button.ButtonClickedEvent();
+            }
         }
         private static void EditInventoryGUI()
         {
@@ -437,6 +471,8 @@ public static class Almanac
                     break;
                 case "achievements":
                     break;
+                case "stats":
+                    break;
             }
         }
         private static void SetTopic(string name)
@@ -463,7 +499,8 @@ public static class Almanac
                 "other",
                 "plantPieces",
                 "modPieces",
-                "achievements"
+                "achievements",
+                "stats"
             };
             // Set panels active based on topic name
             foreach (string topicName in topicNames)
@@ -476,6 +513,12 @@ public static class Almanac
             trophies.gameObject.SetActive(name == "trophies");
             // Set topic title
             textMesh.text = Localization.instance.Localize($"$almanac_{name}_button");
+            // Set player stats element
+            if (name == "stats")
+            {
+                SetActivePanelElement(name);
+                Patches.OnOpenTrophiesPatch.SetPlayerStats();
+            }
 
         }
         private static void CreatePiecesPanel(string id, List<GameObject> list)
@@ -1283,6 +1326,7 @@ public static class Almanac
             Transform fishElement = AlmanacList.Find("fishElement (0)");
             Transform piecesElement = AlmanacList.Find("piecesElement (0)");
             Transform achievementsElement = AlmanacList.Find("achievementsElement (0)");
+            Transform playerStatsElement = AlmanacList.Find("statsElement (0)");
 
             WelcomePanel.gameObject.SetActive(name == "welcome");
             MaterialElement.gameObject.SetActive(name == "material");
@@ -1293,6 +1337,7 @@ public static class Almanac
             weaponElement.gameObject.SetActive(name == "weapon");
             fishElement.gameObject.SetActive(name == "fish");
             achievementsElement.gameObject.SetActive(name == "achievements");
+            playerStatsElement.gameObject.SetActive(name == "stats");
 
             List<string> piecesNames = new List<string>()
             {
@@ -1526,7 +1571,7 @@ public static class Almanac
             });
         }
 
-        private static void CreateAlmanacPanel()
+        private static void CreateElementPanel()
         {
             Vector2 position = new Vector2(880f, 0f);
 
@@ -1549,6 +1594,7 @@ public static class Almanac
             GameObject piecesElement = CreatePiecesElement(AlmanacList.transform, "pieces");
 
             GameObject achievementsElement = CreateAchievementsElement(AlmanacList.transform, "achievements");
+            GameObject statsElement = CreateStatsElement(AlmanacList.transform, "stats");
             
             MaterialElement.SetActive(false);
             ConsummableElement.SetActive(false);
@@ -1558,6 +1604,7 @@ public static class Almanac
             FishElement.SetActive(false);
             piecesElement.SetActive(false);
             achievementsElement.SetActive(false);
+            statsElement.SetActive(false);
 
             creatureRectTransform = AlmanacElement.GetComponent<RectTransform>();
             materialRectTransform = MaterialElement.GetComponent<RectTransform>();
@@ -1567,6 +1614,7 @@ public static class Almanac
             projectileRectTransform = AmmoElement.GetComponent<RectTransform>();
             fishRectTransform = FishElement.GetComponent<RectTransform>();
             piecesRectTransform = piecesElement.GetComponent<RectTransform>();
+            playerStatsRectTransform = statsElement.GetComponent<RectTransform>();
 
             Scrollbar scrollbar = AddScrollbarComponent(AlmanacScroll, AlmanacScrollHandle);
             GameObject AlmanacListRoot = CreateListRoot(AlmanacList.transform);
@@ -1737,6 +1785,8 @@ public static class Almanac
                 //     e < 0.5f ? new Vector2(0f, (e - 0.5f) * -2100f) : new Vector2(0f, (e - 0.5f) * 1f);
                 piecesRectTransform.anchoredPosition =
                     e < 0.5f ? new Vector2(0f, (e - 0.5f) * -1400f) : new Vector2(0f, (e - 0.5f) * 1f);
+                playerStatsRectTransform.anchoredPosition =
+                    e < 0.5f ? new Vector2(0f, (e - 0.5f) * -4550f) : new Vector2(0f, (e - 0.5f) * 1f);
             });
 
             return scrollbar;
@@ -2623,6 +2673,176 @@ public static class Almanac
             return DummyPanel;
         }
 
+        private static GameObject CreateStatsElement(Transform parentElement, string id)
+        {
+            GameObject DummyPanel = new GameObject($"{id}Element (0)");
+            RectTransform DummyRectTransform = DummyPanel.AddComponent<RectTransform>();
+            DummyRectTransform.SetParent(parentElement);
+            DummyRectTransform.anchoredPosition = new Vector2(0f, 0f);
+            DummyRectTransform.sizeDelta = new Vector2(390f, 750f);
+
+            Image dummyImage = DummyPanel.AddComponent<Image>();
+            dummyImage.fillCenter = true;
+            dummyImage.color = new Color(0f, 0f, 0f, 0f);
+            dummyImage.raycastTarget = true;
+            
+            Transform DummyElement = DummyPanel.transform;
+
+            CreateTextElement(DummyElement, "title",
+                "$almanac_stats_title",
+                0f, 300f,
+                100f, 100f,
+                Color.white, 20);
+
+            List<string> statsList = new()
+            {
+                "general_title",
+                "totalKills",
+                "totalDeaths",
+                "craftOrUpgrades",
+                "builds",
+                "jumps",
+                "cheats",
+                
+                "enemy_title",
+                "enemyHits",
+                "enemyKills",
+                "enemyKillsLastHit",
+                
+                "player_title",
+                "playerHits",
+                "playerKills",
+                "hitsTakenEnemies",
+                "itemPickedUp",
+                "crafts",
+                "upgrades",
+                "portalsUsed",
+                "distanceTraveled",
+                "distanceWalk",
+                "distanceRun",
+                "distanceSail",
+                "distanceAir",
+                "timeInBase",
+                "timeOutOfBase",
+                "sleep",
+                "itemStandUses",
+                "armorStandUses",
+                
+                "misc_title",
+                "worldLoads",
+                "treeChops",
+                "tree",
+                "treeTier0",
+                "treeTier1",
+                "treeTier2",
+                "treeTier3",
+                "treeTier4",
+                "treeTier5",
+                "logChops",
+                "logs",
+                "mineHits",
+                "mines",
+                "mineTier0",
+                "mineTier1",
+                "mineTier2",
+                "mineTier3",
+                "mineTier4",
+                "mineTier5",
+                "ravenHits",
+                "ravenTalk",
+                "ravenAppear",
+                
+                "info_title",
+                "creatureTamed",
+                "foodEaten",
+                "skeletonSummons",
+                "arrowsShot",
+                
+                "death_title",
+                "tombstonesOpenedOwn",
+                "tombstonesOpenOther",
+                "tombstonesFit",
+                "deathByUndefined",
+                "deathByEnemyHit",
+                "deathByPlayerHit",
+                "deathByFall",
+                "deathByDrowning",
+                "deathByBurning",
+                "deathByFreezing",
+                "deathByPoisoned",
+                "deathBySmoke",
+                "deathByWater",
+                "deathByEdgeOfWorld",
+                "deathByImpact",
+                "deathByCart",
+                "deathByTree",
+                "deathBySelf",
+                "deathByStructural",
+                "deathByTurret",
+                "deathByBoat",
+                "deathByStalagtite",
+                
+                "other_title",
+                "doorsOpened",
+                "doorsClosed",
+                "beesHarvested",
+                "sapHarvested",
+                "turretAmmoAdded",
+                "turretTrophySet",
+                "trapArmed",
+                "trapTriggered",
+                "placeStacks",
+                "portalDungeonIn",
+                "portalDungeonOut",
+                "totalBossKills",
+                "bossLastHits",
+                
+                "guardian_title",
+                "setGuardianPower",
+                "setPowerEikthyr",
+                "setPowerElder",
+                "setPowerBonemass",
+                "setPowerModer",
+                "setPowerYagluth",
+                "setPowerQueen",
+                "setPowerAshlands",
+                "setPowerDeepNorth",
+                "useGuardianPower",
+                "usePowerEikthyr",
+                "usePowerElder",
+                "usePowerBonemass",
+                "usePowerModer",
+                "usePowerYagluth",
+                "usePowerQueen",
+                "usePowerAshlands",
+                "usePowerDeepNorth",
+                
+                "count_title",
+                "count"
+            };
+
+            for (int i = 0; i < statsList.Count; ++i)
+            {
+                CreateTextElement(
+                    DummyElement,
+                    statsList[i],
+                    "$almanac_no_data",
+                    0f,
+                    225f - (i * 25f),
+                    250f, 50f,
+                    Color.white ,
+                    20,
+                    horizontalAlignment: statsList[i].Contains("title") ? HorizontalAlignmentOptions.Center : HorizontalAlignmentOptions.Left,
+                    overflowModes: TextOverflowModes.Overflow,
+                    wrapMode: TextWrappingModes.NoWrap
+                );
+            }
+
+            CreateImageElement(DummyElement, "overlay", 0f, 0f, 390f, 2500f, true, alpha: 0f);
+            
+            return DummyPanel;
+        }
+
         private static GameObject CreateAchievementsElement(Transform parentElement, string id)
         {
             GameObject DummyPanel = new GameObject($"{id}Element (0)");
@@ -2673,16 +2893,6 @@ public static class Almanac
                 addHoverableText: false
             );
 
-            AddHoverableText(
-                icon, "$almanac_na", 16, 125f, 60f,
-
-                horizontalAlignment: HorizontalAlignmentOptions.Left,
-                verticalAlignment: VerticalAlignmentOptions.Top,
-                overflow: TextOverflowModes.Truncate,
-                sizeX: 50f, sizeY: 50f
-
-            );
-            
             icon.TryGetComponent(out Image iconImage);
 
             ButtonSfx buttonSfx = icon.AddComponent<ButtonSfx>();
@@ -2708,16 +2918,24 @@ public static class Almanac
                 DummyElement,
                 "achievementProgress", "$almanac_no_data",
                 0f, 25f,
-                200f, 50f,
+                275f, 50f,
                 Color.white, 20
                 );
 
             CreateTextElement(
                 DummyElement,
+                "achievementTooltip", "$almanac_no_data",
+                0f, -25f,
+                275f, 50f, 
+                Color.white, 18);
+
+            CreateTextElement(
+                DummyElement,
                 "achievementLore", "$almanac_no_data",
-                0f, -175f,
-                275f, 300f,
-                Color.white, 18
+                0f, -200f,
+                275f, 250f,
+                Color.white, 18,
+                overflowModes: TextOverflowModes.Ellipsis
             );
                 
             return DummyPanel;

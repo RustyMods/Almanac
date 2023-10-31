@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using Almanac.MonoBehaviors;
+using BepInEx;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
@@ -24,6 +26,8 @@ public static class Patches
         private static Transform creaturePanel = null!;
 
         private static Transform achievementsElement = null!;
+
+        private static Transform playerStatsElement = null!;
         // private static Transform materialPanel = null!;
         private static Transform AlmanacElement = null!;
         private static ButtonSfx buttonSfx = null!;
@@ -56,14 +60,178 @@ public static class Patches
             SetUnknownPieces("plantPieces", Almanac.CreateAlmanac.plantPieces);
             SetUnknownPieces("modPieces", Almanac.CreateAlmanac.modPieces);
             
-            SetCustomData();
+            TrackPlayerStats.UpdatePlayerStats();
+            SetPlayerStats();
             
             Achievements.UpdateAchievements();
             Achievements.SetUnknownAchievements(trophyFrame.Find("achievementsPanel"));
-            TrackPlayerStats.UpdatePlayerStats();
             foreach (var achievement in Achievements.allAchievements)
             {
                 SetAchievementsData(achievementsElement, achievement);
+            }
+        }
+
+        private static void SetPlayerElementData(Transform parentElement)
+        {
+            Dictionary<string, int> savedKills = TrackPlayerKills.GetCurrentKilledMonsters();
+            Dictionary<string, int> tempKills = TrackPlayerKills.TempMonstersKilled;
+            int totalKills = savedKills.Values.Sum() + tempKills.Values.Sum();
+
+            // Dictionary<string, int> savedDeaths = TrackPlayerDeaths.GetCurrentPlayerDeaths();
+            // Dictionary<string, int> tempDeaths = TrackPlayerDeaths.TempPlayerDeaths;
+
+            // int totalDeaths = savedDeaths.Values.Sum() + tempDeaths.Values.Sum(); // Almanac Recorded Deaths
+
+            Dictionary<string, string> conversionMap = new()
+            {
+                { "general_title", "$almanac_general_title" },
+                { "enemy_title", "$almanac_enemy_title" },
+                { "player_title", "$almanac_player_title" },
+                { "misc_title", "$almanac_misc_title" },
+                { "info_title", "$almanac_info_title" },
+                { "death_title", "$almanac_death_title" },
+                { "other_title", "$almanac_other_title" },
+                { "guardian_title", "$almanac_guardian_title" },
+                { "count_title", "$almanac_count_title" },
+                { "totalKills", totalKills.ToString() },
+                { "totalDeaths",TrackPlayerStats.GetPlayerStat(PlayerStatType.Deaths).ToString(CultureInfo.CurrentCulture) },
+                { "craftOrUpgrades", TrackPlayerStats.GetPlayerStat(PlayerStatType.CraftsOrUpgrades).ToString(CultureInfo.CurrentCulture) },
+                { "builds", TrackPlayerStats.GetPlayerStat(PlayerStatType.Builds).ToString(CultureInfo.CurrentCulture) },
+                { "jumps", TrackPlayerStats.GetPlayerStat(PlayerStatType.Jumps).ToString(CultureInfo.CurrentCulture) },
+                { "cheats", TrackPlayerStats.GetPlayerStat(PlayerStatType.Cheats).ToString(CultureInfo.InvariantCulture) },
+                { "enemyHits", TrackPlayerStats.GetPlayerStat(PlayerStatType.EnemyHits).ToString(CultureInfo.CurrentCulture) },
+                { "enemyKills", TrackPlayerStats.GetPlayerStat(PlayerStatType.EnemyKills).ToString(CultureInfo.InvariantCulture) },
+                { "enemyKillsLastHit", TrackPlayerStats.GetPlayerStat(PlayerStatType.EnemyKillsLastHits).ToString(CultureInfo.CurrentCulture) },
+                { "playerHits", TrackPlayerStats.GetPlayerStat(PlayerStatType.PlayerHits).ToString(CultureInfo.CurrentCulture) },
+                { "playerKills", TrackPlayerStats.GetPlayerStat(PlayerStatType.PlayerKills).ToString(CultureInfo.CurrentCulture) },
+                { "hitsTakenEnemies", TrackPlayerStats.GetPlayerStat(PlayerStatType.HitsTakenEnemies).ToString(CultureInfo.CurrentCulture) },
+                { "itemPickedUp", TrackPlayerStats.GetPlayerStat(PlayerStatType.ItemsPickedUp).ToString(CultureInfo.CurrentCulture) },
+                { "crafts", TrackPlayerStats.GetPlayerStat(PlayerStatType.Crafts).ToString(CultureInfo.CurrentCulture) },
+                { "upgrades", TrackPlayerStats.GetPlayerStat(PlayerStatType.Upgrades).ToString(CultureInfo.CurrentCulture) },
+                { "portalsUsed", TrackPlayerStats.GetPlayerStat(PlayerStatType.PortalsUsed).ToString(CultureInfo.CurrentCulture) },
+                { "distanceTraveled", TrackPlayerStats.GetPlayerStat(PlayerStatType.DistanceTraveled).ToString(CultureInfo.CurrentCulture) },
+                { "distanceWalk", TrackPlayerStats.GetPlayerStat(PlayerStatType.DistanceWalk).ToString(CultureInfo.CurrentCulture) },
+                { "distanceRun", TrackPlayerStats.GetPlayerStat(PlayerStatType.DistanceRun).ToString(CultureInfo.CurrentCulture) },
+                { "distanceSail", TrackPlayerStats.GetPlayerStat(PlayerStatType.DistanceSail).ToString(CultureInfo.CurrentCulture) },
+                { "distanceAir", TrackPlayerStats.GetPlayerStat(PlayerStatType.DistanceAir).ToString(CultureInfo.CurrentCulture) },
+                { "timeInBase", TrackPlayerStats.GetPlayerStat(PlayerStatType.TimeInBase).ToString(CultureInfo.CurrentCulture) },
+                { "timeOutOfBase", TrackPlayerStats.GetPlayerStat(PlayerStatType.TimeOutOfBase).ToString(CultureInfo.CurrentCulture) },
+                { "sleep", TrackPlayerStats.GetPlayerStat(PlayerStatType.Sleep).ToString(CultureInfo.CurrentCulture) },
+                { "itemStandUses", TrackPlayerStats.GetPlayerStat(PlayerStatType.ItemStandUses).ToString(CultureInfo.CurrentCulture) },
+                { "armorStandUses", TrackPlayerStats.GetPlayerStat(PlayerStatType.ArmorStandUses).ToString(CultureInfo.CurrentCulture) },
+                { "worldLoads", TrackPlayerStats.GetPlayerStat(PlayerStatType.WorldLoads).ToString(CultureInfo.CurrentCulture) },
+                { "treeChops", TrackPlayerStats.GetPlayerStat(PlayerStatType.TreeChops).ToString(CultureInfo.CurrentCulture) },
+                { "tree", TrackPlayerStats.GetPlayerStat(PlayerStatType.Tree).ToString(CultureInfo.CurrentCulture) },
+                { "treeTier0", TrackPlayerStats.GetPlayerStat(PlayerStatType.TreeTier0).ToString(CultureInfo.CurrentCulture) },
+                { "treeTier1", TrackPlayerStats.GetPlayerStat(PlayerStatType.TreeTier1).ToString(CultureInfo.CurrentCulture) },
+                { "treeTier2", TrackPlayerStats.GetPlayerStat(PlayerStatType.TreeTier2).ToString(CultureInfo.CurrentCulture) },
+                { "treeTier3", TrackPlayerStats.GetPlayerStat(PlayerStatType.TreeTier3).ToString(CultureInfo.CurrentCulture) },
+                { "treeTier4", TrackPlayerStats.GetPlayerStat(PlayerStatType.TreeTier4).ToString(CultureInfo.CurrentCulture) },
+                { "treeTier5", TrackPlayerStats.GetPlayerStat(PlayerStatType.TreeTier5).ToString(CultureInfo.CurrentCulture) },
+                { "logChops", TrackPlayerStats.GetPlayerStat(PlayerStatType.LogChops).ToString(CultureInfo.CurrentCulture) },
+                { "logs", TrackPlayerStats.GetPlayerStat(PlayerStatType.Logs).ToString(CultureInfo.CurrentCulture) },
+                { "mineHits", TrackPlayerStats.GetPlayerStat(PlayerStatType.MineHits).ToString(CultureInfo.CurrentCulture) },
+                { "mines", TrackPlayerStats.GetPlayerStat(PlayerStatType.Mines).ToString(CultureInfo.CurrentCulture) },
+                { "mineTier0", TrackPlayerStats.GetPlayerStat(PlayerStatType.MineTier0).ToString(CultureInfo.CurrentCulture) },
+                { "mineTier1", TrackPlayerStats.GetPlayerStat(PlayerStatType.MineTier1).ToString(CultureInfo.CurrentCulture) },
+                { "mineTier2", TrackPlayerStats.GetPlayerStat(PlayerStatType.MineTier2).ToString(CultureInfo.CurrentCulture) },
+                { "mineTier3", TrackPlayerStats.GetPlayerStat(PlayerStatType.MineTier3).ToString(CultureInfo.CurrentCulture) },
+                { "mineTier4", TrackPlayerStats.GetPlayerStat(PlayerStatType.MineTier4).ToString(CultureInfo.CurrentCulture) },
+                { "mineTier5", TrackPlayerStats.GetPlayerStat(PlayerStatType.MineTier5).ToString(CultureInfo.CurrentCulture) },
+                { "ravenHits", TrackPlayerStats.GetPlayerStat(PlayerStatType.RavenHits).ToString(CultureInfo.CurrentCulture) },
+                { "ravenTalk", TrackPlayerStats.GetPlayerStat(PlayerStatType.RavenTalk).ToString(CultureInfo.CurrentCulture) },
+                { "ravenAppear", TrackPlayerStats.GetPlayerStat(PlayerStatType.RavenAppear).ToString(CultureInfo.CurrentCulture) },
+                { "creatureTamed", TrackPlayerStats.GetPlayerStat(PlayerStatType.CreatureTamed).ToString(CultureInfo.CurrentCulture) },
+                { "foodEaten", TrackPlayerStats.GetPlayerStat(PlayerStatType.FoodEaten).ToString(CultureInfo.CurrentCulture) },
+                { "skeletonSummons", TrackPlayerStats.GetPlayerStat(PlayerStatType.SkeletonSummons).ToString(CultureInfo.CurrentCulture) },
+                { "arrowsShot", TrackPlayerStats.GetPlayerStat(PlayerStatType.ArrowsShot).ToString(CultureInfo.CurrentCulture) },
+                { "tombstonesOpenedOwn", TrackPlayerStats.GetPlayerStat(PlayerStatType.TombstonesOpenedOwn).ToString(CultureInfo.CurrentCulture) },
+                { "tombstonesOpenOther", TrackPlayerStats.GetPlayerStat(PlayerStatType.TombstonesOpenedOther).ToString(CultureInfo.CurrentCulture) },
+                { "tombstonesFit", TrackPlayerStats.GetPlayerStat(PlayerStatType.TombstonesFit).ToString(CultureInfo.CurrentCulture) },
+                { "deathByUndefined", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByUndefined).ToString(CultureInfo.CurrentCulture) },
+                { "deathByEnemyHit", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByEnemyHit).ToString(CultureInfo.CurrentCulture) },
+                { "deathByPlayerHit", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByPlayerHit).ToString(CultureInfo.CurrentCulture) },
+                { "deathByFall", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByFall).ToString(CultureInfo.CurrentCulture) },
+                { "deathByDrowning", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByDrowning).ToString(CultureInfo.CurrentCulture) },
+                { "deathByBurning", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByBurning).ToString(CultureInfo.CurrentCulture) },
+                { "deathByFreezing", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByFreezing).ToString(CultureInfo.CurrentCulture) },
+                { "deathByPoisoned", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByPoisoned).ToString(CultureInfo.CurrentCulture) },
+                { "deathBySmoke", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathBySmoke).ToString(CultureInfo.CurrentCulture) },
+                { "deathByWater", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByWater).ToString(CultureInfo.CurrentCulture) },
+                { "deathByEdgeOfWorld", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByEdgeOfWorld).ToString(CultureInfo.CurrentCulture) },
+                { "deathByImpact", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByImpact).ToString(CultureInfo.CurrentCulture) },
+                { "deathByCart", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByCart).ToString(CultureInfo.CurrentCulture) },
+                { "deathByTree", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByTree).ToString(CultureInfo.CurrentCulture) },
+                { "deathBySelf", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathBySelf).ToString(CultureInfo.CurrentCulture) },
+                { "deathByStructural", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByStructural).ToString(CultureInfo.CurrentCulture) },
+                { "deathByBoat", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByBoat).ToString(CultureInfo.CurrentCulture) },
+                { "deathByTurret", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByTurret).ToString(CultureInfo.CurrentCulture) },
+                { "deathByStalagtite", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByStalagtite).ToString(CultureInfo.CurrentCulture) },
+                { "doorsOpened", TrackPlayerStats.GetPlayerStat(PlayerStatType.DoorsOpened).ToString(CultureInfo.CurrentCulture) },
+                { "doorsClosed", TrackPlayerStats.GetPlayerStat(PlayerStatType.DoorsClosed).ToString(CultureInfo.CurrentCulture) },
+                { "beesHarvested", TrackPlayerStats.GetPlayerStat(PlayerStatType.BeesHarvested).ToString(CultureInfo.CurrentCulture) },
+                { "sapHarvested", TrackPlayerStats.GetPlayerStat(PlayerStatType.SapHarvested).ToString(CultureInfo.CurrentCulture) },
+                { "turretAmmoAdded", TrackPlayerStats.GetPlayerStat(PlayerStatType.TurretAmmoAdded).ToString(CultureInfo.CurrentCulture) },
+                { "turretTrophySet", TrackPlayerStats.GetPlayerStat(PlayerStatType.TurretTrophySet).ToString(CultureInfo.CurrentCulture) },
+                { "trapArmed", TrackPlayerStats.GetPlayerStat(PlayerStatType.TrapArmed).ToString(CultureInfo.CurrentCulture) },
+                { "trapTriggered", TrackPlayerStats.GetPlayerStat(PlayerStatType.TrapTriggered).ToString(CultureInfo.CurrentCulture) },
+                { "placeStacks", TrackPlayerStats.GetPlayerStat(PlayerStatType.PlaceStacks).ToString(CultureInfo.CurrentCulture) },
+                { "portalDungeonIn", TrackPlayerStats.GetPlayerStat(PlayerStatType.PortalDungeonIn).ToString(CultureInfo.CurrentCulture) },
+                { "portalDungeonOut", TrackPlayerStats.GetPlayerStat(PlayerStatType.PortalDungeonOut).ToString(CultureInfo.CurrentCulture) },
+                { "totalBossKills", TrackPlayerStats.GetPlayerStat(PlayerStatType.BossKills).ToString(CultureInfo.CurrentCulture) },
+                { "bossLastHits", TrackPlayerStats.GetPlayerStat(PlayerStatType.BossLastHits).ToString(CultureInfo.CurrentCulture) },
+                { "setGuardianPower", TrackPlayerStats.GetPlayerStat(PlayerStatType.SetGuardianPower).ToString(CultureInfo.CurrentCulture) },
+                { "setPowerEikthyr", TrackPlayerStats.GetPlayerStat(PlayerStatType.SetPowerEikthyr).ToString(CultureInfo.CurrentCulture) },
+                { "setPowerElder", TrackPlayerStats.GetPlayerStat(PlayerStatType.SetPowerElder).ToString(CultureInfo.CurrentCulture) },
+                { "setPowerBonemass", TrackPlayerStats.GetPlayerStat(PlayerStatType.SetPowerBonemass).ToString(CultureInfo.CurrentCulture) },
+                { "setPowerModer", TrackPlayerStats.GetPlayerStat(PlayerStatType.SetPowerModer).ToString(CultureInfo.CurrentCulture) },
+                { "setPowerYagluth", TrackPlayerStats.GetPlayerStat(PlayerStatType.SetPowerYagluth).ToString(CultureInfo.CurrentCulture) },
+                { "setPowerQueen", TrackPlayerStats.GetPlayerStat(PlayerStatType.SetPowerQueen).ToString(CultureInfo.CurrentCulture) },
+                { "setPowerAshlands", TrackPlayerStats.GetPlayerStat(PlayerStatType.SetPowerAshlands).ToString(CultureInfo.CurrentCulture) },
+                { "setPowerDeepNorth", TrackPlayerStats.GetPlayerStat(PlayerStatType.SetPowerDeepNorth).ToString(CultureInfo.CurrentCulture) },
+                { "useGuardianPower", TrackPlayerStats.GetPlayerStat(PlayerStatType.UseGuardianPower).ToString(CultureInfo.CurrentCulture) },
+                { "usePowerEikthyr", TrackPlayerStats.GetPlayerStat(PlayerStatType.UsePowerEikthyr).ToString(CultureInfo.CurrentCulture) },
+                { "usePowerElder", TrackPlayerStats.GetPlayerStat(PlayerStatType.UsePowerElder).ToString(CultureInfo.CurrentCulture) },
+                { "usePowerBonemass", TrackPlayerStats.GetPlayerStat(PlayerStatType.UsePowerBonemass).ToString(CultureInfo.CurrentCulture) },
+                { "usePowerModer", TrackPlayerStats.GetPlayerStat(PlayerStatType.UsePowerModer).ToString(CultureInfo.CurrentCulture) },
+                { "usePowerYagluth", TrackPlayerStats.GetPlayerStat(PlayerStatType.UsePowerYagluth).ToString(CultureInfo.CurrentCulture) },
+                { "usePowerQueen", TrackPlayerStats.GetPlayerStat(PlayerStatType.UsePowerQueen).ToString(CultureInfo.CurrentCulture) },
+                { "usePowerAshlands", TrackPlayerStats.GetPlayerStat(PlayerStatType.UsePowerAshlands).ToString(CultureInfo.CurrentCulture) },
+                { "usePowerDeepNorth", TrackPlayerStats.GetPlayerStat(PlayerStatType.UsePowerDeepNorth).ToString(CultureInfo.CurrentCulture) },
+                { "count", TrackPlayerStats.GetPlayerStat(PlayerStatType.Count).ToString(CultureInfo.CurrentCulture) },
+            };
+
+            SetTextElement(parentElement.gameObject, "title", Player.m_localPlayer.GetHoverName() + " " + "$almanac_stats_button");
+
+            // Calculate the largest string length
+            int largestString = 0;
+            foreach (KeyValuePair<string, string> kvp in conversionMap)
+            {
+                string content = $"$almanac_{kvp.Key}_label : <color=orange>{kvp.Value}</color>";
+                string localizedValue = Localization.instance.Localize(content);
+                int length = localizedValue.Length;
+                if (length > largestString) largestString = length;
+            }
+
+            StringBuilder sb = new StringBuilder();
+
+            // Set text elements with padding
+            foreach (KeyValuePair<string, string> kvp in conversionMap)
+            {
+                string content = $"$almanac_{kvp.Key}_label : <color=orange>{kvp.Value}</color>";
+                string localizedValue = Localization.instance.Localize(content);
+
+                sb.Clear();
+                sb.Append(content);
+
+                if (localizedValue.Length < largestString)
+                {
+                    int difference = largestString - localizedValue.Length;
+
+                    sb.Insert(sb.ToString().IndexOf(':') + 1, new string(' ', difference));
+                }
+
+                SetTextElement(parentElement.gameObject, kvp.Key, kvp.Key.Contains("title") ? kvp.Value : sb.ToString());
             }
         }
 
@@ -77,65 +245,116 @@ public static class Patches
             progress = Mathf.Clamp(progress, 0f, 100f);
 
             if (!button) return;
-            button.interactable = data.isCompleted;
+            button.interactable = CheckCheats.PlayerWatcher.noCost || data.isCompleted;
+            button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() =>
             {
                 SetCustomGuardianPower(data);
             });
 
-            SetHoverableText(achievementIconBg.gameObject, "icon", data.powerToolTip);
-            
-            SetTextElement(parentElement.gameObject, "achievementTitle", data.isCompleted ? data.name : "???");
+            SetTextElement(parentElement.gameObject, "achievementTooltip", CheckCheats.PlayerWatcher.noCost ? data.powerToolTip : data.isCompleted ? data.powerToolTip : "");
+            SetTextElement(parentElement.gameObject, "achievementTitle", CheckCheats.PlayerWatcher.noCost ? data.name : data.isCompleted ? data.name : "???");
             SetTextElement(parentElement.gameObject, "achievementDescription", data.description);
-            SetImageElement(achievementIconBg.gameObject, "icon", data.sprite, data.isCompleted ? Color.white : Color.black);
+            SetImageElement(achievementIconBg.gameObject, "icon", data.sprite, CheckCheats.PlayerWatcher.noCost ? Color.white : data.isCompleted ? Color.white : Color.black);
             SetTextElement(parentElement.gameObject, "achievementProgress", $"<color=orange>{data.value}</color> / {data.total} (<color=orange>{progress}</color>%)");
-            SetTextElement(parentElement.gameObject, "achievementLore", data.isCompleted ? data.lore : "");
+            SetTextElement(parentElement.gameObject, "achievementLore", CheckCheats.PlayerWatcher.noCost ? data.lore : data.isCompleted ? data.lore : "");
 
         }
 
         private static void SetCustomGuardianPower(Achievements.Achievement data)
         {
+            if (data.power.IsNullOrWhiteSpace())
+            {
+                MessageHud.instance.ShowMessage(MessageHud.MessageType.Center,
+                    "$almanac_no_power_set", icon: AlmanacPlugin.AlmanacIconButton);
+                return;
+            }
             Player player = Player.m_localPlayer;
-            if (data.name.StartsWith("GP"))
+            if (data.power.StartsWith("GP"))
             {
                 player.SetGuardianPower(data.power);
-                player.GetGuardianPowerHUD(out StatusEffect SE, out float coolDown);
+                player.GetGuardianPowerHUD(out StatusEffect GP, out float coolDown);
                 MessageHud.instance.ShowMessage(MessageHud.MessageType.Center,
-                    $"Set Forsaken Power to {SE.m_name} Power");
+                    $"Set Forsaken Power to {GP.m_name} Power");
             }
             else
             {
+                List<StatusEffect> activeAlmanacEffects = CustomStatusEffects.activeAlmanacEffects;
                 int guardianPowerHashCode = string.IsNullOrEmpty(data.power) ? 0 : data.power.GetStableHashCode();
                 StatusEffect customPower = ObjectDB.instance.GetStatusEffect(guardianPowerHashCode);
+                CustomStatusEffects.CustomGuardianEffects? customData =
+                    CustomStatusEffects.customGuardianPowers.FirstOrDefault(e => e.m_name == customPower.name);
                 
-                Game.instance.IncrementPlayerStat(PlayerStatType.SetGuardianPower);
-
-                player.m_guardianPower = customPower.m_name;
-                player.m_guardianSE = customPower;
-                player.m_guardianPowerHash = guardianPowerHashCode;
-
-                MessageHud.instance.ShowMessage(MessageHud.MessageType.Center,
-                    $"Set Forsaken Power to {customPower.m_name} Power");
+                if (activeAlmanacEffects.Exists(effect => effect.name == data.power))
+                {
+                    Debug.LogWarning($"Removing {data.power}");
+                    CustomStatusEffects.RemoveAlmanacEffect(customPower);
+                    player.m_seman.RemoveStatusEffect(customPower);
+                }
+                else
+                {
+                    if (activeAlmanacEffects.Count >= 3) return;
+                    foreach (var activeEffect in activeAlmanacEffects)
+                    {
+                        CustomStatusEffects.CustomGuardianEffects? activeData =
+                            CustomStatusEffects.customGuardianPowers.FirstOrDefault(e => e.m_name == activeEffect.name);
+                        if (customData == null || activeData == null) continue;
+                        if (activeData.m_modifier != customData.m_modifier) continue;
+                        MessageHud.instance.ShowMessage(
+                            MessageHud.MessageType.Center, "$almanac_power_denied", icon: AlmanacPlugin.AlmanacIconButton);
+                        return;
+                    }
+                    Debug.LogWarning($"Adding {data.power}");
+                    CustomStatusEffects.AddAlmanacEffect(customPower);
+                    player.m_seman.AddStatusEffect(customPower);
+                }
             }
         }
 
-        private static void SetCustomData()
+        public static void SetPlayerStats()
         {
-            Transform playerStats = trophyFrame.Find("PlayerStats");
+            SetPlayerElementData(playerStatsElement);
+            SetPlayerPanel();
+        }
 
-            Dictionary<string, int> savedKills = TrackPlayerKills.GetCurrentKilledMonsters();
-            Dictionary<string, int> tempKills = TrackPlayerKills.TempMonstersKilled;
-
-            Dictionary<string, int> savedDeaths = TrackPlayerDeaths.GetCurrentPlayerDeaths();
-            Dictionary<string, int> tempDeaths = TrackPlayerDeaths.TempPlayerDeaths;
-
-            int totalKills = savedKills.Values.Sum() + tempKills.Values.Sum();
-            int totalDeaths = savedDeaths.Values.Sum() + tempDeaths.Values.Sum();
-
-            string content =
-                $"$almanac_total_kills_label : <color=orange>{totalKills}</color>   $almanac_total_deaths_label : <color=orange>{totalDeaths}</color>";
+        private static void SetPlayerPanel()
+        {
+            Transform panel = trophyFrame.Find("statsPanel");
             
-            SetTextElement(playerStats.gameObject, "totals", content);
+            SetTextElement(panel.gameObject, "almanacPowers", "$almanac_custom_powers_label");
+            
+            SetActivePowers();
+        }
+
+        private static void SetActivePowers()
+        {
+            Player player = Player.m_localPlayer;
+            Transform panel = trophyFrame.Find("statsPanel");
+
+            List<StatusEffect> activePowers = CustomStatusEffects.activeAlmanacEffects;
+            
+            for (int i = 0; i < 3; ++i) SetActiveElement(panel.gameObject, "ImageElement", $"activeEffects ({i})", false);
+            for (int i = 0; i < activePowers.Count; ++i)
+            {
+                StatusEffect power = activePowers[i];
+                SetActiveElement(panel.gameObject, "ImageElement", $"activeEffects ({i})", true);
+                SetHoverableText(panel.gameObject, $"activeEffects ({i})", activePowers[i].m_name);
+                Transform iconBackground = panel.Find($"ImageElement (activeEffects ({i}))");
+                SetImageElement(iconBackground.gameObject, "icon", activePowers[i].m_icon, Color.white);
+
+                Transform achievementIcon = iconBackground.Find("ImageElement (icon)");
+                achievementIcon.TryGetComponent(out Button button);
+
+                if (!button) return; ;
+                button.onClick.RemoveAllListeners();
+                button.onClick.AddListener(() =>
+                {
+                    Debug.LogWarning($"Removing {power.name}");
+                    CustomStatusEffects.RemoveAlmanacEffect(power);
+                    player.m_seman.RemoveStatusEffect(power);
+                    SetActivePowers();
+                });
+            }
         }
 
         private static void SetInitialData(InventoryGui __instance)
@@ -150,6 +369,7 @@ public static class Patches
             AlmanacElement = AlmanacList.transform.Find("AlmanacElement (0)");
             knowledgeLockToggle = AlmanacPlugin._KnowledgeLock.Value;
             achievementsElement = AlmanacList.Find("achievementsElement (0)");
+            playerStatsElement = AlmanacList.Find("statsElement (0)");
 
             closeButton.TryGetComponent(out ButtonSfx buttonSfxScript);
             if (!buttonSfxScript) return;
@@ -438,6 +658,7 @@ public static class Patches
                 SetActiveElement(AlmanacList.gameObject, "piecesElement", "0", false);
                 
                 SetActiveElement(AlmanacList.gameObject, "achievementsElement", "0", false);
+                SetActiveElement(AlmanacList.gameObject, "statsElement", "0", false);
             });
         }
 
@@ -2495,7 +2716,7 @@ public static class Patches
             image.type = inputImage.type;
         }
 
-        private static void SetImageElement(GameObject dummyElement, string id, Sprite sprite, Color color)
+        private static void SetImageElement(GameObject dummyElement, string id, Sprite? sprite, Color color)
         {
             Transform element = dummyElement.transform.Find($"ImageElement ({id})");
             if (!element) return;

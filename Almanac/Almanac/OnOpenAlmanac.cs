@@ -73,9 +73,9 @@ public static class Patches
 
         private static void SetPlayerElementData(Transform parentElement)
         {
-            Dictionary<string, int> savedKills = TrackPlayerKills.GetCurrentKilledMonsters();
-            Dictionary<string, int> tempKills = TrackPlayerKills.TempMonstersKilled;
-            int totalKills = savedKills.Values.Sum() + tempKills.Values.Sum();
+            // Dictionary<string, int> savedKills = TrackPlayerKills.GetCurrentKilledMonsters();
+            // Dictionary<string, int> tempKills = TrackPlayerKills.TempMonstersKilled;
+            // int totalKills = savedKills.Values.Sum() + tempKills.Values.Sum();
 
             // Dictionary<string, int> savedDeaths = TrackPlayerDeaths.GetCurrentPlayerDeaths();
             // Dictionary<string, int> tempDeaths = TrackPlayerDeaths.TempPlayerDeaths;
@@ -93,7 +93,7 @@ public static class Patches
                 { "other_title", "$almanac_other_title" },
                 { "guardian_title", "$almanac_guardian_title" },
                 { "count_title", "$almanac_count_title" },
-                { "totalKills", totalKills.ToString() },
+                { "totalKills", TrackPlayerStats.GetPlayerStat(PlayerStatType.EnemyKills).ToString(CultureInfo.CurrentCulture) },
                 { "totalDeaths",TrackPlayerStats.GetPlayerStat(PlayerStatType.Deaths).ToString(CultureInfo.CurrentCulture) },
                 { "craftOrUpgrades", TrackPlayerStats.GetPlayerStat(PlayerStatType.CraftsOrUpgrades).ToString(CultureInfo.CurrentCulture) },
                 { "builds", TrackPlayerStats.GetPlayerStat(PlayerStatType.Builds).ToString(CultureInfo.CurrentCulture) },
@@ -207,6 +207,7 @@ public static class Patches
             int largestString = 0;
             foreach (KeyValuePair<string, string> kvp in conversionMap)
             {
+                // if (kvp.Key.Contains("title")) continue;
                 string content = $"$almanac_{kvp.Key}_label : <color=orange>{kvp.Value}</color>";
                 string localizedValue = Localization.instance.Localize(content);
                 int length = localizedValue.Length;
@@ -275,36 +276,30 @@ public static class Patches
                 player.SetGuardianPower(data.power);
                 player.GetGuardianPowerHUD(out StatusEffect GP, out float coolDown);
                 MessageHud.instance.ShowMessage(MessageHud.MessageType.Center,
-                    $"Set Forsaken Power to {GP.m_name} Power");
+                    $"$almanac_set_guardian_power {GP.m_name} $almanac_power");
             }
             else
             {
                 List<StatusEffect> activeAlmanacEffects = CustomStatusEffects.activeAlmanacEffects;
                 int guardianPowerHashCode = string.IsNullOrEmpty(data.power) ? 0 : data.power.GetStableHashCode();
                 StatusEffect customPower = ObjectDB.instance.GetStatusEffect(guardianPowerHashCode);
-                CustomStatusEffects.CustomGuardianEffects? customData =
-                    CustomStatusEffects.customGuardianPowers.FirstOrDefault(e => e.m_name == customPower.name);
-                
+
                 if (activeAlmanacEffects.Exists(effect => effect.name == data.power))
                 {
-                    Debug.LogWarning($"Removing {data.power}");
+                    // Debug.LogWarning($"Removing {data.power}");
                     CustomStatusEffects.RemoveAlmanacEffect(customPower);
                     player.m_seman.RemoveStatusEffect(customPower);
                 }
                 else
                 {
-                    if (activeAlmanacEffects.Count >= 3) return;
-                    foreach (var activeEffect in activeAlmanacEffects)
+                    if (activeAlmanacEffects.Count >= 3)
                     {
-                        CustomStatusEffects.CustomGuardianEffects? activeData =
-                            CustomStatusEffects.customGuardianPowers.FirstOrDefault(e => e.m_name == activeEffect.name);
-                        if (customData == null || activeData == null) continue;
-                        if (activeData.m_modifier != customData.m_modifier) continue;
                         MessageHud.instance.ShowMessage(
-                            MessageHud.MessageType.Center, "$almanac_power_denied", icon: AlmanacPlugin.AlmanacIconButton);
+                            MessageHud.MessageType.Center, "$almanac_max_powers");
                         return;
-                    }
-                    Debug.LogWarning($"Adding {data.power}");
+                    };
+
+                    // Debug.LogWarning($"Adding {data.power}");
                     CustomStatusEffects.AddAlmanacEffect(customPower);
                     player.m_seman.AddStatusEffect(customPower);
                 }
@@ -332,8 +327,12 @@ public static class Patches
             Transform panel = trophyFrame.Find("statsPanel");
 
             List<StatusEffect> activePowers = CustomStatusEffects.activeAlmanacEffects;
-            
-            for (int i = 0; i < 3; ++i) SetActiveElement(panel.gameObject, "ImageElement", $"activeEffects ({i})", false);
+
+            for (int i = 0; i < 3; ++i)
+            {
+                SetActiveElement(panel.gameObject, "ImageElement", $"activeEffects ({i})", false);
+                SetActiveElement(panel.gameObject, "TextElement", $"activeDesc ({i})", false);
+            }
             for (int i = 0; i < activePowers.Count; ++i)
             {
                 StatusEffect power = activePowers[i];
@@ -349,11 +348,14 @@ public static class Patches
                 button.onClick.RemoveAllListeners();
                 button.onClick.AddListener(() =>
                 {
-                    Debug.LogWarning($"Removing {power.name}");
+                    // Debug.LogWarning($"Removing {power.name}");
                     CustomStatusEffects.RemoveAlmanacEffect(power);
                     player.m_seman.RemoveStatusEffect(power);
                     SetActivePowers();
                 });
+
+                string desc = $"<color=orange>{power.m_name}</color>\n{power.m_tooltip}";
+                SetTextElement(panel.gameObject, $"activeDesc ({i})", desc);
             }
         }
 

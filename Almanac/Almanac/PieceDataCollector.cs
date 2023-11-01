@@ -167,7 +167,6 @@ public static class PieceDataCollector
             GO.TryGetComponent(out CookingStation cookingStationScript);
             GO.TryGetComponent(out Fermenter fermentScript);
             GO.TryGetComponent(out Smelter smelterScript);
-            GO.TryGetComponent(out TimedDestruction timedDestruction);
             
             if (pieceScript != null) allPieces.Add(GO);
             if (cookingStationScript != null) cookingStations.Add(GO);

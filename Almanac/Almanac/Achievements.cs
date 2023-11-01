@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
+using BepInEx;
 using JetBrains.Annotations;
 using TMPro;
 using UnityEngine;
@@ -54,28 +55,42 @@ public static class Achievements
         "defeated_draugr",
         "defeated_draugr_elite",
         "defeated_skeleton_poison",
-        "defeated_surtling",
+        "killed_surtling",
+        "defeated_wraith",
+        "defeated_leech",
         "defeated_bonemass"
     };
+
+    private static readonly List<string> mountainCreatures = new()
+    {
+        "defeated_wolf",
+        "defeated_fenring",
+        "defeated_hatchling",
+        "KilledBat",
+        "defeated_fenring_cultist",
+        "defeated_stonegolem",
+        "defeated_ulv",
+        "defeated_dragon"
+    };
     
-    private static readonly List<ItemDrop> allFish = ItemDataCollector.GetFishes();
-    private static readonly List<ItemDrop> allMaterials = ItemDataCollector.GetMaterials();
-    private static readonly List<ItemDrop> allConsumables = ItemDataCollector.GetConsumables();
-    private static readonly List<ItemDrop> allWeapons = ItemDataCollector.GetWeapons();
-    private static readonly List<ItemDrop> allProjectiles = ItemDataCollector.GetAmmunition();
-    private static readonly List<ItemDrop> allBows = 
+    public static readonly List<ItemDrop> allFish = ItemDataCollector.GetFishes();
+    public static readonly List<ItemDrop> allMaterials = ItemDataCollector.GetMaterials();
+    public static readonly List<ItemDrop> allConsumables = ItemDataCollector.GetConsumables();
+    public static readonly List<ItemDrop> allWeapons = ItemDataCollector.GetWeapons();
+    public static readonly List<ItemDrop> allProjectiles = ItemDataCollector.GetAmmunition();
+    public static readonly List<ItemDrop> allBows = 
         allWeapons.FindAll(weapon => weapon.name.Contains("Bow") || weapon.name.Contains("Crossbow"));
 
-    private static readonly List<ItemDrop> allArrows =
+    public static readonly List<ItemDrop> allArrows =
         allProjectiles.FindAll(projectile => projectile.name.Contains("Arrow"));
     
-    private static readonly List<ItemDrop> allValuables =
+    public static readonly List<ItemDrop> allValuables =
         allMaterials.FindAll(item => item.m_itemData.m_shared.m_value > 0);
 
-    private static readonly List<ItemDrop> allMeads =
+    public static readonly List<ItemDrop> allMeads =
         allMaterials.FindAll(item => vanillaMeads.Contains(item.m_itemData.m_shared.m_name));
 
-    private static readonly List<ItemDrop> allTrophies = ItemDataCollector.GetTrophies();
+    public static readonly List<ItemDrop> allTrophies = ItemDataCollector.GetTrophies();
     public class Achievement
     {
         public string name = null!;
@@ -89,14 +104,19 @@ public static class Achievements
         public string powerToolTip = null!;
     }
 
-    private static Sprite GetTrophySprite(string prefabName) => allTrophies.Find(item => item.name == prefabName).m_itemData.GetIcon();
-
+    public static Sprite? GetSprite(string prefabName, List<ItemDrop> array)
+    {
+        if (!array.Exists(item => item.name == prefabName)) return AlmanacPlugin.AlmanacIconButton;
+        Sprite sprite = array.Find(item => item.name == prefabName).m_itemData.GetIcon();
+        return sprite;
+    }
     private static void CreateAchievement(
         string name, string description,
         int total, Sprite? sprite,
         string lore, string powerName,
         string powerToolTip)
     {
+        if (powerName.IsNullOrWhiteSpace() || name.IsNullOrWhiteSpace()) return;
         Achievement data = new Achievement()
         {
             name = name,
@@ -116,9 +136,9 @@ public static class Achievements
         allAchievements.Clear();
         
         CreateKillAchievements();
-        // CreateDeathAchievements();
+        CreateDeathAchievements();
         CreateDiscoverAchievements();
-        // CreateBossAchievements();
+        CreateBossAchievements();
     }
 
     private static void CreateDiscoverAchievements()
@@ -130,7 +150,7 @@ public static class Achievements
             AlmanacPlugin.arrowBasicIcon,
             "$almanac_ranger_lore",
             "se_ranger",
-            "<color=white>$almanac_increase_projectile_damage_by </color><color=orange>10</color>"
+            "$almanac_increase_projectile_damage_by <color=orange>10</color>"
             );
         CreateAchievement(
             "$almanac_achievement_brew_master",
@@ -139,7 +159,7 @@ public static class Achievements
             AlmanacPlugin.bottleStandardBlueIcon, 
             "$almanac_brew_master_lore",
             "se_brew_master",
-            "<color=white>$almanac_increase_fire_damage_by</color><color=orange>10</color>"
+            "$almanac_increase_fire_damage_by <color=orange>10</color>"
             );
         CreateAchievement(
             "$almanac_achievement_fisher",
@@ -148,7 +168,7 @@ public static class Achievements
             AlmanacPlugin.fishGreenIcon,
             "$almanac_fisher_lore",
             "GP_Moder",
-            "<color=white>$almanac_allows_moder_power</color>"
+            "$almanac_allows_moder_power"
             );
         CreateAchievement(
             "$almanac_achievement_knowledgeable",
@@ -157,17 +177,26 @@ public static class Achievements
             AlmanacPlugin.necklaceSilverRed,
             "$almanac_knowledgeable_lore",
             "se_knowledgeable",
-            "<color=white>$almanac_increase_carry_weight_by </color><color=orange>100</color>"
+            "$almanac_increase_carry_weight_by <color=orange>100</color>"
             );
-        // CreateAchievement(
-        //     "Gluttony",
-        //      "Discovered all consumables",
-        //     allConsumables.Count,
-        //     AlmanacPlugin.mushroomBigRedIcon,
-        //     "$almanac_consumables_all_lore",
-        //     "",
-        //     ""
-        //     );
+        CreateAchievement(
+            "$almanac_achievement_master_archer",
+            "$almanac_achievement_master_archer_desc",
+            allBows.Count,
+            AlmanacPlugin.bowWoodIcon,
+            "$almanac_master_archer_lore",
+            "se_master_archer",
+            "$almanac_increase_projectile_damage_by <color=orange>15</color>"
+            );
+        CreateAchievement(
+            "Gluttony",
+             "Discovered all consumables",
+            allConsumables.Count,
+            AlmanacPlugin.mushroomBigRedIcon,
+            "$almanac_consumables_all_lore",
+            "se_gluttony",
+            "$almanac_modify_poison_resistance <color=orange>$almanac_resistant</color>"
+            );
         // CreateAchievement(
         //     "Barracks",
         //     "Discovered all weapons",
@@ -177,15 +206,6 @@ public static class Achievements
         //     "",
         //     ""
         //     );
-        CreateAchievement(
-            "$almanac_achievement_master_archer",
-            "$almanac_achievement_master_archer_desc",
-            allBows.Count,
-            AlmanacPlugin.bowWoodIcon,
-            "$almanac_master_archer_lore",
-            "se_master_archer",
-            "<color=white>$almanac_increase_projectile_damage_by</color><color=orange>15</color>"
-            );
         // CreateAchievement(
         //     "Salesman",
         //     "Discovered all valuables",
@@ -199,13 +219,13 @@ public static class Achievements
     private static void CreateBossAchievements()
     {
         CreateAchievement(
-            "Stag Slayer",
-            "Killed Eikthyr over 100 times",
+            "$almanac_achievement_stag_slayer",
+            "$almanac_achievement_stag_slayer_desc",
             100,
-            GetTrophySprite("TrophyEikthyr"),
-            "$almanac_eikthyr_100_lore",
+            GetSprite("TrophyEikthyr", allTrophies),
+            "$almanac_stag_slayer_lore",
             "GP_Eikthyr",
-            "Enables access to <color=orange>Eikthyr Power</color> from Almanac"
+            "$almanac_allows_eikthyr_power"
         );
     }
 
@@ -215,7 +235,7 @@ public static class Achievements
             "$almanac_achievement_meadow_kill",
             "$almanac_achievement_meadow_kill_desc",
             meadowCreatures.Count,
-            GetTrophySprite("TrophyEikthyr"),
+            GetSprite("HardAntler", allMaterials),
             "$almanac_achievement_meadow_kill_lore",
             "se_meadow_kill",
             "$almanac_increase_health_by <color=orange>5</color>"
@@ -224,31 +244,41 @@ public static class Achievements
             "$almanac_achievement_blackforest_kill",
             "$almanac_achievement_blackforest_kill_desc",
             blackforestCreatures.Count,
-            GetTrophySprite("TrophyTheElder"), 
+           GetSprite("TrophyForestTroll", allTrophies),
             "$almanac_achievement_blackforest_kill_lore",
             "se_blackforest_kill",
             "$almanac_increase_health_by <color=orange>10</color>" 
+        );
+        CreateAchievement(
+            "$almanac_achievement_swamp_kill",
+            "$almanac_achievement_swamp_kill_desc",
+            swampCreatures.Count,
+            GetSprite("TrophyAbomination", allTrophies),
+            "$almanac_achievement_swamp_kill_lore",
+            "se_swamp_kill",
+            "$almanac_increase_health_by <color=orange>15</color>" 
+        );
+        CreateAchievement(
+            "$almanac_achievement_mountain_kill",
+            "$almanac_achievement_mountain_kill_desc",
+            mountainCreatures.Count,
+            GetSprite("DragonTear", allMaterials),
+            "$almanac_achievement_mountain_kill_lore",
+            "se_mountain_kill",
+            "$almanac_increase_health_by <color=orange>20</color>" 
         );
     }
 
     private static void CreateDeathAchievements()
     {
         CreateAchievement(
-            "First Death", 
-            "Died at least once",
-            1, 
-            AlmanacPlugin.capeHoodIcon,
-            "$almanac_first_death_lore",
-            "se_first_death",
-            "Increases base stamina by <color=orange>10</color>"
-        );
-        CreateAchievement(
-            "Undying", "Died at least 1000 times",
+            "$almanac_achievement_undying",
+            "$almanac_achievement_undying_desc",
             1000,
             AlmanacPlugin.boneSkullIcon,
-            "$almanac_1000_death_lore",
-            "",
-            ""
+            "$almanac_undying_lore",
+            "se_undying",
+            "$almanac_increase_stamina_by <color=orange>25</color>"
         );
     }
 
@@ -259,13 +289,18 @@ public static class Achievements
             Transform container = parentElement.Find($"achievementsContainer ({i})");
             Transform icon = container.Find("iconObj");
             Transform hoverText = container.Find("hoverTextElement");
+            
             icon.TryGetComponent(out Image containerImage);
             hoverText.TryGetComponent(out TextMeshProUGUI textMesh);
 
-            var achievement = allAchievements[i];
+            if (!containerImage || !textMesh) return;
 
-            containerImage.color = achievement.isCompleted ? Color.white : Color.black;
-            textMesh.text = achievement.isCompleted ? achievement.name : "???";
+            Achievement achievement = allAchievements[i];
+
+            string localizedAchievementName = Localization.instance.Localize(achievement.name);
+
+            containerImage.color = CheckCheats.PlayerWatcher.noCost ? Color.white : achievement.isCompleted ? Color.white : Color.black;
+            textMesh.text = CheckCheats.PlayerWatcher.noCost ? localizedAchievementName : achievement.isCompleted ? localizedAchievementName : "???";
         }
     }
 
@@ -314,11 +349,15 @@ public static class Achievements
 
         int totalMeadowKills = GetBiomeKills(meadowCreatures, totalMonstersKilled);
         int totalBlackforestKills = GetBiomeKills(blackforestCreatures, totalMonstersKilled);
+        int totalSwampKills = GetBiomeKills(swampCreatures, totalMonstersKilled);
+        int totalMountainKills = GetBiomeKills(mountainCreatures, totalMonstersKilled);
 
         Dictionary<string, int> updateAchievementMap = new()
         {
             { "$almanac_achievement_meadow_kill", totalMeadowKills },
             { "$almanac_achievement_blackforest_kill", totalBlackforestKills },
+            { "$almanac_achievement_swamp_kill", totalSwampKills },
+            { "$almanac_achievement_mountain_kill", totalMountainKills },
             { "$almanac_achievement_ranger", totalKnownProjectiles },
             { "$almanac_achievement_brew_master", totalKnownPotions },
             { "$almanac_achievement_fisher", totalKnownFish },
@@ -327,7 +366,7 @@ public static class Achievements
 
         };
 
-        foreach (var updateMap in updateAchievementMap)
+        foreach (KeyValuePair<string, int> updateMap in updateAchievementMap)
         {
             UpdateAchievement(updateMap.Key, updateMap.Value);
         }

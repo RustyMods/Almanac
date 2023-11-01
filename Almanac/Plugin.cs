@@ -140,7 +140,7 @@ namespace Almanac
             WorkingAsType = SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null
                 ? WorkingAs.Server : WorkingAs.Client;
             
-            CustomStatusEffects.RegisterCustomStatusEffects();
+            // CustomStatusEffects.RegisterCustomStatusEffects();
             
             Localizer.Load();
             Assembly assembly = Assembly.GetExecutingAssembly();

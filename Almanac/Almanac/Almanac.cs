@@ -81,7 +81,6 @@ public static class Almanac
             if (AlmanacPlugin.WorkingAsType == AlmanacPlugin.WorkingAs.Server) return;
             SetInitialData(__instance);
             Achievements.RegisterAchievements();
-            CustomStatusEffects.AssignSpecialEffects();
             EditInventoryGUI();
             RepositionTrophyPanel(-220f, 0f);
             CreateAllPanels();
@@ -352,6 +351,17 @@ public static class Almanac
                     fadeDuration = 0.1f
                 };
                 button.onClick = new Button.ButtonClickedEvent();
+
+                CreateTextElement(
+                    panel.transform,
+                    $"activeDesc ({i})",
+                    "$almanac_no_data",
+                    -475f, 125f - (i * 75f),
+                    250f, 50f,
+                    Color.white, 18,
+                    true, TextOverflowModes.Overflow,
+                    HorizontalAlignmentOptions.Left,
+                    wrapMode: TextWrappingModes.NoWrap);
             }
         }
         private static void EditInventoryGUI()

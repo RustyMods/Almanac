@@ -125,6 +125,7 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="Almanac\Achievements.cs" />
+        <Compile Include="Almanac\AlmanacEffectsManager.cs" />
         <Compile Include="Almanac\Commands.cs" />
         <Compile Include="Almanac\CustomStatusEffects.cs" />
         <Compile Include="Almanac\FixTrophiesPositions.cs" />

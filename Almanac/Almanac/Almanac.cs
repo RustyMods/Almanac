@@ -285,7 +285,7 @@ public static class Almanac
             
             if (modPieces.Count > 0) CreateTabs("modPiecesButton", "modPieces", 170f, -425f);
             
-            CreateAchievementsPanel("achievements", Achievements.allAchievements);
+            CreateAchievementsPanel("achievements", Achievements.registeredAchievements);
             CreatePlayerStatsPanel("stats");
             
             CreateTabs("achievementsButton", "achievements", 585f, 425f);

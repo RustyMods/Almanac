@@ -10,129 +10,7 @@ namespace Almanac.Almanac;
 
 public static class RegisterAlmanacEffects
 {
-    public static List<AlmanacEffectsManager.BaseEffectData> effectsData = new()
-    {
-        new AlmanacEffectsManager.BaseEffectData()
-        {
-            effectName = "se_gluttony",
-            displayName = "$almanac_achievement_gluttony",
-            sprite = AlmanacPlugin.mushroomBigRedIcon,
-            startMsg = "$almanac_modify_poison_resistance <color=orange>$almanac_resistant</color>",
-            stopMsg = "$almanac_modify_poison_default",
-            effectTooltip = "$almanac_modify_poison_resistance <color=orange>$almanac_resistant</color>",
-            damageMod = "Poison = Resistant",
-            startEffectNames = new []{"blob_aoe", "sfx_GuckSackDestroyed"}
-        }, 
-        new AlmanacEffectsManager.BaseEffectData()
-        {
-            effectName = "se_knowledgeable",
-            displayName = "Knowledge",
-            sprite = AlmanacPlugin.necklaceSilverRed,
-            Modifier = AlmanacEffectsManager.Modifier.MaxCarryWeight,
-            Modifiers =
-            {
-                [AlmanacEffectsManager.Modifier.MaxCarryWeight] = 100f
-            },
-            startMsg = "$almanac_increase_carry_weight_by <color=orange>100</color>",
-            stopMsg = "$almanac_carry_weight_default",
-            effectTooltip = "$almanac_increase_carry_weight_by <color=orange>100</color>"
-        },
-        new AlmanacEffectsManager.BaseEffectData()
-        {
-            effectName = "se_meadow_kill",
-            displayName = "$almanac_achievement_meadow_kill",
-            startMsg = "$almanac_increase_health_by <color=orange>5</color>",
-            stopMsg = "$almanac_health_default",
-            spriteName = "HardAntler",
-            effectTooltip = "$almanac_increase_health_by <color=orange>5</color>",
-            startEffectNames = new []{"fx_DvergerMage_Support_start"},
-            stopEffectNames = new []{"fx_DvergerMage_Mistile_die"},
-            Modifier = AlmanacEffectsManager.Modifier.BaseHP,
-            m_initialValue = 25f,
-            m_newValue = 5f
-        },
-        new AlmanacEffectsManager.BaseEffectData()
-        {
-            effectName = "se_blackforest_kill",
-            displayName = "$almanac_achievement_blackforest_kill",
-            startMsg = "$almanac_increase_health_by <color=orange>10</color>",
-            stopMsg = "$almanac_health_default",
-            effectTooltip = "$almanac_increase_health_by <color=orange>10</color>",
-            Modifier = AlmanacEffectsManager.Modifier.BaseHP,
-            m_initialValue = 25f,
-            m_newValue = 10f,
-            sprite = AlmanacPlugin.boneWhiteIcon
-        },
-        new AlmanacEffectsManager.BaseEffectData()
-        {
-            effectName = "se_swamp_kill",
-            displayName = "$almanac_achievement_swamp_kill",
-            startMsg = "$almanac_increase_health_by <color=orange>15</color>",
-            stopMsg = "$almanac_health_default",
-            effectTooltip = "$almanac_increase_health_by <color=orange>15</color>",
-            Modifier = AlmanacEffectsManager.Modifier.BaseHP,
-            m_initialValue = 25f,
-            m_newValue = 15f,
-            spriteName = "TrophyAbomination"
-        },
-        new AlmanacEffectsManager.BaseEffectData()
-        {
-            effectName = "se_mountain_kill",
-            displayName = "$almanac_achievement_mountain_kill",
-            startMsg = "$almanac_increase_health_by <color=orange>20</color>",
-            effectTooltip = "$almanac_increase_health_by <color=orange>20</color>",
-            stopMsg = "$almanac_health_defeault",
-            Modifier = AlmanacEffectsManager.Modifier.BaseHP,
-            m_initialValue = 25f,
-            m_newValue = 20f,
-            spriteName = "DragonTear"
-        },
-        new AlmanacEffectsManager.BaseEffectData()
-        {
-            effectName = "se_ranger",
-            displayName = "$almanac_achievement_ranger",
-            startMsg = "$almanac_increase_projectile_damage_by <color=orange>10</color>",
-            stopMsg = "$almanac_projectile_default",
-            effectTooltip = "$almanac_increase_projectile_damage_by <color=orange>10</color>",
-            sprite = AlmanacPlugin.capeHoodIcon,
-            Modifier = AlmanacEffectsManager.Modifier.RangedDMG,
-            m_newValue = 10f,
-        },
-        new AlmanacEffectsManager.BaseEffectData()
-        {
-            effectName = "se_brew_master",
-            displayName = "$almanac_achievement_brew_master",
-            startMsg = "$almanac_increase_fire_damage_by <color=orange>10</color>",
-            effectTooltip = "$almanac_increase_fire_damage_by <color=orange>10</color>",
-            stopMsg = "$almanac_damage_default",
-            sprite = AlmanacPlugin.bottleStandardBlueIcon,
-            Modifier = AlmanacEffectsManager.Modifier.FireDMG,
-            m_newValue = 10f
-        },
-        new AlmanacEffectsManager.BaseEffectData()
-        {
-            effectName = "se_master_archer",
-            displayName = "$almanac_achievement_master_archer",
-            startMsg = "$almanac_increase_projectile_damage_by <color=orange>15</color>",
-            effectTooltip = "$almanac_increase_projectile_damage_by <color=orange>15</color>",
-            stopMsg = "$almanac_projectile_default",
-            sprite = AlmanacPlugin.arrowBasicIcon,
-            Modifier = AlmanacEffectsManager.Modifier.RangedDMG,
-            m_newValue = 15f
-        },
-        new AlmanacEffectsManager.BaseEffectData()
-        {
-            effectName = "se_undying",
-            displayName = "$almanac_achievement_undying",
-            startMsg = "$almanac_increase_stamina_by <color=orange>25</color>",
-            effectTooltip = "$almanac_increase_stamina_by <color=orange>25</color>",
-            stopMsg = "$almanac_stamina_default",
-            sprite = AlmanacPlugin.boneSkullIcon,
-            Modifier = AlmanacEffectsManager.Modifier.BaseStamina,
-            m_initialValue = 50f,
-            m_newValue = 25f
-        }
-    };
+    public static List<AlmanacEffectsManager.BaseEffectData> effectsData = new();
 
     [HarmonyPatch(typeof(ObjectDB), nameof(ObjectDB.Awake))]
     static class ObjectDBAwakePatch
@@ -140,10 +18,19 @@ public static class RegisterAlmanacEffects
         private static void Postfix()
         {
             if (!ZNetScene.instance) return;
+            
+            AchievementManager.InitAchievements();
+            
             ObjectDB.instance.m_StatusEffects.RemoveAll(effect => effect is AlmanacEffectsManager.BaseEffect);
 
             try
             {
+                effectsData.Clear();
+                foreach (var achievement in AchievementManager.tempAchievements)
+                {
+                    effectsData.Add(achievement.m_statusEffect);
+                }
+                
                 foreach (var effectData in effectsData)
                 {
                     effectData.Init();
@@ -182,7 +69,13 @@ public static class AlmanacEffectsManager
         FrostDMG,
         LightningDMG,
         PoisonDMG,
-        SpiritDMG
+        SpiritDMG,
+        EikthyrPower,
+        ElderPower,
+        BonemassPower,
+        ModerPower,
+        YagluthPower,
+        QueenPower
     }
     public class BaseEffectData
     {
@@ -193,8 +86,8 @@ public static class AlmanacEffectsManager
         public string? spriteName;
         public string[]? startEffectNames;
         public string[]? stopEffectNames;
-        public string startMsg = "";
-        public string stopMsg = "";
+        public string? startMsg = "";
+        public string? stopMsg = "";
         public string? effectTooltip;
         public string? damageMod;
         public Modifier Modifier;
@@ -215,15 +108,13 @@ public static class AlmanacEffectsManager
             { Modifier.FallDamage , 1f }
         };
 
-        public List<HitData.DamageModPair> damageMods = new();
+        public readonly List<HitData.DamageModPair> damageMods = new();
 
         private bool? isValid;
         
         public void Init()
         {
             if (isValid.HasValue) return;
-            
-            Sprite? icon = AlmanacPlugin.AlmanacIconButton;
 
             if (!damageMod.IsNullOrWhiteSpace())
             {
@@ -307,15 +198,15 @@ public static class AlmanacEffectsManager
 
                 damageMods.Add(pair);
             }
-
+            
+            Sprite? icon = AlmanacPlugin.AlmanacIconButton;
             if (sprite) icon = sprite;
-            if (!spriteName.IsNullOrWhiteSpace())
+            if (!sprite && !spriteName.IsNullOrWhiteSpace())
             {
                 GameObject item = ZNetScene.instance.GetPrefab(spriteName);
                 item.TryGetComponent(out ItemDrop itemDrop);
                 if (itemDrop) icon = itemDrop.m_itemData.GetIcon();
             }
-
             
             ObjectDB obd = ObjectDB.instance;
 
@@ -335,46 +226,11 @@ public static class AlmanacEffectsManager
             if (startEffectNames is not null)
             {
                 baseEffect.m_startEffects = CreateEffectList(ZNetScene.instance, startEffectNames.ToList());
-                // GameObject startEffect = ZNetScene.instance.GetPrefab(startEffectName);
-                //
-                // baseEffect.m_startEffects = new EffectList()
-                // {
-                //     m_effectPrefabs = new[]
-                //     {
-                //         new EffectList.EffectData()
-                //         {
-                //             m_prefab = startEffect,
-                //             m_attach = true,
-                //             m_enabled = true,
-                //             m_inheritParentRotation = true,
-                //             m_inheritParentScale = true,
-                //             m_randomRotation = false,
-                //             m_scale = true
-                //         }
-                //     }
-                // };
             }
             
             if (stopEffectNames is not null)
             {
                 baseEffect.m_stopEffects = CreateEffectList(ZNetScene.instance, stopEffectNames.ToList());
-                // GameObject stopEffect = ZNetScene.instance.GetPrefab(stopEffectName);
-                // baseEffect.m_stopEffects = new EffectList()
-                // {
-                //     m_effectPrefabs = new[]
-                //     {
-                //         new EffectList.EffectData()
-                //         {
-                //             m_attach = true,
-                //             m_enabled = true,
-                //             m_inheritParentRotation = true,
-                //             m_inheritParentScale = true,
-                //             m_prefab = stopEffect,
-                //             m_randomRotation = false,
-                //             m_scale = true
-                //         }
-                //     }
-                // };
             }
             obd.m_StatusEffects.Add(baseEffect);
             isValid = true;

@@ -65,7 +65,7 @@ public static class Patches
             
             Achievements.UpdateAchievements();
             Achievements.SetUnknownAchievements(trophyFrame.Find("achievementsPanel"));
-            foreach (var achievement in Achievements.allAchievements)
+            foreach (var achievement in Achievements.registeredAchievements)
             {
                 SetAchievementsData(achievementsElement, achievement);
             }
@@ -250,7 +250,7 @@ public static class Patches
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() =>
             {
-                SetCustomGuardianPower(data);
+                SetAlmanacPowers(data);
             });
 
             SetTextElement(parentElement.gameObject, "achievementTooltip", CheckCheats.PlayerWatcher.noCost ? data.powerToolTip : data.isCompleted ? data.powerToolTip : "");
@@ -262,7 +262,7 @@ public static class Patches
 
         }
 
-        private static void SetCustomGuardianPower(Achievements.Achievement data)
+        private static void SetAlmanacPowers(Achievements.Achievement data)
         {
             if (data.power.IsNullOrWhiteSpace())
             {
@@ -281,6 +281,7 @@ public static class Patches
             else
             {
                 List<StatusEffect> activeAlmanacEffects = CustomStatusEffects.activeAlmanacEffects;
+                
                 int guardianPowerHashCode = string.IsNullOrEmpty(data.power) ? 0 : data.power.GetStableHashCode();
                 StatusEffect customPower = ObjectDB.instance.GetStatusEffect(guardianPowerHashCode);
 

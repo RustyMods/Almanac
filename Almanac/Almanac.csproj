@@ -124,6 +124,7 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Almanac\AchievementManager.cs" />
         <Compile Include="Almanac\Achievements.cs" />
         <Compile Include="Almanac\AlmanacEffectsManager.cs" />
         <Compile Include="Almanac\Commands.cs" />

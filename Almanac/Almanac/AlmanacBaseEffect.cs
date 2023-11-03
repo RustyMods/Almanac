@@ -4,42 +4,53 @@ using System.IO.Ports;
 using System.Linq;
 using BepInEx;
 using HarmonyLib;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Almanac.Almanac;
 
 public static class RegisterAlmanacEffects
 {
-    public static List<AlmanacEffectsManager.BaseEffectData> effectsData = new();
+    public static readonly List<AlmanacEffectsManager.BaseEffectData> effectsData = new();
+
+    // [UsedImplicitly]
+    // private static void OnInit()
+    // {
+    //     AchievementManager.serverAchievements.ValueChanged += UpdateEffects;
+    // }
 
     [HarmonyPatch(typeof(ObjectDB), nameof(ObjectDB.Awake))]
     static class ObjectDBAwakePatch
     {
+        [UsedImplicitly]
+        [HarmonyPriority(Priority.VeryLow)]
         private static void Postfix()
         {
-            if (!ZNetScene.instance) return;
-            
-            AchievementManager.InitAchievements();
-            
-            ObjectDB.instance.m_StatusEffects.RemoveAll(effect => effect is AlmanacEffectsManager.BaseEffect);
+            UpdateEffects();
+        }
+    }
+    private static void UpdateEffects()
+    {
+        if (!ZNetScene.instance) return;
+        // AlmanacPlugin.AlmanacLogger.LogWarning($"starting object db postfix to add {AchievementManager.tempAchievements.Count} effects");
+        ObjectDB.instance.m_StatusEffects.RemoveAll(effect => effect is AlmanacEffectsManager.BaseEffect);
 
-            try
+        try
+        {
+            effectsData.Clear();
+            foreach (var achievement in AchievementManager.tempAchievements)
             {
-                effectsData.Clear();
-                foreach (var achievement in AchievementManager.tempAchievements)
-                {
-                    effectsData.Add(achievement.m_statusEffect);
-                }
+                effectsData.Add(achievement.m_statusEffect);
+            }
                 
-                foreach (var effectData in effectsData)
-                {
-                    effectData.Init();
-                }
-            }
-            catch (Exception e)
+            foreach (var effectData in effectsData)
             {
-                Debug.LogWarning(e);
+                effectData.Init();
             }
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning(e);
         }
     }
     
@@ -101,7 +112,7 @@ public static class AlmanacEffectsManager
             { Modifier.RaiseSkills , 1f },
             { Modifier.Speed , 1f },
             { Modifier.Noise , 1f },
-            { Modifier.MaxCarryWeight , 1f },
+            { Modifier.MaxCarryWeight , 0f },
             { Modifier.Stealth , 1f },
             { Modifier.RunStaminaDrain , 1f },
             { Modifier.DamageReduction , 0f },
@@ -120,8 +131,8 @@ public static class AlmanacEffectsManager
             {
                 damageMods.Clear();
                 
-                damageMod = damageMod.Replace(" ", "");
-                string[] split = damageMod.Split('=');
+                string normalizedDamageMod = damageMod.Replace(" ", "");
+                string[] split = normalizedDamageMod.Split('=');
                 if (split.Length != 2) return;
                 string damageType = split[0];
                 string damageValue = split[1];
@@ -134,66 +145,29 @@ public static class AlmanacEffectsManager
 
                 switch (damageValue)
                 {
-                    case "Normal":
-                        break;
-                    case "Resistant":
-                        pair.m_modifier = HitData.DamageModifier.Resistant;
-                        break;
-                    case "Weak":
-                        pair.m_modifier = HitData.DamageModifier.Weak;
-                        break;
-                    case "Immune":
-                        pair.m_modifier = HitData.DamageModifier.Immune;
-                        break;
-                    case "Ignore":
-                        pair.m_modifier = HitData.DamageModifier.Ignore;
-                        break;
-                    case "VeryResistant":
-                        pair.m_modifier = HitData.DamageModifier.VeryResistant;
-                        break;
-                    case "VeryWeak":
-                        pair.m_modifier = HitData.DamageModifier.VeryWeak;
-                        break;
+                    case "Normal": break;
+                    case "Resistant": pair.m_modifier = HitData.DamageModifier.Resistant; break;
+                    case "Weak": pair.m_modifier = HitData.DamageModifier.Weak; break;
+                    case "Immune": pair.m_modifier = HitData.DamageModifier.Immune; break;
+                    case "Ignore": pair.m_modifier = HitData.DamageModifier.Ignore; break;
+                    case "VeryResistant": pair.m_modifier = HitData.DamageModifier.VeryResistant; break;
+                    case "VeryWeak": pair.m_modifier = HitData.DamageModifier.VeryWeak; break;
                 }
 
                 switch (damageType)
                 {
-                    case "Blunt":
-                        pair.m_type = HitData.DamageType.Blunt;
-                        break;
-                    case "Slash":
-                        pair.m_type = HitData.DamageType.Slash;
-                        break;
-                    case "Pierce":
-                        pair.m_type = HitData.DamageType.Pierce;
-                        break;
-                    case "Chop":
-                        pair.m_type = HitData.DamageType.Chop;
-                        break;
-                    case "Pickaxe":
-                        pair.m_type = HitData.DamageType.Pickaxe;
-                        break;
-                    case "Fire":
-                        pair.m_type = HitData.DamageType.Fire;
-                        break;
-                    case "Frost":
-                        pair.m_type = HitData.DamageType.Frost;
-                        break;
-                    case "Lightning":
-                        pair.m_type = HitData.DamageType.Lightning;
-                        break;
-                    case "Poison":
-                        pair.m_type = HitData.DamageType.Poison;
-                        break;
-                    case "Spirit":
-                        pair.m_type = HitData.DamageType.Spirit;
-                        break;
-                    case "Physical":
-                        pair.m_type = HitData.DamageType.Physical;
-                        break;
-                    case "Elemental":
-                        pair.m_type = HitData.DamageType.Elemental;
-                        break;
+                    case "Blunt": pair.m_type = HitData.DamageType.Blunt; break;
+                    case "Slash": pair.m_type = HitData.DamageType.Slash; break;
+                    case "Pierce": pair.m_type = HitData.DamageType.Pierce; break;
+                    case "Chop": pair.m_type = HitData.DamageType.Chop; break;
+                    case "Pickaxe": pair.m_type = HitData.DamageType.Pickaxe; break;
+                    case "Fire": pair.m_type = HitData.DamageType.Fire; break;
+                    case "Frost": pair.m_type = HitData.DamageType.Frost; break;
+                    case "Lightning": pair.m_type = HitData.DamageType.Lightning; break;
+                    case "Poison": pair.m_type = HitData.DamageType.Poison; break;
+                    case "Spirit": pair.m_type = HitData.DamageType.Spirit; break;
+                    case "Physical": pair.m_type = HitData.DamageType.Physical; break;
+                    case "Elemental": pair.m_type = HitData.DamageType.Elemental; break;
                 }
 
                 damageMods.Add(pair);
@@ -210,6 +184,7 @@ public static class AlmanacEffectsManager
             
             ObjectDB obd = ObjectDB.instance;
 
+            // Make sure new effects have unique names
             if (obd.m_StatusEffects.Find(effect => effect.name == effectName)) return;
 
             BaseEffect baseEffect = ScriptableObject.CreateInstance<BaseEffect>();
@@ -245,6 +220,7 @@ public static class AlmanacEffectsManager
 
             for (int i = 0; i < effects.Count; ++i)
             {
+                if (effects[i].IsNullOrWhiteSpace()) continue;
                 GameObject fx = scene.GetPrefab(effects[i]);
                 EffectList.EffectData effectData = new EffectList.EffectData()
                 {

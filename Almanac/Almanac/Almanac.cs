@@ -80,14 +80,17 @@ public static class Almanac
             if (!__instance) return;
             if (AlmanacPlugin.WorkingAsType == AlmanacPlugin.WorkingAs.Server) return;
             SetInitialData(__instance);
-            Achievements.RegisterAchievements();
+            AchievementsUI.RegisterAchievements();
             EditInventoryGUI();
             RepositionTrophyPanel(-220f, 0f);
             CreateAllPanels();
         }
         
-        private static GameObject CreateAchievementsPanel(string id, List<Achievements.Achievement> list)
+        private static GameObject CreateAchievementsPanel(string id, List<AchievementsUI.Achievement> list)
         {
+            
+            // AlmanacPlugin.AlmanacLogger.LogWarning($"Creating achievement panel: {list.Count} achievements registered");
+            
             Transform trophies = TrophiesFrame.Find("Trophies");
             
             GameObject panel = new GameObject($"{id}Panel") { layer = 5 };
@@ -115,7 +118,7 @@ public static class Almanac
             int pages = Mathf.CeilToInt(list.Count / 72f);
             for (int i = 0; i < list.Count; ++i)
             {
-                Achievements.Achievement data = list[i];
+                AchievementsUI.Achievement data = list[i];
                 int wrappedIndex = i % 72;
                 int rowIndex = wrappedIndex / 12;
                 int colIndex = wrappedIndex % 12;
@@ -285,7 +288,7 @@ public static class Almanac
             
             if (modPieces.Count > 0) CreateTabs("modPiecesButton", "modPieces", 170f, -425f);
             
-            CreateAchievementsPanel("achievements", Achievements.registeredAchievements);
+            CreateAchievementsPanel("achievements", AchievementsUI.registeredAchievements);
             CreatePlayerStatsPanel("stats");
             
             CreateTabs("achievementsButton", "achievements", 585f, 425f);
@@ -306,24 +309,38 @@ public static class Almanac
 
             panel.SetActive(false);
 
-            GameObject background = new GameObject($"{id}Background");
-            RectTransform rectTransform = background.AddComponent<RectTransform>();
-            rectTransform.SetParent(panel.transform);
-            rectTransform.anchoredPosition = new Vector2(0f, 0f);
-            rectTransform.sizeDelta = new Vector2(1260f, 650f);
+            trophies.TryGetComponent(out Image trophiesImage);
+            if (!trophiesImage) return;
             
-            Image backgroundImage = background.AddComponent<Image>();
+            GameObject backgroundLeft = new GameObject($"{id}Background (1)");
+            RectTransform rectTransformLeft = backgroundLeft.AddComponent<RectTransform>();
+            rectTransformLeft.SetParent(panel.transform);
+            rectTransformLeft.anchoredPosition = new Vector2(-400f, 0f);
+            rectTransformLeft.sizeDelta = new Vector2(450f, 650f);
             
-            Image trophiesImage = trophies.gameObject.GetComponent<Image>();
-            backgroundImage.color = trophiesImage.color;
-            backgroundImage.raycastTarget = true;
-            backgroundImage.maskable = true;
+            Image backgroundImageLeft = backgroundLeft.AddComponent<Image>();
+            
+            backgroundImageLeft.color = trophiesImage.color;
+            backgroundImageLeft.raycastTarget = true;
+            backgroundImageLeft.maskable = true;
+            
+            GameObject backgroundRight = new GameObject($"{id}Background (2)");
+            RectTransform rectTransformRight = backgroundRight.AddComponent<RectTransform>();
+            rectTransformRight.SetParent(panel.transform);
+            rectTransformRight.anchoredPosition = new Vector2(235f, 0f);
+            rectTransformRight.sizeDelta = new Vector2(775f, 650f);
+            
+            Image backgroundImageRight = backgroundRight.AddComponent<Image>();
+            
+            backgroundImageRight.color = trophiesImage.color;
+            backgroundImageRight.raycastTarget = true;
+            backgroundImageRight.maskable = true;
 
             CreateTextElement(panel.transform, "almanacPowers", "$almanac_no_data",
             -450f, 300f, 350f, 100f, Color.yellow, 30
             );
 
-            for (int i = 0; i < 3; ++i)
+            for (int i = 0; i < AchievementsUI.maxPowers; ++i)
             {
                 GameObject effectBackground = CreateImageElement(panel.transform, $"activeEffects ({i})",
                     -550f + (i * 78f), 225f, 75f, 75f, false, false,
@@ -363,6 +380,13 @@ public static class Almanac
                     HorizontalAlignmentOptions.Left,
                     wrapMode: TextWrappingModes.NoWrap);
             }
+            
+            CreateTextElement(panel.transform, "leaderboard", "$almanac_leaderboard",
+                40f, 300f, 350f, 100f, Color.yellow, 30,
+                horizontalAlignment: HorizontalAlignmentOptions.Left
+            );
+            
+            
         }
         private static void EditInventoryGUI()
         {
@@ -635,7 +659,7 @@ public static class Almanac
             return panel;
         }
         
-        private static void CreatePageButtons(Transform parentElement, int index, int pageSize, string id, List<Achievements.Achievement> list)
+        private static void CreatePageButtons(Transform parentElement, int index, int pageSize, string id, List<AchievementsUI.Achievement> list)
         {
             GameObject obj = new GameObject($"Button ({index})") { layer = 5 };
             RectTransform objRect = obj.AddComponent<RectTransform>();

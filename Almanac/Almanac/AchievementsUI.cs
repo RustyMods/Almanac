@@ -3,30 +3,23 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using BepInEx;
+using HarmonyLib;
 using JetBrains.Annotations;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using YamlDotNet.Core.Tokens;
+using Object = UnityEngine.Object;
 
 namespace Almanac.Almanac;
 
-public static class Achievements
+public static class AchievementsUI
 {
     public static readonly List<Achievement> registeredAchievements = new();
 
-    private static readonly List<string> vanillaMeads = new()
-    {
-        "MeadBaseEitrMinor",
-        "MeadBaseFrostResist",
-        "MeadBaseHealthMajor",
-        "MeadBaseHealthMedium",
-        "MeadBaseHealthMinor",
-        "MeadBaseStaminaLingering",
-        "MeadBaseStaminaMedium",
-        "MeadBaseStaminaMinor",
-        "BarleyWineBase"
-    };
+    public const int maxPowers = 4;
+
+    public static int powerLimit = 3;
 
     private static readonly List<string> meadowCreatures = new()
     {
@@ -37,7 +30,7 @@ public static class Achievements
         "defeated_eikthyr"
     };
 
-    private static readonly List<string> blackforestCreatures = new()
+    private static readonly List<string> blackForestCreatures = new()
     {
         "defeated_skeleton",
         "KilledTroll",
@@ -72,17 +65,42 @@ public static class Achievements
         "defeated_ulv",
         "defeated_dragon"
     };
+
+    private static readonly List<string> plainsCreatures = new()
+    {
+        "defeated_deathsquito",
+        "defeated_goblin",
+        "defeated_goblinbrute",
+        "defeated_goblinshaman",
+        "defeated_lox",
+        "defeated_blobtar",
+        "defeated_goblinking"
+    };
+
+    private static readonly List<string> mistLandCreatures = new()
+    {
+        "defeated_dverger",
+        "defeated_dvergermagefire",
+        "defeated_dvergermagesupport",
+        "defeated_dvergermageice",
+        "defeated_gjall",
+        "defeated_tick",
+        "defeated_hare",
+        "defeated_seeker",
+        "defeated_seekerbrood",
+        "defeated_seekerbrute",
+        "defeated_queen"
+    };
     
-    public static readonly List<ItemDrop> allFish = ItemDataCollector.GetFishes();
-    public static readonly List<ItemDrop> allMaterials = ItemDataCollector.GetMaterials();
-    public static readonly List<ItemDrop> allConsumables = ItemDataCollector.GetConsumables();
-    public static readonly List<ItemDrop> allWeapons = ItemDataCollector.GetWeapons();
-    public static readonly List<ItemDrop> allProjectiles = ItemDataCollector.GetAmmunition();
-    public static readonly List<ItemDrop> allBows = allWeapons.FindAll(weapon => weapon.name.Contains("Bow") || weapon.name.Contains("Crossbow"));
-    public static readonly List<ItemDrop> allArrows = allProjectiles.FindAll(projectile => projectile.name.Contains("Arrow"));
-    public static readonly List<ItemDrop> allValuables = allMaterials.FindAll(item => item.m_itemData.m_shared.m_value > 0);
-    public static readonly List<ItemDrop> allMeads = allMaterials.FindAll(item => vanillaMeads.Contains(item.m_itemData.m_shared.m_name));
-    public static readonly List<ItemDrop> allTrophies = ItemDataCollector.GetTrophies();
+    private static readonly List<ItemDrop> allFish = ItemDataCollector.GetFishes();
+    private static readonly List<ItemDrop> allMaterials = ItemDataCollector.GetMaterials();
+    private static readonly List<ItemDrop> allConsumables = ItemDataCollector.GetConsumables();
+    private static readonly List<ItemDrop> allWeapons = ItemDataCollector.GetWeapons();
+    private static readonly List<ItemDrop> allProjectiles = ItemDataCollector.GetAmmunition();
+    private static readonly List<ItemDrop> allBows = allWeapons.FindAll(weapon => weapon.name.Contains("Bow") || weapon.name.Contains("Crossbow"));
+    private static readonly List<ItemDrop> allArrows = allProjectiles.FindAll(projectile => projectile.name.Contains("Arrow"));
+    private static readonly List<ItemDrop> allValuables = allMaterials.FindAll(item => item.m_itemData.m_shared.m_value > 0);
+    private static readonly List<ItemDrop> allTrophies = ItemDataCollector.GetTrophies();
     public class Achievement
     {
         public AchievementManager.AchievementType type;
@@ -103,12 +121,7 @@ public static class Achievements
         ZNetScene scene = ZNetScene.instance;
         GameObject prefab = scene.GetPrefab(prefabName);
         prefab.TryGetComponent(out ItemDrop itemDrop);
-        if (itemDrop)
-        {
-            return itemDrop.m_itemData.GetIcon();
-        }
-
-        return null;
+        return itemDrop ? itemDrop.m_itemData.GetIcon() : null;
     }
     private static void CreateAchievement(
         string name, string? description,
@@ -136,65 +149,36 @@ public static class Achievements
     public static void RegisterAchievements()
     {
         registeredAchievements.Clear();
+        
+        // AlmanacPlugin.AlmanacLogger.LogWarning("registering achievements to UI");
+        
         foreach (AchievementManager.Achievement achievement in AchievementManager.tempAchievements)
         {
             int total = 0;
 
+            // Conversion map to get total values to set
             switch (achievement.m_type)
             {
-                case AchievementManager.AchievementType.Fish:
-                    total = allFish.Count;
-                    break;
-                case AchievementManager.AchievementType.Materials:
-                    total = allMaterials.Count;
-                    break;
-                case AchievementManager.AchievementType.Consumables:
-                    total = allConsumables.Count;
-                    break;
-                case AchievementManager.AchievementType.Weapons:
-                    total = allWeapons.Count;
-                    break;
-                case AchievementManager.AchievementType.Arrows:
-                    total = allArrows.Count;
-                    break;
-                case AchievementManager.AchievementType.Bows:
-                    total = allBows.Count;
-                    break;
-                case AchievementManager.AchievementType.Valuables:
-                    total = allValuables.Count;
-                    break;
-                case AchievementManager.AchievementType.Potions:
-                    total = allMaterials.FindAll(item => item.name.Contains("Mead")).Count;
-                    break;
-                case AchievementManager.AchievementType.Trophies:
-                    total = allTrophies.Count;
-                    break;
-                case AchievementManager.AchievementType.Creatures:
-                    total = CreatureDataCollector.tempCreatureData.Count;
-                    break;
-                case AchievementManager.AchievementType.MeadowCreatures:
-                    total = meadowCreatures.Count;
-                    break;
-                case AchievementManager.AchievementType.BlackForestCreatures:
-                    total = blackforestCreatures.Count;
-                    break;
-                case AchievementManager.AchievementType.SwampCreatures:
-                    total = swampCreatures.Count;
-                    break;
-                case AchievementManager.AchievementType.MountainCreatures:
-                    total = mountainCreatures.Count;
-                    break;
-                case AchievementManager.AchievementType.PlainsCreatures:
-                    break;
-                case AchievementManager.AchievementType.MistLandCreatures:
-                    break;
-                case AchievementManager.AchievementType.AshLandCreatures:
-                    break;
-                case AchievementManager.AchievementType.DeepNorthCreatures:
-                    break;
-                default:
-                    total = achievement.m_goal;
-                    break;
+                case AchievementManager.AchievementType.Fish: total = allFish.Count; break;
+                case AchievementManager.AchievementType.Materials: total = allMaterials.Count; break;
+                case AchievementManager.AchievementType.Consumables: total = allConsumables.Count; break;
+                case AchievementManager.AchievementType.Weapons: total = allWeapons.Count; break;
+                case AchievementManager.AchievementType.Arrows: total = allArrows.Count; break;
+                case AchievementManager.AchievementType.Bows: total = allBows.Count; break;
+                case AchievementManager.AchievementType.Valuables: total = allValuables.Count; break;
+                case AchievementManager.AchievementType.Potions: total = allMaterials.FindAll(item => item.name.Contains("Base")).Count; break;
+                case AchievementManager.AchievementType.Trophies: total = allTrophies.Count; break;
+                case AchievementManager.AchievementType.Creatures: total = CreatureDataCollector.tempCreatureData.Count; break;
+                case AchievementManager.AchievementType.MeadowCreatures: total = meadowCreatures.Count; break;
+                case AchievementManager.AchievementType.BlackForestCreatures: total = blackForestCreatures.Count; break;
+                case AchievementManager.AchievementType.SwampCreatures: total = swampCreatures.Count; break;
+                case AchievementManager.AchievementType.MountainCreatures: total = mountainCreatures.Count; break;
+                case AchievementManager.AchievementType.PlainsCreatures: total = plainsCreatures.Count; break;
+                case AchievementManager.AchievementType.MistLandCreatures: total = mistLandCreatures.Count; break;
+                case AchievementManager.AchievementType.AshLandCreatures: break;
+                case AchievementManager.AchievementType.DeepNorthCreatures: break;
+                case AchievementManager.AchievementType.TotalAchievements: total = AchievementManager.tempAchievements.Count - 1; break;
+                default: total = achievement.m_goal; break;
             }
 
             CreateAchievement(
@@ -252,6 +236,12 @@ public static class Achievements
     public static void UpdateAchievements()
     {
         Player player = Player.m_localPlayer;
+
+        // var maxAchievements = registeredAchievements.Count;
+        // var completedAchievements = registeredAchievements.FindAll(x => x.isCompleted == true).Count;
+        //
+        // var percentage = completedAchievements / maxAchievements;
+        
         Dictionary<string, int> tempMonstersKilled = TrackPlayerKills.TempMonstersKilled;
         Dictionary<string, int> currentMonstersKilled = TrackPlayerKills.GetCurrentKilledMonsters();
         Dictionary<string, int> totalMonstersKilled = CombineDict(tempMonstersKilled, currentMonstersKilled);
@@ -268,9 +258,11 @@ public static class Achievements
             { AchievementManager.AchievementType.Potions , allMaterials.FindAll(item => item.name.Contains("Mead")).Count(item => player.IsKnownMaterial(item.m_itemData.m_shared.m_name)) },
             { AchievementManager.AchievementType.Trophies , allTrophies.Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
             { AchievementManager.AchievementType.MeadowCreatures , GetBiomeKills(meadowCreatures, totalMonstersKilled) },
-            { AchievementManager.AchievementType.BlackForestCreatures , GetBiomeKills(blackforestCreatures, totalMonstersKilled) },
+            { AchievementManager.AchievementType.BlackForestCreatures , GetBiomeKills(blackForestCreatures, totalMonstersKilled) },
             { AchievementManager.AchievementType.SwampCreatures , GetBiomeKills(swampCreatures, totalMonstersKilled) },
             { AchievementManager.AchievementType.MountainCreatures , GetBiomeKills(mountainCreatures, totalMonstersKilled) },
+            { AchievementManager.AchievementType.PlainsCreatures , GetBiomeKills(plainsCreatures, totalMonstersKilled)},
+            { AchievementManager.AchievementType.MistLandCreatures , GetBiomeKills(mistLandCreatures, totalMonstersKilled) },
             { AchievementManager.AchievementType.Deaths , (int)TrackPlayerStats.GetPlayerStat(PlayerStatType.Deaths) },
             { AchievementManager.AchievementType.EikthyrKills , GetKillCount("defeated_eikthyr", totalMonstersKilled) },
             { AchievementManager.AchievementType.ElderKills , GetKillCount("defeated_gdking", totalMonstersKilled) },
@@ -278,6 +270,16 @@ public static class Achievements
             { AchievementManager.AchievementType.ModerKills , GetKillCount("defeated_dragon", totalMonstersKilled) },
             { AchievementManager.AchievementType.YagluthKills , GetKillCount("defeated_goblinking", totalMonstersKilled) },
             { AchievementManager.AchievementType.QueenKills , GetKillCount("defeated_queen", totalMonstersKilled) },
+            { AchievementManager.AchievementType.DistanceRan , (int)TrackPlayerStats.GetPlayerStat(PlayerStatType.DistanceRun)},
+            { AchievementManager.AchievementType.DistanceSailed , (int)TrackPlayerStats.GetPlayerStat(PlayerStatType.DistanceSail) },
+            { AchievementManager.AchievementType.TotalKills , (int)TrackPlayerStats.GetPlayerStat(PlayerStatType.EnemyKills)},
+            { AchievementManager.AchievementType.TotalAchievements , registeredAchievements.FindAll(x => x.isCompleted).Count},
+            { AchievementManager.AchievementType.TrollKills , GetKillCount("KilledTroll", totalMonstersKilled)},
+            { AchievementManager.AchievementType.SerpentKills , GetKillCount("defeated_serpent",totalMonstersKilled)},
+            { AchievementManager.AchievementType.CultistKills , GetKillCount("defeated_fenring_cultist",totalMonstersKilled)},
+            { AchievementManager.AchievementType.StoneGolemKills , GetKillCount("defeated_stonegolem",totalMonstersKilled)},
+            { AchievementManager.AchievementType.TarBlobKills , GetKillCount("defeated_blobtar",totalMonstersKilled)},
+            { AchievementManager.AchievementType.DeathByFall , (int)TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByFall)}
         };
         
         foreach (Achievement achievement in registeredAchievements)
@@ -301,21 +303,6 @@ public static class Achievements
         return totalKills;
     }
 
-    private static int GetKillCount(string defeatKey, Dictionary<string, int> totalMonstersKilled)
-    {
-        return totalMonstersKilled[defeatKey];
-    }
-
-    private static void UpdateAchievement(AchievementManager.AchievementType type, int value)
-    {
-
-        List<Achievement> achievements = registeredAchievements.FindAll(x => x.type == type);
-        if (achievements.Count == 0) return;
-        
-        foreach (Achievement achievement in achievements)
-        {
-            achievement.isCompleted = value >= achievement.total;
-            achievement.value = value;
-        }
-    }
+    private static int GetKillCount(string defeatKey, Dictionary<string, int> totalMonstersKilled) => totalMonstersKilled[defeatKey];
+    
 }

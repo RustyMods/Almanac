@@ -63,9 +63,9 @@ public static class Patches
             TrackPlayerStats.UpdatePlayerStats();
             SetPlayerStats();
             
-            Achievements.UpdateAchievements();
-            Achievements.SetUnknownAchievements(trophyFrame.Find("achievementsPanel"));
-            foreach (var achievement in Achievements.registeredAchievements)
+            AchievementsUI.UpdateAchievements();
+            AchievementsUI.SetUnknownAchievements(trophyFrame.Find("achievementsPanel"));
+            foreach (var achievement in AchievementsUI.registeredAchievements)
             {
                 SetAchievementsData(achievementsElement, achievement);
             }
@@ -236,7 +236,7 @@ public static class Patches
             }
         }
 
-        public static void SetAchievementsData(Transform parentElement, Achievements.Achievement data)
+        public static void SetAchievementsData(Transform parentElement, AchievementsUI.Achievement data)
         {
             Transform achievementIconBg = parentElement.Find("ImageElement (achievementIcon)");
             Transform achievementIcon = achievementIconBg.Find("ImageElement (icon)");
@@ -262,7 +262,7 @@ public static class Patches
 
         }
 
-        private static void SetAlmanacPowers(Achievements.Achievement data)
+        private static void SetAlmanacPowers(AchievementsUI.Achievement data)
         {
             if (data.power.IsNullOrWhiteSpace())
             {
@@ -293,7 +293,7 @@ public static class Patches
                 }
                 else
                 {
-                    if (activeAlmanacEffects.Count >= 3)
+                    if (activeAlmanacEffects.Count >= AchievementsUI.maxPowers)
                     {
                         MessageHud.instance.ShowMessage(
                             MessageHud.MessageType.Center, "$almanac_max_powers");
@@ -329,7 +329,7 @@ public static class Patches
 
             List<StatusEffect> activePowers = CustomStatusEffects.activeAlmanacEffects;
 
-            for (int i = 0; i < 3; ++i)
+            for (int i = 0; i < AchievementsUI.maxPowers; ++i)
             {
                 SetActiveElement(panel.gameObject, "ImageElement", $"activeEffects ({i})", false);
                 SetActiveElement(panel.gameObject, "TextElement", $"activeDesc ({i})", false);

@@ -59,8 +59,7 @@ namespace Almanac
         public static readonly Sprite? arrowBasicIcon = SpriteManager.RegisterSprite("arrow_basic.png");
         public static readonly Sprite? capeHoodIcon = SpriteManager.RegisterSprite("cape_hood_darkyellow.png");
         public static readonly Sprite? bottleStandardEmptyIcon = SpriteManager.RegisterSprite("bottle_standard_empty.png");
-        public static readonly Sprite? bottleStandardBlueIcon =
-            SpriteManager.RegisterSprite("bottle_standard_blue.png");
+        public static readonly Sprite? bottleStandardBlueIcon = SpriteManager.RegisterSprite("bottle_standard_blue.png");
         public static readonly Sprite? fishGreenIcon = SpriteManager.RegisterSprite("fish_green.png");
         public static readonly Sprite? bowWoodIcon = SpriteManager.RegisterSprite("bow_wood1.png");
         public static readonly Sprite? necklaceSilverRed = SpriteManager.RegisterSprite("necklace_silver_red.png");
@@ -69,10 +68,7 @@ namespace Almanac
         public static readonly Sprite? keySilverIcon = SpriteManager.RegisterSprite("key_silver.png");
         public static readonly Sprite? boneWhiteIcon = SpriteManager.RegisterSprite("bone_white.png");
         public static readonly Sprite? bookClosedRedIcon = SpriteManager.RegisterSprite("book_closed_red.png");
-
-        public static readonly Sprite? bottleStandardGreenIcon =
-            SpriteManager.RegisterSprite("bottle_standard_green.png");
-
+        public static readonly Sprite? bottleStandardGreenIcon = SpriteManager.RegisterSprite("bottle_standard_green.png");
         public static readonly Sprite? crownGoldIcon = SpriteManager.RegisterSprite("crown_gold.png");
         public static readonly Sprite? gemDiamondRedIcon = SpriteManager.RegisterSprite("gem_diamond_red.png");
         public static readonly Sprite? goldBarsIcon = SpriteManager.RegisterSprite("gold_bars_three.png");
@@ -108,7 +104,7 @@ namespace Almanac
 
             _KnowledgeLock = config("3 - Utilities", "Knowledge Wall", Toggle.On,
                 "If on, data is locked behind knowledge of item", true);
-
+            
             List<string> IgnoredList = new()
             {
                 "StaminaUpgrade_Greydwarf",
@@ -140,9 +136,10 @@ namespace Almanac
             WorkingAsType = SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null
                 ? WorkingAs.Server : WorkingAs.Client;
             
-            // CustomStatusEffects.RegisterCustomStatusEffects();
-
+            AchievementManager.InitAchievements();
+            
             Localizer.Load();
+            
             Assembly assembly = Assembly.GetExecutingAssembly();
             _harmony.PatchAll(assembly);
             SetupWatcher();
@@ -192,7 +189,7 @@ namespace Almanac
         public static ConfigEntry<Color> _immuneColorConfig = null!;
         public static ConfigEntry<Toggle> _KnowledgeLock = null!;
         public static ConfigEntry<string> _IgnoredPrefabs = null!;
-
+        
         private ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description,
             bool synchronizedSetting = true)
         {

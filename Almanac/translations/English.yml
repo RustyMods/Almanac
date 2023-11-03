@@ -395,7 +395,18 @@ almanac_increase_health_by: "Increase base health by"
 almanac_increase_stamina_by: "Increase base stamina by"
 almanac_increase_projectile_damage_by: "Increase projectile damage by"
 almanac_increase_fire_damage_by: "Increase fire damage by"
+almanac_increase_frost_damage_by: "Increase frost damage by"
+almanac_increase_lightning_damage_by: "Increase lightning damage by"
+almanac_increase_poison_damage_by: "Increase poison damage by"
+almanac_increase_spirit_damage_by: "Increase spirit damage by"
 almanac_increase_carry_weight_by: "Increase base carry weight by"
+almanac_modify_damage_by: "Damage modifier:"
+almanac_raise_skill_experience_by: "Increase experience gain by"
+almanac_reduce_stamina_drain_by: "Reduce stamina drain by"
+almanac_increase_attack_by: "Increase attack by"
+almanac_reduce_fall_damage_by: "Reduce fall damage by"
+almanac_increase_health_regen_by: "Increase health regeneration by"
+almanac_increase_speed_by: "Increase speed by"
 
 almanac_allows_eikthyr_power: "Enables quick access to <color=orange>Eikthyr</color> power"
 almanac_allows_elder_power: "Enables quick access to <color=orange>The Elder</color> power"
@@ -420,6 +431,14 @@ almanac_achievement_swamp_kill_lore: "Swamp Hunters, the brave souls who delve i
 almanac_achievement_mountain_kill: "Mountain Hunter"
 almanac_achievement_mountain_kill_desc: "Hunt down all the mountain creatures"
 almanac_achievement_mountain_kill_lore: "Mountain Hunters are the fearless souls who conquer the towering peaks of Valheim. These adventurers, draped in wolf pelts, face the fierce climate, frost giants, and wolves to gather silver and explore the frozen expanses. With their trusty obsidian weaponry and unmatched determination, they thrive in the harsh environments of the mountains."
+
+almanac_achievement_plains_kill: "Plains Hunter"
+almanac_achievement_plains_desc: "Hunt down all the plains creatures"
+almanac_achievement_plains_kill_lore: "The Plains Hunter, a seasoned tracker and a master of Valheim's open fields, has honed their skills to perfection, becoming one with the plains' roaming creatures. They've acquired an innate understanding of the land and its fauna, making them elusive and formidable foes in the endless grassy expanses."
+
+almanac_achievement_mistlands_kill: "Mistlands Hunter"
+almanac_achievement_mistlands_kill_desc: "Hunt down all the mistlands creatures"
+almanac_achievement_mistlands_kill_lore: "The Mistlands Hunter, a fearless wanderer of the eerie, otherworldly Mistlands, has unlocked the secrets of this mysterious realm filled with peculiar insects and enigmatic magical creatures. Their knowledge of these unique beings allows them to harness their essence and face the eerie unknown with an uncanny courage that few can match."
 
 almanac_achievement_ranger: "Ranger"
 almanac_achievement_ranger_desc: "Discover all the arrows in this world"
@@ -449,3 +468,50 @@ almanac_achievement_stag_slayer: "Stag Slayer"
 almanac_achievement_stag_slayer_desc: "Defeated <color=orange>Eikthyr</color> over <color=orange>100</color> times"
 almanac_stag_slayer_lore: "In their relentless pursuit of mastery, this Viking has felled Eikthyr, the Stag, a staggering 100 times. Each encounter with this mythical creature only served to refine their hunting skills, earning them the title of the Stag Slayer in the land of Valheim."
 
+almanac_achievement_gluttony: "Gluttony"
+almanac_achievement_gluttony_desc: "Discover all available consumables in this world"
+almanac_gluttony_lore: "The Glutton's adventurous palate has granted them an extraordinary resilience to toxins and venoms, allowing them to venture fearlessly into the most dangerous of swamps and dark caves."
+
+almanac_achievement_completion: "Over-Achiever"
+almanac_achievement_completion_desc: "Complete all achievements"
+almanac_completion_lore: "Completionists are the valiant souls who have achieved the impossible, collecting every achievement in Valheim. Their journeys have been marked by countless battles, adventures, and challenges. These relentless seekers of glory have conquered all aspects of the Viking world, leaving no stone unturned, and earning their place among the legends of Valheim."
+
+almanac_achievement_runner: "Long Dark"
+almanac_achievement_runner_desc: "Run over <color=orange>999,999</color> meters"
+almanac_runner_lore: "To achieve the incredible feat of running over 999,999 meters in Valheim, you must have traversed the land tirelessly, conquering each terrain, and witnessing the vast beauty of the Viking world. Your journey, marked by endurance and exploration, is a testament to your commitment to Valheim's unique adventures."
+
+almanac_achievement_killer: "Slayer"
+almanac_achievement_killer_desc: "Kill over <color=orange>999,999</color> creatures"
+almanac_killer_lore: "Slaying 999,999 creatures in Valheim is a monumental achievement that speaks volumes about your prowess and the countless battles you've endured. Your name shall echo throughout the Viking world as a legendary hunter, having faced innumerable foes to become the ultimate predator of the realm."
+
+almanac_achievement_sailor: "Seaman"
+almanac_achievement_sailor_desc: "Sailed over <color=orange>999,999</color> meters"
+almanac_sailor_lore: "Sailing over 999,999 meters in Valheim demonstrates your mastery of the seas, having explored vast waters, distant shores, and perhaps even uncovered hidden treasures that few could ever fathom. Your voyages are the stuff of legends, and your expertise as a seafarer is a testament to your unparalleled maritime skills."
+
+almanac_achievement_break_a_leg: "Splinter"
+almanac_achievement_break_a_leg_desc: "Died of fall damage over <color=orange>1000</color> times"
+almanac_break_a_leg_lore: "Dying of fall damage a thousand times in Valheim speaks of an adventurous spirit that often leads you to daring heights. It's a reminder of the many breathtaking leaps and heart-pounding tumbles you've experienced in your quest, as well as the countless lessons you've learned from the impact of the earth upon your Viking bones."
+
+almanac_achievement_troll: "Troll Hunter"
+almanac_achievement_troll_desc: "Kill a troll over <color=orange>1000</color> times"
+almanac_troll_lore: "Slaying a troll a thousand times in Valheim reflects your unwavering determination and combat prowess. You've faced these formidable creatures again and again, honing your skills with each encounter. Your relentless pursuit of these monstrous foes has certainly solidified your place among the fiercest of Viking warriors."
+
+almanac_achievement_tarred: "Tarred"
+almanac_achievement_tarred_desc: "Kill a Tar blob over <color=orange>1000</color> times"
+almanac_tarred_lore: ""
+
+almanac_achievement_golem_hunter: "Rock Smasher"
+almanac_achievement_golem_hunter_desc: "Kill a stone golem over <color=orange>1000</color> times"
+almanac_golem_hunter_lore: ""
+
+almanac_achievement_gaseous: "Gaseous"
+almanac_achievement_gaseous_desc: "Kill over <color=orange>500</color> creatures"
+almanac_gaseous_lore: ""
+
+almanac_achievement_spark: "Stag Breaker"
+almanac_achievement_spark_desc: "Defeat <color=orange>Eikthyr</color> until the sky turns red"
+almanac_spark_lore: ""
+  
+  
+# Leaderboard 
+almanac_leaderboard: "Leaderboard"

@@ -75,7 +75,7 @@ public static class Almanac
         public static int otherPage;
         public static int modPage;
 
-        private static List<ItemDrop> filteredGear = new();
+        public static List<ItemDrop> filteredGear = new();
         
         public static bool jewelCraftingLoaded;
         public static List<ItemDrop> jewels = new();
@@ -89,6 +89,95 @@ public static class Almanac
             EditInventoryGUI();
             RepositionTrophyPanel(-220f, 0f);
             CreateAllPanels();
+        }
+        
+        private static void SetInitialData(InventoryGui __instance)
+        {
+            root = __instance.gameObject.transform.Find("root").gameObject;
+            trophyElement = __instance.m_trophieElementPrefab;
+            TrophiesPanel = __instance.m_trophiesPanel.transform;
+            TrophiesFrame = TrophiesPanel.Find("TrophiesFrame");
+
+            Transform closeButton = TrophiesFrame.Find("Closebutton");
+            Transform closeButtonText = closeButton.Find("Text");
+            Transform iconBkg = trophyElement.transform.Find("icon_bkg");
+            Transform border = TrophiesFrame.Find("border (1)");
+            Transform weightIconElement = __instance.m_player.Find("Weight").Find("weight_icon");
+            Transform armorIconElement = __instance.m_player.Find("Armor").Find("armor_icon");
+            
+            closeButtonText.TryGetComponent(out TextMeshProUGUI textMesh);
+            closeButton.TryGetComponent(out Button button);
+            closeButton.TryGetComponent(out ButtonSfx buttonSfx);
+            closeButton.TryGetComponent(out Image buttonImage);
+            iconBkg.TryGetComponent(out Image iconImage);
+            border.TryGetComponent(out Image borderImg);
+            weightIconElement.TryGetComponent(out Image weightImg);
+            armorIconElement.TryGetComponent(out Image armorImg);
+
+            if (!textMesh || !button || !buttonSfx || !buttonImage || !iconImage || !borderImg || !weightImg || !armorImg) return;
+            
+            font = textMesh.font;
+            closeButtonScript = button;
+            closeButtonSfx = buttonSfx;
+            closeButtonImage = buttonImage;
+            iconBg = iconImage;
+            borderImage = borderImg;
+            weightIcon = weightImg;
+            armorIcon = armorImg;
+            
+            PieceDataCollector.GetBuildPieces();
+
+            materials = ItemDataCollector.GetMaterials();
+            consumables = ItemDataCollector.GetConsumables();
+            gear = ItemDataCollector.GetEquipments();
+            weapons = ItemDataCollector.GetWeapons();
+            fish = ItemDataCollector.GetFishes();
+            ammunition = ItemDataCollector.GetAmmunition();
+            creatures = CreatureDataCollector.GetSortedCreatureData();
+            cookingStations = PieceDataCollector.cookingStations;
+            fermentingStations = PieceDataCollector.fermentingStations;
+            smelterStations = PieceDataCollector.smelterStations;
+            miscPieces = PieceDataCollector.miscPieces;
+            craftingPieces = PieceDataCollector.craftingPieces;
+            buildPieces = PieceDataCollector.buildPieces;
+            furniturePieces = PieceDataCollector.furniturePieces;
+            plantPieces = PieceDataCollector.plantPieces;
+            defaultPieces = PieceDataCollector.defaultPieces;
+            modPieces = PieceDataCollector.modPieces;
+
+            jewelCraftingLoaded = gear.Exists(x => x.name == "Advanced_Green_Socket");
+            
+            if (jewelCraftingLoaded)
+            {
+                jewels.Clear();
+                filteredGear.Clear();
+
+                foreach (ItemDrop item in gear)
+                {
+                    string name = item.name;
+                    if (
+                        name.EndsWith("Socket") 
+                        || name.StartsWith("Uncut") 
+                        || name.Contains("Gemstone") 
+                        || name.StartsWith("JC_") 
+                        || name.Contains("Boss_Crystal") 
+                        || name.Contains("Crystal_Frame")) jewels.Add(item);
+                    else filteredGear.Add(item);
+                }
+                
+            }
+        }
+        
+        private static void EditInventoryGUI()
+        {
+            Transform info = root.transform.Find("Info");
+            Transform trophiesOpenButton = info.Find("Trophies");
+
+            UITooltip openTrophiesToolTip = trophiesOpenButton.GetComponent<UITooltip>();
+            Image trophiesOpenImage = trophiesOpenButton.Find("Image").GetComponent<Image>();
+            
+            openTrophiesToolTip.m_text = "$almanac_name";
+            trophiesOpenImage.sprite = AlmanacPlugin.AlmanacIconButton;
         }
         
         private static GameObject CreateAchievementsPanel(string id, List<AchievementsUI.Achievement> list)
@@ -199,83 +288,6 @@ public static class Almanac
             return panel;
         }
         
-        private static void SetInitialData(InventoryGui __instance)
-        {
-            root = __instance.gameObject.transform.Find("root").gameObject;
-            trophyElement = __instance.m_trophieElementPrefab;
-            TrophiesPanel = __instance.m_trophiesPanel.transform;
-            TrophiesFrame = TrophiesPanel.Find("TrophiesFrame");
-
-            Transform closeButton = TrophiesFrame.Find("Closebutton");
-            Transform closeButtonText = closeButton.Find("Text");
-            Transform iconBkg = trophyElement.transform.Find("icon_bkg");
-            Transform border = TrophiesFrame.Find("border (1)");
-            Transform weightIconElement = __instance.m_player.Find("Weight").Find("weight_icon");
-            Transform armorIconElement = __instance.m_player.Find("Armor").Find("armor_icon");
-            
-            closeButtonText.TryGetComponent(out TextMeshProUGUI textMesh);
-            closeButton.TryGetComponent(out Button button);
-            closeButton.TryGetComponent(out ButtonSfx buttonSfx);
-            closeButton.TryGetComponent(out Image buttonImage);
-            iconBkg.TryGetComponent(out Image iconImage);
-            border.TryGetComponent(out Image borderImg);
-            weightIconElement.TryGetComponent(out Image weightImg);
-            armorIconElement.TryGetComponent(out Image armorImg);
-
-            if (!textMesh || !button || !buttonSfx || !buttonImage || !iconImage || !borderImg || !weightImg || !armorImg) return;
-            
-            font = textMesh.font;
-            closeButtonScript = button;
-            closeButtonSfx = buttonSfx;
-            closeButtonImage = buttonImage;
-            iconBg = iconImage;
-            borderImage = borderImg;
-            weightIcon = weightImg;
-            armorIcon = armorImg;
-            
-            PieceDataCollector.GetBuildPieces();
-
-            materials = ItemDataCollector.GetMaterials();
-            consumables = ItemDataCollector.GetConsumables();
-            gear = ItemDataCollector.GetEquipments();
-            weapons = ItemDataCollector.GetWeapons();
-            fish = ItemDataCollector.GetFishes();
-            ammunition = ItemDataCollector.GetAmmunition();
-            creatures = CreatureDataCollector.GetSortedCreatureData();
-            cookingStations = PieceDataCollector.cookingStations;
-            fermentingStations = PieceDataCollector.fermentingStations;
-            smelterStations = PieceDataCollector.smelterStations;
-            miscPieces = PieceDataCollector.miscPieces;
-            craftingPieces = PieceDataCollector.craftingPieces;
-            buildPieces = PieceDataCollector.buildPieces;
-            furniturePieces = PieceDataCollector.furniturePieces;
-            plantPieces = PieceDataCollector.plantPieces;
-            defaultPieces = PieceDataCollector.defaultPieces;
-            modPieces = PieceDataCollector.modPieces;
-
-            jewelCraftingLoaded = gear.Exists(x => x.name == "Advanced_Green_Socket");
-            
-            if (jewelCraftingLoaded)
-            {
-                jewels.Clear();
-                filteredGear.Clear();
-
-                foreach (ItemDrop item in gear)
-                {
-                    string name = item.name;
-                    if (
-                        name.EndsWith("Socket") 
-                        || name.StartsWith("Uncut") 
-                        || name.Contains("Gemstone") 
-                        || name.StartsWith("JC_") 
-                        || name.Contains("Boss_Crystal") 
-                        || name.Contains("Crystal_Frame")) jewels.Add(item);
-                    else filteredGear.Add(item);
-                }
-                
-            }
-        }
-
         private static void CreateAllPanels()
         {
             CreateElementPanel();
@@ -370,13 +382,13 @@ public static class Almanac
             backgroundImageRight.maskable = true;
 
             CreateTextElement(panel.transform, "almanacPowers", "$almanac_no_data",
-            -450f, 300f, 350f, 100f, Color.yellow, 30
+            -425f, 300f, 350f, 100f, Color.yellow, 30
             );
 
             for (int i = 0; i < AchievementsUI.maxPowers; ++i)
             {
                 GameObject effectBackground = CreateImageElement(panel.transform, $"activeEffects ({i})",
-                    -555f + (i * 78f), 225f, 75f, 75f, false, false,
+                    -556f + (i * 78f), 225f, 75f, 75f, false, false,
                     iconBg.sprite, 1f, true
                     );
                 
@@ -439,17 +451,7 @@ public static class Almanac
             
             
         }
-        private static void EditInventoryGUI()
-        {
-            Transform info = root.transform.Find("Info");
-            Transform trophiesOpenButton = info.Find("Trophies");
-
-            UITooltip openTrophiesToolTip = trophiesOpenButton.GetComponent<UITooltip>();
-            Image trophiesOpenImage = trophiesOpenButton.Find("Image").GetComponent<Image>();
-            
-            openTrophiesToolTip.m_text = "$almanac_name";
-            trophiesOpenImage.sprite = AlmanacPlugin.AlmanacIconButton;
-        }
+        
 
         private static void CreateTabs(string id, string name, float anchorX, float anchorY)
         {
@@ -515,7 +517,7 @@ public static class Almanac
                 case "fish": Patches.OnOpenTrophiesPatch.SetUnknownItems(name, fish); break;
                 case "ammo": Patches.OnOpenTrophiesPatch.SetUnknownItems(name, ammunition); break;
                 case "weapon": Patches.OnOpenTrophiesPatch.SetUnknownItems(name, weapons); break;
-                case "gear": Patches.OnOpenTrophiesPatch.SetUnknownItems(name, gear); break;
+                case "gear": Patches.OnOpenTrophiesPatch.SetUnknownItems(name, jewelCraftingLoaded ? filteredGear : gear); break;
                 case "material": Patches.OnOpenTrophiesPatch.SetUnknownItems(name, materials); break;
                 case "consummable": Patches.OnOpenTrophiesPatch.SetUnknownItems(name, consumables); break;
                 case "miscPieces": Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, miscPieces); break;

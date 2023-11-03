@@ -48,7 +48,7 @@ public static class Patches
             SetUnknownItems("material", Almanac.CreateAlmanac.materials);
             SetUnknownItems("consummable", Almanac.CreateAlmanac.consumables);
             SetUnknownItems("weapon", Almanac.CreateAlmanac.weapons);
-            SetUnknownItems("gear", Almanac.CreateAlmanac.gear);
+            SetUnknownItems("gear", Almanac.CreateAlmanac.jewelCraftingLoaded ? Almanac.CreateAlmanac.filteredGear : Almanac.CreateAlmanac.gear);
             SetUnknownItems("ammo", Almanac.CreateAlmanac.ammunition);
             SetUnknownItems("fish", Almanac.CreateAlmanac.fish);
             if (Almanac.CreateAlmanac.jewelCraftingLoaded) SetUnknownItems("jewelcrafting", Almanac.CreateAlmanac.jewels);
@@ -251,12 +251,12 @@ public static class Patches
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() =>
             {
-                SetAlmanacPowers(data);
+                if (AlmanacPlugin._AchievementPowers.Value is AlmanacPlugin.Toggle.On || CheckCheats.PlayerWatcher.noCost) SetAlmanacPowers(data);
             });
 
             SetTextElement(parentElement.gameObject, "achievementTooltip", CheckCheats.PlayerWatcher.noCost ? data.powerToolTip : data.isCompleted ? data.powerToolTip : "");
             SetTextElement(parentElement.gameObject, "achievementTitle", CheckCheats.PlayerWatcher.noCost ? data.name : data.isCompleted ? data.name : "???");
-            SetTextElement(parentElement.gameObject, "achievementDescription", data.description);
+            SetTextElement(parentElement.gameObject, "achievementDescription", data.description ?? "$almanac_no_data");
             SetImageElement(achievementIconBg.gameObject, "icon", data.sprite, CheckCheats.PlayerWatcher.noCost ? Color.white : data.isCompleted ? Color.white : Color.black);
             SetTextElement(parentElement.gameObject, "achievementProgress", $"<color=orange>{data.value}</color> / {data.total} (<color=orange>{progress}</color>%)");
             SetTextElement(parentElement.gameObject, "achievementLore", CheckCheats.PlayerWatcher.noCost ? data.lore : data.isCompleted ? data.lore : "");
@@ -294,7 +294,9 @@ public static class Patches
                 }
                 else
                 {
-                    if (activeAlmanacEffects.Count >= AchievementsUI.powerLimit && !CheckCheats.PlayerWatcher.noCost )
+                    if (activeAlmanacEffects.Count >= (CheckCheats.PlayerWatcher.noCost
+                            ? AchievementsUI.maxPowers
+                            : AchievementsUI.powerLimit) )
                     {
                         MessageHud.instance.ShowMessage(
                             MessageHud.MessageType.Center, "$almanac_max_powers");
@@ -335,6 +337,9 @@ public static class Patches
                 SetActiveElement(panel.gameObject, "ImageElement", $"activeEffects ({i})", false);
                 SetActiveElement(panel.gameObject, "TextElement", $"activeDesc ({i})", false);
             }
+
+            if (AlmanacPlugin._AchievementPowers.Value is AlmanacPlugin.Toggle.Off && !CheckCheats.PlayerWatcher.noCost) return;
+            
             for (int i = 0; i < activePowers.Count; ++i)
             {
                 StatusEffect power = activePowers[i];

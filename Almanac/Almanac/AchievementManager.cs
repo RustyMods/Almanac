@@ -957,7 +957,7 @@ public static class AchievementManager
             display_name = "$almanac_achievement_goblin_shaman_hunter",
             description = "$almanac_achievement_goblin_shaman_hunter_desc",
             lore = "$almanac_goblin_shaman_hunter_lore",
-            sprite_name = "almanac_book_red",
+            sprite_name = "GoblinTotem",
             tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_frost</color>\n$almanac_increase_fire_damage_by <color=orange>5</color>",
             start_effects = new []{"sfx_coins_placed"},
             achievement_type = "GoblinShamanKills",

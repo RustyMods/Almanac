@@ -43,8 +43,7 @@ public static class CustomStatusEffects
             GameObject YagluthDrop = __instance.GetPrefab("YagluthDrop");
             Transform purpleSmoke = YagluthDrop.transform.Find("attach");
             spirit = purpleSmoke.gameObject;
-
-
+            
         }
     }
 

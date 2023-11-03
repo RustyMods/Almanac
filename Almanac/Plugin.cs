@@ -19,6 +19,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using YamlDotNet.Serialization;
 using CompressionLevel = UnityEngine.CompressionLevel;
+using Patches = Almanac.Almanac.Patches;
 
 
 namespace Almanac
@@ -104,6 +105,9 @@ namespace Almanac
 
             _KnowledgeLock = config("3 - Utilities", "Knowledge Wall", Toggle.On,
                 "If on, data is locked behind knowledge of item", true);
+
+            _AchievementPowers = config("4 - Achievements", "Powers Enabled", Toggle.On,
+                "If on, achievements reward players with powers");
             
             List<string> IgnoredList = new()
             {
@@ -177,6 +181,25 @@ namespace Almanac
                 AlmanacLogger.LogError($"There was an issue loading your {ConfigFileName}");
                 AlmanacLogger.LogError("Please check your config entries for spelling and format!");
             }
+
+            if (_AchievementPowers.Value is Toggle.On) return;
+            if (!Player.m_localPlayer) return;
+            List<StatusEffect> activeEffects = Player.m_localPlayer.m_seman.GetStatusEffects();
+            List<StatusEffect> effectsToRemove = new List<StatusEffect>();
+
+            foreach (StatusEffect effect in activeEffects)
+            {
+                if (RegisterAlmanacEffects.effectsData.Exists(x => x.effectName == effect.name))
+                {
+                    effectsToRemove.Add(effect);
+                }
+            }
+            foreach (StatusEffect effect in effectsToRemove)
+            {
+                Player.m_localPlayer.m_seman.RemoveStatusEffect(effect);
+            }
+            
+
         }
 
         #region ConfigOptions
@@ -190,7 +213,9 @@ namespace Almanac
         public static ConfigEntry<Color> _immuneColorConfig = null!;
         public static ConfigEntry<Toggle> _KnowledgeLock = null!;
         public static ConfigEntry<string> _IgnoredPrefabs = null!;
-        
+
+        public static ConfigEntry<Toggle> _AchievementPowers = null!;
+
         private ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description,
             bool synchronizedSetting = true)
         {

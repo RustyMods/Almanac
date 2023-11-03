@@ -51,6 +51,7 @@ public static class Patches
             SetUnknownItems("gear", Almanac.CreateAlmanac.gear);
             SetUnknownItems("ammo", Almanac.CreateAlmanac.ammunition);
             SetUnknownItems("fish", Almanac.CreateAlmanac.fish);
+            if (Almanac.CreateAlmanac.jewelCraftingLoaded) SetUnknownItems("jewelcrafting", Almanac.CreateAlmanac.jewels);
             
             SetUnknownPieces("miscPieces", Almanac.CreateAlmanac.miscPieces);
             SetUnknownPieces("craftingPieces", Almanac.CreateAlmanac.craftingPieces);
@@ -293,7 +294,7 @@ public static class Patches
                 }
                 else
                 {
-                    if (activeAlmanacEffects.Count >= AchievementsUI.maxPowers)
+                    if (activeAlmanacEffects.Count >= AchievementsUI.powerLimit && !CheckCheats.PlayerWatcher.noCost )
                     {
                         MessageHud.instance.ShowMessage(
                             MessageHud.MessageType.Center, "$almanac_max_powers");
@@ -438,95 +439,39 @@ public static class Patches
             int currentPage = Int32.MaxValue;
             switch (id)
             {
-                case "miscPieces":
-                    currentPage = Almanac.CreateAlmanac.miscPage;
-                    break;
-                case "craftingPieces":
-                    currentPage = Almanac.CreateAlmanac.craftPage;
-                    break;
-                case "buildPieces":
-                    currentPage = Almanac.CreateAlmanac.buildPage;
-                    break;
-                case "furniturePieces":
-                    currentPage = Almanac.CreateAlmanac.furniturePage;
-                    break;
-                case "other":
-                    currentPage = Almanac.CreateAlmanac.otherPage;
-                    break;
-                case "plantPieces":
-                    currentPage = Almanac.CreateAlmanac.plantsPage;
-                    break;
-                case "modPieces":
-                    currentPage = Almanac.CreateAlmanac.modPage;
-                    break;
-                case "Creature":
-                    currentPage = Almanac.CreateAlmanac.creaturesPage;
-                    break;
-                case "material":
-                    currentPage = Almanac.CreateAlmanac.materialsPage;
-                    break;
-                case "consummable":
-                    currentPage = Almanac.CreateAlmanac.consumablesPage;
-                    break;
-                case "weapon":
-                    currentPage = Almanac.CreateAlmanac.weaponsPage;
-                    break;
-                case "gear":
-                    currentPage = Almanac.CreateAlmanac.equipmentPage;
-                    break;
-                case "ammo":
-                    currentPage = Almanac.CreateAlmanac.projectilePage;
-                    break;
-                case "fish":
-                    currentPage = Almanac.CreateAlmanac.fishPage;
-                    break;
+                case "miscPieces": currentPage = Almanac.CreateAlmanac.miscPage; break;
+                case "craftingPieces": currentPage = Almanac.CreateAlmanac.craftPage; break;
+                case "buildPieces": currentPage = Almanac.CreateAlmanac.buildPage; break;
+                case "furniturePieces": currentPage = Almanac.CreateAlmanac.furniturePage; break;
+                case "other": currentPage = Almanac.CreateAlmanac.otherPage; break;
+                case "plantPieces": currentPage = Almanac.CreateAlmanac.plantsPage; break;
+                case "modPieces": currentPage = Almanac.CreateAlmanac.modPage; break;
+                case "Creature": currentPage = Almanac.CreateAlmanac.creaturesPage; break;
+                case "material": currentPage = Almanac.CreateAlmanac.materialsPage; break;
+                case "consummable": currentPage = Almanac.CreateAlmanac.consumablesPage; break;
+                case "weapon": currentPage = Almanac.CreateAlmanac.weaponsPage; break;
+                case "gear": currentPage = Almanac.CreateAlmanac.equipmentPage; break;
+                case "ammo": currentPage = Almanac.CreateAlmanac.projectilePage; break;
+                case "fish": currentPage = Almanac.CreateAlmanac.fishPage; break;
             }
 
             if (currentPage != page) return;
             switch (id)
             {
-                case "miscPieces":
-                    container.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefabName));
-                    break;
-                case "craftingPieces":
-                    container.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefabName));
-                    break;
-                case "buildPieces":
-                    container.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefabName));
-                    break;
-                case "furniturePieces":
-                    container.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefabName));
-                    break;
-                case "other":
-                    container.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefabName));
-                    break;
-                case "plantPieces":
-                    container.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefabName));
-                    break;
-                case "modPieces":
-                    container.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefabName));
-                    break;
-                case "Creature":
-                    container.gameObject.SetActive(!BlackList.CreatureBlackList.Value.Contains(prefabName));
-                    break;
-                case "material":
-                    container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName));
-                    break;
-                case "consummable":
-                    container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName));
-                    break;
-                case "weapon":
-                    container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName));
-                    break;
-                case "gear":
-                    container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName));
-                    break;
-                case "ammo":
-                    container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName));
-                    break;
-                case "fish":
-                    container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName));
-                    break;
+                case "miscPieces": container.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefabName)); break;
+                case "craftingPieces": container.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefabName)); break;
+                case "buildPieces": container.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefabName)); break;
+                case "furniturePieces": container.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefabName)); break;
+                case "other": container.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefabName)); break;
+                case "plantPieces": container.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefabName)); break;
+                case "modPieces": container.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefabName)); break;
+                case "Creature": container.gameObject.SetActive(!BlackList.CreatureBlackList.Value.Contains(prefabName)); break;
+                case "material": container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName)); break;
+                case "consummable": container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName)); break;
+                case "weapon": container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName)); break;
+                case "gear": container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName)); break;
+                case "ammo": container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName)); break;
+                case "fish": container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName)); break;
             }
         }
         public static void SetUnknownCreatures()

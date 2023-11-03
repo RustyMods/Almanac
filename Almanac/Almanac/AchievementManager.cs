@@ -39,6 +39,14 @@ public static class AchievementManager
         Materials,
         Consumables,
         Weapons,
+        Swords,
+        Axes,
+        PoleArms,
+        Spears,
+        Maces,
+        Knives,
+        Shields,
+        Staves,
         Arrows,
         Bows,
         Valuables,
@@ -68,7 +76,18 @@ public static class AchievementManager
         CultistKills,
         StoneGolemKills,
         TarBlobKills,
-        DeathByFall
+        DeathByFall,
+        TreesChopped,
+        DeathByTree,
+        DeathByEdgeOfWorld,
+        TimeInBase,
+        TimeOutOfBase,
+        ArrowsShot,
+        GoblinShamanKills,
+        WraithKills,
+        DrakeKills,
+        GhostKills,
+        FenringKills
     }
 
     private static void CreateAchievement(
@@ -282,6 +301,11 @@ public static class AchievementManager
                 case "LightningDMG": mod = AlmanacEffectsManager.Modifier.LightningDMG; break;
                 case "PoisonDMG": mod = AlmanacEffectsManager.Modifier.PoisonDMG; break;
                 case "SpiritDMG": mod = AlmanacEffectsManager.Modifier.SpiritDMG; break;
+                case "ChopDMG" : mod = AlmanacEffectsManager.Modifier.ChopDMG; break;
+                case "PickaxeDMG" : mod = AlmanacEffectsManager.Modifier.PickaxeDMG; break;
+                case "BluntDMG": mod = AlmanacEffectsManager.Modifier.BluntDMG; break;
+                case "PierceDMG": mod = AlmanacEffectsManager.Modifier.PierceDMG; break;
+                case "SlashDMG": mod = AlmanacEffectsManager.Modifier.SlashDMG; break;
                 case "EikthyrPower": mod = AlmanacEffectsManager.Modifier.EikthyrPower; break;
                 case "ElderPower": mod = AlmanacEffectsManager.Modifier.ElderPower; break;
                 case "BonemassPower": mod = AlmanacEffectsManager.Modifier.BonemassPower; break;
@@ -348,6 +372,14 @@ public static class AchievementManager
             case "Materials": return AchievementType.Materials;
             case "Consumables": return AchievementType.Consumables;
             case "Weapons": return AchievementType.Weapons;
+            case "Swords": return AchievementType.Swords;
+            case "Axes": return AchievementType.Axes;
+            case "Polearms": return AchievementType.PoleArms;
+            case "Spears": return AchievementType.Spears;
+            case "Maces": return AchievementType.Maces;
+            case "Knives": return AchievementType.Knives;
+            case "Shields": return AchievementType.Shields;
+            case "Staves": return AchievementType.Staves;
             case "Arrows": return AchievementType.Arrows;
             case "Bows": return AchievementType.Bows;
             case "Valuables": return AchievementType.Valuables;
@@ -379,6 +411,17 @@ public static class AchievementManager
             case "StoneGolemKills": return AchievementType.StoneGolemKills;
             case "TarBlobKills": return AchievementType.TarBlobKills;
             case "DeathByFall": return AchievementType.DeathByFall;
+            case "Trees": return AchievementType.TreesChopped;
+            case "DeathByTree": return AchievementType.DeathByTree;
+            case "DeathByEdge": return AchievementType.DeathByEdgeOfWorld;
+            case "TimeInBase": return AchievementType.TimeInBase;
+            case "TimeOutOfBase": return AchievementType.TimeOutOfBase;
+            case "ArrowsShot": return AchievementType.ArrowsShot;
+            case "GoblinShamanKills": return AchievementType.GoblinShamanKills;
+            case "DrakeKills": return AchievementType.DrakeKills;
+            case "GhostKills": return AchievementType.GhostKills;
+            case "FenringKills": return AchievementType.FenringKills;
+            case "WraithKills": return AchievementType.WraithKills;
             default: return AchievementType.None;
         }
     }
@@ -456,13 +499,13 @@ public static class AchievementManager
                 description = "$almanac_achievement_plains_kill_desc",
                 lore = "$almanac_achievement_plains_kill_lore",
                 sprite_name = "Barley",
-                tool_tip = "$almanac_increase_health_by <color=orange>6</color>",
+                tool_tip = "$almanac_increase_health_by <color=orange>5</color>",
                 achievement_type = "PlainsCreatures",
                 stop_message = "$almanac_health_default",
                 start_effects = new []{"fx_DvergerMage_Support_start"},
                 stop_effects = new []{"fx_DvergerMage_Mistile_die"},
                 modifier = "BaseHP",
-                modifier_value = 6f
+                modifier_value = 5f
             },
             new AchievementData()
             {
@@ -471,13 +514,13 @@ public static class AchievementManager
                 description = "$almanac_achievement_mistlands_kill_desc",
                 lore = "$almanac_achievement_mistlands_kill_lore",
                 sprite_name = "MushroomMagecap",
-                tool_tip = "$almanac_increase_health_by <color=orange>7</color>",
+                tool_tip = "$almanac_increase_health_by <color=orange>5</color>",
                 achievement_type = "MistLandCreatures",
                 stop_message = "$almanac_health_default",
                 start_effects = new []{"fx_DvergerMage_Support_start"},
                 stop_effects = new []{"fx_DvergerMage_Mistile_die"},
                 modifier = "BaseHP",
-                modifier_value = 7f
+                modifier_value = 5f
             },
             new AchievementData()
             {
@@ -486,11 +529,12 @@ public static class AchievementManager
                 description = "$almanac_achievement_ranger_desc",
                 sprite_name = "almanac_arrow",
                 lore = "$almanac_ranger_lore",
-                tool_tip = "$almanac_increase_projectile_damage_by <color=orange>5</color>",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_physical</color>\n$almanac_increase_projectile_damage_by <color=orange>5</color>",
                 achievement_type = "Arrows",
                 start_effects = new []{"sfx_coins_placed"},
                 stop_message = "$almanac_projectile_default",
                 modifier = "RangedDMG",
+                resistance_modifier = "Physical = Weak",
                 modifier_value = 5f
             },
             new AchievementData()
@@ -500,8 +544,9 @@ public static class AchievementManager
                 description = "$almanac_achievement_brew_master_desc",
                 sprite_name = "almanac_bottle_blue",
                 lore = "$almanac_brew_master_lore",
-                tool_tip = "$almanac_increase_fire_damage_by <color=orange>5</color>",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_frost</color>\n$almanac_increase_fire_damage_by <color=orange>5</color>",
                 achievement_type = "Potions",
+                resistance_modifier = "Frost = Weak",
                 stop_message = "$almanac_damage_default",
                 start_effects = new []{"sfx_coins_placed"},
                 modifier = "FireDMG",
@@ -515,6 +560,7 @@ public static class AchievementManager
                 sprite_name = "almanac_fish_green",
                 lore = "$almanac_fisher_lore",
                 tool_tip = "$almanac_allows_moder_power",
+                stop_message = "$almanac_removed_achievement_power",
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "Fish",
                 modifier = "ModerPower"
@@ -528,6 +574,7 @@ public static class AchievementManager
                 lore = "$almanac_knowledgeable_lore",
                 tool_tip = "$almanac_increase_carry_weight_by <color=orange>100</color>",
                 start_effects = new []{"sfx_coins_placed"},
+                stop_message = "$almanac_removed_achievement_power",
                 achievement_type = "Materials",
                 modifier = "MaxCarryWeight",
                 modifier_value = 100f
@@ -539,9 +586,11 @@ public static class AchievementManager
                 description = "$almanac_achievement_master_archer_desc",
                 sprite_name = "almanac_bow",
                 lore = "$almanac_master_archer_lore",
-                tool_tip = "$almanac_increase_projectile_damage_by <color=orange>5</color>",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_physical</color>\n$almanac_increase_projectile_damage_by <color=orange>5</color>",
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "Bows",
+                resistance_modifier = "Physical = Weak",
+                stop_message = "$almanac_removed_achievement_power",
                 modifier = "RangedDMG",
                 modifier_value = 5f
             },
@@ -551,11 +600,14 @@ public static class AchievementManager
                 display_name = "$almanac_achievement_gluttony",
                 description = "$almanac_achievement_gluttony_desc",
                 sprite_name = "almanac_mushroom",
+                stop_message = "$almanac_removed_achievement_power",
                 lore = "$almanac_gluttony_lore",
                 start_effects = new []{"sfx_coins_placed"},
-                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_resistant</color> VS <color=orange>$almanac_poison</color>",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_very_resistant</color> VS <color=orange>$almanac_poison</color>\n$almanac_reduce_health_by <color=orange>5</color>",
                 achievement_type = "Consumables",
-                resistance_modifier = "Poison = Resistant",
+                resistance_modifier = "Poison = VeryResistant",
+                modifier = "BaseHP",
+                modifier_value = -5f
             },
             new AchievementData()
             {
@@ -564,6 +616,7 @@ public static class AchievementManager
                 description = "$almanac_achievement_stag_slayer_desc",
                 goal = 100,
                 sprite_name = "TrophyEikthyr",
+                stop_message = "$almanac_removed_achievement_power",
                 lore = "$almanac_stag_slayer_lore",
                 tool_tip = "$almanac_allows_eikthyr_power",
                 start_effects = new []{"sfx_coins_placed"},
@@ -578,10 +631,12 @@ public static class AchievementManager
                 goal = 200,
                 sprite_name = "almanac_bone_skull",
                 lore = "$almanac_undying_lore",
-                tool_tip = "$almanac_increase_stamina_by <color=orange>10</color>",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_spirit</color>\n$almanac_increase_stamina_by <color=orange>10</color>",
                 start_effects = new []{"sfx_coins_placed"},
+                stop_message = "$almanac_removed_achievement_power",
                 achievement_type = "Deaths",
                 modifier = "BaseStamina",
+                resistance_modifier = "Spirit = Weak",
                 modifier_value = 10f
             },
             new AchievementData()
@@ -591,9 +646,11 @@ public static class AchievementManager
                 description = "$almanac_achievement_completion_desc",
                 sprite_name = "almanac_crown_gold",
                 lore = "$almanac_completion_lore",
-                tool_tip = "$almanac_raise_skill_experience_by <color=orange>100</color>%",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_physical</color>\n$almanac_raise_skill_experience_by <color=orange>100</color>%",
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "TotalAchievements",
+                resistance_modifier = "Physical = Weak",
+                stop_message = "$almanac_removed_achievement_power",
                 modifier = "RaiseSkills",
                 modifier_value = 2f
             },
@@ -602,11 +659,13 @@ public static class AchievementManager
                 unique_name = "runner",
                 display_name = "$almanac_achievement_runner",
                 description = "$almanac_achievement_runner_desc",
-                sprite_name = "almanac_gem_red",
+                sprite_name = "almanac_scroll_map",
                 lore = "$almanac_runner_lore",
-                tool_tip = "$almanac_reduce_stamina_drain_by <color=orange>50</color>%",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_pierce</color>\n$almanac_reduce_stamina_drain_by <color=orange>50</color>%",
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "DistanceRan",
+                resistance_modifier = "Pierce = Weak",
+                stop_message = "$almanac_removed_achievement_power",
                 modifier = "RunStaminaDrain",
                 modifier_value = 0.5f,
                 goal = 999999
@@ -618,10 +677,12 @@ public static class AchievementManager
                 description = "$almanac_achievement_killer_desc",
                 lore = "$almanac_killer_lore",
                 sprite_name = "Acorn",
-                tool_tip = "$almanac_increase_attack_by <color=orange>50</color>%",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_physical</color>\n$almanac_increase_attack_by <color=orange>50</color>%",
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "TotalKills",
                 modifier = "Attack",
+                resistance_modifier = "Physical = Weak",
+                stop_message = "$almanac_removed_achievement_power",
                 modifier_value = 1.5f,
                 goal = 999999
             },
@@ -634,6 +695,7 @@ public static class AchievementManager
                 sprite_name = "SpearChitin",
                 tool_tip = "$almanac_allows_moder_power",
                 start_effects = new []{"sfx_coins_placed"},
+                stop_message = "$almanac_removed_achievement_power",
                 achievement_type = "DistanceSailed",
                 modifier = "ModerPower",
                 goal = 999999
@@ -648,6 +710,7 @@ public static class AchievementManager
                 tool_tip = "$almanac_reduce_fall_damage_by <color=orange>10</color>%",
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "DeathByFall",
+                stop_message = "$almanac_removed_achievement_power",
                 modifier = "FallDamage",
                 modifier_value = 0.9f,
                 goal = 100
@@ -659,10 +722,12 @@ public static class AchievementManager
                 description = "$almanac_achievement_troll_desc",
                 lore = "$almanac_troll_lore",
                 sprite_name = "TrophyForestTroll",
-                tool_tip = "$almanac_increase_health_regen_by <color=orange>10</color>%",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_blunt</color>\n$almanac_increase_health_regen_by <color=orange>10</color>%",
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "TrollKills",
                 modifier = "HealthRegen",
+                resistance_modifier = "Blunt = Weak",
+                stop_message = "$almanac_removed_achievement_power",
                 modifier_value = 1.1f,
                 goal = 200,
             },
@@ -673,9 +738,11 @@ public static class AchievementManager
                 description = "$almanac_achievement_tarred_desc",
                 lore = "$almanac_tarred_lore",
                 sprite_name = "Tar",
-                tool_tip = "$almanac_increase_speed_by <color=orange>10</color>%",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_poison</color>\n$almanac_increase_speed_by <color=orange>10</color>%",
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "TarBlobKills",
+                resistance_modifier = "Poison = Weak",
+                stop_message = "$almanac_removed_achievement_power",
                 modifier = "Speed",
                 modifier_value = 1.1f,
                 goal = 100
@@ -687,9 +754,11 @@ public static class AchievementManager
                 description = "$almanac_achievement_golem_hunter_desc",
                 lore = "$almanac_golem_hunter_lore",
                 sprite_name = "TrophySGolem",
-                tool_tip = "$almanac_increase_frost_damage_by <color=orange>5</color>",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_blunt</color>\n$almanac_increase_frost_damage_by <color=orange>5</color>",
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "StoneGolemKills",
+                resistance_modifier = "Blunt = Weak",
+                stop_message = "$almanac_removed_achievement_power",
                 modifier = "FrostDMG",
                 modifier_value = 5f,
                 goal = 100
@@ -701,10 +770,12 @@ public static class AchievementManager
                 description = "$almanac_achievement_gaseous_desc",
                 lore = "$almanac_gaseous_lore",
                 sprite_name = "BombOoze",
-                tool_tip = "$almanac_increase_poison_damage_by <color=orange>5</color>",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_poison</color>\n$almanac_increase_poison_damage_by <color=orange>5</color>",
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "TotalKills",
+                stop_message = "$almanac_removed_achievement_power",
                 goal = 500,
+                resistance_modifier = "Poison = Weak",
                 modifier = "PoisonDMG",
                 modifier_value = 5f
             },
@@ -715,10 +786,12 @@ public static class AchievementManager
                 description = "$almanac_achievement_spark_desc",
                 lore = "$almanac_spark_lore",
                 sprite_name = "Thunderstone",
-                tool_tip = "$almanac_increase_lightning_damage_by <color=orange>5</color>",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_lightning</color>\n$almanac_increase_lightning_damage_by <color=orange>5</color>",
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "EikthyrKills",
+                stop_message = "$almanac_removed_achievement_power",
                 goal = 200,
+                resistance_modifier = "Lightning = Weak",
                 modifier = "LightningDMG",
                 modifier_value = 5f
             },
@@ -729,10 +802,12 @@ public static class AchievementManager
                 description = "$almanac_achievement_spark_desc",
                 lore = "$almanac_spark_lore",
                 sprite_name = "Thunderstone",
-                tool_tip = "$almanac_increase_lightning_damage_by <color=orange>5</color>",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_lightning</color>\n$almanac_increase_lightning_damage_by <color=orange>5</color>",
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "EikthyrKills",
+                stop_message = "$almanac_removed_achievement_power",
                 goal = 400,
+                resistance_modifier = "Lightning = Weak",
                 modifier = "LightningDMG",
                 modifier_value = 5f
             },
@@ -743,14 +818,267 @@ public static class AchievementManager
                 description = "$almanac_achievement_spark_desc",
                 lore = "$almanac_spark_lore",
                 sprite_name = "Thunderstone",
-                tool_tip = "$almanac_increase_lightning_damage_by <color=orange>5</color>",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_lightning</color>\n$almanac_increase_lightning_damage_by <color=orange>5</color>",
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "EikthyrKills",
+                stop_message = "$almanac_removed_achievement_power",
+                resistance_modifier = "Lightning = Weak",
                 goal = 600,
                 modifier = "LightningDMG",
                 modifier_value = 5f
             },
-            
+            new AchievementData()
+            {
+                unique_name = "sword_master",
+                display_name = "$almanac_achievement_sword_master",
+                description = "$almanac_achievement_sword_master_desc",
+                lore = "$almanac_sword_master_lore",
+                sprite_name = "almanac_sword_blue",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_pierce</color>\n$almanac_increase_melee_damage_by <color=orange>5</color>",
+                start_effects = new []{"sfx_coins_placed"},
+                achievement_type = "Swords",
+                stop_message = "$almanac_removed_achievement_power",
+                resistance_modifier = "Pierce = Weak",
+                modifier = "MeleeDMG",
+                modifier_value = 5f
+            },
+            new AchievementData()
+            {
+                unique_name = "axe_master",
+                display_name = "$almanac_achievement_axe_master",
+                description = "$almanac_achievement_axe_master_desc",
+                lore = "$almanac_axe_master_lore",
+                sprite_name = "AxeJotunBane",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_blunt</color>\n$almanac_increase_melee_damage_by <color=orange>5</color>",
+                start_effects = new []{"sfx_coins_placed"},
+                achievement_type = "Axes",
+                stop_message = "$almanac_removed_achievement_power",
+                resistance_modifier = "Blunt = Weak",
+                modifier = "MeleeDMG",
+                modifier_value = 5f
+            },
+            new AchievementData()
+            {
+                unique_name = "lumberjack",
+                display_name = "$almanac_achievement_lumberjack",
+                description = "$almanac_achievement_lumberjack_desc",
+                lore = "$almanac_lumberjack_lore",
+                sprite_name = "almanac_wood_stack",
+                tool_tip = "$almanac_increase_chop_damage_by <color=orange>5</color>",
+                start_effects = new []{"sfx_coins_placed"},
+                stop_message = "$almanac_removed_achievement_power",
+                achievement_type = "Trees",
+                modifier = "ChopDMG",
+                modifier_value = 5f,
+                goal = 1000
+            },
+            new AchievementData()
+            {
+                unique_name = "lumberer",
+                display_name = "$almanac_achievement_lumberer",
+                description = "$almanac_achievement_lumberer_desc",
+                lore = "$almanac_lumberer_lore",
+                sprite_name = "almanac_wood_log",
+                tool_tip = "$almanac_increase_chop_damage_by <color=orange>5</color>",
+                start_effects = new []{"sfx_coins_placed"},
+                stop_message = "$almanac_removed_achievement_power",
+                achievement_type = "DeathByTree",
+                modifier = "ChopDMG",
+                modifier_value = 5f,
+                goal = 100
+            },
+            new AchievementData()
+            {
+                unique_name = "daredevil",
+                display_name = "$almanac_achievement_daredevil",
+                description = "$almanac_achievement_daredevil_desc",
+                lore = "$almanac_daredevil_lore",
+                sprite_name = "YagluthDrop",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_spirit</color>\n$almanac_increase_stamina_by <color=orange>15</color>",
+                start_effects = new []{"sfx_coins_placed"},
+                achievement_type = "DeathByEdge",
+                stop_message = "$almanac_removed_achievement_power",
+                resistance_modifier = "Spirit = Weak",
+                modifier = "BaseStamina",
+                modifier_value = 15f,
+                goal = 1
+            },
+            new AchievementData()
+            {
+                unique_name = "turret",
+                display_name = "$almanac_achievement_turret",
+                description = "$almanac_achievement_turret_desc",
+                lore = "$almanac_turret_lore",
+                sprite_name = "ArrowCarapace",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_fire</color>\n$almanac_increase_projectile_damage_by <color=orange>5</color>",
+                start_effects = new []{"sfx_coins_placed"},
+                achievement_type = "ArrowsShot",
+                stop_message = "$almanac_removed_achievement_power",
+                resistance_modifier = "Fire = Weak",
+                modifier = "RangedDMG",
+                modifier_value = 5f,
+                goal = 5000
+            },
+            new AchievementData()
+            {
+                unique_name = "adventurer",
+                display_name = "$almanac_achievement_adventurer",
+                description = "$almanac_achievement_adventurer_desc",
+                lore = "$almanac_adventurer_lore",
+                sprite_name = "BlackCore",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_poison</color>\n$almanac_increase_stamina_regen_by <color=orange>50</color>%",
+                start_effects = new []{"sfx_coins_placed"},
+                achievement_type = "TimeOutOfBase",
+                stop_message = "$almanac_removed_achievement_power",
+                goal = 50000,
+                resistance_modifier = "Poison = Weak",
+                modifier = "StaminaRegen",
+                modifier_value = 1.5f
+            },
+            new AchievementData()
+            {
+                unique_name = "cultist_hunter",
+                display_name = "$almanac_achievement_cultist_hunter",
+                description = "$almanac_achievement_cultist_hunter_desc",
+                lore = "$almanac_cultist_hunter_lore",
+                sprite_name = "almanac_book_red",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_frost</color>\n$almanac_increase_fire_damage_by <color=orange>5</color>",
+                start_effects = new []{"sfx_coins_placed"},
+                achievement_type = "CultistKills",
+                stop_message = "$almanac_removed_achievement_power",
+                goal = 100,
+                resistance_modifier = "Frost = Weak",
+                modifier = "FireDMG",
+                modifier_value = 5f
+            },
+            new AchievementData()
+            {
+            unique_name = "goblin_shaman_hunter",
+            display_name = "$almanac_achievement_goblin_shaman_hunter",
+            description = "$almanac_achievement_goblin_shaman_hunter_desc",
+            lore = "$almanac_goblin_shaman_hunter_lore",
+            sprite_name = "almanac_book_red",
+            tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_frost</color>\n$almanac_increase_fire_damage_by <color=orange>5</color>",
+            start_effects = new []{"sfx_coins_placed"},
+            achievement_type = "GoblinShamanKills",
+            stop_message = "$almanac_removed_achievement_power",
+            goal = 100,
+            resistance_modifier = "Frost = Weak",
+            modifier = "FireDMG",
+            modifier_value = 5f
+            },
+            new AchievementData()
+            {
+                unique_name = "drake_hunter",
+                display_name = "$almanac_achievement_drake_hunter",
+                description = "$almanac_achievement_drake_hunter_desc",
+                lore = "$almanac_drake_hunter_lore",
+                sprite_name = "FreezeGland",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_fire</color>\n$almanac_increase_frost_damage_by <color=orange>5</color>",
+                start_effects = new []{"sfx_coins_placed"},
+                achievement_type = "DrakeKills",
+                stop_message = "$almanac_removed_achievement_power",
+                goal = 100,
+                resistance_modifier = "Fire = Weak",
+                modifier = "FrostDMG",
+                modifier_value = 5f
+            },
+            new AchievementData()
+            {
+                unique_name = "dragon_killer",
+                display_name = "$almanac_achievement_dragon_killer",
+                description = "$almanac_achievement_dragon_killer_desc",
+                lore = "$almanac_dragon_killer_lore",
+                sprite_name = "TrophyDragonQueen",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_fire</color>\n$almanac_increase_frost_damage_by <color=orange>5</color>",
+                start_effects = new []{"sfx_coins_placed"},
+                achievement_type = "ModerKills",
+                stop_message = "$almanac_removed_achievement_power",
+                goal = 100,
+                resistance_modifier = "Fire = Weak",
+                modifier = "FrostDMG",
+                modifier_value = 5f
+            },
+            new AchievementData()
+            {
+                unique_name = "bonemass_killer",
+                display_name = "$almanac_achievement_bonemass_killer",
+                description = "$almanac_achievement_bonemass_killer_desc",
+                lore = "$almanac_bonemass_killer_lore",
+                sprite_name = "TrophyBonemass",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_spirit</color>\n$almanac_increase_poison_damage_by <color=orange>5</color>",
+                start_effects = new []{"sfx_coins_placed"},
+                achievement_type = "BonemassKills",
+                stop_message = "$almanac_removed_achievement_power",
+                goal = 100,
+                resistance_modifier = "Spirit = Weak",
+                modifier = "PoisonDMG",
+                modifier_value = 5f
+            },
+            new AchievementData()
+            {
+                unique_name = "stench",
+                display_name = "$almanac_achievement_stench",
+                description = "$almanac_achievement_stench_desc",
+                lore = "$almanac_stench_lore",
+                sprite_name = "Ooze",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_spirit</color>\n$almanac_increase_poison_damage_by <color=orange>5</color>",
+                stop_message = "$almanac_removed_achievement_power",
+                start_effects = new []{"sfx_coins_placed"},
+                achievement_type = "Deaths",
+                goal = 100,
+                resistance_modifier = "Spirit = Weak",
+                modifier = "PoisonDMG",
+                modifier_value = 5f
+            },
+            new AchievementData()
+            {
+                unique_name = "vengeful",
+                display_name = "$almanac_achievement_vengeful",
+                description = "$almanac_achievement_vengeful_desc",
+                lore = "$almanac_vengeful_lore",
+                sprite_name = "almanac_gem_red",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_physical</color>\n$almanac_increase_spirit_damage_by <color=orange>5</color>",
+                stop_message = "$almanac_removed_achievement_power",
+                start_effects = new []{"sfx_coins_placed"},
+                achievement_type = "WraithKills",
+                goal = 100,
+                resistance_modifier = "Physical = Weak",
+                modifier = "SpiritDMG",
+                modifier_value = 5f
+            },
+            new AchievementData()
+            {
+                unique_name = "ghastly",
+                display_name = "$almanac_achievement_ghastly",
+                description = "$almanac_achievement_ghastly_desc",
+                lore = "$almanac_ghastly_lore",
+                sprite_name = "almanac_bottle_empty",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_physical</color>\n$almanac_increase_spirit_damage_by <color=orange>5</color>",
+                stop_message = "$almanac_removed_achievement_power",
+                start_effects = new []{"sfx_coins_placed"},
+                achievement_type = "GhostKills",
+                goal = 100,
+                resistance_modifier = "Physical = Weak",
+                modifier = "SpiritDMG",
+                modifier_value = 5f
+            },
+            new AchievementData()
+            {
+                unique_name = "fenring",
+                display_name = "$almanac_achievement_fenring",
+                description = "$almanac_achievement_fenring_desc",
+                lore = "$almanac_fenring_lore",
+                sprite_name = "TrophyUlv",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_physical</color>\n$almanac_increase_spirit_damage_by <color=orange>5</color>",
+                stop_message = "$almanac_removed_achievement_power",
+                start_effects = new []{"sfx_coins_placed"},
+                achievement_type = "FenringKills",
+                goal = 100,
+                resistance_modifier = "Physical = Weak",
+                modifier = "SpiritDMG",
+                modifier_value = 5f
+            },
         };
 
         return almanacAchievements;
@@ -769,7 +1097,7 @@ public static class AchievementManager
         public string description = "";
         public string lore = "";
         public string tool_tip = "";
-        public string stop_message = "";
+        public string stop_message = "$almanac_removed_achievement_power";
         public string[] start_effects;
         public string[] stop_effects;
         public string achievement_type = "";

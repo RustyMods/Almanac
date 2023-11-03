@@ -384,6 +384,7 @@ almanac_power_denied: "Cannot have multiple of same type of passive powers"
 almanac_no_power_set: "No Power - In development"
 almanac_set_guardian_power: "Set Forsaken"
 almanac_power: "Power"
+almanac_removed_achievement_power: "Removed achievement effect"
 
 almanac_health_default: "Health returned to normal"
 almanac_projectile_default: "Projectile damage returned to normal"
@@ -400,13 +401,22 @@ almanac_increase_lightning_damage_by: "Increase lightning damage by"
 almanac_increase_poison_damage_by: "Increase poison damage by"
 almanac_increase_spirit_damage_by: "Increase spirit damage by"
 almanac_increase_carry_weight_by: "Increase base carry weight by"
-almanac_modify_damage_by: "Damage modifier:"
 almanac_raise_skill_experience_by: "Increase experience gain by"
-almanac_reduce_stamina_drain_by: "Reduce stamina drain by"
 almanac_increase_attack_by: "Increase attack by"
-almanac_reduce_fall_damage_by: "Reduce fall damage by"
 almanac_increase_health_regen_by: "Increase health regeneration by"
 almanac_increase_speed_by: "Increase speed by"
+almanac_increase_chop_damage_by: "Increase chop damage by"
+almanac_increase_pickaxe_damage_by: "Increase pickaxe damage by"
+almanac_increase_melee_damage_by: "Increase melee damage by"
+almanac_increase_stamina_regen_by: "Increase stamina regeneration by"
+
+almanac_reduce_stamina_drain_by: "Reduce stamina drain by"
+almanac_reduce_fall_damage_by: "Reduce fall damage by"
+almanac_reduce_health_by: "Reduce base health by"
+
+almanac_physical: "Physical"
+almanac_elemental: "Elemental"
+almanac_modify_damage_by: "Player Resistance:"
 
 almanac_allows_eikthyr_power: "Enables quick access to <color=orange>Eikthyr</color> power"
 almanac_allows_elder_power: "Enables quick access to <color=orange>The Elder</color> power"
@@ -433,7 +443,7 @@ almanac_achievement_mountain_kill_desc: "Hunt down all the mountain creatures"
 almanac_achievement_mountain_kill_lore: "Mountain Hunters are the fearless souls who conquer the towering peaks of Valheim. These adventurers, draped in wolf pelts, face the fierce climate, frost giants, and wolves to gather silver and explore the frozen expanses. With their trusty obsidian weaponry and unmatched determination, they thrive in the harsh environments of the mountains."
 
 almanac_achievement_plains_kill: "Plains Hunter"
-almanac_achievement_plains_desc: "Hunt down all the plains creatures"
+almanac_achievement_plains_kill_desc: "Hunt down all the plains creatures"
 almanac_achievement_plains_kill_lore: "The Plains Hunter, a seasoned tracker and a master of Valheim's open fields, has honed their skills to perfection, becoming one with the plains' roaming creatures. They've acquired an innate understanding of the land and its fauna, making them elusive and formidable foes in the endless grassy expanses."
 
 almanac_achievement_mistlands_kill: "Mistlands Hunter"
@@ -461,7 +471,7 @@ almanac_achievement_master_archer_desc: "Discover all available bows and crossbo
 almanac_master_archer_lore: "The master archer of Valheim is an unparalleled marksman, boasting a formidable arsenal of bows and crossbows. Their expertise with ranged weaponry is renowned throughout the land, making them a fearsome opponent and an asset to any Viking clan."
 
 almanac_achievement_undying: "Undying"
-almanac_achievement_undying_desc: "Died over <color=orange>1000</color> times"
+almanac_achievement_undying_desc: "Died over <color=orange>200</color> times"
 almanac_undying_lore: "Through countless battles and treacherous challenges, this Viking has met death head-on over a thousand times, only to rise again with unwavering determination. Each rebirth has brought wisdom and strength, making them a true legend among the warriors of Valheim."
 
 almanac_achievement_stag_slayer: "Stag Slayer"
@@ -489,29 +499,96 @@ almanac_achievement_sailor_desc: "Sailed over <color=orange>999,999</color> mete
 almanac_sailor_lore: "Sailing over 999,999 meters in Valheim demonstrates your mastery of the seas, having explored vast waters, distant shores, and perhaps even uncovered hidden treasures that few could ever fathom. Your voyages are the stuff of legends, and your expertise as a seafarer is a testament to your unparalleled maritime skills."
 
 almanac_achievement_break_a_leg: "Splinter"
-almanac_achievement_break_a_leg_desc: "Died of fall damage over <color=orange>1000</color> times"
+almanac_achievement_break_a_leg_desc: "Died of fall damage over <color=orange>100</color> times"
 almanac_break_a_leg_lore: "Dying of fall damage a thousand times in Valheim speaks of an adventurous spirit that often leads you to daring heights. It's a reminder of the many breathtaking leaps and heart-pounding tumbles you've experienced in your quest, as well as the countless lessons you've learned from the impact of the earth upon your Viking bones."
 
 almanac_achievement_troll: "Troll Hunter"
-almanac_achievement_troll_desc: "Kill a troll over <color=orange>1000</color> times"
+almanac_achievement_troll_desc: "Kill a troll over <color=orange>200</color> times"
 almanac_troll_lore: "Slaying a troll a thousand times in Valheim reflects your unwavering determination and combat prowess. You've faced these formidable creatures again and again, honing your skills with each encounter. Your relentless pursuit of these monstrous foes has certainly solidified your place among the fiercest of Viking warriors."
 
 almanac_achievement_tarred: "Tarred"
-almanac_achievement_tarred_desc: "Kill a Tar blob over <color=orange>1000</color> times"
-almanac_tarred_lore: ""
+almanac_achievement_tarred_desc: "Kill a Tar blob over <color=orange>100</color> times"
+almanac_tarred_lore: "Battling tar blobs in Valheim has a peculiar way of speeding up your reflexes. When you've experienced the consequences of being tarred once, you quickly learn the importance of agility. These encounters may leave you feeling lighter on your feet, a crucial skill to avoid a sticky situation."
 
 almanac_achievement_golem_hunter: "Rock Smasher"
-almanac_achievement_golem_hunter_desc: "Kill a stone golem over <color=orange>1000</color> times"
-almanac_golem_hunter_lore: ""
+almanac_achievement_golem_hunter_desc: "Kill a stone golem over <color=orange>100</color> times"
+almanac_golem_hunter_lore: "Crushing stone golems in Valheim feels like shattering pebbles. These formidable creatures may appear colossal, but with the right strategy and strength, they can be reduced to rubble. It's a testament to the power that skilled Viking warriors possess."
 
 almanac_achievement_gaseous: "Gaseous"
 almanac_achievement_gaseous_desc: "Kill over <color=orange>500</color> creatures"
-almanac_gaseous_lore: ""
+almanac_gaseous_lore: "Killing over 500 creatures in Valheim, you become imbued with poison damage, reflecting the toxins of the wild world you've conquered. It's a mark of your resilience and the way nature's brutal cycle can leave its mark on even the fiercest of Viking hunters."
 
 almanac_achievement_spark: "Stag Breaker"
 almanac_achievement_spark_desc: "Defeat <color=orange>Eikthyr</color> until the sky turns red"
-almanac_spark_lore: ""
+almanac_spark_lore: "Battling Eikthyr repeatedly, the thunderous energy surges within you, and you harness the very lightning that once defined your adversary. You become a harbinger of storms, wielding the power of the sky itself."
+
+almanac_achievement_sword_master: "Swordsman"
+almanac_achievement_sword_master_desc: "Discover all the <color=orange>swords</color> in this world"
+almanac_sword_master_lore: "Mastering the art of the sword, you've unveiled the secrets of every blade in Valheim. With a keen eye and a swift hand, you've unlocked the techniques of every swordsmith's craft, becoming a true master of these deadly instruments."
+
+almanac_achievement_axe_master: "Axeman"
+almanac_achievement_axe_master_desc: "Discover all the <color=orange>axes</color> in this world"
+almanac_axe_master_lore: "Becoming a true lumberjack warrior, you've unearthed the secrets of every axe in Valheim. From the mightiest woodchoppers to the most fearsome battle-axes, you've mastered them all, solidifying your expertise with these versatile tools of destruction."
+
+almanac_achievement_lumberjack: "Lumberjack"
+almanac_achievement_lumberjack_desc: "Chop down over <color=orange>1000</color> trees"
+almanac_lumberjack_lore: "With each mighty swing, you've felled a thousand trees in Valheim, reshaping the forest into an arena of your conquest. Your lumberjack skills have become legendary, and the echo of your axe striking wood rings through the land."
+
+almanac_achievement_lumberer: "Lumbered"
+almanac_achievement_lumberer_desc: "Die over <color=orange>100</color> times by a tree"
+almanac_lumberer_lore: "A hundred times, the weight of the forest sought to claim you, yet you rose again, each time a testament to your unwavering spirit and determination. Being crushed by falling trees has only made you stronger, teaching you to dance through the woods with greater agility."
+
+almanac_achievement_daredevil: "Daredevil"
+almanac_achievement_daredevil_desc: "Die by falling off the edge of the world"
+almanac_daredevil_lore: "A daredevil's journey, you flirted with the very edge of the world, and a hundred times it cast you into the abyss. But each time, you were reborn, and now, you've mastered the art of balance, dancing on the precipice with unparalleled grace."
+
+almanac_achievement_turret: "Slinger"
+almanac_achievement_turret_desc: "Shoot over <color=orange>5000</color> arrows"
+almanac_turret_lore: "You, the relentless archer, have drawn your bowstring over 5,000 times, sending arrows flying with deadly precision. Your aim is true, and your quiver always ready for the next target."
   
-  
+almanac_achievement_adventurer: "Adventurer"
+almanac_achievement_adventurer_desc: "Stay out of your base for over <color=orange>50,000</color> minutes"
+almanac_adventurer_lore: "As a true adventurer, you've spent a staggering 50,000 minutes away from the safety of your base, braving the wilds of Valheim. Your journey has taken you to every corner of this world, and your resilience in the face of danger knows no bounds."
+
+almanac_achievement_cultist_hunter: "Preacher"
+almanac_achievement_cultist_hunter_desc: "Hunt down the cultists of the mountains"
+almanac_cultist_hunter_lore: ""
+
+almanac_achievement_goblin_shaman_hunter: "Witch Hunt"
+almanac_achievement_goblin_shaman_hunter_desc: "Hunt down the witches of the plains"
+almanac_goblin_shaman_hunter_lore: ""
+
+almanac_achievement_drake_hunter: "Flies"
+almanac_achievement_drake_hunter_desc: "Hunt down the drakes from the mountains"
+almanac_drake_hunter_lore: ""
+
+almanac_achievement_dragon_killer: "Dragon Hunter"
+almanac_achievement_dragon_killer_desc: "Hunt down the dragon queen"
+almanac_dragon_killer_lore: ""
+
+almanac_achievement_bonemass_killer: "Noxious"
+almanac_achievement_bonemass_killer_desc: "Hunt down bonemass"
+almanac_bonemass_killer_lore: ""
+
+almanac_achievement_stench: "Putrid"
+almanac_achievement_stench_desc: "Died over <color=orange>100</color> times"
+almanac_stench_lore: ""
+
+almanac_achievement_vengeful: "Vengeful"
+almanac_achievement_vengeful_desc: "Hunt down the wraiths of the swamps"
+almanac_vengeful_lore: ""
+
+almanac_achievement_ghastly: "Ghastly"
+almanac_achievement_ghastly_desc: "Hunt down the crypt ghosts of the black forest"
+almanac_ghostly_lore: ""
+
+almanac_achievement_fenring: "Wolverine"
+almanac_achievement_fenring_desc: "Hunt down the fenrings of the mountains"
+almanac_fenring_lore: ""
+
+
 # Leaderboard 
 almanac_leaderboard: "Leaderboard"
+
+# Jewelcrafting
+almanac_jewelcrafting_button: "Jewels"

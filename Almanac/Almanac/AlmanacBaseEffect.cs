@@ -81,6 +81,11 @@ public static class AlmanacEffectsManager
         LightningDMG,
         PoisonDMG,
         SpiritDMG,
+        ChopDMG,
+        PickaxeDMG,
+        BluntDMG,
+        PierceDMG,
+        SlashDMG,
         EikthyrPower,
         ElderPower,
         BonemassPower,
@@ -132,45 +137,49 @@ public static class AlmanacEffectsManager
                 damageMods.Clear();
                 
                 string normalizedDamageMod = damageMod.Replace(" ", "");
-                string[] split = normalizedDamageMod.Split('=');
-                if (split.Length != 2) return;
-                string damageType = split[0];
-                string damageValue = split[1];
-
-                HitData.DamageModPair pair = new()
+                string[] resistanceMods = normalizedDamageMod.Split(',');
+                foreach (string resistance in resistanceMods)
                 {
-                    m_type = HitData.DamageType.Physical,
-                    m_modifier = HitData.DamageModifier.Normal
-                };
+                    string[] split = resistance.Split('=');
+                    if (split.Length != 2) return;
+                    string damageType = split[0];
+                    string damageValue = split[1];
 
-                switch (damageValue)
-                {
-                    case "Normal": break;
-                    case "Resistant": pair.m_modifier = HitData.DamageModifier.Resistant; break;
-                    case "Weak": pair.m_modifier = HitData.DamageModifier.Weak; break;
-                    case "Immune": pair.m_modifier = HitData.DamageModifier.Immune; break;
-                    case "Ignore": pair.m_modifier = HitData.DamageModifier.Ignore; break;
-                    case "VeryResistant": pair.m_modifier = HitData.DamageModifier.VeryResistant; break;
-                    case "VeryWeak": pair.m_modifier = HitData.DamageModifier.VeryWeak; break;
+                    HitData.DamageModPair pair = new()
+                    {
+                        m_type = HitData.DamageType.Physical,
+                        m_modifier = HitData.DamageModifier.Normal
+                    };
+
+                    switch (damageValue)
+                    {
+                        case "Normal": break;
+                        case "Resistant": pair.m_modifier = HitData.DamageModifier.Resistant; break;
+                        case "Weak": pair.m_modifier = HitData.DamageModifier.Weak; break;
+                        case "Immune": pair.m_modifier = HitData.DamageModifier.Immune; break;
+                        case "Ignore": pair.m_modifier = HitData.DamageModifier.Ignore; break;
+                        case "VeryResistant": pair.m_modifier = HitData.DamageModifier.VeryResistant; break;
+                        case "VeryWeak": pair.m_modifier = HitData.DamageModifier.VeryWeak; break;
+                    }
+
+                    switch (damageType)
+                    {
+                        case "Blunt": pair.m_type = HitData.DamageType.Blunt; break;
+                        case "Slash": pair.m_type = HitData.DamageType.Slash; break;
+                        case "Pierce": pair.m_type = HitData.DamageType.Pierce; break;
+                        case "Chop": pair.m_type = HitData.DamageType.Chop; break;
+                        case "Pickaxe": pair.m_type = HitData.DamageType.Pickaxe; break;
+                        case "Fire": pair.m_type = HitData.DamageType.Fire; break;
+                        case "Frost": pair.m_type = HitData.DamageType.Frost; break;
+                        case "Lightning": pair.m_type = HitData.DamageType.Lightning; break;
+                        case "Poison": pair.m_type = HitData.DamageType.Poison; break;
+                        case "Spirit": pair.m_type = HitData.DamageType.Spirit; break;
+                        case "Physical": pair.m_type = HitData.DamageType.Physical; break;
+                        case "Elemental": pair.m_type = HitData.DamageType.Elemental; break;
+                    }
+
+                    damageMods.Add(pair);
                 }
-
-                switch (damageType)
-                {
-                    case "Blunt": pair.m_type = HitData.DamageType.Blunt; break;
-                    case "Slash": pair.m_type = HitData.DamageType.Slash; break;
-                    case "Pierce": pair.m_type = HitData.DamageType.Pierce; break;
-                    case "Chop": pair.m_type = HitData.DamageType.Chop; break;
-                    case "Pickaxe": pair.m_type = HitData.DamageType.Pickaxe; break;
-                    case "Fire": pair.m_type = HitData.DamageType.Fire; break;
-                    case "Frost": pair.m_type = HitData.DamageType.Frost; break;
-                    case "Lightning": pair.m_type = HitData.DamageType.Lightning; break;
-                    case "Poison": pair.m_type = HitData.DamageType.Poison; break;
-                    case "Spirit": pair.m_type = HitData.DamageType.Spirit; break;
-                    case "Physical": pair.m_type = HitData.DamageType.Physical; break;
-                    case "Elemental": pair.m_type = HitData.DamageType.Elemental; break;
-                }
-
-                damageMods.Add(pair);
             }
             
             Sprite? icon = AlmanacPlugin.AlmanacIconButton;

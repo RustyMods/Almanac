@@ -74,7 +74,12 @@ public static class Almanac
         public static int plantsPage;
         public static int otherPage;
         public static int modPage;
+
+        private static List<ItemDrop> filteredGear = new();
         
+        public static bool jewelCraftingLoaded;
+        public static List<ItemDrop> jewels = new();
+
         public static void Postfix(InventoryGui __instance)
         {
             if (!__instance) return;
@@ -247,6 +252,28 @@ public static class Almanac
             plantPieces = PieceDataCollector.plantPieces;
             defaultPieces = PieceDataCollector.defaultPieces;
             modPieces = PieceDataCollector.modPieces;
+
+            jewelCraftingLoaded = gear.Exists(x => x.name == "Advanced_Green_Socket");
+            
+            if (jewelCraftingLoaded)
+            {
+                jewels.Clear();
+                filteredGear.Clear();
+
+                foreach (ItemDrop item in gear)
+                {
+                    string name = item.name;
+                    if (
+                        name.EndsWith("Socket") 
+                        || name.StartsWith("Uncut") 
+                        || name.Contains("Gemstone") 
+                        || name.StartsWith("JC_") 
+                        || name.Contains("Boss_Crystal") 
+                        || name.Contains("Crystal_Frame")) jewels.Add(item);
+                    else filteredGear.Add(item);
+                }
+                
+            }
         }
 
         private static void CreateAllPanels()
@@ -256,7 +283,7 @@ public static class Almanac
             CreateCreaturesPanel();
             CreateMaterialPanel();
             CreatePanel("consummable", consumables);
-            CreatePanel("gear", gear);
+            CreatePanel("gear", jewelCraftingLoaded ? filteredGear : gear);
             CreatePanel("weapon", weapons);
             CreatePanel("ammo", ammunition);
             CreatePanel("fish", fish);
@@ -293,6 +320,12 @@ public static class Almanac
             
             CreateTabs("achievementsButton", "achievements", 585f, 425f);
             CreateTabs("playerStatsButton", "stats", 740f, 425f);
+
+            if (jewelCraftingLoaded)
+            {
+                CreatePanel("jewelcrafting", jewels);
+                CreateTabs("jewelcraftingButton", "jewelcrafting", -760f, 477f);
+            }
 
         }
 
@@ -343,7 +376,7 @@ public static class Almanac
             for (int i = 0; i < AchievementsUI.maxPowers; ++i)
             {
                 GameObject effectBackground = CreateImageElement(panel.transform, $"activeEffects ({i})",
-                    -550f + (i * 78f), 225f, 75f, 75f, false, false,
+                    -555f + (i * 78f), 225f, 75f, 75f, false, false,
                     iconBg.sprite, 1f, true
                     );
                 
@@ -373,8 +406,8 @@ public static class Almanac
                     panel.transform,
                     $"activeDesc ({i})",
                     "$almanac_no_data",
-                    -475f, 125f - (i * 75f),
-                    250f, 50f,
+                    -475f, 125f - (i * 86f),
+                    250f, 85f,
                     Color.white, 18,
                     true, TextOverflowModes.Overflow,
                     HorizontalAlignmentOptions.Left,
@@ -385,6 +418,24 @@ public static class Almanac
                 40f, 300f, 350f, 100f, Color.yellow, 30,
                 horizontalAlignment: HorizontalAlignmentOptions.Left
             );
+            
+            CreateTextElement(panel.transform, "leaderboard", "- Work in progress -",
+                40f, 200f, 350f, 100f, Color.white, 30,
+                horizontalAlignment: HorizontalAlignmentOptions.Left
+            );
+
+            // for (int i = 0; i < 10; ++i)
+            // {
+            //     CreateImageElement(panel.transform, "board overlay", 235f, 200f * (i - 52f), 775f, 50f, true, alpha: 0.5f);
+            //     CreateTextElement(
+            //         panel.transform, "playerName",
+            //         "$almanac_no_data",
+            //         40f, 200f * (i - 52f),
+            //         200f, 50f,
+            //         Color.white, 16,
+            //         horizontalAlignment: HorizontalAlignmentOptions.Left
+            //     );
+            // }
             
             
         }
@@ -461,52 +512,22 @@ public static class Almanac
         {
             switch (name)
             {
-                case "fish":
-                    Patches.OnOpenTrophiesPatch.SetUnknownItems(name, fish);
-                    break;
-                case "ammo":
-                    Patches.OnOpenTrophiesPatch.SetUnknownItems(name, ammunition);
-                    break;
-                case "weapon":
-                    Patches.OnOpenTrophiesPatch.SetUnknownItems(name, weapons);
-                    break;
-                case "gear":
-                    Patches.OnOpenTrophiesPatch.SetUnknownItems(name, gear);
-                    break;
-                case "material":
-                    Patches.OnOpenTrophiesPatch.SetUnknownItems(name, materials);
-                    break;
-                case "consummable":
-                    Patches.OnOpenTrophiesPatch.SetUnknownItems(name, consumables);
-                    break;
-                case "miscPieces":
-                    Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, miscPieces);
-                    break;
-                case "craftingPieces":
-                    Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, craftingPieces);
-                    break;
-                case "buildPieces":
-                    Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, buildPieces);
-                    break;
-                case "furniturePieces":
-                    Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, furniturePieces);
-                    break;
-                case "other":
-                    Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, defaultPieces);
-                    break;
-                case "plantPieces":
-                    Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, plantPieces);
-                    break;
-                case "modPieces":
-                    Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, modPieces);
-                    break;
-                case "creature":
-                    Patches.OnOpenTrophiesPatch.SetUnknownCreatures();
-                    break;
-                case "achievements":
-                    break;
-                case "stats":
-                    break;
+                case "fish": Patches.OnOpenTrophiesPatch.SetUnknownItems(name, fish); break;
+                case "ammo": Patches.OnOpenTrophiesPatch.SetUnknownItems(name, ammunition); break;
+                case "weapon": Patches.OnOpenTrophiesPatch.SetUnknownItems(name, weapons); break;
+                case "gear": Patches.OnOpenTrophiesPatch.SetUnknownItems(name, gear); break;
+                case "material": Patches.OnOpenTrophiesPatch.SetUnknownItems(name, materials); break;
+                case "consummable": Patches.OnOpenTrophiesPatch.SetUnknownItems(name, consumables); break;
+                case "miscPieces": Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, miscPieces); break;
+                case "craftingPieces": Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, craftingPieces); break;
+                case "buildPieces": Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, buildPieces); break;
+                case "furniturePieces": Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, furniturePieces); break;
+                case "other": Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, defaultPieces); break;
+                case "plantPieces": Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, plantPieces); break;
+                case "modPieces": Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, modPieces); break;
+                case "creature": Patches.OnOpenTrophiesPatch.SetUnknownCreatures(); break;
+                case "achievements": break;
+                case "stats": break;
             }
         }
         private static void SetTopic(string name)
@@ -534,7 +555,8 @@ public static class Almanac
                 "plantPieces",
                 "modPieces",
                 "achievements",
-                "stats"
+                "stats",
+                "jewelcrafting"
             };
             // Set panels active based on topic name
             foreach (string topicName in topicNames)
@@ -940,50 +962,20 @@ public static class Almanac
         {
             switch (id)
             {
-                case "materialContainer":
-                    materialsPage = index;
-                    break;
-                case "CreatureContainer":
-                    creaturesPage = index;
-                    break;
-                case "consummableContainer":
-                    consumablesPage = index;
-                    break;
-                case "gearContainer":
-                    equipmentPage = index;
-                    break;
-                case "weaponContainer":
-                    weaponsPage = index;
-                    break;
-                case "ammoContainer":
-                    projectilePage = index;
-                    break;
-                case "fishContainer":
-                    fishPage = index;
-                    break;
-                case "miscPiecesContainer":
-                    miscPage = index;
-                    break;
-                case "craftingPiecesContainer":
-                    craftPage = index;
-                    break;
-                case "buildPiecesContainer":
-                    buildPage = index;
-                    break;
-                case "furniturePiecesContainer":
-                    furniturePage = index;
-                    break;
-                case "otherContainer":
-                    otherPage = index;
-                    break;
-                case "plantPiecesContainer":
-                    plantsPage = index;
-                    break;
-                case "modPiecesContainer":
-                    modPage = index;
-                    break;
-                default:
-                    break;
+                case "materialContainer": materialsPage = index; break;
+                case "CreatureContainer": creaturesPage = index; break;
+                case "consummableContainer": consumablesPage = index; break;
+                case "gearContainer": equipmentPage = index; break;
+                case "weaponContainer": weaponsPage = index; break;
+                case "ammoContainer": projectilePage = index; break;
+                case "fishContainer": fishPage = index; break;
+                case "miscPiecesContainer": miscPage = index; break;
+                case "craftingPiecesContainer": craftPage = index; break;
+                case "buildPiecesContainer": buildPage = index; break;
+                case "furniturePiecesContainer": furniturePage = index; break;
+                case "otherContainer": otherPage = index; break;
+                case "plantPiecesContainer": plantsPage = index; break;
+                case "modPiecesContainer": modPage = index; break;
             }
         }
         private static void CreatePiecesContainer(Transform parentElement, GameObject data, int index, Vector2 position, string id)
@@ -1099,6 +1091,10 @@ public static class Almanac
             containerButton.onClick = new Button.ButtonClickedEvent();
             containerButton.onClick.AddListener(() =>
             {
+                switch (id)
+                {
+                    case "jewelcrafting": id = "gear"; break;
+                }
                 Transform AlmanacPanel = TrophiesFrame.Find("ContentPanel");
                 Transform AlmanacList = AlmanacPanel.Find("AlmanacList");
                 Transform element = AlmanacList.Find($"{id}Element (0)");

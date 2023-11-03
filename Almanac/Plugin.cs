@@ -126,7 +126,8 @@ namespace Almanac
                 "NPC_HelmetBronze_Worn0",
                 "NPC_ArmorIronChest_Worn",
                 "NPC_ArmorIronLegs_Worn",
-                "TrainingDummy"
+                "TrainingDummy",
+                "VegvisirShard_Bonemass"
             };
             string ignoredPrefabs = string.Join(",", IgnoredList);
 

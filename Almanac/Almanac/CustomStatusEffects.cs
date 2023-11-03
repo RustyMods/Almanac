@@ -9,10 +9,112 @@ public static class CustomStatusEffects
 {
     public static readonly List<StatusEffect> activeAlmanacEffects = new();
 
-    private static readonly float visEquipThreshold = 30f;
+    private static readonly float visEquipThreshold = 15f;
     public static void AddAlmanacEffect(StatusEffect statusEffect) => activeAlmanacEffects.Add(statusEffect);
     public static void RemoveAlmanacEffect(StatusEffect statusEffect) => activeAlmanacEffects.Remove(statusEffect);
-    
+
+    private static GameObject embers = null!;
+    private static GameObject sparks = null!;
+    private static GameObject frost = null!;
+    private static GameObject drip = null!;
+    private static GameObject spirit = null!;
+
+    [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.Awake))]
+    static class ZNetSceneAwakePatch
+    {
+        private static void Postfix(ZNetScene __instance)
+        {
+            GameObject TrophySurtling = __instance.GetPrefab("TrophySurtling");
+            Transform surtlingEmbers = TrophySurtling.transform.Find("attach").Find("fx_Torch_Carried").Find("Embers");
+            embers = surtlingEmbers.gameObject;
+
+            GameObject MaceSilver = __instance.GetPrefab("MaceSilver");
+            Transform frostParticles = MaceSilver.transform.Find("attach").Find("effects").Find("vfx_BloodHit 1");
+            frost = frostParticles.gameObject;
+
+            GameObject AtgeirHimminAfl = __instance.GetPrefab("AtgeirHimminAfl");
+            Transform sparcParticles = AtgeirHimminAfl.transform.Find("attach").Find("equiped").Find("Sparcs");
+            sparks = sparcParticles.gameObject;
+
+            GameObject AxeJotunBane = __instance.GetPrefab("AxeJotunBane");
+            Transform dripEffect = AxeJotunBane.transform.Find("attach").Find("poison drip");
+            drip = dripEffect.gameObject;
+
+            GameObject YagluthDrop = __instance.GetPrefab("YagluthDrop");
+            Transform purpleSmoke = YagluthDrop.transform.Find("attach");
+            spirit = purpleSmoke.gameObject;
+
+
+        }
+    }
+
+    [HarmonyPatch(typeof(TreeBase), nameof(TreeBase.RPC_Damage))]
+    static class AddExtraDamageTreePatch
+    {
+        private static void Prefix(TreeBase __instance, HitData hit)
+        {
+            if (!__instance) return;
+            if (!Player.m_localPlayer) return;
+
+            Player localPlayer = Player.m_localPlayer;
+            List<StatusEffect> activeEffects = localPlayer.m_seman.GetStatusEffects();
+
+            if (hit.m_attacker.IsNone()) return;
+            if (hit.m_hitType is not HitData.HitType.PlayerHit) return;
+            
+            GameObject attacker = ZNetScene.instance.FindInstance(hit.m_attacker);
+            attacker.TryGetComponent(out Player player);
+            if (!player) return;
+
+            if (player.GetHoverName() != localPlayer.GetHoverName()) return;
+
+            foreach (StatusEffect effect in activeEffects)
+            {
+                if (!RegisterAlmanacEffects.effectsData.Exists(x => x.effectName == effect.name)) continue;
+                AlmanacEffectsManager.BaseEffectData data = RegisterAlmanacEffects.effectsData.Find(x => x.effectName == effect.name);
+                switch (data.Modifier)
+                {
+                    case AlmanacEffectsManager.Modifier.ChopDMG:
+                        hit.m_damage.m_chop += data.m_newValue;
+                        break;
+                }
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(TreeLog), nameof(TreeLog.RPC_Damage))]
+    static class AddExtraDamageTreeLogPatch
+    {
+        private static void Prefix(TreeLog __instance, HitData hit)
+        {
+            if (!__instance) return;
+            if (!Player.m_localPlayer) return;
+
+            Player localPlayer = Player.m_localPlayer;
+            List<StatusEffect> activeEffects = localPlayer.m_seman.GetStatusEffects();
+
+            if (hit.m_attacker.IsNone()) return;
+            if (hit.m_hitType is not HitData.HitType.PlayerHit) return;
+            
+            GameObject attacker = ZNetScene.instance.FindInstance(hit.m_attacker);
+            attacker.TryGetComponent(out Player player);
+            if (!player) return;
+
+            if (player.GetHoverName() != localPlayer.GetHoverName()) return;
+
+            foreach (StatusEffect effect in activeEffects)
+            {
+                if (!RegisterAlmanacEffects.effectsData.Exists(x => x.effectName == effect.name)) continue;
+                AlmanacEffectsManager.BaseEffectData data = RegisterAlmanacEffects.effectsData.Find(x => x.effectName == effect.name);
+                switch (data.Modifier)
+                {
+                    case AlmanacEffectsManager.Modifier.ChopDMG:
+                        hit.m_damage.m_chop += data.m_newValue;
+                        break;
+                }
+            }
+        }
+    }
 
     [HarmonyPatch(typeof(Character), nameof(Character.RPC_Damage))]
     static class AddExtraDamagePatch
@@ -70,223 +172,43 @@ public static class CustomStatusEffects
                     case AlmanacEffectsManager.Modifier.SpiritDMG:
                         hit.m_damage.m_spirit += data.m_newValue;
                         break;
+                    case AlmanacEffectsManager.Modifier.ChopDMG:
+                        hit.m_damage.m_chop += data.m_newValue;
+                        break;
+                    case AlmanacEffectsManager.Modifier.PickaxeDMG:
+                        hit.m_damage.m_pickaxe += data.m_newValue;
+                        break;
+                    case AlmanacEffectsManager.Modifier.BluntDMG:
+                        hit.m_damage.m_blunt += data.m_newValue;
+                        break;
+                    case AlmanacEffectsManager.Modifier.PierceDMG:
+                        hit.m_damage.m_pierce += data.m_newValue;
+                        break;
+                    case AlmanacEffectsManager.Modifier.SlashDMG:
+                        hit.m_damage.m_slash += data.m_newValue;
+                        break;
+
                 }
             }
         }
     }
 
-    [HarmonyPatch(typeof(VisEquipment), nameof(VisEquipment.AttachItem))]
-    static class SetLeftHandPatch
+    [HarmonyPatch(typeof(Player), nameof(Player.Awake))]
+    static class PlayerAwakePatch
     {
-        private static void Postfix(VisEquipment __instance, Transform joint, int itemHash)
+        private static void Postfix(Player __instance)
         {
-            if (!__instance.m_isPlayer || !ZNetScene.instance) return;
-
-            Player playerComponent = __instance.GetComponentInParent<Player>();
-
-            if (Player.m_localPlayer.GetHoverName() != playerComponent.GetHoverName()) return;
-
-            GameObject itemPrefab = ObjectDB.instance.GetItemPrefab(itemHash);
-            itemPrefab.TryGetComponent(out ItemDrop itemDrop);
-            if (!itemDrop) return;
-
-            List<StatusEffect> activeEffects = Player.m_localPlayer.m_seman.GetStatusEffects();
-            List<AlmanacEffectsManager.Modifier> activeModifiers = new();
-
-            Dictionary<AlmanacEffectsManager.Modifier, float> totalValues = new();
-
-            foreach (StatusEffect effect in activeEffects)
-            {
-                if (!RegisterAlmanacEffects.effectsData.Exists(x => x.effectName == effect.name)) continue;
-                AlmanacEffectsManager.BaseEffectData data = RegisterAlmanacEffects.effectsData.Find(x => x.effectName == effect.name);
-
-                if (totalValues.ContainsKey(data.Modifier))
-                {
-                    totalValues[data.Modifier] += data.m_newValue;
-                }
-                else
-                {
-                    totalValues.Add(data.Modifier, data.m_newValue);
-                }
-                
-                if (!activeModifiers.Contains(data.Modifier)) activeModifiers.Add(data.Modifier);
-                
-            }
+            if (!__instance) return;
             
-            ItemDrop.ItemData.ItemType itemType = itemDrop.m_itemData.m_shared.m_itemType;
-            Skills.SkillType skillType = itemDrop.m_itemData.m_shared.m_skillType;
+            GameObject playerObj = __instance.gameObject;
 
-            foreach (var kvp in totalValues)
-            {
-                if (kvp.Value >= visEquipThreshold)
-                {
-                    AddCustomEquipmentEffects(joint, itemType, skillType, kvp.Key);
-                }
-            }
-
-        }
-
-        private static void AddCustomEquipmentEffects(Transform joint, ItemDrop.ItemData.ItemType itemType, Skills.SkillType skillType, AlmanacEffectsManager.Modifier mods)
-        {
-            switch (joint.name)
-            {
-                case "RightHand_Attach" or "LeftHand_Attach":
-
-                    switch (itemType)
-                    {
-                        case ItemDrop.ItemData.ItemType.OneHandedWeapon:
-                            
-                            Transform item = joint.GetChild(0);
-                            // Create empty game object
-                            GameObject effects = new GameObject("almanac_effects");
-                            effects.transform.SetParent(item);
-                            effects.transform.localPosition = Vector3.zero;
-                            effects.transform.localRotation = Quaternion.identity;
-
-                            ZNetScene scene = ZNetScene.instance;
-                            // Add effects depending on active mods
-                            if (mods is (AlmanacEffectsManager.Modifier.FireDMG))
-                            {
-                                GameObject prefab = scene.GetPrefab("SwordIronFire");
-                                GameObject itemEffects = prefab.transform.Find("attach").Find("effects").gameObject;
-                                
-                                GameObject effect = Object.Instantiate(itemEffects, effects.transform, false);
-                                
-                                switch (skillType)
-                                {
-                                    case Skills.SkillType.Spears :
-                                        effect.transform.localPosition = new Vector3(0f, 0f, -1.386f);
-                                        effect.transform.localScale = new Vector3(1f, 1f, 1f);
-                                        break;
-                                    case Skills.SkillType.Knives:
-                                        effect.transform.localPosition = new Vector3(-0.5f, 0.0375f, 0.1755f);
-                                        for (int i = 0; i < effect.transform.GetChildCount(); ++i)
-                                        {
-                                            Transform child = effect.transform.GetChild(i);
-                                            child.transform.localPosition = new Vector3(0f, 0f, 0f);
-                                            child.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
-                                        }
-
-                                        break;
-                                    default:
-                                        break;
-                                        
-                                }
+            GameObject effectsContainer = new GameObject("almanac_effects");
+            effectsContainer.transform.SetParent(playerObj.transform);
+            Transform containerLocale = effectsContainer.transform;
+            containerLocale.localPosition = new Vector3(0f, 1.8f, 0f);
+            containerLocale.localRotation = Quaternion.identity;
             
-                                effect.SetActive(true);
-                            }
-
-                            if (mods is (AlmanacEffectsManager.Modifier.FrostDMG))
-                            {
-                                GameObject prefab = scene.GetPrefab("MaceSilver");
-                                GameObject itemEffects = prefab.transform.Find("attach").Find("effects").gameObject;
-                                
-                                GameObject effect = Object.Instantiate(itemEffects, effects.transform, false);
-                                
-                                switch (skillType)
-                                {
-                                    case Skills.SkillType.Spears :
-                                        effect.transform.localPosition = new Vector3(0f, 0f, -1.386f);
-                                        effect.transform.localScale = new Vector3(1f, 1f, 1f);
-                                        break;
-                                    case Skills.SkillType.Knives:
-                                        effect.transform.localPosition = new Vector3(-0.05f, 0.0375f, -0.1755f);
-                                        for (int i = 0; i < effect.transform.GetChildCount(); ++i)
-                                        {
-                                            Transform child = effect.transform.GetChild(i);
-                                            child.transform.localPosition = new Vector3(0f, 0f, 0f);
-                                            child.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
-                                        }
-
-                                        break;
-                                    default:
-                                        break;
-                                        
-                                }
-            
-                                effect.SetActive(true);
-                            }
-
-                            if (mods is (AlmanacEffectsManager.Modifier.PoisonDMG))
-                            {
-                                GameObject prefab = scene.GetPrefab("AxeJotunBane");
-                                GameObject itemEffects = prefab.transform.Find("attach").Find("poison drip").gameObject;
-
-                                GameObject effect = Object.Instantiate(itemEffects, effects.transform, false);
-                                
-                                switch (skillType)
-                                {
-                                    case Skills.SkillType.Spears :
-                                        effect.transform.localPosition = new Vector3(0.128f, -0.082f, -0.624f);
-                                        effect.transform.localScale = new Vector3(1f, 1f, 1f);
-                                        break;
-                                    case Skills.SkillType.Knives:
-                                        effect.transform.localPosition = new Vector3(-0.05f, 0.0375f, 0.1755f);
-                                        for (int i = 0; i < effect.transform.GetChildCount(); ++i)
-                                        {
-                                            Transform child = effect.transform.GetChild(i);
-                                            child.transform.localPosition = new Vector3(0f, 0f, 0f);
-                                            child.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
-                                        }
-
-                                        break;
-                                    default:
-                                        break;
-                                        
-                                }
-                                
-                                effect.SetActive(true);
-                            }
-
-                            if (mods is (AlmanacEffectsManager.Modifier.LightningDMG))
-                            {
-                                GameObject prefab = scene.GetPrefab("AtgeirHimminAfl");
-                                GameObject itemEffects = prefab.transform.Find("attach").Find("equiped").Find("Sparcs").gameObject;
-
-                                GameObject effect = Object.Instantiate(itemEffects, effects.transform, false);
-
-                                switch (skillType)
-                                {
-                                    case Skills.SkillType.Spears :
-                                        effect.transform.localPosition = new Vector3(0.128f, -0.082f, -0.685f);
-                                        effect.transform.localScale = new Vector3(1f, 1f, 1f);
-                                        break;
-                                    case Skills.SkillType.Knives:
-                                        effect.transform.localPosition = new Vector3(-0.05f, 0.0375f, 0.1755f);
-                                        for (int i = 0; i < effect.transform.GetChildCount(); ++i)
-                                        {
-                                            Transform child = effect.transform.GetChild(i);
-                                            child.transform.localPosition = new Vector3(0f, 0f, 0f);
-                                            child.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
-                                        }
-
-                                        break;
-                                    default:
-                                        effect.transform.localPosition = new Vector3(0f, 0f, 0.7f);
-                                        effect.transform.localScale = new Vector3(1f, 1f, 2f);
-                                        break;
-                                        
-                                }
-                                effect.SetActive(true);
-                            }
-                            
-                            break;
-                            
-                    }
-                    
-                    break;
-                
-            }
-        }
-
-        private static void CloneItemEffects(string prefabName, Transform parent, Skills.SkillType skillType)
-        {
-            GameObject prefab = ZNetScene.instance.GetPrefab(prefabName);
-            GameObject itemEffects = prefab.transform.Find("attach").Find("effects").gameObject;
-                                
-            GameObject effect = Object.Instantiate(itemEffects, parent, false);
-            
-            effect.SetActive(true);
+            effectsContainer.SetActive(true);
         }
     }
 
@@ -299,6 +221,9 @@ public static class CustomStatusEffects
             if (!character) return;
             if (!Player.m_localPlayer) return;
             Player player = Player.m_localPlayer;
+            GameObject playerObj = player.gameObject;
+            Transform effectsContainer = playerObj.transform.Find("almanac_effects");
+
             if (player.GetHoverName() != character.GetHoverName()) return;
             
             List<StatusEffect> statusEffects = __instance.m_statusEffects;
@@ -314,23 +239,73 @@ public static class CustomStatusEffects
             {
                 if (!RegisterAlmanacEffects.effectsData.Exists(x => x.effectName == effect.name)) continue;
                 var data = RegisterAlmanacEffects.effectsData.Find(x => x.effectName == effect.name);
-                if (data.Modifier is not AlmanacEffectsManager.Modifier.BaseHP
-                    or AlmanacEffectsManager.Modifier.BaseStamina) continue;
                 
-                totalValues[data.Modifier] += data.m_newValue;
+                if (!totalValues.ContainsKey(data.Modifier)) totalValues.Add(data.Modifier, data.m_newValue);
+                else totalValues[data.Modifier] += data.m_newValue;
             }
             
             // Apply the total values
-            foreach (var kvp in totalValues)
+            ApplyCustomEffects(totalValues, player, effectsContainer);
+        }
+    }
+
+    private static void ApplyCustomEffects(Dictionary<AlmanacEffectsManager.Modifier,float> totalValues, Player player, Transform effectsContainer)
+    {
+        foreach (var kvp in totalValues)
+        {
+            switch (kvp.Key)
             {
+                case AlmanacEffectsManager.Modifier.BaseHP:
+                    player.m_baseHP = kvp.Value;
+                    break;
+                case AlmanacEffectsManager.Modifier.BaseStamina :
+                    player.m_baseStamina = kvp.Value;
+                    break;
+            }
+
+            if (kvp.Value >= visEquipThreshold)
+            {
+                if (kvp.Key is AlmanacEffectsManager.Modifier.BaseHP or AlmanacEffectsManager.Modifier.BaseStamina) continue;
+                Debug.LogWarning($"threshold met for {kvp.Key} : at {kvp.Value}");
                 switch (kvp.Key)
                 {
-                    case AlmanacEffectsManager.Modifier.BaseHP:
-                        player.m_baseHP = kvp.Value;
-                        break;
-                    case AlmanacEffectsManager.Modifier.BaseStamina :
-                        player.m_baseStamina = kvp.Value;
-                        break;
+                    case AlmanacEffectsManager.Modifier.FireDMG:
+                    GameObject EmberEffect = Object.Instantiate(embers, effectsContainer, false);
+                    Transform emberLocale = EmberEffect.transform;
+                    emberLocale.localPosition = new Vector3(0f, 0f, 0.09f);
+                    effectsContainer.gameObject.SetActive(true);
+                    EmberEffect.SetActive(true);
+                    break;
+                case AlmanacEffectsManager.Modifier.FrostDMG:
+                    GameObject SnowEffect = Object.Instantiate(frost, effectsContainer, false);
+                    Transform snowLocale = SnowEffect.transform;
+                    snowLocale.localPosition = Vector3.zero;
+                    effectsContainer.gameObject.SetActive(true);
+                    SnowEffect.SetActive(true);
+                    break;
+                case AlmanacEffectsManager.Modifier.LightningDMG:
+                    GameObject SparkEffect = Object.Instantiate(sparks, effectsContainer, false);
+                    Transform sparkLocale = SparkEffect.transform;
+                    sparkLocale.localPosition = new Vector3(0f, -0.3f, 0f);
+                    effectsContainer.gameObject.SetActive(true);
+                    SparkEffect.SetActive(true);
+                    break;
+                case AlmanacEffectsManager.Modifier.PoisonDMG:
+                    GameObject DripEffect = Object.Instantiate(drip, effectsContainer, false);
+                    Transform dripLocale = DripEffect.transform;
+                    dripLocale.localPosition = Vector3.zero;
+                    effectsContainer.gameObject.SetActive(true);
+                    DripEffect.SetActive(true);
+                    break;
+                case AlmanacEffectsManager.Modifier.SpiritDMG:
+                    GameObject SpiritEffect = Object.Instantiate(spirit, effectsContainer, false);
+                    Transform spiritLocale = SpiritEffect.transform;
+                    spiritLocale.localPosition = new Vector3(0f, 0f, 0.11f);
+                    Transform sphere = SpiritEffect.transform.Find("Sphere");
+                    sphere.gameObject.SetActive(false);
+                    effectsContainer.gameObject.SetActive(true);
+                    SpiritEffect.SetActive(true);
+                    break;
                 }
             }
         }
@@ -343,6 +318,15 @@ public static class CustomStatusEffects
         {
             Character character = __instance.m_character;
             Player player = Player.m_localPlayer;
+            GameObject playerObj = player.gameObject;
+            Transform effectsContainer = playerObj.transform.Find("almanac_effects");
+            // Destroy any instances of active almanac effects
+            for (int i = 0; i < effectsContainer.GetChildCount(); ++i)
+            {
+                Transform effect = effectsContainer.GetChild(i);
+                Object.Destroy(effect.gameObject);
+            }
+            
             if (!character || !player) return;
 
             if (character.GetHoverName() != player.GetHoverName()) return;
@@ -360,24 +344,11 @@ public static class CustomStatusEffects
             {
                 if (!RegisterAlmanacEffects.effectsData.Exists(x => x.effectName == effect.name)) continue;
                 var data = RegisterAlmanacEffects.effectsData.Find(x => x.effectName == effect.name);
-                if (data.Modifier is not AlmanacEffectsManager.Modifier.BaseHP
-                    or AlmanacEffectsManager.Modifier.BaseStamina) continue;
-                
-                totalValues[data.Modifier] += data.m_newValue;
+                if (!totalValues.ContainsKey(data.Modifier)) totalValues.Add(data.Modifier, data.m_newValue);
+                else totalValues[data.Modifier] += data.m_newValue;
             }
             // Set the values
-            foreach (var kvp in totalValues)
-            {
-                switch (kvp.Key)
-                {
-                    case AlmanacEffectsManager.Modifier.BaseHP:
-                        player.m_baseHP = kvp.Value;
-                        break;
-                    case AlmanacEffectsManager.Modifier.BaseStamina :
-                        player.m_baseStamina = kvp.Value;
-                        break;
-                }
-            }
+            ApplyCustomEffects(totalValues, player, effectsContainer);
         }
     }
     
@@ -390,6 +361,16 @@ public static class CustomStatusEffects
             Character character = __instance.m_character;
             Player localPlayer = Player.m_localPlayer;
             if (character.GetHoverName() != localPlayer.GetHoverName()) return;
+            
+            GameObject playerObj = localPlayer.gameObject;
+            Transform effectsContainer = playerObj.transform.Find("almanac_effects");
+            
+            // Destroy instances of active almanac visual effects on player
+            for (int i = 0; i < effectsContainer.GetChildCount(); ++i)
+            {
+                Transform effect = effectsContainer.GetChild(i);
+                Object.Destroy(effect.gameObject);
+            }
 
             // Reset player base stats to default
             localPlayer.m_baseHP = 25f;

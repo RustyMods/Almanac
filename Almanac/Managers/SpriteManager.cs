@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using UnityEngine;
+using static Almanac.AlmanacPlugin;
 
 namespace Almanac.Managers;
 
@@ -9,7 +10,7 @@ public static class SpriteManager
     {
         Assembly assembly = Assembly.GetExecutingAssembly();
 
-        string path = $"{AlmanacPlugin.ModName}.{folderName}.{fileName}";
+        string path = $"{ModName}.{folderName}.{fileName}";
         using var stream = assembly.GetManifestResourceStream(path);
         if (stream == null) return null;
         byte[] buffer = new byte[stream.Length];

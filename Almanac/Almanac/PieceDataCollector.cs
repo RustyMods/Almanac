@@ -16,6 +16,8 @@ public static class PieceDataCollector
     public static readonly List<GameObject> buildPieces = new();
     public static readonly List<GameObject> craftingPieces = new();
     public static readonly List<GameObject> defaultPieces = new();
+
+    public static readonly List<GameObject> comfortPieces = new();
     
     public static readonly List<GameObject> allPieces = new ();
     public static readonly List<GameObject> cookingStations = new ();
@@ -106,6 +108,7 @@ public static class PieceDataCollector
                     if (furnitureNames.Contains(hoverName)) continue;
                     furniturePieces.Add((piece));
                     furnitureNames.Add(hoverName);
+                    comfortPieces.Add(piece);
                 }
                 else if (Regex.IsMatch(pieceScript.m_category.ToString(), @"^[-]?\d+$"))
                 {

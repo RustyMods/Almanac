@@ -4,6 +4,7 @@ using BepInEx;
 using HarmonyLib;
 using JetBrains.Annotations;
 using YamlDotNet.Serialization;
+using static Almanac.Almanac.CreatureDataCollector;
 
 namespace Almanac.Almanac;
 
@@ -16,7 +17,7 @@ public static class TrackPlayerDeaths
     public static Dictionary<string, int> TempPlayerDeaths = new();
     private static Dictionary<string, int> zeroPlayerDeaths = new();
 
-    public static void SetInitialData(List<CreatureDataCollector.CreatureData> creatures)
+    public static void SetInitialData(List<CreatureData> creatures)
     {
         Dictionary<string, int> initialData = new();
         foreach (var creature in creatures)

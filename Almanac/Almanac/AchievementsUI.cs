@@ -9,6 +9,13 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using YamlDotNet.Core.Tokens;
+using static Almanac.Almanac.AchievementManager;
+using static Almanac.Almanac.AchievementManager.AchievementType;
+using static Almanac.Almanac.CheckCheats.PlayerWatcher;
+using static Almanac.Almanac.CreatureDataCollector;
+using static Almanac.Almanac.ItemDataCollector;
+using static Almanac.Almanac.PieceDataCollector;
+using static Almanac.Almanac.TrackPlayerStats;
 using Object = UnityEngine.Object;
 
 namespace Almanac.Almanac;
@@ -92,27 +99,27 @@ public static class AchievementsUI
         "defeated_queen"
     };
     
-    private static readonly List<ItemDrop> allFish = ItemDataCollector.GetFishes();
-    private static readonly List<ItemDrop> allMaterials = ItemDataCollector.GetMaterials();
-    private static readonly List<ItemDrop> allConsumables = ItemDataCollector.GetConsumables();
-    private static readonly List<ItemDrop> allWeapons = ItemDataCollector.GetWeapons();
-    private static readonly List<ItemDrop> allProjectiles = ItemDataCollector.GetAmmunition();
+    private static readonly List<ItemDrop> allFish = GetFishes();
+    private static readonly List<ItemDrop> allMaterials = GetMaterials();
+    private static readonly List<ItemDrop> allConsumables = GetConsumables();
+    private static readonly List<ItemDrop> allWeapons = GetWeapons();
+    private static readonly List<ItemDrop> allProjectiles = GetAmmunition();
     private static readonly List<ItemDrop> allBows = allWeapons.FindAll(weapon => weapon.name.Contains("Bow") || weapon.name.Contains("Crossbow"));
     private static readonly List<ItemDrop> allArrows = allProjectiles.FindAll(projectile => projectile.name.Contains("Arrow"));
     private static readonly List<ItemDrop> allValuables = allMaterials.FindAll(item => item.m_itemData.m_shared.m_value > 0);
-    private static readonly List<ItemDrop> allTrophies = ItemDataCollector.GetTrophies();
+    private static readonly List<ItemDrop> allTrophies = GetTrophies();
     public class Achievement
     {
-        public AchievementManager.AchievementType type;
+        public AchievementType type;
         public string name = null!;
         public string? description = null!;
         public int total;
         public int value;
         public Sprite? sprite;
         public bool isCompleted;
-        public string? lore = null!;
+        public string lore = null!;
         public string power = null!;
-        public string? powerToolTip = null!;
+        public string powerToolTip = null!;
     }
 
     private static Sprite? GetSprite(string? prefabName)
@@ -120,22 +127,25 @@ public static class AchievementsUI
         if (prefabName.IsNullOrWhiteSpace()) return null;
         ZNetScene scene = ZNetScene.instance;
         GameObject prefab = scene.GetPrefab(prefabName);
+        if (!prefab) return null;
         prefab.TryGetComponent(out ItemDrop itemDrop);
         return itemDrop ? itemDrop.m_itemData.GetIcon() : null;
     }
     private static void CreateAchievement(
         string name, string? description,
-        int total, Sprite? sprite,
-        string? lore, string powerName,
-        string? powerToolTip,
-        AchievementManager.AchievementType type)
+        int goal, Sprite? sprite,
+        string lore, string powerName,
+        string powerToolTip,
+        AchievementType type)
     {
         if (powerName.IsNullOrWhiteSpace() || name.IsNullOrWhiteSpace()) return;
+        if (!sprite) sprite = AlmanacPlugin.AlmanacIconButton;
+        
         Achievement data = new Achievement()
         {
             name = name,
             description = description,
-            total = total,
+            total = goal,
             sprite = sprite,
             value = 0,
             lore = lore,
@@ -148,51 +158,56 @@ public static class AchievementsUI
     
     public static void RegisterAchievements()
     {
+        // Make sure temp achievements has data or else do not clear the currently registered achievements
+        // We do this because when the player logs out, it does not re-initialize the reading of the achievements,
+        // Therefore temp achievements ends up becoming empty as they have already been registered.
+        if (tempAchievements.Count == 0) return;
         registeredAchievements.Clear();
         
-        // AlmanacPlugin.AlmanacLogger.LogWarning("registering achievements to UI");
+        // Register achievements to the UI
         
-        foreach (AchievementManager.Achievement achievement in AchievementManager.tempAchievements)
+        foreach (AchievementManager.Achievement achievement in tempAchievements)
         {
-            int total = 0;
+            int m_goal = 0;
 
             // Conversion map to get total values to set
             switch (achievement.m_type)
             {
-                case AchievementManager.AchievementType.Fish: total = allFish.Count; break;
-                case AchievementManager.AchievementType.Materials: total = allMaterials.Count; break;
-                case AchievementManager.AchievementType.Consumables: total = allConsumables.Count; break;
-                case AchievementManager.AchievementType.Weapons: total = allWeapons.Count; break;
-                case AchievementManager.AchievementType.Swords: total = allWeapons.FindAll(item => item.name.Contains("Sword")).Count; break;
-                case AchievementManager.AchievementType.Axes: total = allWeapons.FindAll(item => item.name.Contains("Axe")).Count; break;
-                case AchievementManager.AchievementType.PoleArms: total = allWeapons.FindAll(item => item.name.Contains("Atgeir")).Count; break;
-                case AchievementManager.AchievementType.Spears: total = allWeapons.FindAll(item => item.name.Contains("Spear")).Count; break;
-                case AchievementManager.AchievementType.Maces: total = allWeapons.FindAll(item => item.name.Contains("Mace")).Count; break;
-                case AchievementManager.AchievementType.Knives: total = allWeapons.FindAll(item => item.name.Contains("Knife")).Count; break;
-                case AchievementManager.AchievementType.Shields: total = allWeapons.FindAll(item => item.name.Contains("Shield")).Count; break;
-                case AchievementManager.AchievementType.Staves: total = allWeapons.FindAll(item => item.name.Contains("Staff")).Count; break;
-                case AchievementManager.AchievementType.Arrows: total = allArrows.Count; break;
-                case AchievementManager.AchievementType.Bows: total = allBows.Count; break;
-                case AchievementManager.AchievementType.Valuables: total = allValuables.Count; break;
-                case AchievementManager.AchievementType.Potions: total = allMaterials.FindAll(item => item.name.Contains("Base")).Count; break;
-                case AchievementManager.AchievementType.Trophies: total = allTrophies.Count; break;
-                case AchievementManager.AchievementType.Creatures: total = CreatureDataCollector.tempCreatureData.Count; break;
-                case AchievementManager.AchievementType.MeadowCreatures: total = meadowCreatures.Count; break;
-                case AchievementManager.AchievementType.BlackForestCreatures: total = blackForestCreatures.Count; break;
-                case AchievementManager.AchievementType.SwampCreatures: total = swampCreatures.Count; break;
-                case AchievementManager.AchievementType.MountainCreatures: total = mountainCreatures.Count; break;
-                case AchievementManager.AchievementType.PlainsCreatures: total = plainsCreatures.Count; break;
-                case AchievementManager.AchievementType.MistLandCreatures: total = mistLandCreatures.Count; break;
-                case AchievementManager.AchievementType.AshLandCreatures: break;
-                case AchievementManager.AchievementType.DeepNorthCreatures: break;
-                case AchievementManager.AchievementType.TotalAchievements: total = AchievementManager.tempAchievements.Count - 1; break;
-                default: total = achievement.m_goal; break;
+                case AchievementType.Fish: m_goal = allFish.Count; break;
+                case Materials: m_goal = allMaterials.Count; break;
+                case Consumables: m_goal = allConsumables.Count; break;
+                case Weapons: m_goal = allWeapons.Count; break;
+                case Swords: m_goal = allWeapons.FindAll(item => item.name.Contains("Sword")).Count; break;
+                case Axes: m_goal = allWeapons.FindAll(item => item.name.Contains("Axe")).Count; break;
+                case PoleArms: m_goal = allWeapons.FindAll(item => item.name.Contains("Atgeir")).Count; break;
+                case Spears: m_goal = allWeapons.FindAll(item => item.name.Contains("Spear")).Count; break;
+                case Maces: m_goal = allWeapons.FindAll(item => item.name.Contains("Mace")).Count; break;
+                case Knives: m_goal = allWeapons.FindAll(item => item.name.Contains("Knife")).Count; break;
+                case Shields: m_goal = allWeapons.FindAll(item => item.name.Contains("Shield")).Count; break;
+                case Staves: m_goal = allWeapons.FindAll(item => item.name.Contains("Staff")).Count; break;
+                case Arrows: m_goal = allArrows.Count; break;
+                case Bows: m_goal = allBows.Count; break;
+                case Valuables: m_goal = allValuables.Count; break;
+                case Potions: m_goal = allMaterials.FindAll(item => item.name.Contains("Base")).Count; break;
+                case Trophies: m_goal = allTrophies.Count; break;
+                case Creatures: m_goal = tempCreatureData.Count; break;
+                case MeadowCreatures: m_goal = meadowCreatures.Count; break;
+                case BlackForestCreatures: m_goal = blackForestCreatures.Count; break;
+                case SwampCreatures: m_goal = swampCreatures.Count; break;
+                case MountainCreatures: m_goal = mountainCreatures.Count; break;
+                case PlainsCreatures: m_goal = plainsCreatures.Count; break;
+                case MistLandCreatures: m_goal = mistLandCreatures.Count; break;
+                case TotalAchievements: m_goal = tempAchievements.Count - 1; break;
+                case ComfortPieces: m_goal = comfortPieces.Count; break;
+                case AshLandCreatures: break;
+                case DeepNorthCreatures: break;
+                default: m_goal = achievement.m_goal; break; // The rest are threshold achievement
             }
 
             CreateAchievement(
                 name: achievement.m_displayName,
                 description: achievement.m_desc,
-                total: total,
+                goal: m_goal,
                 sprite: achievement.m_sprite ? achievement.m_sprite : GetSprite(achievement.m_spriteName),
                 lore: achievement.m_lore,
                 powerName: achievement.m_statusEffect.effectName,
@@ -206,6 +221,7 @@ public static class AchievementsUI
         for (int i = 0; i < registeredAchievements.Count; ++i)
         {
             Transform container = parentElement.Find($"achievementsContainer ({i})");
+            if (!container) continue;
             Transform icon = container.Find("iconObj");
             Transform hoverText = container.Find("hoverTextElement");
             
@@ -218,8 +234,8 @@ public static class AchievementsUI
 
             string localizedAchievementName = Localization.instance.Localize(achievement.name);
 
-            containerImage.color = CheckCheats.PlayerWatcher.noCost ? Color.white : achievement.isCompleted ? Color.white : Color.black;
-            textMesh.text = CheckCheats.PlayerWatcher.noCost ? localizedAchievementName : achievement.isCompleted ? localizedAchievementName : "???";
+            containerImage.color = noCost ? Color.white : achievement.isCompleted ? Color.white : Color.black;
+            textMesh.text = noCost ? localizedAchievementName : achievement.isCompleted ? localizedAchievementName : "???";
         }
     }
 
@@ -257,59 +273,93 @@ public static class AchievementsUI
         Dictionary<string, int> currentMonstersKilled = TrackPlayerKills.GetCurrentKilledMonsters();
         Dictionary<string, int> totalMonstersKilled = CombineDict(tempMonstersKilled, currentMonstersKilled);
 
-        Dictionary<AchievementManager.AchievementType, int> updateAchievementMap = new()
+        Dictionary<AchievementType, int> updateAchievementMap = new()
         {
-            { AchievementManager.AchievementType.Fish , allFish.Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
-            { AchievementManager.AchievementType.Materials , allMaterials.Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
-            { AchievementManager.AchievementType.Consumables , allConsumables.Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
-            { AchievementManager.AchievementType.Weapons , allWeapons.Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
-            { AchievementManager.AchievementType.Swords , allWeapons.FindAll(item => item.name.Contains("Sword")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
-            { AchievementManager.AchievementType.Axes , allWeapons.FindAll(item => item.name.Contains("Axe")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
-            { AchievementManager.AchievementType.PoleArms , allWeapons.FindAll(item => item.name.Contains("Atgeir")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
-            { AchievementManager.AchievementType.Spears , allWeapons.FindAll(item => item.name.Contains("Spear")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
-            { AchievementManager.AchievementType.Maces , allWeapons.FindAll(item => item.name.Contains("Mace")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
-            { AchievementManager.AchievementType.Knives , allWeapons.FindAll(item => item.name.Contains("Knife")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
-            { AchievementManager.AchievementType.Shields , allWeapons.FindAll(item => item.name.Contains("Shield")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
-            { AchievementManager.AchievementType.Staves , allWeapons.FindAll(item => item.name.Contains("Staff")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
-            { AchievementManager.AchievementType.Arrows , allArrows.Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
-            { AchievementManager.AchievementType.Bows , allBows.Count(item => player.IsKnownMaterial(item.m_itemData.m_shared.m_name)) },
-            { AchievementManager.AchievementType.Valuables , allValuables.Count(item => player.IsKnownMaterial(item.m_itemData.m_shared.m_name)) },
-            { AchievementManager.AchievementType.Potions , allMaterials.FindAll(item => item.name.Contains("Mead")).Count(item => player.IsKnownMaterial(item.m_itemData.m_shared.m_name)) },
-            { AchievementManager.AchievementType.Trophies , allTrophies.Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
-            { AchievementManager.AchievementType.MeadowCreatures , GetBiomeKills(meadowCreatures, totalMonstersKilled) },
-            { AchievementManager.AchievementType.BlackForestCreatures , GetBiomeKills(blackForestCreatures, totalMonstersKilled) },
-            { AchievementManager.AchievementType.SwampCreatures , GetBiomeKills(swampCreatures, totalMonstersKilled) },
-            { AchievementManager.AchievementType.MountainCreatures , GetBiomeKills(mountainCreatures, totalMonstersKilled) },
-            { AchievementManager.AchievementType.PlainsCreatures , GetBiomeKills(plainsCreatures, totalMonstersKilled)},
-            { AchievementManager.AchievementType.MistLandCreatures , GetBiomeKills(mistLandCreatures, totalMonstersKilled) },
-            { AchievementManager.AchievementType.Deaths , (int)TrackPlayerStats.GetPlayerStat(PlayerStatType.Deaths) },
-            { AchievementManager.AchievementType.EikthyrKills , totalMonstersKilled["defeated_eikthyr"] },
-            { AchievementManager.AchievementType.ElderKills , totalMonstersKilled["defeated_gdking"] },
-            { AchievementManager.AchievementType.BonemassKills , totalMonstersKilled["defeated_bonemass"]},
-            { AchievementManager.AchievementType.ModerKills , totalMonstersKilled["defeated_dragon"] },
-            { AchievementManager.AchievementType.YagluthKills , totalMonstersKilled["defeated_goblinking"] },
-            { AchievementManager.AchievementType.QueenKills , totalMonstersKilled["defeated_queen"] },
-            { AchievementManager.AchievementType.DistanceRan , (int)TrackPlayerStats.GetPlayerStat(PlayerStatType.DistanceRun)},
-            { AchievementManager.AchievementType.DistanceSailed , (int)TrackPlayerStats.GetPlayerStat(PlayerStatType.DistanceSail) },
-            { AchievementManager.AchievementType.TotalKills , (int)TrackPlayerStats.GetPlayerStat(PlayerStatType.EnemyKills)},
-            { AchievementManager.AchievementType.TotalAchievements , registeredAchievements.FindAll(x => x.isCompleted).Count},
-            { AchievementManager.AchievementType.TrollKills , totalMonstersKilled["KilledTroll"]},
-            { AchievementManager.AchievementType.SerpentKills , totalMonstersKilled["defeated_serpent"]},
-            { AchievementManager.AchievementType.CultistKills , totalMonstersKilled["defeated_fenring_cultist"]},
-            { AchievementManager.AchievementType.StoneGolemKills , totalMonstersKilled["defeated_stonegolem"]},
-            { AchievementManager.AchievementType.TarBlobKills , totalMonstersKilled["defeated_blobtar"]},
-            { AchievementManager.AchievementType.DeathByFall , (int)TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByFall)},
-            { AchievementManager.AchievementType.TreesChopped , (int)TrackPlayerStats.GetPlayerStat(PlayerStatType.Tree)},
-            { AchievementManager.AchievementType.DeathByTree , (int)TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByTree)},
-            { AchievementManager.AchievementType.DeathByEdgeOfWorld , (int)TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByEdgeOfWorld)},
-            { AchievementManager.AchievementType.TimeInBase , (int)TrackPlayerStats.GetPlayerStat(PlayerStatType.TimeInBase)},
-            { AchievementManager.AchievementType.TimeOutOfBase , (int)TrackPlayerStats.GetPlayerStat(PlayerStatType.TimeOutOfBase)},
-            { AchievementManager.AchievementType.ArrowsShot , (int)TrackPlayerStats.GetPlayerStat(PlayerStatType.ArrowsShot)},
-            { AchievementManager.AchievementType.GoblinShamanKills , totalMonstersKilled["defeated_goblinshaman"]},
-            { AchievementManager.AchievementType.WraithKills , totalMonstersKilled["defeated_wraith"]},
-            { AchievementManager.AchievementType.DrakeKills , totalMonstersKilled.TryGetValue("defeated_hatchling", out int drakeKills) ? drakeKills : 0},
-            { AchievementManager.AchievementType.GhostKills , totalMonstersKilled.TryGetValue("defeated_ghost", out int ghostKills) ? ghostKills : 0},
-            { AchievementManager.AchievementType.FenringKills , totalMonstersKilled.TryGetValue("defeated_fenring", out int fenringKills) ? fenringKills : 0}
+            { AchievementType.Fish , allFish.Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
+            { Materials , allMaterials.Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
+            { Consumables , allConsumables.Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
+            { Weapons , allWeapons.Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
+            { Swords , allWeapons.FindAll(item => item.name.Contains("Sword")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
+            { Axes , allWeapons.FindAll(item => item.name.Contains("Axe")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
+            { PoleArms , allWeapons.FindAll(item => item.name.Contains("Atgeir")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
+            { Spears , allWeapons.FindAll(item => item.name.Contains("Spear")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
+            { Maces , allWeapons.FindAll(item => item.name.Contains("Mace")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
+            { Knives , allWeapons.FindAll(item => item.name.Contains("Knife")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
+            { Shields , allWeapons.FindAll(item => item.name.Contains("Shield")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
+            { Staves , allWeapons.FindAll(item => item.name.Contains("Staff")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
+            { Arrows , allArrows.Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
+            { Bows , allBows.Count(item => player.IsKnownMaterial(item.m_itemData.m_shared.m_name)) },
+            { Valuables , allValuables.Count(item => player.IsKnownMaterial(item.m_itemData.m_shared.m_name)) },
+            { Potions , allMaterials.FindAll(item => item.name.Contains("Mead")).Count(item => player.IsKnownMaterial(item.m_itemData.m_shared.m_name)) },
+            { Trophies , allTrophies.Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
+            { MeadowCreatures , GetBiomeKills(meadowCreatures, totalMonstersKilled) },
+            { BlackForestCreatures , GetBiomeKills(blackForestCreatures, totalMonstersKilled) },
+            { SwampCreatures , GetBiomeKills(swampCreatures, totalMonstersKilled) },
+            { MountainCreatures , GetBiomeKills(mountainCreatures, totalMonstersKilled) },
+            { PlainsCreatures , GetBiomeKills(plainsCreatures, totalMonstersKilled)},
+            { MistLandCreatures , GetBiomeKills(mistLandCreatures, totalMonstersKilled) },
+            { Deaths , (int)GetPlayerStat(PlayerStatType.Deaths) },
+            { EikthyrKills , totalMonstersKilled["defeated_eikthyr"] },
+            { ElderKills , totalMonstersKilled["defeated_gdking"] },
+            { BonemassKills , totalMonstersKilled["defeated_bonemass"]},
+            { ModerKills , totalMonstersKilled["defeated_dragon"] },
+            { YagluthKills , totalMonstersKilled["defeated_goblinking"] },
+            { QueenKills , totalMonstersKilled["defeated_queen"] },
+            { DistanceRan , (int)GetPlayerStat(PlayerStatType.DistanceRun)},
+            { DistanceSailed , (int)GetPlayerStat(PlayerStatType.DistanceSail) },
+            { TotalKills , (int)GetPlayerStat(PlayerStatType.EnemyKills)},
+            { TotalAchievements , registeredAchievements.FindAll(x => x.isCompleted).Count},
+            { TrollKills , totalMonstersKilled["KilledTroll"]},
+            { SerpentKills , totalMonstersKilled["defeated_serpent"]},
+            { CultistKills , totalMonstersKilled["defeated_fenring_cultist"]},
+            { StoneGolemKills , totalMonstersKilled["defeated_stonegolem"]},
+            { TarBlobKills , totalMonstersKilled["defeated_blobtar"]},
+            { DeathByFall , (int)GetPlayerStat(PlayerStatType.DeathByFall)},
+            { TreesChopped , (int)GetPlayerStat(PlayerStatType.Tree)},
+            { DeathByTree , (int)GetPlayerStat(PlayerStatType.DeathByTree)},
+            { DeathByEdgeOfWorld , (int)GetPlayerStat(PlayerStatType.DeathByEdgeOfWorld)},
+            { TimeInBase , (int)GetPlayerStat(PlayerStatType.TimeInBase)},
+            { TimeOutOfBase , (int)GetPlayerStat(PlayerStatType.TimeOutOfBase)},
+            { ArrowsShot , (int)GetPlayerStat(PlayerStatType.ArrowsShot)},
+            { GoblinShamanKills , totalMonstersKilled["defeated_goblinshaman"]},
+            { WraithKills , totalMonstersKilled["defeated_wraith"]},
+            { DrakeKills , totalMonstersKilled.TryGetValue("defeated_hatchling", out int drakeKills) ? drakeKills : 0},
+            { GhostKills , totalMonstersKilled.TryGetValue("defeated_ghost", out int ghostKills) ? ghostKills : 0},
+            { FenringKills , totalMonstersKilled.TryGetValue("defeated_fenring", out int fenringKills) ? fenringKills : 0},
+            { ComfortPieces , comfortPieces.Count(x => player.IsMaterialKnown(x.name))},
+            { GreydwarfShamanKills , totalMonstersKilled.TryGetValue("defeated_greydwarf_shaman", out int greydwarfShamanKills) ? greydwarfShamanKills : 0},
+            { DvergerKills , totalMonstersKilled.TryGetValue("defeated_dverger", out int dvergerKills) ? dvergerKills : 0},
+            { DvergerFireKills , totalMonstersKilled.TryGetValue("defeated_dvergermagefire", out int dvergerFireKills) ? dvergerFireKills : 0},
+            { DvergerFrostKills , totalMonstersKilled.TryGetValue("defeated_dvergermageice" ,out int dvergerFrostKills) ? dvergerFrostKills : 0},
+            { DvergerSupportKills , totalMonstersKilled.TryGetValue("defeated_dvergermagesupport", out int dvergerSupportKills) ? dvergerSupportKills : 0},
+            { TotalJumps , (int)GetPlayerStat(PlayerStatType.Jumps)},
+            { TotalCraftsOrUpgrades , (int)GetPlayerStat(PlayerStatType.CraftsOrUpgrades)},
+            { TotalBuilds , (int)GetPlayerStat(PlayerStatType.Builds)},
+            { EnemyHits , (int)GetPlayerStat(PlayerStatType.EnemyHits)},
+            { PlayerKills , (int)GetPlayerStat(PlayerStatType.PlayerKills)},
+            { HitsTaken , (int)GetPlayerStat(PlayerStatType.HitsTakenEnemies) + (int)GetPlayerStat(PlayerStatType.HitsTakenPlayers)},
+            { ItemsPicked , (int)GetPlayerStat(PlayerStatType.ItemsPickedUp)},
+            { DistanceWalked , (int)GetPlayerStat(PlayerStatType.DistanceWalk)},
+            { DistanceInAir , (int)GetPlayerStat(PlayerStatType.DistanceAir)},
+            { MineHits , (int)GetPlayerStat(PlayerStatType.MineHits)},
+            { TotalMined , (int)GetPlayerStat(PlayerStatType.Mines)},
+            { CreatureTamed , (int)GetPlayerStat(PlayerStatType.CreatureTamed)},
+            { FoodEaten , (int)GetPlayerStat(PlayerStatType.FoodEaten)},
+            { SkeletonSummoned , (int)GetPlayerStat(PlayerStatType.SkeletonSummons)},
+            { DeathByDrowning , (int)GetPlayerStat(PlayerStatType.DeathByDrowning)},
+            { DeathByBurning , (int)GetPlayerStat(PlayerStatType.DeathByBurning)},
+            { DeathByFreezing , (int)GetPlayerStat(PlayerStatType.DeathByFreezing)},
+            { DeathByPoisoned , (int)GetPlayerStat(PlayerStatType.DeathByPoisoned)},
+            { DeathBySmoke, (int)GetPlayerStat(PlayerStatType.DeathBySmoke)},
+            { DeathByCart , (int)GetPlayerStat(PlayerStatType.DeathByCart)},
+            { DeathBySelf , (int)GetPlayerStat(PlayerStatType.DeathBySelf)},
+            { DeathByStalagtite , (int)GetPlayerStat(PlayerStatType.DeathByStalagtite)},
+            { BeesHarvested , (int)GetPlayerStat(PlayerStatType.BeesHarvested)},
+            { SapHarvested , (int)GetPlayerStat(PlayerStatType.SapHarvested)},
+            { TrapsArmed , (int)GetPlayerStat(PlayerStatType.TrapArmed)},
+            { StacksPlaced , (int)GetPlayerStat(PlayerStatType.PlaceStacks)},
+            { BossKills , (int)GetPlayerStat(PlayerStatType.BossKills)}
+
         };
         
         foreach (Achievement achievement in registeredAchievements)

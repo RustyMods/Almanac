@@ -7,6 +7,10 @@ using ServerSync;
 using UnityEngine;
 using UnityEngine.Serialization;
 using YamlDotNet.Serialization;
+using static Almanac.Almanac.AchievementManager.AchievementType;
+using static Almanac.Almanac.AlmanacEffectsManager;
+using static Almanac.Almanac.AlmanacEffectsManager.Modifier;
+using static Almanac.AlmanacPlugin;
 
 namespace Almanac.Almanac;
 
@@ -15,10 +19,12 @@ public static class AchievementManager
     // public static readonly CustomSyncedValue<List<AchievementData>> serverAchievements =
     //     new(AlmanacPlugin.ConfigSync, "ServerAchievements", new());
 
-    public static readonly List<Achievement> tempAchievements = new();
+    public static readonly List<Achievement> tempAchievements = new(); // To be used to register to achievements UI, ObjectDB effects and Custom Status Effects
+
+    private static List<AchievementData> tempAchievementData = new(); // to be serialized / deserialized
     public class Achievement
     {
-        public AlmanacEffectsManager.BaseEffectData m_statusEffect = null!;
+        public BaseEffectData m_statusEffect = null!;
         public string m_uniqueName = null!;
         public string m_displayName = null!;
         public int m_goal;
@@ -26,8 +32,8 @@ public static class AchievementManager
         public string? m_desc = null!;
         public Sprite? m_sprite;
         public string? m_spriteName;
-        public string? m_lore;
-        public string? m_toolTip;
+        public string m_lore = "";
+        public string m_toolTip = "";
         public bool isCompleted;
     }
 
@@ -87,43 +93,88 @@ public static class AchievementManager
         WraithKills,
         DrakeKills,
         GhostKills,
-        FenringKills
+        FenringKills,
+        ComfortPieces,
+        GreydwarfShamanKills,
+        DvergerSupportKills,
+        DvergerFireKills,
+        DvergerFrostKills,
+        DvergerKills,
+        TotalJumps,
+        TotalCraftsOrUpgrades,
+        TotalBuilds,
+        EnemyHits,
+        PlayerKills,
+        HitsTaken,
+        ItemsPicked,
+        DistanceWalked,
+        DistanceInAir,
+        MineHits,
+        TotalMined,
+        CreatureTamed,
+        FoodEaten,
+        SkeletonSummoned,
+        DeathByDrowning,
+        DeathByBurning,
+        DeathByFreezing,
+        DeathByPoisoned,
+        DeathBySmoke,
+        DeathByWater,
+        DeathByCart,
+        DeathBySelf,
+        DeathByStalagtite,
+        BeesHarvested,
+        SapHarvested,
+        TrapsArmed,
+        StacksPlaced,
+        BossKills,
+        
     }
 
     private static void CreateAchievement(
         string uniqueName,
         string name, 
         AchievementType type,
-        AlmanacEffectsManager.Modifier modifier,
-        Dictionary<AlmanacEffectsManager.Modifier, float> modifiers,
+        Modifier modifier,
+        Dictionary<Modifier, float> modifiers,
         string[]? startEffects,
         string[]? stopEffects,
         int goal = 0,
         Sprite? sprite = null,
-        string? damageModifier = "",
-        string? desc = "",
-        string? spriteName = "",
-        string? lore = "",
-        string? toolTip = "",
-        string? statusEffectStopMsg = "",
+        string damageModifier = "",
+        string desc = "",
+        string spriteName = "",
+        string lore = "",
+        string toolTip = "",
+        string statusEffectStopMsg = "",
+        string activationAnimation = "gpower",
         float newValue = 0f,
         int statusEffectDuration = 0
     )
     {
+        if (type is AchievementType.None)
+        {
+            AlmanacLogger.LogWarning($"[{uniqueName}] : Failed to recognize achievement type");
+            return;
+        }
+        if (tempAchievements.Exists(x => x.m_uniqueName == uniqueName)) return;
+
         string statusEffectName = "se_" + uniqueName;
         switch (modifier)
         {
-            case AlmanacEffectsManager.Modifier.EikthyrPower: statusEffectName = "GP_Eikthyr"; break;
-            case AlmanacEffectsManager.Modifier.ElderPower: statusEffectName = "GP_TheElder"; break;
-            case AlmanacEffectsManager.Modifier.BonemassPower: statusEffectName = "GP_Bonemass"; break;
-            case AlmanacEffectsManager.Modifier.ModerPower: statusEffectName = "GP_Moder"; break;
-            case AlmanacEffectsManager.Modifier.YagluthPower: statusEffectName = "GP_Yagluth"; break;
-            case AlmanacEffectsManager.Modifier.QueenPower: statusEffectName = "GP_Queen"; break;
+            case EikthyrPower: statusEffectName = "GP_Eikthyr"; break;
+            case ElderPower: statusEffectName = "GP_TheElder"; break;
+            case BonemassPower: statusEffectName = "GP_Bonemass"; break;
+            case ModerPower: statusEffectName = "GP_Moder"; break;
+            case YagluthPower: statusEffectName = "GP_Yagluth"; break;
+            case QueenPower: statusEffectName = "GP_Queen"; break;
         }
+
+        if (statusEffectDuration > 0) statusEffectName = "GP_" + uniqueName;
         
         Achievement data = new Achievement()
         {
-            m_statusEffect = new AlmanacEffectsManager.BaseEffectData()
+            m_statusEffect = new BaseEffectData()
             {
                 effectName = statusEffectName,
                 displayName = name,
@@ -138,7 +189,8 @@ public static class AchievementManager
                 damageMod = damageModifier,
                 Modifier = modifier,
                 Modifiers = modifiers,
-                m_newValue = newValue
+                m_newValue = newValue,
+                activationAnimation = activationAnimation
             },
             m_uniqueName = uniqueName,
             m_displayName = name,
@@ -154,193 +206,365 @@ public static class AchievementManager
         tempAchievements.Add(data);
     }
 
-    // private static readonly string folderName = "Almanac";
-    // private static readonly string folderPath = Path.Combine(Paths.ConfigPath, folderName);
-    // private static readonly string achievementPath = folderPath + Path.DirectorySeparatorChar + "AchievementData";
+    private static readonly string folderName = "Almanac";
+    private static readonly string folderPath = Path.Combine(Paths.ConfigPath, folderName);
+    public static readonly string achievementPath = folderPath + Path.DirectorySeparatorChar + "AchievementData";
+
+    private static readonly string achievementTutorialPath = achievementPath + Path.DirectorySeparatorChar + "Achievements_README.md";
+
+    public static void SaveAchievementData()
+    {
+        var serializer = new SerializerBuilder().Build();
+
+        if (!Directory.Exists(achievementPath)) Directory.CreateDirectory(achievementPath);
+
+        if (!File.Exists(achievementTutorialPath))
+        {
+            List<string> tutorial = new List<string>()
+            {
+                "# Almanac Achievements",
+                "Users can customize and create their own achievements by manipulating the files within this folder.",
+                "Make sure that you distribute this folder to your players or else they will use default achievements.",
+                "`If almanac recognizes a folder named: 'AchievementData' in config/Almanac folder, then it will use the files within",
+                "as data for achievements.`",
+                "## Features",
+                "- Create custom passive or active effects",
+                "- Create achievements for players to reach",
+                "- Use in-game assets to customize your achievements",
+                "## Unique Name",
+                "Make sure each achievement has a unique name or else it will be ignored - no white spaces, use underscore",
+                "## Active vs Passive",
+                "If cooldown is set to anything higher than 0, power is set as guardian power. Effects only applied while active, and countdown is running.",
+                "## Modifiers",
+                "```","Modifier key : description","```",
+                "```yml",
+                "Attack : Damage multiplier",
+                "HealthRegen : Health regeneration multiplier",
+                "StaminaRegen : Stamina regeneration multiplier",
+                "RaiseSkills : Experience multiplier",
+                "Speed : Speed multiplier",
+                "Noise : Noise multiplier",
+                "MaxCarryWeight : Additive carry weight",
+                "Stealth : Stealth multiplier",
+                "RunStaminaDrain : Run stamina drain multiplier",
+                "DamageReduction : Damage reduction multiplier",
+                "FallDamage : Fall damage multiplier",
+                "BaseHP : Additive base health",
+                "BaseStamina : Addive base stamina",
+                "MeleeDMG : Additive melee damage",
+                "RangedDMG : Additive ranged damage",
+                "FireDMG : Additive fire damage",
+                "FrostDMG : Additive frost damage",
+                "LightningDMG : Additive lightning damage",
+                "PoisonDMG : Additive poison damage",
+                "SpiritDMG : Additive spirit damage",
+                "ChopDMG : Additive chop damage",
+                "PickaxedDMG : Additive pickaxe damage",
+                "BluntDMG : Additive blunt damage",
+                "PierceDMG : Additive pierce damage",
+                "SlashDMG : Additive slash damage",
+                "EikthyrPower : On click, switches forsaken power to eikthyr",
+                "ElderPower : On click, switches forsaken power to elder",
+                "BonemassPower : On click, switches forsaken power to bonemass",
+                "ModerPower : On click, switches forsaken power to moder",
+                "YagluthPower : On click, switches forsaken power to yagluth",
+                "QueenPower : On click, switches forsaken power to seeker queen",
+                "```",
+                "## Sprite Name",
+                "You can use any loaded prefabs (ex:HardAntler) with icons or you can choose from almanac's custom icons:",
+                "```","Icon key : description","```",
+                "```yml",
+                "almanac_bone_skull : white bone skull",
+                "almanac_sword_blue : basic sword with a blue hilt",
+                "almanac_sword_brown : basic sword with a brown hilt",
+                "almanac_arrow : basic arrow",
+                "almanac_cape_hood : hooded cape",
+                "almanac_bottle_empty : empty bottle",
+                "almanac_bottle_blue : bottle with blue fluid",
+                "almanac_fish_green : green fish",
+                "almanac_bow : basic bow",
+                "almanac_necklace : silver necklace with red gem",
+                "almanac_mushroom : red mushroom",
+                "almanac_gold_coins : stack of gold coins",
+                "almanac_key_silver : silver key",
+                "almanac_bone_white : white femur bone",
+                "almanac_book_red : red book",
+                "almanac_bottle_green : bottle with green fluid",
+                "almanac_crown_gold : golden crown",
+                "almanac_gem_red : red gem",
+                "almanac_gold_bars : stack of gold bars",
+                "almanac_silver_coins : stack of silver coins",
+                "almanac_wood_log : one wood log",
+                "almanac_wood_stack : stack of wood logs",
+                "```",
+                "## Available Trackers - Achievement Type",
+                "List of currently available types of trackers to use:",
+                "```","achievement type key : description","```",
+                "```yml",
+                "Fish : tracks total currently known fish - goal irrelevant",
+                "Materials : tracks total currently known materials - goal irrelevant",
+                "Consumables : tracks total currently known consumables - goal irrelevant",
+                "Weapons : tracks total currently known weapons - goal irrelevant",
+                "Swords : tracks total currently known swords - goal irrelevant",
+                "Axes : tracks total currently known axes - goal irrelevant",
+                "Polearms : tracks total currently known atgeirs - goal irrelevant",
+                "Spears : tracks total currently known spears - goal irrelevant",
+                "Maces : tracks total currently known maces - goal irrelevant",
+                "Knives : tracks total currently known knives - goal irrelevant",
+                "Shields : tracks total currently known shields - goal irrelevant",
+                "Staves : tracks total currently known staves - goal irrelevant",
+                "Arrows : tracks total currently known arrows - goal irrelevant",
+                "Bows : tracks total currently known bows - goal irrelevant",
+                "Valuables : tracks total currently known sellable items - goal irrelevant",
+                "Potions : tracks total currently known mead bases - goal irrelevant",
+                "Trophies : tracks total currently known trophies - goal irrelevant",
+                "Creatures : tracks total currently known creatures - goal irrelevant",
+                "MeadowCreatures : tracks total currently known meadow creatures - goal irrelevant",
+                "BlackForestCreatures : tracks total currently known black forest creatures - goal irrelevant",
+                "SwampCreatures : tracks total currently known swamp creatures - goal irrelevant",
+                "MountainCreatures : tracks total currently known mountain creatures - goal irrelevant",
+                "PlainsCreatures : tracks total currently known plains creatures - goal irrelevant",
+                "MistLandCreatures : tracks total currently known mistlands creatures - goal irrelevant",
+                "EikthyrKills : tracks total eikthyr kills - use goal to set up threshold",
+                "ElderKills : tracks total elder kills - use goal to set up threshold",
+                "BonemassKills : tracks total bonemass kills - use goal to set up threshold",
+                "ModerKills : tracks total moder kills - use goal to set up threshold",
+                "YagluthKills : tracks total yagluth kills - use goal to set up threshold",
+                "QueenKills : tracks total seeker queen kills - use goal to set up threshold",
+                "Deaths : tracks total player deaths - use goal to set up threshold",
+                "DistanceRan : tracks total distance ran - use goal to set up threshold",
+                "DistanceSailed : tracks total distance sailed - use goal to set up threshold",
+                "TotalKills : tracks total enemy kills - use goal to set up threshold",
+                "TotalAchievements : tracks total achievements - use goal to set up threshold",
+                "TrollKills : tracks total troll kills - use goal to set up threshold",
+                "SerpentKills : tracks total serpent kills - use goal to set up threshold",
+                "CultistKills : tracks total fenring cultists kills - use goal to set up threshold",
+                "StoneGolemKills : tracks total stone golem kills - use goal to set up threshold",
+                "TarBlobKills : tracks total tar blob kills - use goal to set up threshold",
+                "DeathByFall : tracks total deaths by falling - use goal to set up threshold",
+                "Trees : tracks total trees chopped - use goal to set up threshold",
+                "DeathByTree : tracks total death by trees - use goal to set up threshold",
+                "DeathByEdge : tracks total death by falling off edge of world - use goal to set up threshold",
+                "TimeInBase : tracks total time in base - use goal to set up threshold",
+                "TimeOutOfBase : tracks total time out of base - use goal to set up threshold",
+                "ArrowsShot : tracks total arrows shot - use goal to set up threshold",
+                "GoblinShamanKills : tracks total goblin shaman kills - use goal to set up threshold",
+                "DrakeKills : tracks total drake kills - use goal to set up threshold",
+                "WraithKills : tracks total wraith kills - use goal to set up threshold",
+                "ComfortPieces : tracks total known comfort pieces - goal irrelevant",
+                "GreydwarfShamanKills : tracks total greydwarf shaman kills - use goal to set up threshold",
+                "DvergerKills : tracks total dverger kills - use goal to set up threshold",
+                "DvergerFireKills : tracks total dverger fire mage kills - use goal to set up threshold",
+                "DvergerFrostKills : tracks total dverger frost mage kills - use goal to set up threshold",
+                "DvergerSupportKills : tracks total dverger support mage kills - use goal to set up threshold",
+                "TotalJumps : tracks total jumps - use goal to set up threshold",
+                "TotalCraftsOrUpgrades : tracks total crafts and upgrades of items - use goal to set up threshold",
+                "TotalBuilds : tracks total built pieces - use goal to set up threshold",
+                "EnemyHits : tracks total hits against creatures - use goal to set up threshold",
+                "PlayerKills : tracks total player kills - pvp - - use goal to set up threshold",
+                "HitsTaken : tracks total hits taken - use goal to set up threshold",
+                "ItemsPicked : tracks total items picked up - use goal to set up threshold",
+                "DistanceWalked : tracks total distance walked - use goal to set up threshold",
+                "DistanceInAir : tracks total air time - use goal to set up threshold",
+                "MineHits : tracks total pickaxe mine hits - use goal to set up threshold",
+                "CreatureTamed : tracks total successful tame - use goal to set up threshold",
+                "FoodEaten : tracks total food eaten - use goal to set up threshold",
+                "SkeletonSummoned : tracks total f riendly skeleton summoned - use goal to set up threshold",
+                "DeathByDrowning : tracks total death by drowning - use goal to set up threshold",
+                "DeathByBurning : tracks total death by drowning - use goal to set up threshold",
+                "DeathByFreezing : tracks total death by freezing - use goal to set up threshold",
+                "DeathByPoisoned : tracks total death by poisoned - use goal to set up threshold",
+                "DeathBySmoke : tracks total death by smoke - use goal to set up threshold",
+                "DeathByWater : tracks total death by water - use goal to set up threshold",
+                "DeathByCart : tracks total death by cart - use goal to set up threshold",
+                "DeathBySelf : tracks total suicides - use goal to set up threshold",
+                "DeathByStalagtite : tracks total death by stalagtite - use goal to set up threshold",
+                "BeesHarvested : tracks total bees harvested - use goal to set up threshold",
+                "SapHarvested : tracks total sap harvested - use goal to set up threshold",
+                "TrapsArmed : tracks total traps armed - use goal to set up threshold",
+                "StacksPlaced : tracks total stacks placed - use goal to set up threshold",
+                "BossKills : tracks total boss kills - use goal to set up threshold",
+                "```",
+                "## Resistance Modifier",
+                "This can be used to apply damage modifiers `on the player`,",
+                "It can be read as list if seperated by commas.",
+                "(ex: Fire = Weak, Frost = Resistant)",
+                "This affects any damages from status effects such as `burning` but not direct damages.",
+                "### Acceptable resistances:",
+                "```yml",
+                "Physical",
+                "Elemental",
+                "Fire",
+                "Frost",
+                "Lightning",
+                "Poison",
+                "Spirit",
+                "```",
+                "### Acceptable modifier:",
+                "```yml",
+                "VeryWeak",
+                "Weak",
+                "Normal",
+                "Resistant",
+                "VeryResistant",
+                "```",
+                "## Activation animation",
+                "Only applies to active powers that use the 'F' key to engage forsaken power (aka guardian power)",
+                "Work in progress",
+                "Currently all set to default of 'gpower'",
+                "## Extra",
+                "Please come find me on OdinPlus discord if you have any ideas on how to improve the system",
+                "Best, Rusty"
+            };
+            
+            File.WriteAllLines(achievementTutorialPath, tutorial);
+        }
+
+        foreach (var data in tempAchievementData)
+        {
+            string serializedData = serializer.Serialize(data);
+            
+            File.WriteAllText(
+                (achievementPath + Path.DirectorySeparatorChar + $"{data.unique_name}.yml"),
+                serializedData
+            );
+        }
+    }
+
+    public static void ResetAchievementData()
+    {
+        var serializer = new SerializerBuilder().Build();
+
+        if (!Directory.Exists(achievementPath)) Directory.CreateDirectory(achievementPath);
+
+        var defaultData = CreateDefaultAchievements();
+
+        foreach (var data in defaultData)
+        {
+            string serializedData = serializer.Serialize(data);
+            
+            File.WriteAllText(
+                (achievementPath + Path.DirectorySeparatorChar + $"{data.unique_name}.yml"),
+                serializedData
+            );
+        }
+    }
 
     public static void InitAchievements()
     {
-        // AlmanacPlugin.AlmanacLogger.LogWarning($"starting achievements initialization");
+        tempAchievementData.Clear();
         
-        // IDeserializer deserializer = new DeserializerBuilder().Build();
-        
-        // if (AlmanacPlugin.WorkingAsType is AlmanacPlugin.WorkingAs.Server)
-        // {
-        //     if (!Directory.Exists(achievementPath))
-        //     {
-        //         Directory.CreateDirectory(achievementPath);
-        //         
-        //         string serializedData = CreateAlmanacAchievements();
-        //         File.WriteAllText(
-        //             (achievementPath + Path.DirectorySeparatorChar + "AlmanacAchievements.yml"),
-        //             serializedData
-        //         );
-        //     }
-        //
-        //     string[] filePaths = Directory.GetFiles(achievementPath, "*.yml");
-        //
-        //     List<AchievementData> newData = new List<AchievementData>();
-        //
-        //     foreach (string filePath in filePaths)
-        //     {
-        //         try
-        //         {
-        //             string serializedData = File.ReadAllText(filePath);
-        //             List<AchievementData> data = deserializer.Deserialize<List<AchievementData>>(serializedData);
-        //
-        //             foreach (var achievement in data)
-        //             {
-        //                 if (newData.Exists(x => x.unique_name == achievement.unique_name)) continue;
-        //                 newData.Add(achievement);
-        //             }
-        //         }
-        //         catch (Exception ex)
-        //         {
-        //             // Handle exceptions here (e.g., log the error)
-        //             Debug.LogWarning($"Error reading file '{filePath}': {ex.Message}");
-        //         }
-        //     }
-        //     
-        //     serverAchievements.Value = newData;
-        //
-        //     FileSystemWatcher achievementWatcher = new FileSystemWatcher(achievementPath)
-        //     {
-        //         Filter = "*.yml",
-        //         EnableRaisingEvents = true,
-        //         IncludeSubdirectories = true,
-        //         SynchronizingObject = ThreadingHelper.SynchronizingObject,
-        //         NotifyFilter = NotifyFilters.LastWrite
-        //     };
-        //     achievementWatcher.Created += AchievementChanged;
-        //     achievementWatcher.Changed += AchievementChanged;
-        //     
-        //     GetSetAchievementData(serverAchievements.Value);
-        //
-        // }
-        // else
-        // {
-        //
-        //     if (serverAchievements.Value.Count != 0)
-        //     {
-        //         GetSetAchievementData(serverAchievements.Value);
-        //     }
-        //     else
-            // {
-                // string serializedData = CreateAlmanacAchievements();
-                // List<AchievementData> deserializedData = deserializer.Deserialize<List<AchievementData>>(serializedData);
-                GetSetAchievementData(CreateAlmanacAchievements());
-            // }
-        // }
+        if (Directory.Exists(achievementPath))
+        {
+            var deserializer = new DeserializerBuilder().Build();
+            string[] filePaths = Directory.GetFiles(achievementPath, "*.yml");
+
+            List<AchievementData> newData = new();
+            
+            foreach (string filePath in filePaths)
+            {
+                try
+                {
+                    string serializedData = File.ReadAllText(filePath);
+                    AchievementData data = deserializer.Deserialize<AchievementData>(serializedData);
+                    if (newData.Exists(x => x.unique_name == data.unique_name)) continue;
+                    newData.Add(data);
+                }
+                catch (Exception ex) { AlmanacLogger.LogWarning($"Error reading file '{filePath}': {ex.Message}"); }
+            }
+            
+            AlmanacLogger.LogInfo($"Loading [Almanac Custom Achievements]: {newData.Count} achievements on file" );
+
+            tempAchievementData = newData;
+        }
+        else { tempAchievementData = CreateDefaultAchievements(); } // If achievement data folder does not exist, use default data
+        AddAchievementToRegistrar(tempAchievementData); // Add read files or data to registry to be added to temp achievements
     }
-
-    // private static void UpdateAchievementsData() => GetSetAchievementData(serverAchievements.Value);
-
-    // private static void AchievementChanged(object sender, FileSystemEventArgs e)
-    // {
-    //     if (e.ChangeType is not (WatcherChangeTypes.Changed or WatcherChangeTypes.Deleted or WatcherChangeTypes.Created)) return;
-    //
-    //     string fName = Path.GetFileName(e.Name);
-    //     string serializedData = File.ReadAllText(Path.Combine(achievementPath, fName));
-    //     
-    //     IDeserializer deserializer = new DeserializerBuilder().Build();
-    //     List<AchievementData> deserializedData = deserializer.Deserialize<List<AchievementData>>(serializedData);
-    //
-    //     foreach (var achievement in deserializedData)
-    //     {
-    //         if (serverAchievements.Value.Exists(x => x.unique_name == achievement.unique_name))
-    //         {
-    //             var match = serverAchievements.Value.Find(x => x.unique_name == achievement.unique_name);
-    //             serverAchievements.Value.Remove(match);
-    //         }
-    //         serverAchievements.Value.Add(achievement);
-    //         AlmanacPlugin.AlmanacLogger.LogWarning($"adding {achievement.unique_name} to server achievements");
-    //     }
-    // }
-
-    private static void GetSetAchievementData(List<AchievementData> deserializedData)
+    
+    private static void AddAchievementToRegistrar(List<AchievementData> deserializedData)
     {
         tempAchievements.Clear();
-        // AlmanacPlugin.AlmanacLogger.LogWarning($"Reading {deserializedData.Count} achievements..." );
+        
         foreach (AchievementData achievement in deserializedData)
         {
-            AlmanacEffectsManager.Modifier mod = AlmanacEffectsManager.Modifier.None;
-            Dictionary<AlmanacEffectsManager.Modifier, float> modifiers = new()
+            Modifier mod = Modifier.None;
+            Dictionary<Modifier, float> modifiers = new()
             {
-                { AlmanacEffectsManager.Modifier.Attack, 1f },
-                { AlmanacEffectsManager.Modifier.HealthRegen, 1f },
-                { AlmanacEffectsManager.Modifier.StaminaRegen, 1f },
-                { AlmanacEffectsManager.Modifier.RaiseSkills, 1f },
-                { AlmanacEffectsManager.Modifier.Speed, 1f },
-                { AlmanacEffectsManager.Modifier.Noise, 1f },
-                { AlmanacEffectsManager.Modifier.MaxCarryWeight, 0f },
-                { AlmanacEffectsManager.Modifier.Stealth, 1f },
-                { AlmanacEffectsManager.Modifier.RunStaminaDrain, 1f },
-                { AlmanacEffectsManager.Modifier.DamageReduction, 0f },
-                { AlmanacEffectsManager.Modifier.FallDamage, 1f }
+                { Modifier.Attack, 1f },
+                { HealthRegen, 1f },
+                { StaminaRegen, 1f },
+                { RaiseSkills, 1f },
+                { Speed, 1f },
+                { Noise, 1f },
+                { MaxCarryWeight, 0f },
+                { Stealth, 1f },
+                { RunStaminaDrain, 1f },
+                { DamageReduction, 0f },
+                { FallDamage, 1f }
             };
             Sprite? customSprite = null;
             switch (achievement.modifier)
             {
-                case "Attack": mod = AlmanacEffectsManager.Modifier.Attack; modifiers[AlmanacEffectsManager.Modifier.Attack] = achievement.modifier_value; break;
-                case "HealthRegen": mod = AlmanacEffectsManager.Modifier.HealthRegen; modifiers[AlmanacEffectsManager.Modifier.HealthRegen] = achievement.modifier_value; break;
-                case "StaminaRegen": mod = AlmanacEffectsManager.Modifier.StaminaRegen; modifiers[AlmanacEffectsManager.Modifier.StaminaRegen] = achievement.modifier_value; break;
-                case "RaiseSkills": mod = AlmanacEffectsManager.Modifier.RaiseSkills; modifiers[AlmanacEffectsManager.Modifier.RaiseSkills] = achievement.modifier_value; break;
-                case "Speed": mod = AlmanacEffectsManager.Modifier.Speed; modifiers[AlmanacEffectsManager.Modifier.Speed] = achievement.modifier_value; break;
-                case "Noise": mod = AlmanacEffectsManager.Modifier.Noise; modifiers[AlmanacEffectsManager.Modifier.Noise] = achievement.modifier_value; break;
-                case "MaxCarryWeight": mod = AlmanacEffectsManager.Modifier.MaxCarryWeight; modifiers[AlmanacEffectsManager.Modifier.MaxCarryWeight] = achievement.modifier_value; break;
-                case "Stealth": mod = AlmanacEffectsManager.Modifier.Stealth; modifiers[AlmanacEffectsManager.Modifier.Stealth] = achievement.modifier_value; break;
-                case "RunStaminaDrain": mod = AlmanacEffectsManager.Modifier.RunStaminaDrain; modifiers[AlmanacEffectsManager.Modifier.RunStaminaDrain] = achievement.modifier_value; break;
-                case "DamageReduction": mod = AlmanacEffectsManager.Modifier.DamageReduction; modifiers[AlmanacEffectsManager.Modifier.DamageReduction] = achievement.modifier_value; break;
-                case "FallDamage": mod = AlmanacEffectsManager.Modifier.FallDamage; modifiers[AlmanacEffectsManager.Modifier.FallDamage] = achievement.modifier_value; break;
-                case "BaseHP": mod = AlmanacEffectsManager.Modifier.BaseHP; break;
-                case "BaseStamina": mod = AlmanacEffectsManager.Modifier.BaseStamina; break;
-                case "MeleeDMG": mod = AlmanacEffectsManager.Modifier.MeleeDMG; break;
-                case "RangedDMG": mod = AlmanacEffectsManager.Modifier.RangedDMG; break;
-                case "FireDMG": mod = AlmanacEffectsManager.Modifier.FireDMG; break;
-                case "FrostDMG": mod = AlmanacEffectsManager.Modifier.FrostDMG; break;
-                case "LightningDMG": mod = AlmanacEffectsManager.Modifier.LightningDMG; break;
-                case "PoisonDMG": mod = AlmanacEffectsManager.Modifier.PoisonDMG; break;
-                case "SpiritDMG": mod = AlmanacEffectsManager.Modifier.SpiritDMG; break;
-                case "ChopDMG" : mod = AlmanacEffectsManager.Modifier.ChopDMG; break;
-                case "PickaxeDMG" : mod = AlmanacEffectsManager.Modifier.PickaxeDMG; break;
-                case "BluntDMG": mod = AlmanacEffectsManager.Modifier.BluntDMG; break;
-                case "PierceDMG": mod = AlmanacEffectsManager.Modifier.PierceDMG; break;
-                case "SlashDMG": mod = AlmanacEffectsManager.Modifier.SlashDMG; break;
-                case "EikthyrPower": mod = AlmanacEffectsManager.Modifier.EikthyrPower; break;
-                case "ElderPower": mod = AlmanacEffectsManager.Modifier.ElderPower; break;
-                case "BonemassPower": mod = AlmanacEffectsManager.Modifier.BonemassPower; break;
-                case "ModerPower": mod = AlmanacEffectsManager.Modifier.ModerPower; break;
-                case "YagluthPower": mod = AlmanacEffectsManager.Modifier.YagluthPower; break;
-                case "QueenPower": mod = AlmanacEffectsManager.Modifier.QueenPower; break;
+                case "Attack": mod = Modifier.Attack; modifiers[Modifier.Attack] = achievement.modifier_value; break;
+                case "HealthRegen": mod = HealthRegen; modifiers[HealthRegen] = achievement.modifier_value; break;
+                case "StaminaRegen": mod = StaminaRegen; modifiers[StaminaRegen] = achievement.modifier_value; break;
+                case "RaiseSkills": mod = RaiseSkills; modifiers[RaiseSkills] = achievement.modifier_value; break;
+                case "Speed": mod = Speed; modifiers[Speed] = achievement.modifier_value; break;
+                case "Noise": mod = Noise; modifiers[Noise] = achievement.modifier_value; break;
+                case "MaxCarryWeight": mod = MaxCarryWeight; modifiers[MaxCarryWeight] = achievement.modifier_value; break;
+                case "Stealth": mod = Stealth; modifiers[Stealth] = achievement.modifier_value; break;
+                case "RunStaminaDrain": mod = RunStaminaDrain; modifiers[RunStaminaDrain] = achievement.modifier_value; break;
+                case "DamageReduction": mod = DamageReduction; modifiers[DamageReduction] = achievement.modifier_value; break;
+                case "FallDamage": mod = FallDamage; modifiers[FallDamage] = achievement.modifier_value; break;
+                case "BaseHP": mod = BaseHP; break;
+                case "BaseStamina": mod = BaseStamina; break;
+                case "MeleeDMG": mod = MeleeDMG; break;
+                case "RangedDMG": mod = RangedDMG; break;
+                case "FireDMG": mod = FireDMG; break;
+                case "FrostDMG": mod = FrostDMG; break;
+                case "LightningDMG": mod = LightningDMG; break;
+                case "PoisonDMG": mod = PoisonDMG; break;
+                case "SpiritDMG": mod = SpiritDMG; break;
+                case "ChopDMG" : mod = ChopDMG; break;
+                case "PickaxeDMG" : mod = PickaxeDMG; break;
+                case "BluntDMG": mod = BluntDMG; break;
+                case "PierceDMG": mod = PierceDMG; break;
+                case "SlashDMG": mod = SlashDMG; break;
+                case "EikthyrPower": mod = EikthyrPower; break;
+                case "ElderPower": mod = ElderPower; break;
+                case "BonemassPower": mod = BonemassPower; break;
+                case "ModerPower": mod = ModerPower; break;
+                case "YagluthPower": mod = YagluthPower; break;
+                case "QueenPower": mod = QueenPower; break;
             }
 
             switch (achievement.sprite_name)
             {
-                case "almanac_bone_skull": customSprite = AlmanacPlugin.boneSkullIcon; break;
-                case "almanac_sword_blue": customSprite = AlmanacPlugin.swordBasicBlueIcon; break;
-                case "almanac_sword_brown": customSprite = AlmanacPlugin.swordBasicBrownIcon; break;
-                case "almanac_arrow": customSprite = AlmanacPlugin.arrowBasicIcon; break;
-                case "almanac_cape_hood": customSprite = AlmanacPlugin.capeHoodIcon; break;
-                case "almanac_bottle_empty": customSprite = AlmanacPlugin.bottleStandardEmptyIcon; break;
-                case "almanac_bottle_blue": customSprite = AlmanacPlugin.bottleStandardBlueIcon; break;
-                case "almanac_fish_green": customSprite = AlmanacPlugin.fishGreenIcon; break;
-                case "almanac_bow": customSprite = AlmanacPlugin.bowWoodIcon; break;
-                case "almanac_necklace": customSprite = AlmanacPlugin.necklaceSilverRed; break;
-                case "almanac_mushroom": customSprite = AlmanacPlugin.mushroomBigRedIcon; break;
-                case "almanac_gold_coins": customSprite = AlmanacPlugin.goldCoinsPileIcon; break;
-                case "almanac_key_silver": customSprite = AlmanacPlugin.keySilverIcon; break;
-                case "almanac_bone_white": customSprite = AlmanacPlugin.boneWhiteIcon; break;
-                case "almanac_book_red": customSprite = AlmanacPlugin.bookClosedRedIcon; break;
-                case "almanac_bottle_green": customSprite = AlmanacPlugin.bottleStandardGreenIcon; break;
-                case "almanac_crown_gold": customSprite = AlmanacPlugin.crownGoldIcon; break;
-                case "almanac_gem_red": customSprite = AlmanacPlugin.gemDiamondRedIcon; break;
-                case "almanac_gold_bars": customSprite = AlmanacPlugin.goldBarsIcon; break;
-                case "almanac_scroll_map": customSprite = AlmanacPlugin.scrollMapIcon; break;
-                case "almanac_shield": customSprite = AlmanacPlugin.shieldBasicIcon; break;
-                case "almanac_silver_bars": customSprite = AlmanacPlugin.silverBarsIcon; break;
-                case "almanac_silver_coins": customSprite = AlmanacPlugin.silverCoinsIcon; break;
-                case "almanac_wood_log": customSprite = AlmanacPlugin.woodLogIcon; break;
-                case "almanac_wood_stack": customSprite = AlmanacPlugin.woodLogsIcon; break;
+                case "almanac_bone_skull": customSprite = boneSkullIcon; break;
+                case "almanac_sword_blue": customSprite = swordBasicBlueIcon; break;
+                case "almanac_sword_brown": customSprite = swordBasicBrownIcon; break;
+                case "almanac_arrow": customSprite = arrowBasicIcon; break;
+                case "almanac_cape_hood": customSprite = capeHoodIcon; break;
+                case "almanac_bottle_empty": customSprite = bottleStandardEmptyIcon; break;
+                case "almanac_bottle_blue": customSprite = bottleStandardBlueIcon; break;
+                case "almanac_fish_green": customSprite = fishGreenIcon; break;
+                case "almanac_bow": customSprite = bowWoodIcon; break;
+                case "almanac_necklace": customSprite = necklaceSilverRed; break;
+                case "almanac_mushroom": customSprite = mushroomBigRedIcon; break;
+                case "almanac_gold_coins": customSprite = goldCoinsPileIcon; break;
+                case "almanac_key_silver": customSprite = keySilverIcon; break;
+                case "almanac_bone_white": customSprite = boneWhiteIcon; break;
+                case "almanac_book_red": customSprite = bookClosedRedIcon; break;
+                case "almanac_bottle_green": customSprite = bottleStandardGreenIcon; break;
+                case "almanac_crown_gold": customSprite = crownGoldIcon; break;
+                case "almanac_gem_red": customSprite = gemDiamondRedIcon; break;
+                case "almanac_gold_bars": customSprite = goldBarsIcon; break;
+                case "almanac_scroll_map": customSprite = scrollMapIcon; break;
+                case "almanac_shield": customSprite = shieldBasicIcon; break;
+                case "almanac_silver_bars": customSprite = silverBarsIcon; break;
+                case "almanac_silver_coins": customSprite = silverCoinsIcon; break;
+                case "almanac_wood_log": customSprite = woodLogIcon; break;
+                case "almanac_wood_stack": customSprite = woodLogsIcon; break;
             }
 
             CreateAchievement(
@@ -359,7 +583,9 @@ public static class AchievementManager
                 desc: achievement.description,
                 damageModifier: achievement.resistance_modifier,
                 statusEffectStopMsg: achievement.stop_message,
-                newValue: achievement.modifier_value
+                newValue: achievement.modifier_value,
+                activationAnimation: achievement.activation_animation,
+                statusEffectDuration: achievement.cooldown
             );
         }
     }
@@ -369,64 +595,98 @@ public static class AchievementManager
         switch (modifier)
         {
             case "Fish": return AchievementType.Fish;
-            case "Materials": return AchievementType.Materials;
-            case "Consumables": return AchievementType.Consumables;
-            case "Weapons": return AchievementType.Weapons;
-            case "Swords": return AchievementType.Swords;
-            case "Axes": return AchievementType.Axes;
-            case "Polearms": return AchievementType.PoleArms;
-            case "Spears": return AchievementType.Spears;
-            case "Maces": return AchievementType.Maces;
-            case "Knives": return AchievementType.Knives;
-            case "Shields": return AchievementType.Shields;
-            case "Staves": return AchievementType.Staves;
-            case "Arrows": return AchievementType.Arrows;
-            case "Bows": return AchievementType.Bows;
-            case "Valuables": return AchievementType.Valuables;
-            case "Potions": return AchievementType.Potions;
-            case "Trophies": return AchievementType.Trophies;
-            case "Creatures": return AchievementType.Creatures;
-            case "MeadowCreatures": return AchievementType.MeadowCreatures;
-            case "BlackForestCreatures": return AchievementType.BlackForestCreatures;
-            case "SwampCreatures": return AchievementType.SwampCreatures;
-            case "MountainCreatures": return AchievementType.MountainCreatures;
-            case "PlainsCreatures": return AchievementType.PlainsCreatures;
-            case "MistLandCreatures": return AchievementType.MistLandCreatures;
-            case "AshLandCreatures": return AchievementType.AshLandCreatures;
-            case "DeepNorthCreatures": return AchievementType.DeepNorthCreatures;
-            case "EikthyrKills": return AchievementType.EikthyrKills;
-            case "ElderKills": return AchievementType.ElderKills;
-            case "BonemassKills": return AchievementType.BonemassKills;
-            case "ModerKills": return AchievementType.ModerKills;
-            case "YagluthKills": return AchievementType.YagluthKills;
-            case "QueenKills": return AchievementType.QueenKills;
-            case "Deaths": return AchievementType.Deaths;
-            case "DistanceRan": return AchievementType.DistanceRan;
-            case "DistanceSailed": return AchievementType.DistanceSailed;
-            case "TotalKills": return AchievementType.TotalKills;
-            case "TotalAchievements": return AchievementType.TotalAchievements;
-            case "TrollKills": return AchievementType.TrollKills;
-            case "SerpentKills": return AchievementType.SerpentKills;
-            case "CultistKills": return AchievementType.CultistKills;
-            case "StoneGolemKills": return AchievementType.StoneGolemKills;
-            case "TarBlobKills": return AchievementType.TarBlobKills;
-            case "DeathByFall": return AchievementType.DeathByFall;
-            case "Trees": return AchievementType.TreesChopped;
-            case "DeathByTree": return AchievementType.DeathByTree;
-            case "DeathByEdge": return AchievementType.DeathByEdgeOfWorld;
-            case "TimeInBase": return AchievementType.TimeInBase;
-            case "TimeOutOfBase": return AchievementType.TimeOutOfBase;
-            case "ArrowsShot": return AchievementType.ArrowsShot;
-            case "GoblinShamanKills": return AchievementType.GoblinShamanKills;
-            case "DrakeKills": return AchievementType.DrakeKills;
-            case "GhostKills": return AchievementType.GhostKills;
-            case "FenringKills": return AchievementType.FenringKills;
-            case "WraithKills": return AchievementType.WraithKills;
+            case "Materials": return Materials;
+            case "Consumables": return Consumables;
+            case "Weapons": return Weapons;
+            case "Swords": return Swords;
+            case "Axes": return Axes;
+            case "Polearms": return PoleArms;
+            case "Spears": return Spears;
+            case "Maces": return Maces;
+            case "Knives": return Knives;
+            case "Shields": return Shields;
+            case "Staves": return Staves;
+            case "Arrows": return Arrows;
+            case "Bows": return Bows;
+            case "Valuables": return Valuables;
+            case "Potions": return Potions;
+            case "Trophies": return Trophies;
+            case "Creatures": return Creatures;
+            case "MeadowCreatures": return MeadowCreatures;
+            case "BlackForestCreatures": return BlackForestCreatures;
+            case "SwampCreatures": return SwampCreatures;
+            case "MountainCreatures": return MountainCreatures;
+            case "PlainsCreatures": return PlainsCreatures;
+            case "MistLandCreatures": return MistLandCreatures;
+            case "AshLandCreatures": return AshLandCreatures;
+            case "DeepNorthCreatures": return DeepNorthCreatures;
+            case "EikthyrKills": return EikthyrKills;
+            case "ElderKills": return ElderKills;
+            case "BonemassKills": return BonemassKills;
+            case "ModerKills": return ModerKills;
+            case "YagluthKills": return YagluthKills;
+            case "QueenKills": return QueenKills;
+            case "Deaths": return Deaths;
+            case "DistanceRan": return DistanceRan;
+            case "DistanceSailed": return DistanceSailed;
+            case "TotalKills": return TotalKills;
+            case "TotalAchievements": return TotalAchievements;
+            case "TrollKills": return TrollKills;
+            case "SerpentKills": return SerpentKills;
+            case "CultistKills": return CultistKills;
+            case "StoneGolemKills": return StoneGolemKills;
+            case "TarBlobKills": return TarBlobKills;
+            case "DeathByFall": return DeathByFall;
+            case "Trees": return TreesChopped;
+            case "DeathByTree": return DeathByTree;
+            case "DeathByEdge": return DeathByEdgeOfWorld;
+            case "TimeInBase": return TimeInBase;
+            case "TimeOutOfBase": return TimeOutOfBase;
+            case "ArrowsShot": return ArrowsShot;
+            case "GoblinShamanKills": return GoblinShamanKills;
+            case "DrakeKills": return DrakeKills;
+            case "GhostKills": return GhostKills;
+            case "FenringKills": return FenringKills;
+            case "WraithKills": return WraithKills;
+            case "ComfortPieces": return ComfortPieces;
+            case "GreydwarfShamanKills": return GreydwarfShamanKills;
+            case "DvergerKills": return DvergerKills;
+            case "DvergerSupportKills": return DvergerSupportKills;
+            case "DvergerFireKills": return DvergerFireKills;
+            case "DvergerFrostKills": return DvergerFrostKills;
+            case "TotalJumps": return TotalJumps;
+            case "TotalCraftsOrUpgrades": return TotalCraftsOrUpgrades;
+            case "TotalBuilds": return TotalBuilds;
+            case "EnemyHits": return EnemyHits;
+            case "PlayerKills": return PlayerKills;
+            case "HitsTaken": return HitsTaken;
+            case "ItemsPicked": return ItemsPicked;
+            case "DistanceWalked": return DistanceWalked;
+            case "DistanceInAir": return DistanceInAir;
+            case "MineHits": return MineHits;
+            case "TotalMined": return TotalMined;
+            case "CreatureTamed": return CreatureTamed;
+            case "FoodEaten": return FoodEaten;
+            case "SkeletonSummoned": return SkeletonSummoned;
+            case "DeathByDrowning": return DeathByDrowning;
+            case "DeathByBurning": return DeathByBurning;
+            case "DeathByFreezing": return DeathByFreezing;
+            case "DeathByPoisoned": return DeathByPoisoned;
+            case "DeathBySmoke": return DeathBySmoke;
+            case "DeathByWater": return DeathByWater;
+            case "DeathByCart": return DeathByCart;
+            case "DeathBySelf": return DeathBySelf;
+            case "DeathByStalagtite": return DeathByStalagtite;
+            case "BeesHarvested": return BeesHarvested;
+            case "SapHarvested": return SapHarvested;
+            case "TrapsArmed": return TrapsArmed;
+            case "StacksPlaced": return StacksPlaced;
+            case "BossKills": return BossKills;
             default: return AchievementType.None;
         }
     }
 
-    private static List<AchievementData> CreateAlmanacAchievements()
+    private static List<AchievementData> CreateDefaultAchievements()
     {
         List<AchievementData> almanacAchievements = new()
         {
@@ -529,12 +789,12 @@ public static class AchievementManager
                 description = "$almanac_achievement_ranger_desc",
                 sprite_name = "almanac_arrow",
                 lore = "$almanac_ranger_lore",
-                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_physical</color>\n$almanac_increase_projectile_damage_by <color=orange>5</color>",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_fire</color>\n$almanac_increase_projectile_damage_by <color=orange>5</color>",
                 achievement_type = "Arrows",
                 start_effects = new []{"sfx_coins_placed"},
                 stop_message = "$almanac_projectile_default",
                 modifier = "RangedDMG",
-                resistance_modifier = "Physical = Weak",
+                resistance_modifier = "Fire = Weak",
                 modifier_value = 5f
             },
             new AchievementData()
@@ -586,10 +846,10 @@ public static class AchievementManager
                 description = "$almanac_achievement_master_archer_desc",
                 sprite_name = "almanac_bow",
                 lore = "$almanac_master_archer_lore",
-                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_physical</color>\n$almanac_increase_projectile_damage_by <color=orange>5</color>",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_poison</color>\n$almanac_increase_projectile_damage_by <color=orange>5</color>",
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "Bows",
-                resistance_modifier = "Physical = Weak",
+                resistance_modifier = "Poison = Weak",
                 stop_message = "$almanac_removed_achievement_power",
                 modifier = "RangedDMG",
                 modifier_value = 5f
@@ -646,10 +906,10 @@ public static class AchievementManager
                 description = "$almanac_achievement_completion_desc",
                 sprite_name = "almanac_crown_gold",
                 lore = "$almanac_completion_lore",
-                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_physical</color>\n$almanac_raise_skill_experience_by <color=orange>100</color>%",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_resistant</color> VS <color=orange>$almanac_frost</color>\n$almanac_raise_skill_experience_by <color=orange>100</color>%",
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "TotalAchievements",
-                resistance_modifier = "Physical = Weak",
+                resistance_modifier = "Frost = Resistant",
                 stop_message = "$almanac_removed_achievement_power",
                 modifier = "RaiseSkills",
                 modifier_value = 2f
@@ -677,11 +937,11 @@ public static class AchievementManager
                 description = "$almanac_achievement_killer_desc",
                 lore = "$almanac_killer_lore",
                 sprite_name = "Acorn",
-                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_physical</color>\n$almanac_increase_attack_by <color=orange>50</color>%",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_fire</color>\n$almanac_increase_attack_by <color=orange>50</color>%",
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "TotalKills",
                 modifier = "Attack",
-                resistance_modifier = "Physical = Weak",
+                resistance_modifier = "Fire = Weak",
                 stop_message = "$almanac_removed_achievement_power",
                 modifier_value = 1.5f,
                 goal = 999999
@@ -782,7 +1042,7 @@ public static class AchievementManager
             new AchievementData()
             {
                 unique_name = "spark",
-                display_name = "$almanac_achievement_spark II",
+                display_name = "$almanac_achievement_spark I",
                 description = "$almanac_achievement_spark_desc",
                 lore = "$almanac_spark_lore",
                 sprite_name = "Thunderstone",
@@ -927,7 +1187,7 @@ public static class AchievementManager
                 lore = "$almanac_adventurer_lore",
                 sprite_name = "BlackCore",
                 tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_poison</color>\n$almanac_increase_stamina_regen_by <color=orange>50</color>%",
-                start_effects = new []{"sfx_coins_placed"},
+                start_effects = new []{"sfx_coins_placed","vfx_HealthUpgrade"},
                 achievement_type = "TimeOutOfBase",
                 stop_message = "$almanac_removed_achievement_power",
                 goal = 50000,
@@ -953,19 +1213,19 @@ public static class AchievementManager
             },
             new AchievementData()
             {
-            unique_name = "goblin_shaman_hunter",
-            display_name = "$almanac_achievement_goblin_shaman_hunter",
-            description = "$almanac_achievement_goblin_shaman_hunter_desc",
-            lore = "$almanac_goblin_shaman_hunter_lore",
-            sprite_name = "GoblinTotem",
-            tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_frost</color>\n$almanac_increase_fire_damage_by <color=orange>5</color>",
-            start_effects = new []{"sfx_coins_placed"},
-            achievement_type = "GoblinShamanKills",
-            stop_message = "$almanac_removed_achievement_power",
-            goal = 100,
-            resistance_modifier = "Frost = Weak",
-            modifier = "FireDMG",
-            modifier_value = 5f
+                unique_name = "goblin_shaman_hunter",
+                display_name = "$almanac_achievement_goblin_shaman_hunter",
+                description = "$almanac_achievement_goblin_shaman_hunter_desc",
+                lore = "$almanac_goblin_shaman_hunter_lore",
+                sprite_name = "GoblinTotem",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_frost</color>\n$almanac_increase_fire_damage_by <color=orange>5</color>",
+                start_effects = new []{"sfx_coins_placed"},
+                achievement_type = "GoblinShamanKills",
+                stop_message = "$almanac_removed_achievement_power",
+                goal = 100,
+                resistance_modifier = "Frost = Weak",
+                modifier = "FireDMG",
+                modifier_value = 5f
             },
             new AchievementData()
             {
@@ -1038,12 +1298,12 @@ public static class AchievementManager
                 description = "$almanac_achievement_vengeful_desc",
                 lore = "$almanac_vengeful_lore",
                 sprite_name = "almanac_gem_red",
-                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_physical</color>\n$almanac_increase_spirit_damage_by <color=orange>5</color>",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_spirit</color>\n$almanac_increase_spirit_damage_by <color=orange>5</color>",
                 stop_message = "$almanac_removed_achievement_power",
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "WraithKills",
                 goal = 100,
-                resistance_modifier = "Physical = Weak",
+                resistance_modifier = "Spirit = Weak",
                 modifier = "SpiritDMG",
                 modifier_value = 5f
             },
@@ -1054,12 +1314,12 @@ public static class AchievementManager
                 description = "$almanac_achievement_ghastly_desc",
                 lore = "$almanac_ghastly_lore",
                 sprite_name = "almanac_bottle_empty",
-                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_physical</color>\n$almanac_increase_spirit_damage_by <color=orange>5</color>",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_spirit</color>\n$almanac_increase_spirit_damage_by <color=orange>5</color>",
                 stop_message = "$almanac_removed_achievement_power",
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "GhostKills",
                 goal = 100,
-                resistance_modifier = "Physical = Weak",
+                resistance_modifier = "Spirit = Weak",
                 modifier = "SpiritDMG",
                 modifier_value = 5f
             },
@@ -1070,22 +1330,71 @@ public static class AchievementManager
                 description = "$almanac_achievement_fenring_desc",
                 lore = "$almanac_fenring_lore",
                 sprite_name = "TrophyUlv",
-                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_physical</color>\n$almanac_increase_spirit_damage_by <color=orange>5</color>",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_spirit</color>\n$almanac_increase_spirit_damage_by <color=orange>5</color>",
                 stop_message = "$almanac_removed_achievement_power",
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "FenringKills",
                 goal = 100,
-                resistance_modifier = "Physical = Weak",
+                resistance_modifier = "Spirit = Weak",
                 modifier = "SpiritDMG",
                 modifier_value = 5f
             },
+            new AchievementData()
+            {
+                unique_name = "healer",
+                display_name = "$almanac_achievement_healer",
+                description = "$almanac_achievement_healer_desc",
+                lore = "$almanac_healer_lore",
+                sprite_name = "TrophyGreydwarfShaman",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_slash</color>\n$almanac_greydwarf_shaman_heal\n$almanac_reduce_health_by <color=orange>5</color>",
+                stop_message = "$almanac_removed_achievement_power",
+                start_effects = new []{"shaman_heal_aoe","sfx_greydwarf_shaman_heal"},
+                stop_effects = new []{"shaman_heal_aoe","sfx_greydwarf_shaman_heal"},
+                achievement_type = "GreydwarfShamanKills",
+                goal = 100,
+                resistance_modifier = "Slash = Weak",
+                modifier = "BaseHP",
+                activation_animation = "staff_summon",
+                modifier_value = -5f,
+                cooldown = 30
+            },
+            new AchievementData()
+            {
+                unique_name = "dverger_healer",
+                display_name = "$almanac_achievement_dverger_healer",
+                description = "$almanac_achievement_dverger_healer_desc",
+                lore = "$almanac_dverger_healer_lore",
+                sprite_name = "Lantern",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_elemental</color>\n$almanac_dverger_heal\n$almanac_reduce_health_by <color=orange>5</color>",
+                stop_message = "$almanac_removed_achievement_power",
+                start_effects = new []{"DvergerStaffHeal_aoe","sfx_dverger_heal_start"},
+                stop_effects = new []{"DvergerStaffHeal_aoe","sfx_dverger_heal_finish"},
+                achievement_type = "GreydwarfShamanKills",
+                goal = 100,
+                resistance_modifier = "Elemental = Weak",
+                modifier = "BaseHP",
+                activation_animation = "staff_summon",
+                modifier_value = -5f,
+                cooldown = 30
+            },
+            new AchievementData()
+            {
+                unique_name = "trophy_hunter",
+                display_name = "$almanac_achievement_trophy_hunter",
+                description = "$almanac_achievement_trophy_hunter_desc",
+                lore = "$almanac_trophy_hunter_lore",
+                sprite_name = "almanac_silver_coins",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_very_resistant</color> VS <color=orange>$almanac_spirit</color>\n$almanac_reduce_health_by <color=orange>5</color>",
+                stop_message = "$almanac_removed_achievement_power",
+                start_effects = new []{"sfx_coins_placed"},
+                achievement_type = "Trophies",
+                resistance_modifier = "Spirit = VeryResistant",
+                modifier = "BaseHP",
+                modifier_value = -5f
+            },
         };
-
+        
         return almanacAchievements;
-        // var serializer = new SerializerBuilder().Build();
-        // string serializedData = serializer.Serialize(almanacAchievements);
-        //
-        // return serializedData;
     }
 
     [Serializable]
@@ -1105,6 +1414,8 @@ public static class AchievementManager
         public string resistance_modifier = "";
         public string modifier = "";
         public float modifier_value = 0f;
+        public string activation_animation = "gpower";
+        [FormerlySerializedAs("statusEffectDuration")] public int cooldown = 0;
         public void Serialize(ref ZPackage pkg)
         {
             pkg.Write(unique_name);
@@ -1123,6 +1434,7 @@ public static class AchievementManager
             pkg.Write(resistance_modifier);
             pkg.Write(modifier);
             pkg.Write(modifier_value);
+            pkg.Write(activation_animation);
         }
 
         public void Deserialize(ref ZPackage pkg)
@@ -1145,6 +1457,7 @@ public static class AchievementManager
             resistance_modifier = pkg.ReadString();
             modifier = pkg.ReadString();
             modifier_value = pkg.ReadSingle();
+            activation_animation = pkg.ReadString();
 
         }
     }

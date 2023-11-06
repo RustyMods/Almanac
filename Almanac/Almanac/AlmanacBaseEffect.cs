@@ -6,52 +6,62 @@ using BepInEx;
 using HarmonyLib;
 using JetBrains.Annotations;
 using UnityEngine;
+using static Almanac.Almanac.AchievementManager;
+using static Almanac.Almanac.AlmanacEffectsManager;
+using static Almanac.Almanac.RegisterAlmanacEffects;
+using static Almanac.AlmanacPlugin;
 
 namespace Almanac.Almanac;
 
 public static class RegisterAlmanacEffects
 {
-    public static readonly List<AlmanacEffectsManager.BaseEffectData> effectsData = new();
-
-    // [UsedImplicitly]
-    // private static void OnInit()
-    // {
-    //     AchievementManager.serverAchievements.ValueChanged += UpdateEffects;
-    // }
-
+    public static readonly List<BaseEffectData> effectsData = new();
+    
     [HarmonyPatch(typeof(ObjectDB), nameof(ObjectDB.Awake))]
     static class ObjectDBAwakePatch
     {
         [UsedImplicitly]
         [HarmonyPriority(Priority.VeryLow)]
-        private static void Postfix()
-        {
-            UpdateEffects();
-        }
+        private static void Postfix() => AddStatusEffectsToObjectDB();
+        
     }
-    private static void UpdateEffects()
+    public static void AddStatusEffectsToObjectDB()
     {
         if (!ZNetScene.instance) return;
-        // AlmanacPlugin.AlmanacLogger.LogWarning($"starting object db postfix to add {AchievementManager.tempAchievements.Count} effects");
-        ObjectDB.instance.m_StatusEffects.RemoveAll(effect => effect is AlmanacEffectsManager.BaseEffect);
+        ObjectDB.instance.m_StatusEffects.RemoveAll(effect => effect is BaseEffect);
+        
+        if (tempAchievements.Count == 0) return;
+        
+        effectsData.Clear();
+        foreach (Achievement achievement in tempAchievements) effectsData.Add(achievement.m_statusEffect);
+        foreach (BaseEffectData effectData in effectsData)
+        {
+            if (effectData.effectName 
+                is "GP_Eikthyr" 
+                or "GP_TheElder" 
+                or "GP_Bonemass" 
+                or "GP_Moder" 
+                or "GP_Yagluth"
+                ) continue;
+            
+            effectData.Init();
+        }
+    }
 
-        try
-        {
-            effectsData.Clear();
-            foreach (var achievement in AchievementManager.tempAchievements)
-            {
-                effectsData.Add(achievement.m_statusEffect);
-            }
-                
-            foreach (var effectData in effectsData)
-            {
-                effectData.Init();
-            }
-        }
-        catch (Exception e)
-        {
-            Debug.LogWarning(e);
-        }
+    public static void ReCreateStatusEffect(StatusEffect effect)
+    {
+        if (!ZNetScene.instance) return;
+
+        ObjectDB.instance.m_StatusEffects.Remove(effect);
+        var originalData = effectsData.Find(x => x.effectName == effect.name);
+
+        effectsData.Remove(originalData);
+
+        var newData = tempAchievements.Find(x => x.m_statusEffect.effectName == effect.name);
+        
+        effectsData.Add(newData.m_statusEffect);
+        
+        newData.m_statusEffect.Init();
     }
     
 }
@@ -91,7 +101,7 @@ public static class AlmanacEffectsManager
         BonemassPower,
         ModerPower,
         YagluthPower,
-        QueenPower
+        QueenPower,
     }
     public class BaseEffectData
     {
@@ -107,8 +117,8 @@ public static class AlmanacEffectsManager
         public string? effectTooltip;
         public string? damageMod;
         public Modifier Modifier;
-        public float m_initialValue = 0f;
         public float m_newValue = 0f;
+        public string? activationAnimation = "gpower";
         public Dictionary<Modifier, float> Modifiers = new()
         {
             { Modifier.Attack, 1f },
@@ -125,17 +135,16 @@ public static class AlmanacEffectsManager
         };
 
         public readonly List<HitData.DamageModPair> damageMods = new();
-
-        private bool? isValid;
         
         public void Init()
         {
-            if (isValid.HasValue) return;
+            ObjectDB obd = ObjectDB.instance;
+
+            // Make sure new effects have unique names
+            if (obd.m_StatusEffects.Find(effect => effect.name == effectName)) return;
 
             if (!damageMod.IsNullOrWhiteSpace())
             {
-                damageMods.Clear();
-                
                 string normalizedDamageMod = damageMod.Replace(" ", "");
                 string[] resistanceMods = normalizedDamageMod.Split(',');
                 foreach (string resistance in resistanceMods)
@@ -178,59 +187,78 @@ public static class AlmanacEffectsManager
                         case "Elemental": pair.m_type = HitData.DamageType.Elemental; break;
                     }
 
-                    damageMods.Add(pair);
+                    this.damageMods.Add(pair);
                 }
             }
             
-            Sprite? icon = AlmanacPlugin.AlmanacIconButton;
+            Sprite? icon = AlmanacIconButton;
             if (sprite) icon = sprite;
             if (!sprite && !spriteName.IsNullOrWhiteSpace())
             {
                 GameObject item = ZNetScene.instance.GetPrefab(spriteName);
-                item.TryGetComponent(out ItemDrop itemDrop);
-                if (itemDrop) icon = itemDrop.m_itemData.GetIcon();
+                if (!item)
+                {
+                    AlmanacLogger.LogWarning($"[{effectName}] : Failed to get prefab: {spriteName}");
+                }
+                else
+                {
+                    item.TryGetComponent(out ItemDrop itemDrop);
+                    if (itemDrop) icon = itemDrop.m_itemData.GetIcon();
+                }
             }
-            
-            ObjectDB obd = ObjectDB.instance;
-
-            // Make sure new effects have unique names
-            if (obd.m_StatusEffects.Find(effect => effect.name == effectName)) return;
 
             BaseEffect baseEffect = ScriptableObject.CreateInstance<BaseEffect>();
             baseEffect.name = effectName;
             baseEffect.data = this;
             baseEffect.m_icon = icon;
             baseEffect.m_name = displayName;
-            baseEffect.m_ttl = duration;
+            baseEffect.m_cooldown = duration + 60; // guardian power cool down
+            baseEffect.m_ttl = duration; // status effect cool down
             baseEffect.m_tooltip = effectTooltip;
             baseEffect.m_startMessageType = MessageHud.MessageType.Center;
             baseEffect.m_stopMessageType = MessageHud.MessageType.Center;
             baseEffect.m_startMessage = startMsg;
             baseEffect.m_stopMessage = stopMsg;
+            baseEffect.m_activationAnimation = activationAnimation;
             if (startEffectNames is not null)
             {
-                baseEffect.m_startEffects = CreateEffectList(ZNetScene.instance, startEffectNames.ToList());
+                baseEffect.m_startEffects = CreateEffectList(ZNetScene.instance, startEffectNames.ToList(), effectName);
             }
             
             if (stopEffectNames is not null)
             {
-                baseEffect.m_stopEffects = CreateEffectList(ZNetScene.instance, stopEffectNames.ToList());
+                baseEffect.m_stopEffects = CreateEffectList(ZNetScene.instance, stopEffectNames.ToList(), effectName);
             }
+            
+            // Add base effect to ObjectDB
             obd.m_StatusEffects.Add(baseEffect);
-            isValid = true;
         }
         
         private static EffectList CreateEffectList(
             ZNetScene scene,
-            List<string> effects)
+            List<string> effects,
+            string baseEffectName)
         {
             EffectList list = new();
-            EffectList.EffectData[] allEffects = new EffectList.EffectData[effects.Count];
-
-            for (int i = 0; i < effects.Count; ++i)
+            List<GameObject> validatedPrefabs = new();
+            
+            foreach (string effect in effects)
             {
-                if (effects[i].IsNullOrWhiteSpace()) continue;
-                GameObject fx = scene.GetPrefab(effects[i]);
+                GameObject prefab = scene.GetPrefab(effect);
+                if (!prefab)
+                {
+                    AlmanacLogger.LogWarning( $"[{baseEffectName}]" + " : " + "Failed to find prefab: " + effect);
+                    continue;
+                }
+                validatedPrefabs.Add(prefab);
+            }
+            
+            EffectList.EffectData[] allEffects = new EffectList.EffectData[validatedPrefabs.Count];
+
+            for (int i = 0; i < validatedPrefabs.Count; ++i)
+            {
+                GameObject fx = validatedPrefabs[i];
+
                 EffectList.EffectData effectData = new EffectList.EffectData()
                 {
                     m_prefab = fx,
@@ -242,9 +270,7 @@ public static class AlmanacEffectsManager
                     m_scale = true,
                     m_childTransform = ""
                 };
-
                 allEffects[i] = effectData;
-
             }
 
             list.m_effectPrefabs = allEffects;

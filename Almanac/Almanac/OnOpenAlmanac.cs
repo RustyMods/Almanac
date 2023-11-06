@@ -3,12 +3,21 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Xml.Schema;
 using Almanac.MonoBehaviors;
 using BepInEx;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static Almanac.Almanac.AchievementsUI;
+using static Almanac.Almanac.Almanac.CreateAlmanac;
+using static Almanac.Almanac.CheckCheats.PlayerWatcher;
+using static Almanac.Almanac.CustomStatusEffects;
+using static Almanac.Almanac.TrackPlayerStats;
+using static Almanac.AlmanacPlugin;
+using static Almanac.AlmanacPlugin.Toggle;
+using static MessageHud;
 
 namespace Almanac.Almanac;
 
@@ -37,7 +46,7 @@ public static class Patches
         private static void Postfix(InventoryGui __instance)
         {
             if (!__instance) return;
-            if (AlmanacPlugin.WorkingAsType == AlmanacPlugin.WorkingAs.Server) return;
+            if (WorkingAsType == WorkingAs.Server) return;
             
             SetInitialData(__instance);
             
@@ -45,44 +54,32 @@ public static class Patches
             
             SetUnknownCreatures();
             
-            SetUnknownItems("material", Almanac.CreateAlmanac.materials);
-            SetUnknownItems("consummable", Almanac.CreateAlmanac.consumables);
-            SetUnknownItems("weapon", Almanac.CreateAlmanac.weapons);
-            SetUnknownItems("gear", Almanac.CreateAlmanac.jewelCraftingLoaded ? Almanac.CreateAlmanac.filteredGear : Almanac.CreateAlmanac.gear);
-            SetUnknownItems("ammo", Almanac.CreateAlmanac.ammunition);
-            SetUnknownItems("fish", Almanac.CreateAlmanac.fish);
-            if (Almanac.CreateAlmanac.jewelCraftingLoaded) SetUnknownItems("jewelcrafting", Almanac.CreateAlmanac.jewels);
+            SetUnknownItems("material", jewelCraftingLoaded ? filteredMaterials : materials);
+            SetUnknownItems("consummable", consumables);
+            SetUnknownItems("weapon", weapons);
+            SetUnknownItems("gear", jewelCraftingLoaded ? filteredGear : gear);
+            SetUnknownItems("ammo", ammunition);
+            SetUnknownItems("fish", fish);
+            if (jewelCraftingLoaded) SetUnknownItems("jewelcrafting", jewels);
             
-            SetUnknownPieces("miscPieces", Almanac.CreateAlmanac.miscPieces);
-            SetUnknownPieces("craftingPieces", Almanac.CreateAlmanac.craftingPieces);
-            SetUnknownPieces("buildPieces", Almanac.CreateAlmanac.buildPieces);
-            SetUnknownPieces("furniturePieces", Almanac.CreateAlmanac.furniturePieces);
-            SetUnknownPieces("other", Almanac.CreateAlmanac.defaultPieces);
-            SetUnknownPieces("plantPieces", Almanac.CreateAlmanac.plantPieces);
-            SetUnknownPieces("modPieces", Almanac.CreateAlmanac.modPieces);
+            SetUnknownPieces("miscPieces", miscPieces);
+            SetUnknownPieces("craftingPieces", craftingPieces);
+            SetUnknownPieces("buildPieces", buildPieces);
+            SetUnknownPieces("furniturePieces", furniturePieces);
+            SetUnknownPieces("other", defaultPieces);
+            SetUnknownPieces("plantPieces", plantPieces);
+            SetUnknownPieces("modPieces", modPieces);
             
-            TrackPlayerStats.UpdatePlayerStats();
+            UpdatePlayerStats();
             SetPlayerStats();
             
-            AchievementsUI.UpdateAchievements();
-            AchievementsUI.SetUnknownAchievements(trophyFrame.Find("achievementsPanel"));
-            foreach (var achievement in AchievementsUI.registeredAchievements)
-            {
-                SetAchievementsData(achievementsElement, achievement);
-            }
+            UpdateAchievements();
+            SetUnknownAchievements(trophyFrame.Find("achievementsPanel"));
+            foreach (Achievement achievement in registeredAchievements) SetAchievementsData(achievementsElement, achievement);
         }
 
         private static void SetPlayerElementData(Transform parentElement)
         {
-            // Dictionary<string, int> savedKills = TrackPlayerKills.GetCurrentKilledMonsters();
-            // Dictionary<string, int> tempKills = TrackPlayerKills.TempMonstersKilled;
-            // int totalKills = savedKills.Values.Sum() + tempKills.Values.Sum();
-
-            // Dictionary<string, int> savedDeaths = TrackPlayerDeaths.GetCurrentPlayerDeaths();
-            // Dictionary<string, int> tempDeaths = TrackPlayerDeaths.TempPlayerDeaths;
-
-            // int totalDeaths = savedDeaths.Values.Sum() + tempDeaths.Values.Sum(); // Almanac Recorded Deaths
-
             Dictionary<string, string> conversionMap = new()
             {
                 { "general_title", "$almanac_general_title" },
@@ -94,150 +91,134 @@ public static class Patches
                 { "other_title", "$almanac_other_title" },
                 { "guardian_title", "$almanac_guardian_title" },
                 { "count_title", "$almanac_count_title" },
-                { "totalKills", TrackPlayerStats.GetPlayerStat(PlayerStatType.EnemyKills).ToString(CultureInfo.CurrentCulture) },
-                { "totalDeaths",TrackPlayerStats.GetPlayerStat(PlayerStatType.Deaths).ToString(CultureInfo.CurrentCulture) },
-                { "craftOrUpgrades", TrackPlayerStats.GetPlayerStat(PlayerStatType.CraftsOrUpgrades).ToString(CultureInfo.CurrentCulture) },
-                { "builds", TrackPlayerStats.GetPlayerStat(PlayerStatType.Builds).ToString(CultureInfo.CurrentCulture) },
-                { "jumps", TrackPlayerStats.GetPlayerStat(PlayerStatType.Jumps).ToString(CultureInfo.CurrentCulture) },
-                { "cheats", TrackPlayerStats.GetPlayerStat(PlayerStatType.Cheats).ToString(CultureInfo.InvariantCulture) },
-                { "enemyHits", TrackPlayerStats.GetPlayerStat(PlayerStatType.EnemyHits).ToString(CultureInfo.CurrentCulture) },
-                { "enemyKills", TrackPlayerStats.GetPlayerStat(PlayerStatType.EnemyKills).ToString(CultureInfo.InvariantCulture) },
-                { "enemyKillsLastHit", TrackPlayerStats.GetPlayerStat(PlayerStatType.EnemyKillsLastHits).ToString(CultureInfo.CurrentCulture) },
-                { "playerHits", TrackPlayerStats.GetPlayerStat(PlayerStatType.PlayerHits).ToString(CultureInfo.CurrentCulture) },
-                { "playerKills", TrackPlayerStats.GetPlayerStat(PlayerStatType.PlayerKills).ToString(CultureInfo.CurrentCulture) },
-                { "hitsTakenEnemies", TrackPlayerStats.GetPlayerStat(PlayerStatType.HitsTakenEnemies).ToString(CultureInfo.CurrentCulture) },
-                { "itemPickedUp", TrackPlayerStats.GetPlayerStat(PlayerStatType.ItemsPickedUp).ToString(CultureInfo.CurrentCulture) },
-                { "crafts", TrackPlayerStats.GetPlayerStat(PlayerStatType.Crafts).ToString(CultureInfo.CurrentCulture) },
-                { "upgrades", TrackPlayerStats.GetPlayerStat(PlayerStatType.Upgrades).ToString(CultureInfo.CurrentCulture) },
-                { "portalsUsed", TrackPlayerStats.GetPlayerStat(PlayerStatType.PortalsUsed).ToString(CultureInfo.CurrentCulture) },
-                { "distanceTraveled", TrackPlayerStats.GetPlayerStat(PlayerStatType.DistanceTraveled).ToString(CultureInfo.CurrentCulture) },
-                { "distanceWalk", TrackPlayerStats.GetPlayerStat(PlayerStatType.DistanceWalk).ToString(CultureInfo.CurrentCulture) },
-                { "distanceRun", TrackPlayerStats.GetPlayerStat(PlayerStatType.DistanceRun).ToString(CultureInfo.CurrentCulture) },
-                { "distanceSail", TrackPlayerStats.GetPlayerStat(PlayerStatType.DistanceSail).ToString(CultureInfo.CurrentCulture) },
-                { "distanceAir", TrackPlayerStats.GetPlayerStat(PlayerStatType.DistanceAir).ToString(CultureInfo.CurrentCulture) },
-                { "timeInBase", TrackPlayerStats.GetPlayerStat(PlayerStatType.TimeInBase).ToString(CultureInfo.CurrentCulture) },
-                { "timeOutOfBase", TrackPlayerStats.GetPlayerStat(PlayerStatType.TimeOutOfBase).ToString(CultureInfo.CurrentCulture) },
-                { "sleep", TrackPlayerStats.GetPlayerStat(PlayerStatType.Sleep).ToString(CultureInfo.CurrentCulture) },
-                { "itemStandUses", TrackPlayerStats.GetPlayerStat(PlayerStatType.ItemStandUses).ToString(CultureInfo.CurrentCulture) },
-                { "armorStandUses", TrackPlayerStats.GetPlayerStat(PlayerStatType.ArmorStandUses).ToString(CultureInfo.CurrentCulture) },
-                { "worldLoads", TrackPlayerStats.GetPlayerStat(PlayerStatType.WorldLoads).ToString(CultureInfo.CurrentCulture) },
-                { "treeChops", TrackPlayerStats.GetPlayerStat(PlayerStatType.TreeChops).ToString(CultureInfo.CurrentCulture) },
-                { "tree", TrackPlayerStats.GetPlayerStat(PlayerStatType.Tree).ToString(CultureInfo.CurrentCulture) },
-                { "treeTier0", TrackPlayerStats.GetPlayerStat(PlayerStatType.TreeTier0).ToString(CultureInfo.CurrentCulture) },
-                { "treeTier1", TrackPlayerStats.GetPlayerStat(PlayerStatType.TreeTier1).ToString(CultureInfo.CurrentCulture) },
-                { "treeTier2", TrackPlayerStats.GetPlayerStat(PlayerStatType.TreeTier2).ToString(CultureInfo.CurrentCulture) },
-                { "treeTier3", TrackPlayerStats.GetPlayerStat(PlayerStatType.TreeTier3).ToString(CultureInfo.CurrentCulture) },
-                { "treeTier4", TrackPlayerStats.GetPlayerStat(PlayerStatType.TreeTier4).ToString(CultureInfo.CurrentCulture) },
-                { "treeTier5", TrackPlayerStats.GetPlayerStat(PlayerStatType.TreeTier5).ToString(CultureInfo.CurrentCulture) },
-                { "logChops", TrackPlayerStats.GetPlayerStat(PlayerStatType.LogChops).ToString(CultureInfo.CurrentCulture) },
-                { "logs", TrackPlayerStats.GetPlayerStat(PlayerStatType.Logs).ToString(CultureInfo.CurrentCulture) },
-                { "mineHits", TrackPlayerStats.GetPlayerStat(PlayerStatType.MineHits).ToString(CultureInfo.CurrentCulture) },
-                { "mines", TrackPlayerStats.GetPlayerStat(PlayerStatType.Mines).ToString(CultureInfo.CurrentCulture) },
-                { "mineTier0", TrackPlayerStats.GetPlayerStat(PlayerStatType.MineTier0).ToString(CultureInfo.CurrentCulture) },
-                { "mineTier1", TrackPlayerStats.GetPlayerStat(PlayerStatType.MineTier1).ToString(CultureInfo.CurrentCulture) },
-                { "mineTier2", TrackPlayerStats.GetPlayerStat(PlayerStatType.MineTier2).ToString(CultureInfo.CurrentCulture) },
-                { "mineTier3", TrackPlayerStats.GetPlayerStat(PlayerStatType.MineTier3).ToString(CultureInfo.CurrentCulture) },
-                { "mineTier4", TrackPlayerStats.GetPlayerStat(PlayerStatType.MineTier4).ToString(CultureInfo.CurrentCulture) },
-                { "mineTier5", TrackPlayerStats.GetPlayerStat(PlayerStatType.MineTier5).ToString(CultureInfo.CurrentCulture) },
-                { "ravenHits", TrackPlayerStats.GetPlayerStat(PlayerStatType.RavenHits).ToString(CultureInfo.CurrentCulture) },
-                { "ravenTalk", TrackPlayerStats.GetPlayerStat(PlayerStatType.RavenTalk).ToString(CultureInfo.CurrentCulture) },
-                { "ravenAppear", TrackPlayerStats.GetPlayerStat(PlayerStatType.RavenAppear).ToString(CultureInfo.CurrentCulture) },
-                { "creatureTamed", TrackPlayerStats.GetPlayerStat(PlayerStatType.CreatureTamed).ToString(CultureInfo.CurrentCulture) },
-                { "foodEaten", TrackPlayerStats.GetPlayerStat(PlayerStatType.FoodEaten).ToString(CultureInfo.CurrentCulture) },
-                { "skeletonSummons", TrackPlayerStats.GetPlayerStat(PlayerStatType.SkeletonSummons).ToString(CultureInfo.CurrentCulture) },
-                { "arrowsShot", TrackPlayerStats.GetPlayerStat(PlayerStatType.ArrowsShot).ToString(CultureInfo.CurrentCulture) },
-                { "tombstonesOpenedOwn", TrackPlayerStats.GetPlayerStat(PlayerStatType.TombstonesOpenedOwn).ToString(CultureInfo.CurrentCulture) },
-                { "tombstonesOpenOther", TrackPlayerStats.GetPlayerStat(PlayerStatType.TombstonesOpenedOther).ToString(CultureInfo.CurrentCulture) },
-                { "tombstonesFit", TrackPlayerStats.GetPlayerStat(PlayerStatType.TombstonesFit).ToString(CultureInfo.CurrentCulture) },
-                { "deathByUndefined", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByUndefined).ToString(CultureInfo.CurrentCulture) },
-                { "deathByEnemyHit", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByEnemyHit).ToString(CultureInfo.CurrentCulture) },
-                { "deathByPlayerHit", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByPlayerHit).ToString(CultureInfo.CurrentCulture) },
-                { "deathByFall", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByFall).ToString(CultureInfo.CurrentCulture) },
-                { "deathByDrowning", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByDrowning).ToString(CultureInfo.CurrentCulture) },
-                { "deathByBurning", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByBurning).ToString(CultureInfo.CurrentCulture) },
-                { "deathByFreezing", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByFreezing).ToString(CultureInfo.CurrentCulture) },
-                { "deathByPoisoned", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByPoisoned).ToString(CultureInfo.CurrentCulture) },
-                { "deathBySmoke", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathBySmoke).ToString(CultureInfo.CurrentCulture) },
-                { "deathByWater", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByWater).ToString(CultureInfo.CurrentCulture) },
-                { "deathByEdgeOfWorld", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByEdgeOfWorld).ToString(CultureInfo.CurrentCulture) },
-                { "deathByImpact", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByImpact).ToString(CultureInfo.CurrentCulture) },
-                { "deathByCart", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByCart).ToString(CultureInfo.CurrentCulture) },
-                { "deathByTree", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByTree).ToString(CultureInfo.CurrentCulture) },
-                { "deathBySelf", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathBySelf).ToString(CultureInfo.CurrentCulture) },
-                { "deathByStructural", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByStructural).ToString(CultureInfo.CurrentCulture) },
-                { "deathByBoat", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByBoat).ToString(CultureInfo.CurrentCulture) },
-                { "deathByTurret", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByTurret).ToString(CultureInfo.CurrentCulture) },
-                { "deathByStalagtite", TrackPlayerStats.GetPlayerStat(PlayerStatType.DeathByStalagtite).ToString(CultureInfo.CurrentCulture) },
-                { "doorsOpened", TrackPlayerStats.GetPlayerStat(PlayerStatType.DoorsOpened).ToString(CultureInfo.CurrentCulture) },
-                { "doorsClosed", TrackPlayerStats.GetPlayerStat(PlayerStatType.DoorsClosed).ToString(CultureInfo.CurrentCulture) },
-                { "beesHarvested", TrackPlayerStats.GetPlayerStat(PlayerStatType.BeesHarvested).ToString(CultureInfo.CurrentCulture) },
-                { "sapHarvested", TrackPlayerStats.GetPlayerStat(PlayerStatType.SapHarvested).ToString(CultureInfo.CurrentCulture) },
-                { "turretAmmoAdded", TrackPlayerStats.GetPlayerStat(PlayerStatType.TurretAmmoAdded).ToString(CultureInfo.CurrentCulture) },
-                { "turretTrophySet", TrackPlayerStats.GetPlayerStat(PlayerStatType.TurretTrophySet).ToString(CultureInfo.CurrentCulture) },
-                { "trapArmed", TrackPlayerStats.GetPlayerStat(PlayerStatType.TrapArmed).ToString(CultureInfo.CurrentCulture) },
-                { "trapTriggered", TrackPlayerStats.GetPlayerStat(PlayerStatType.TrapTriggered).ToString(CultureInfo.CurrentCulture) },
-                { "placeStacks", TrackPlayerStats.GetPlayerStat(PlayerStatType.PlaceStacks).ToString(CultureInfo.CurrentCulture) },
-                { "portalDungeonIn", TrackPlayerStats.GetPlayerStat(PlayerStatType.PortalDungeonIn).ToString(CultureInfo.CurrentCulture) },
-                { "portalDungeonOut", TrackPlayerStats.GetPlayerStat(PlayerStatType.PortalDungeonOut).ToString(CultureInfo.CurrentCulture) },
-                { "totalBossKills", TrackPlayerStats.GetPlayerStat(PlayerStatType.BossKills).ToString(CultureInfo.CurrentCulture) },
-                { "bossLastHits", TrackPlayerStats.GetPlayerStat(PlayerStatType.BossLastHits).ToString(CultureInfo.CurrentCulture) },
-                { "setGuardianPower", TrackPlayerStats.GetPlayerStat(PlayerStatType.SetGuardianPower).ToString(CultureInfo.CurrentCulture) },
-                { "setPowerEikthyr", TrackPlayerStats.GetPlayerStat(PlayerStatType.SetPowerEikthyr).ToString(CultureInfo.CurrentCulture) },
-                { "setPowerElder", TrackPlayerStats.GetPlayerStat(PlayerStatType.SetPowerElder).ToString(CultureInfo.CurrentCulture) },
-                { "setPowerBonemass", TrackPlayerStats.GetPlayerStat(PlayerStatType.SetPowerBonemass).ToString(CultureInfo.CurrentCulture) },
-                { "setPowerModer", TrackPlayerStats.GetPlayerStat(PlayerStatType.SetPowerModer).ToString(CultureInfo.CurrentCulture) },
-                { "setPowerYagluth", TrackPlayerStats.GetPlayerStat(PlayerStatType.SetPowerYagluth).ToString(CultureInfo.CurrentCulture) },
-                { "setPowerQueen", TrackPlayerStats.GetPlayerStat(PlayerStatType.SetPowerQueen).ToString(CultureInfo.CurrentCulture) },
-                { "setPowerAshlands", TrackPlayerStats.GetPlayerStat(PlayerStatType.SetPowerAshlands).ToString(CultureInfo.CurrentCulture) },
-                { "setPowerDeepNorth", TrackPlayerStats.GetPlayerStat(PlayerStatType.SetPowerDeepNorth).ToString(CultureInfo.CurrentCulture) },
-                { "useGuardianPower", TrackPlayerStats.GetPlayerStat(PlayerStatType.UseGuardianPower).ToString(CultureInfo.CurrentCulture) },
-                { "usePowerEikthyr", TrackPlayerStats.GetPlayerStat(PlayerStatType.UsePowerEikthyr).ToString(CultureInfo.CurrentCulture) },
-                { "usePowerElder", TrackPlayerStats.GetPlayerStat(PlayerStatType.UsePowerElder).ToString(CultureInfo.CurrentCulture) },
-                { "usePowerBonemass", TrackPlayerStats.GetPlayerStat(PlayerStatType.UsePowerBonemass).ToString(CultureInfo.CurrentCulture) },
-                { "usePowerModer", TrackPlayerStats.GetPlayerStat(PlayerStatType.UsePowerModer).ToString(CultureInfo.CurrentCulture) },
-                { "usePowerYagluth", TrackPlayerStats.GetPlayerStat(PlayerStatType.UsePowerYagluth).ToString(CultureInfo.CurrentCulture) },
-                { "usePowerQueen", TrackPlayerStats.GetPlayerStat(PlayerStatType.UsePowerQueen).ToString(CultureInfo.CurrentCulture) },
-                { "usePowerAshlands", TrackPlayerStats.GetPlayerStat(PlayerStatType.UsePowerAshlands).ToString(CultureInfo.CurrentCulture) },
-                { "usePowerDeepNorth", TrackPlayerStats.GetPlayerStat(PlayerStatType.UsePowerDeepNorth).ToString(CultureInfo.CurrentCulture) },
-                { "count", TrackPlayerStats.GetPlayerStat(PlayerStatType.Count).ToString(CultureInfo.CurrentCulture) },
+                { "totalKills", GetPlayerStat(PlayerStatType.EnemyKills).ToString(CultureInfo.CurrentCulture) },
+                { "totalDeaths",GetPlayerStat(PlayerStatType.Deaths).ToString(CultureInfo.CurrentCulture) },
+                { "craftOrUpgrades", GetPlayerStat(PlayerStatType.CraftsOrUpgrades).ToString(CultureInfo.CurrentCulture) },
+                { "builds", GetPlayerStat(PlayerStatType.Builds).ToString(CultureInfo.CurrentCulture) },
+                { "jumps", GetPlayerStat(PlayerStatType.Jumps).ToString(CultureInfo.CurrentCulture) },
+                { "cheats", GetPlayerStat(PlayerStatType.Cheats).ToString(CultureInfo.InvariantCulture) },
+                { "enemyHits", GetPlayerStat(PlayerStatType.EnemyHits).ToString(CultureInfo.CurrentCulture) },
+                { "enemyKills", GetPlayerStat(PlayerStatType.EnemyKills).ToString(CultureInfo.InvariantCulture) },
+                { "enemyKillsLastHit", GetPlayerStat(PlayerStatType.EnemyKillsLastHits).ToString(CultureInfo.CurrentCulture) },
+                { "playerHits", GetPlayerStat(PlayerStatType.PlayerHits).ToString(CultureInfo.CurrentCulture) },
+                { "playerKills", GetPlayerStat(PlayerStatType.PlayerKills).ToString(CultureInfo.CurrentCulture) },
+                { "hitsTakenEnemies", GetPlayerStat(PlayerStatType.HitsTakenEnemies).ToString(CultureInfo.CurrentCulture) },
+                { "itemPickedUp", GetPlayerStat(PlayerStatType.ItemsPickedUp).ToString(CultureInfo.CurrentCulture) },
+                { "crafts", GetPlayerStat(PlayerStatType.Crafts).ToString(CultureInfo.CurrentCulture) },
+                { "upgrades", GetPlayerStat(PlayerStatType.Upgrades).ToString(CultureInfo.CurrentCulture) },
+                { "portalsUsed", GetPlayerStat(PlayerStatType.PortalsUsed).ToString(CultureInfo.CurrentCulture) },
+                { "distanceTraveled", GetPlayerStat(PlayerStatType.DistanceTraveled).ToString(CultureInfo.CurrentCulture) },
+                { "distanceWalk", GetPlayerStat(PlayerStatType.DistanceWalk).ToString(CultureInfo.CurrentCulture) },
+                { "distanceRun", GetPlayerStat(PlayerStatType.DistanceRun).ToString(CultureInfo.CurrentCulture) },
+                { "distanceSail", GetPlayerStat(PlayerStatType.DistanceSail).ToString(CultureInfo.CurrentCulture) },
+                { "distanceAir", GetPlayerStat(PlayerStatType.DistanceAir).ToString(CultureInfo.CurrentCulture) },
+                { "timeInBase", GetPlayerStat(PlayerStatType.TimeInBase).ToString(CultureInfo.CurrentCulture) },
+                { "timeOutOfBase", GetPlayerStat(PlayerStatType.TimeOutOfBase).ToString(CultureInfo.CurrentCulture) },
+                { "sleep", GetPlayerStat(PlayerStatType.Sleep).ToString(CultureInfo.CurrentCulture) },
+                { "itemStandUses", GetPlayerStat(PlayerStatType.ItemStandUses).ToString(CultureInfo.CurrentCulture) },
+                { "armorStandUses", GetPlayerStat(PlayerStatType.ArmorStandUses).ToString(CultureInfo.CurrentCulture) },
+                { "worldLoads", GetPlayerStat(PlayerStatType.WorldLoads).ToString(CultureInfo.CurrentCulture) },
+                { "treeChops", GetPlayerStat(PlayerStatType.TreeChops).ToString(CultureInfo.CurrentCulture) },
+                { "tree", GetPlayerStat(PlayerStatType.Tree).ToString(CultureInfo.CurrentCulture) },
+                { "treeTier0", GetPlayerStat(PlayerStatType.TreeTier0).ToString(CultureInfo.CurrentCulture) },
+                { "treeTier1", GetPlayerStat(PlayerStatType.TreeTier1).ToString(CultureInfo.CurrentCulture) },
+                { "treeTier2", GetPlayerStat(PlayerStatType.TreeTier2).ToString(CultureInfo.CurrentCulture) },
+                { "treeTier3", GetPlayerStat(PlayerStatType.TreeTier3).ToString(CultureInfo.CurrentCulture) },
+                { "treeTier4", GetPlayerStat(PlayerStatType.TreeTier4).ToString(CultureInfo.CurrentCulture) },
+                { "treeTier5", GetPlayerStat(PlayerStatType.TreeTier5).ToString(CultureInfo.CurrentCulture) },
+                { "logChops", GetPlayerStat(PlayerStatType.LogChops).ToString(CultureInfo.CurrentCulture) },
+                { "logs", GetPlayerStat(PlayerStatType.Logs).ToString(CultureInfo.CurrentCulture) },
+                { "mineHits", GetPlayerStat(PlayerStatType.MineHits).ToString(CultureInfo.CurrentCulture) },
+                { "mines", GetPlayerStat(PlayerStatType.Mines).ToString(CultureInfo.CurrentCulture) },
+                { "mineTier0", GetPlayerStat(PlayerStatType.MineTier0).ToString(CultureInfo.CurrentCulture) },
+                { "mineTier1", GetPlayerStat(PlayerStatType.MineTier1).ToString(CultureInfo.CurrentCulture) },
+                { "mineTier2", GetPlayerStat(PlayerStatType.MineTier2).ToString(CultureInfo.CurrentCulture) },
+                { "mineTier3", GetPlayerStat(PlayerStatType.MineTier3).ToString(CultureInfo.CurrentCulture) },
+                { "mineTier4", GetPlayerStat(PlayerStatType.MineTier4).ToString(CultureInfo.CurrentCulture) },
+                { "mineTier5", GetPlayerStat(PlayerStatType.MineTier5).ToString(CultureInfo.CurrentCulture) },
+                { "ravenHits", GetPlayerStat(PlayerStatType.RavenHits).ToString(CultureInfo.CurrentCulture) },
+                { "ravenTalk", GetPlayerStat(PlayerStatType.RavenTalk).ToString(CultureInfo.CurrentCulture) },
+                { "ravenAppear", GetPlayerStat(PlayerStatType.RavenAppear).ToString(CultureInfo.CurrentCulture) },
+                { "creatureTamed", GetPlayerStat(PlayerStatType.CreatureTamed).ToString(CultureInfo.CurrentCulture) },
+                { "foodEaten", GetPlayerStat(PlayerStatType.FoodEaten).ToString(CultureInfo.CurrentCulture) },
+                { "skeletonSummons", GetPlayerStat(PlayerStatType.SkeletonSummons).ToString(CultureInfo.CurrentCulture) },
+                { "arrowsShot", GetPlayerStat(PlayerStatType.ArrowsShot).ToString(CultureInfo.CurrentCulture) },
+                { "tombstonesOpenedOwn", GetPlayerStat(PlayerStatType.TombstonesOpenedOwn).ToString(CultureInfo.CurrentCulture) },
+                { "tombstonesOpenOther", GetPlayerStat(PlayerStatType.TombstonesOpenedOther).ToString(CultureInfo.CurrentCulture) },
+                { "tombstonesFit", GetPlayerStat(PlayerStatType.TombstonesFit).ToString(CultureInfo.CurrentCulture) },
+                { "deathByUndefined", GetPlayerStat(PlayerStatType.DeathByUndefined).ToString(CultureInfo.CurrentCulture) },
+                { "deathByEnemyHit", GetPlayerStat(PlayerStatType.DeathByEnemyHit).ToString(CultureInfo.CurrentCulture) },
+                { "deathByPlayerHit", GetPlayerStat(PlayerStatType.DeathByPlayerHit).ToString(CultureInfo.CurrentCulture) },
+                { "deathByFall", GetPlayerStat(PlayerStatType.DeathByFall).ToString(CultureInfo.CurrentCulture) },
+                { "deathByDrowning", GetPlayerStat(PlayerStatType.DeathByDrowning).ToString(CultureInfo.CurrentCulture) },
+                { "deathByBurning", GetPlayerStat(PlayerStatType.DeathByBurning).ToString(CultureInfo.CurrentCulture) },
+                { "deathByFreezing", GetPlayerStat(PlayerStatType.DeathByFreezing).ToString(CultureInfo.CurrentCulture) },
+                { "deathByPoisoned", GetPlayerStat(PlayerStatType.DeathByPoisoned).ToString(CultureInfo.CurrentCulture) },
+                { "deathBySmoke", GetPlayerStat(PlayerStatType.DeathBySmoke).ToString(CultureInfo.CurrentCulture) },
+                { "deathByWater", GetPlayerStat(PlayerStatType.DeathByWater).ToString(CultureInfo.CurrentCulture) },
+                { "deathByEdgeOfWorld", GetPlayerStat(PlayerStatType.DeathByEdgeOfWorld).ToString(CultureInfo.CurrentCulture) },
+                { "deathByImpact", GetPlayerStat(PlayerStatType.DeathByImpact).ToString(CultureInfo.CurrentCulture) },
+                { "deathByCart", GetPlayerStat(PlayerStatType.DeathByCart).ToString(CultureInfo.CurrentCulture) },
+                { "deathByTree", GetPlayerStat(PlayerStatType.DeathByTree).ToString(CultureInfo.CurrentCulture) },
+                { "deathBySelf", GetPlayerStat(PlayerStatType.DeathBySelf).ToString(CultureInfo.CurrentCulture) },
+                { "deathByStructural", GetPlayerStat(PlayerStatType.DeathByStructural).ToString(CultureInfo.CurrentCulture) },
+                { "deathByBoat", GetPlayerStat(PlayerStatType.DeathByBoat).ToString(CultureInfo.CurrentCulture) },
+                { "deathByTurret", GetPlayerStat(PlayerStatType.DeathByTurret).ToString(CultureInfo.CurrentCulture) },
+                { "deathByStalagtite", GetPlayerStat(PlayerStatType.DeathByStalagtite).ToString(CultureInfo.CurrentCulture) },
+                { "doorsOpened", GetPlayerStat(PlayerStatType.DoorsOpened).ToString(CultureInfo.CurrentCulture) },
+                { "doorsClosed", GetPlayerStat(PlayerStatType.DoorsClosed).ToString(CultureInfo.CurrentCulture) },
+                { "beesHarvested", GetPlayerStat(PlayerStatType.BeesHarvested).ToString(CultureInfo.CurrentCulture) },
+                { "sapHarvested", GetPlayerStat(PlayerStatType.SapHarvested).ToString(CultureInfo.CurrentCulture) },
+                { "turretAmmoAdded", GetPlayerStat(PlayerStatType.TurretAmmoAdded).ToString(CultureInfo.CurrentCulture) },
+                { "turretTrophySet", GetPlayerStat(PlayerStatType.TurretTrophySet).ToString(CultureInfo.CurrentCulture) },
+                { "trapArmed", GetPlayerStat(PlayerStatType.TrapArmed).ToString(CultureInfo.CurrentCulture) },
+                { "trapTriggered", GetPlayerStat(PlayerStatType.TrapTriggered).ToString(CultureInfo.CurrentCulture) },
+                { "placeStacks", GetPlayerStat(PlayerStatType.PlaceStacks).ToString(CultureInfo.CurrentCulture) },
+                { "portalDungeonIn", GetPlayerStat(PlayerStatType.PortalDungeonIn).ToString(CultureInfo.CurrentCulture) },
+                { "portalDungeonOut", GetPlayerStat(PlayerStatType.PortalDungeonOut).ToString(CultureInfo.CurrentCulture) },
+                { "totalBossKills", GetPlayerStat(PlayerStatType.BossKills).ToString(CultureInfo.CurrentCulture) },
+                { "bossLastHits", GetPlayerStat(PlayerStatType.BossLastHits).ToString(CultureInfo.CurrentCulture) },
+                { "setGuardianPower", GetPlayerStat(PlayerStatType.SetGuardianPower).ToString(CultureInfo.CurrentCulture) },
+                { "setPowerEikthyr", GetPlayerStat(PlayerStatType.SetPowerEikthyr).ToString(CultureInfo.CurrentCulture) },
+                { "setPowerElder", GetPlayerStat(PlayerStatType.SetPowerElder).ToString(CultureInfo.CurrentCulture) },
+                { "setPowerBonemass", GetPlayerStat(PlayerStatType.SetPowerBonemass).ToString(CultureInfo.CurrentCulture) },
+                { "setPowerModer", GetPlayerStat(PlayerStatType.SetPowerModer).ToString(CultureInfo.CurrentCulture) },
+                { "setPowerYagluth", GetPlayerStat(PlayerStatType.SetPowerYagluth).ToString(CultureInfo.CurrentCulture) },
+                { "setPowerQueen", GetPlayerStat(PlayerStatType.SetPowerQueen).ToString(CultureInfo.CurrentCulture) },
+                { "setPowerAshlands", GetPlayerStat(PlayerStatType.SetPowerAshlands).ToString(CultureInfo.CurrentCulture) },
+                { "setPowerDeepNorth", GetPlayerStat(PlayerStatType.SetPowerDeepNorth).ToString(CultureInfo.CurrentCulture) },
+                { "useGuardianPower", GetPlayerStat(PlayerStatType.UseGuardianPower).ToString(CultureInfo.CurrentCulture) },
+                { "usePowerEikthyr", GetPlayerStat(PlayerStatType.UsePowerEikthyr).ToString(CultureInfo.CurrentCulture) },
+                { "usePowerElder", GetPlayerStat(PlayerStatType.UsePowerElder).ToString(CultureInfo.CurrentCulture) },
+                { "usePowerBonemass", GetPlayerStat(PlayerStatType.UsePowerBonemass).ToString(CultureInfo.CurrentCulture) },
+                { "usePowerModer", GetPlayerStat(PlayerStatType.UsePowerModer).ToString(CultureInfo.CurrentCulture) },
+                { "usePowerYagluth", GetPlayerStat(PlayerStatType.UsePowerYagluth).ToString(CultureInfo.CurrentCulture) },
+                { "usePowerQueen", GetPlayerStat(PlayerStatType.UsePowerQueen).ToString(CultureInfo.CurrentCulture) },
+                { "usePowerAshlands", GetPlayerStat(PlayerStatType.UsePowerAshlands).ToString(CultureInfo.CurrentCulture) },
+                { "usePowerDeepNorth", GetPlayerStat(PlayerStatType.UsePowerDeepNorth).ToString(CultureInfo.CurrentCulture) },
+                { "count", GetPlayerStat(PlayerStatType.Count).ToString(CultureInfo.CurrentCulture) },
             };
 
             SetTextElement(parentElement.gameObject, "title", Player.m_localPlayer.GetHoverName() + " " + "$almanac_stats_button");
 
-            // Calculate the largest string length
-            int largestString = 0;
-            foreach (KeyValuePair<string, string> kvp in conversionMap)
+            foreach (var kvp in conversionMap)
             {
-                // if (kvp.Key.Contains("title")) continue;
-                string content = $"$almanac_{kvp.Key}_label : <color=orange>{kvp.Value}</color>";
-                string localizedValue = Localization.instance.Localize(content);
-                int length = localizedValue.Length;
-                if (length > largestString) largestString = length;
-            }
-
-            StringBuilder sb = new StringBuilder();
-
-            // Set text elements with padding
-            foreach (KeyValuePair<string, string> kvp in conversionMap)
-            {
-                string content = $"$almanac_{kvp.Key}_label : <color=orange>{kvp.Value}</color>";
-                string localizedValue = Localization.instance.Localize(content);
-
-                sb.Clear();
-                sb.Append(content);
-
-                if (localizedValue.Length < largestString)
+                if (kvp.Key.Contains("title"))
                 {
-                    int difference = largestString - localizedValue.Length;
-
-                    sb.Insert(sb.ToString().IndexOf(':') + 1, new string(' ', difference));
+                    SetTextElement(parentElement.gameObject, kvp.Key, kvp.Value);
                 }
-
-                SetTextElement(parentElement.gameObject, kvp.Key, kvp.Key.Contains("title") ? kvp.Value : sb.ToString());
+                else
+                {
+                    string labelId = kvp.Key + "_label";
+                    string valueId = kvp.Key + "_value";
+                    
+                    SetTextElement(parentElement.gameObject, labelId, $"$almanac_{labelId}");
+                    SetTextElement(parentElement.gameObject, valueId, $"<color=orange>{kvp.Value}</color>");
+                }
             }
         }
 
-        public static void SetAchievementsData(Transform parentElement, AchievementsUI.Achievement data)
+        public static void SetAchievementsData(Transform parentElement, Achievement data)
         {
             Transform achievementIconBg = parentElement.Find("ImageElement (achievementIcon)");
             Transform achievementIcon = achievementIconBg.Find("ImageElement (icon)");
@@ -247,64 +228,66 @@ public static class Patches
             progress = Mathf.Clamp(progress, 0f, 100f);
 
             if (!button) return;
-            button.interactable = CheckCheats.PlayerWatcher.noCost || data.isCompleted;
+            button.interactable = noCost || data.isCompleted;
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() =>
             {
-                if (AlmanacPlugin._AchievementPowers.Value is AlmanacPlugin.Toggle.On || CheckCheats.PlayerWatcher.noCost) SetAlmanacPowers(data);
+                if (_AchievementPowers.Value is On || noCost) SetAlmanacPowers(data);
             });
-
-            SetTextElement(parentElement.gameObject, "achievementTooltip", CheckCheats.PlayerWatcher.noCost ? data.powerToolTip : data.isCompleted ? data.powerToolTip : "");
-            SetTextElement(parentElement.gameObject, "achievementTitle", CheckCheats.PlayerWatcher.noCost ? data.name : data.isCompleted ? data.name : "???");
+            
+            SetTextElement(parentElement.gameObject, "achievementTooltip", noCost ? data.powerToolTip 
+                    : data.isCompleted && _AchievementPowers.Value == On ? data.powerToolTip : "");
+            SetTextElement(parentElement.gameObject, "achievementTitle", noCost ? data.name : data.isCompleted ? data.name : "???");
             SetTextElement(parentElement.gameObject, "achievementDescription", data.description ?? "$almanac_no_data");
-            SetImageElement(achievementIconBg.gameObject, "icon", data.sprite, CheckCheats.PlayerWatcher.noCost ? Color.white : data.isCompleted ? Color.white : Color.black);
+            SetImageElement(achievementIconBg.gameObject, "icon", data.sprite, noCost ? Color.white : data.isCompleted ? Color.white : Color.black);
             SetTextElement(parentElement.gameObject, "achievementProgress", $"<color=orange>{data.value}</color> / {data.total} (<color=orange>{progress}</color>%)");
-            SetTextElement(parentElement.gameObject, "achievementLore", CheckCheats.PlayerWatcher.noCost ? data.lore : data.isCompleted ? data.lore : "");
-
+            SetTextElement(parentElement.gameObject, "achievementLore", noCost ? data.lore : data.isCompleted ? data.lore : "");
         }
 
-        private static void SetAlmanacPowers(AchievementsUI.Achievement data)
+        private static void SetAlmanacPowers(Achievement data)
         {
             if (data.power.IsNullOrWhiteSpace())
             {
-                MessageHud.instance.ShowMessage(MessageHud.MessageType.Center,
-                    "$almanac_no_power_set", icon: AlmanacPlugin.AlmanacIconButton);
+                instance.ShowMessage(MessageType.Center, "$almanac_no_power_set");
                 return;
             }
+
             Player player = Player.m_localPlayer;
+            if (!player) return;
+            
+            StatusEffect customPower = ObjectDB.instance.GetStatusEffect(data.power.GetStableHashCode());
+            if (customPower == null)
+            {
+                AlmanacLogger.LogInfo("Failed to find: " + data.power);
+                return;
+            }
+
             if (data.power.StartsWith("GP"))
             {
                 player.SetGuardianPower(data.power);
                 player.GetGuardianPowerHUD(out StatusEffect GP, out float coolDown);
-                MessageHud.instance.ShowMessage(MessageHud.MessageType.Center,
-                    $"$almanac_set_guardian_power {GP.m_name} $almanac_power");
+                instance.ShowMessage(MessageType.Center, $"$almanac_set_guardian_power {GP.m_name} $almanac_power");
             }
             else
             {
                 List<StatusEffect> activeAlmanacEffects = CustomStatusEffects.activeAlmanacEffects;
                 
-                int guardianPowerHashCode = string.IsNullOrEmpty(data.power) ? 0 : data.power.GetStableHashCode();
-                StatusEffect customPower = ObjectDB.instance.GetStatusEffect(guardianPowerHashCode);
-
                 if (activeAlmanacEffects.Exists(effect => effect.name == data.power))
                 {
-                    // Debug.LogWarning($"Removing {data.power}");
-                    CustomStatusEffects.RemoveAlmanacEffect(customPower);
+                    RemoveAlmanacEffect(customPower);
                     player.m_seman.RemoveStatusEffect(customPower);
                 }
                 else
                 {
-                    if (activeAlmanacEffects.Count >= (CheckCheats.PlayerWatcher.noCost
-                            ? AchievementsUI.maxPowers
-                            : AchievementsUI.powerLimit) )
+                    if (activeAlmanacEffects.Count >= (noCost
+                            ? maxPowers
+                            : powerLimit))
                     {
-                        MessageHud.instance.ShowMessage(
-                            MessageHud.MessageType.Center, "$almanac_max_powers");
+                        instance.ShowMessage(MessageType.Center, "$almanac_max_powers");
                         return;
-                    };
-
-                    // Debug.LogWarning($"Adding {data.power}");
-                    CustomStatusEffects.AddAlmanacEffect(customPower);
+                    }
+                    // If the power is not active and player has not met max powers, add status effect
+                    AddAlmanacEffect(customPower);
                     player.m_seman.AddStatusEffect(customPower);
                 }
             }
@@ -322,27 +305,28 @@ public static class Patches
             
             SetTextElement(panel.gameObject, "almanacPowers", "$almanac_custom_powers_label");
             
-            SetActivePowers();
+            SetActivePowersUI();
         }
 
-        private static void SetActivePowers()
+        private static void SetActivePowersUI()
         {
             Player player = Player.m_localPlayer;
             Transform panel = trophyFrame.Find("statsPanel");
 
-            List<StatusEffect> activePowers = CustomStatusEffects.activeAlmanacEffects;
+            List<StatusEffect> activePowers = activeAlmanacEffects;
 
-            for (int i = 0; i < AchievementsUI.maxPowers; ++i)
+            for (int i = 0; i < maxPowers; ++i)
             {
                 SetActiveElement(panel.gameObject, "ImageElement", $"activeEffects ({i})", false);
                 SetActiveElement(panel.gameObject, "TextElement", $"activeDesc ({i})", false);
             }
 
-            if (AlmanacPlugin._AchievementPowers.Value is AlmanacPlugin.Toggle.Off && !CheckCheats.PlayerWatcher.noCost) return;
+            if (_AchievementPowers.Value is Off && !noCost) return;
             
             for (int i = 0; i < activePowers.Count; ++i)
             {
                 StatusEffect power = activePowers[i];
+                if (power == null) return; // null reference exception when logging out and back in
                 SetActiveElement(panel.gameObject, "ImageElement", $"activeEffects ({i})", true);
                 SetHoverableText(panel.gameObject, $"activeEffects ({i})", activePowers[i].m_name);
                 Transform iconBackground = panel.Find($"ImageElement (activeEffects ({i}))");
@@ -351,14 +335,14 @@ public static class Patches
                 Transform achievementIcon = iconBackground.Find("ImageElement (icon)");
                 achievementIcon.TryGetComponent(out Button button);
 
-                if (!button) return; ;
+                if (!button) return; 
                 button.onClick.RemoveAllListeners();
                 button.onClick.AddListener(() =>
                 {
-                    // Debug.LogWarning($"Removing {power.name}");
-                    CustomStatusEffects.RemoveAlmanacEffect(power);
+                    // On click, effect is removed from UI and SEMan status effects
+                    RemoveAlmanacEffect(power);
                     player.m_seman.RemoveStatusEffect(power);
-                    SetActivePowers();
+                    SetActivePowersUI();
                 });
 
                 string desc = $"<color=orange>{power.m_name}</color>\n{power.m_tooltip}";
@@ -376,7 +360,7 @@ public static class Patches
             creaturePanel = trophyFrame.transform.Find("creaturePanel");
             // materialPanel = trophyFrame.transform.Find("materialPanel");
             AlmanacElement = AlmanacList.transform.Find("AlmanacElement (0)");
-            knowledgeLockToggle = AlmanacPlugin._KnowledgeLock.Value;
+            knowledgeLockToggle = _KnowledgeLock.Value;
             achievementsElement = AlmanacList.Find("achievementsElement (0)");
             playerStatsElement = AlmanacList.Find("statsElement (0)");
 
@@ -405,14 +389,14 @@ public static class Patches
 
                 string prefab = piece.name;
                 string name = piece.m_name;
-                bool isRecipeKnown = Player.m_localPlayer.IsRecipeKnown(name) || CheckCheats.PlayerWatcher.noCost;
+                bool isRecipeKnown = Player.m_localPlayer.IsRecipeKnown(name) || noCost;
                 string localizedName = Localization.instance.Localize(name);
 
-                button.interactable = knowledgeLockToggle != AlmanacPlugin.Toggle.On || isRecipeKnown;
-                textMesh.text = knowledgeLockToggle == AlmanacPlugin.Toggle.On
+                button.interactable = knowledgeLockToggle != On || isRecipeKnown;
+                textMesh.text = knowledgeLockToggle == On
                     ? isRecipeKnown ? localizedName : "???"
                     : localizedName;
-                iconImage.color = knowledgeLockToggle == AlmanacPlugin.Toggle.On
+                iconImage.color = knowledgeLockToggle == On
                     ? isRecipeKnown ? Color.white : Color.black
                     : Color.white;
 
@@ -428,36 +412,36 @@ public static class Patches
         }
         private static void SetBlackListByPage(Transform container, string id, string prefabName, int index, BlackListTypes type)
         {
+            // Since page buttons also uses GameObject.SetActive to display the corresponding information
+            // Blacklist needs to know which page user is looking at in order set them false correctly
+            
             int page = 0;
             switch (type)
             {
-                case BlackListTypes.pieces:
-                    page = Mathf.FloorToInt(index / 72f);
-                    break;
-                case BlackListTypes.creatures:
-                    page = Mathf.FloorToInt(index / 100f);
-                    break;
-                case BlackListTypes.items:
-                    page = Mathf.FloorToInt(index / 72f);
-                    break;
+                case BlackListTypes.pieces: page = Mathf.FloorToInt(index / 72f); break;
+                case BlackListTypes.creatures: page = Mathf.FloorToInt(index / 100f); break;
+                case BlackListTypes.items: page = Mathf.FloorToInt(index / 72f); break;
+                // Add new page breakpoints here
             }
             int currentPage = Int32.MaxValue;
             switch (id)
             {
-                case "miscPieces": currentPage = Almanac.CreateAlmanac.miscPage; break;
-                case "craftingPieces": currentPage = Almanac.CreateAlmanac.craftPage; break;
-                case "buildPieces": currentPage = Almanac.CreateAlmanac.buildPage; break;
-                case "furniturePieces": currentPage = Almanac.CreateAlmanac.furniturePage; break;
-                case "other": currentPage = Almanac.CreateAlmanac.otherPage; break;
-                case "plantPieces": currentPage = Almanac.CreateAlmanac.plantsPage; break;
-                case "modPieces": currentPage = Almanac.CreateAlmanac.modPage; break;
-                case "Creature": currentPage = Almanac.CreateAlmanac.creaturesPage; break;
-                case "material": currentPage = Almanac.CreateAlmanac.materialsPage; break;
-                case "consummable": currentPage = Almanac.CreateAlmanac.consumablesPage; break;
-                case "weapon": currentPage = Almanac.CreateAlmanac.weaponsPage; break;
-                case "gear": currentPage = Almanac.CreateAlmanac.equipmentPage; break;
-                case "ammo": currentPage = Almanac.CreateAlmanac.projectilePage; break;
-                case "fish": currentPage = Almanac.CreateAlmanac.fishPage; break;
+                case "miscPieces": currentPage = miscPage; break;
+                case "craftingPieces": currentPage = craftPage; break;
+                case "buildPieces": currentPage = buildPage; break;
+                case "furniturePieces": currentPage = furniturePage; break;
+                case "other": currentPage = otherPage; break;
+                case "plantPieces": currentPage = plantsPage; break;
+                case "modPieces": currentPage = modPage; break;
+                case "Creature": currentPage = creaturesPage; break;
+                case "material": currentPage = materialsPage; break;
+                case "consummable": currentPage = consumablesPage; break;
+                case "weapon": currentPage = weaponsPage; break;
+                case "gear": currentPage = equipmentPage; break;
+                case "ammo": currentPage = projectilePage; break;
+                case "fish": currentPage = fishPage; break;
+                case "jewelcrafting": currentPage = jewelPage; break;
+                // Add category here to check against saved current page 
             }
 
             if (currentPage != page) return;
@@ -477,6 +461,8 @@ public static class Patches
                 case "gear": container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName)); break;
                 case "ammo": container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName)); break;
                 case "fish": container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName)); break;
+                case "jewelcrafting": container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName)); break;
+                // Add new categories here to be affected by blacklist
             }
         }
         public static void SetUnknownCreatures()
@@ -497,12 +483,12 @@ public static class Patches
                 string defeatedKey = creatures[i].defeatedKey;
                 bool isWise = true;
                 
-                if (knowledgeLockToggle == AlmanacPlugin.Toggle.On)
+                if (knowledgeLockToggle == On)
                 {
                     isWise = globalKeys.Contains(defeatedKey);
                 }
 
-                if (CheckCheats.PlayerWatcher.noCost) isWise = true;
+                if (noCost) isWise = true;
                 
                 // Set values
                 button.interactable = isWise;
@@ -540,22 +526,22 @@ public static class Patches
                     string prefab = list[i].name;
                     string name = list[i].m_itemData.m_shared.m_name;
                     string localizedName = Localization.instance.Localize(name);
-                    bool isKnown = Player.m_localPlayer.IsMaterialKnown(name) || CheckCheats.PlayerWatcher.noCost;
+                    bool isKnown = Player.m_localPlayer.IsMaterialKnown(name) || noCost;
 
-                    iconImage.color = knowledgeLockToggle == AlmanacPlugin.Toggle.On
+                    iconImage.color = knowledgeLockToggle == On
                         ? (isKnown ? Color.white : Color.black)
                         : Color.white;
-                    text.text = knowledgeLockToggle == AlmanacPlugin.Toggle.On
+                    text.text = knowledgeLockToggle == On
                         ? (isKnown ? localizedName : "???")
                         : localizedName;
-                    button.interactable = knowledgeLockToggle != AlmanacPlugin.Toggle.On || isKnown;
+                    button.interactable = knowledgeLockToggle != On || isKnown;
                     // Check against blacklist
                     if (BlackList.ItemBlackList.Value.Count == 0) continue;
                     SetBlackListByPage(container, id, prefab, i, BlackListTypes.items);
                 }
                 catch (NullReferenceException)
                 {
-                    // Debug.Log(list[i].name);
+                    // Some fringe exceptions still looking to nail down
                 }
             }
         }
@@ -629,7 +615,7 @@ public static class Patches
             {
                 SetActiveElement(Element, "ImageElement", $"recipe ({i})", false);
             }
-            SetImageElement(Element, "craftingStation", AlmanacPlugin.questionMarkIcon, Color.white);
+            SetImageElement(Element, "craftingStation", questionMarkIcon, Color.white);
             SetHoverableText(Element, "craftingStation", "$almanac_no_data");
             SetActiveElement(Element, "ImageElement", "craftingStation", false);
             // Plants
@@ -951,8 +937,8 @@ public static class Patches
                 textEditor.SelectAll();
                 textEditor.Copy();
                 
-                MessageHud.instance.ShowMessage(
-                    MessageHud.MessageType.Center, 
+                instance.ShowMessage(
+                    MessageType.Center, 
                     Localization.instance.Localize("$almanac_copy_to_clipboard"));
             });
 
@@ -975,7 +961,7 @@ public static class Patches
                 if (i >= 5) continue;
                 string resourceName = resources[i].m_resItem.m_itemData.m_shared.m_name;
                 bool isKnown = Player.m_localPlayer.IsMaterialKnown(resourceName);
-                if (CheckCheats.PlayerWatcher.noCost) isKnown = true;
+                if (noCost) isKnown = true;
                 int resourceAmount = resources[i].m_amount;
                 Sprite resourceIcon = resources[i].m_resItem.m_itemData.m_shared.m_icons[0];
                 GameObject ResourceBackground =
@@ -987,7 +973,7 @@ public static class Patches
                     $"recipe ({i})",
                     isKnown 
                         ? localizedName
-                        : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : localizedName 
+                        : _KnowledgeLock.Value == On ? "???" : localizedName 
                 );
                 SetImageElement(
                     ResourceBackground,
@@ -995,7 +981,7 @@ public static class Patches
                     resourceIcon, 
                     isKnown 
                         ? Color.white 
-                        : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ?Color.black : Color.white
+                        : _KnowledgeLock.Value == On ?Color.black : Color.white
                 );
                 SetTextElement(ResourceBackground, $"recipeAmount", $"{resourceAmount}");
             }
@@ -1130,7 +1116,7 @@ public static class Patches
                         int dropMax = defaultItems[i].m_stackMax;
     
                         bool isKnown = Player.m_localPlayer.IsMaterialKnown(dropName);
-                        if (CheckCheats.PlayerWatcher.noCost) isKnown = true;
+                        if (noCost) isKnown = true;
                         string elementName = $"containerDrops ({i})";
                         GameObject ResourceBackground = Element.transform.Find($"ImageElement ({elementName})").gameObject;
                         string localizedContent =
@@ -1138,8 +1124,8 @@ public static class Patches
                         SetActiveElement(Element, "ImageElement", elementName, true);
                         SetHoverableText(Element, elementName, isKnown 
                             ? localizedContent
-                            : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : localizedContent);
-                        SetImageElement(ResourceBackground, "item", dropIcon, isKnown ? Color.white : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white);
+                            : _KnowledgeLock.Value == On ? "???" : localizedContent);
+                        SetImageElement(ResourceBackground, "item", dropIcon, isKnown ? Color.white : _KnowledgeLock.Value == On ? Color.black : Color.white);
                         SetTextElement(ResourceBackground, $"recipeAmount", $"{dropMin}<color=white>-</color>{dropMax}");
                     }
                 };
@@ -1195,15 +1181,15 @@ public static class Patches
                     float cookTime = cookingConversion.m_cookTime;
         
                     bool isKnown = Player.m_localPlayer.IsMaterialKnown(cookingItemName);
-                    if (CheckCheats.PlayerWatcher.noCost) isKnown = true;
+                    if (noCost) isKnown = true;
                     string elementName = $"cookingConversion ({i})";
                     GameObject ResourceBackground = Element.transform.Find($"ImageElement ({elementName})").gameObject;
                     string localizedName = Localization.instance.Localize($"{cookingItemName}");
                     SetActiveElement(Element, "ImageElement", elementName, true);
                     SetHoverableText(Element, elementName, isKnown 
                         ? localizedName
-                        : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : localizedName);
-                    SetImageElement(ResourceBackground, "item", cookingItemIcon, isKnown ? Color.white : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white);
+                        : _KnowledgeLock.Value == On ? "???" : localizedName);
+                    SetImageElement(ResourceBackground, "item", cookingItemIcon, isKnown ? Color.white : _KnowledgeLock.Value == On ? Color.black : Color.white);
                     SetTextElement(ResourceBackground, $"cookTime", $"{cookTime}<color=white>s</color>");
                 }
             }
@@ -1259,14 +1245,14 @@ public static class Patches
                     
                     string elementName = $"fireplaceFireworks ({i})";
                     bool isKnown = Player.m_localPlayer.IsMaterialKnown(fireworkName);
-                    if (CheckCheats.PlayerWatcher.noCost) isKnown = true;
+                    if (noCost) isKnown = true;
                     GameObject ResourceBackground = Element.transform.Find($"ImageElement ({elementName})").gameObject;
                     string localizedName = Localization.instance.Localize($"{fireworkName}");
                     SetActiveElement(Element, "ImageElement", elementName, true);
                     SetHoverableText(Element, elementName, isKnown 
                         ? localizedName
-                        : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : localizedName);
-                    SetImageElement(ResourceBackground, "item", fireworkIcon, isKnown ? Color.white : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white);
+                        : _KnowledgeLock.Value == On ? "???" : localizedName);
+                    SetImageElement(ResourceBackground, "item", fireworkIcon, isKnown ? Color.white : _KnowledgeLock.Value == On ? Color.black : Color.white);
                     SetTextElement(ResourceBackground, $"itemCount", $"{fireworkCount}");
                     
                 }
@@ -1300,28 +1286,28 @@ public static class Patches
                     
                     string FromElementId = $"smelterConversion from ({i})";
                     bool fromIsKnown = Player.m_localPlayer.IsMaterialKnown(fromItemName);
-                    if (CheckCheats.PlayerWatcher.noCost) fromIsKnown = true;
+                    if (noCost) fromIsKnown = true;
                     GameObject smelterFrom = Element.transform.Find($"ImageElement ({FromElementId})").gameObject;
                     string fromLocalizedName = Localization.instance.Localize($"{fromItemName}");
                     SetActiveElement(Element, "ImageElement", FromElementId, true);
                     SetHoverableText(Element, FromElementId, fromIsKnown 
                         ? fromLocalizedName
-                        : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : fromLocalizedName);
-                    SetImageElement(smelterFrom, "item", FromItemIcon, fromIsKnown ? Color.white : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white);
+                        : _KnowledgeLock.Value == On ? "???" : fromLocalizedName);
+                    SetImageElement(smelterFrom, "item", FromItemIcon, fromIsKnown ? Color.white : _KnowledgeLock.Value == On ? Color.black : Color.white);
                     
                     string toItemName = smelterItem.m_to.m_itemData.m_shared.m_name;
                     Sprite? toItemIcon = smelterItem.m_to.m_itemData.GetIcon();
                     
                     string toElementId = $"smelterConversion to ({i})";
                     bool toIsKnown = Player.m_localPlayer.IsMaterialKnown(toItemName);
-                    if (CheckCheats.PlayerWatcher.noCost) toIsKnown = true;
+                    if (noCost) toIsKnown = true;
                     GameObject smelterTo = Element.transform.Find($"ImageElement ({toElementId})").gameObject;
                     string toLocalizedName = Localization.instance.Localize($"{toItemName}");
                     SetActiveElement(Element, "ImageElement", toElementId, true);
                     SetHoverableText(Element, toElementId, toIsKnown 
                         ? toLocalizedName
-                        : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : toLocalizedName);
-                    SetImageElement(smelterTo, "item", toItemIcon, toIsKnown ? Color.white : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white);
+                        : _KnowledgeLock.Value == On ? "???" : toLocalizedName);
+                    SetImageElement(smelterTo, "item", toItemIcon, toIsKnown ? Color.white : _KnowledgeLock.Value == On ? Color.black : Color.white);
                     
                     SetActiveElement(Element, "TextElement", $"smelterConversionSymbol ({i})", true);
                 }
@@ -1395,15 +1381,15 @@ public static class Patches
                         Sprite? ammoIcon = ammoItemDrop.m_itemData.GetIcon();
                         
                         bool isKnown = Player.m_localPlayer.IsMaterialKnown(ammoName);
-                        if (CheckCheats.PlayerWatcher.noCost) isKnown = true;
+                        if (noCost) isKnown = true;
                         string elementId = $"turretAmmo ({i})";
                         GameObject resourceBackground = Element.transform.Find($"ImageElement ({elementId})").gameObject;
                         string localizedName = Localization.instance.Localize($"{ammoName}");
                         SetActiveElement(Element, "ImageElement", elementId, true);
                         SetHoverableText(Element, elementId, isKnown 
                             ? localizedName
-                            : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : localizedName );
-                        SetImageElement(resourceBackground, "item", ammoIcon, isKnown ? Color.white : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white);
+                            : _KnowledgeLock.Value == On ? "???" : localizedName );
+                        SetImageElement(resourceBackground, "item", ammoIcon, isKnown ? Color.white : _KnowledgeLock.Value == On ? Color.black : Color.white);
                     }
                 }
             }
@@ -1450,16 +1436,16 @@ public static class Patches
                     SetActiveElement(Element, "ImageElement", fromElementId, true);
                     SetHoverableText(Element, fromElementId, isFromKnown 
                         ? fromLocalizedName
-                        : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : fromLocalizedName);
-                    SetImageElement(fromBackground, "item", fromIcon, isFromKnown ? Color.white : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white);
+                        : _KnowledgeLock.Value == On ? "???" : fromLocalizedName);
+                    SetImageElement(fromBackground, "item", fromIcon, isFromKnown ? Color.white : _KnowledgeLock.Value == On ? Color.black : Color.white);
                     
                     SetActiveElement(Element, "TextElement", $"fermentConversionSymbol ({i})", true);
                     
                     SetActiveElement(Element, "ImageElement", toElementId, true);
                     SetHoverableText(Element, toElementId, isToKnown 
                         ? toLocalizedName
-                        : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : toLocalizedName);
-                    SetImageElement(toBackground, "item", toIcon, isToKnown ? Color.white : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white);
+                        : _KnowledgeLock.Value == On ? "???" : toLocalizedName);
+                    SetImageElement(toBackground, "item", toIcon, isToKnown ? Color.white : _KnowledgeLock.Value == On ? Color.black : Color.white);
                     
                     SetTextElement(toBackground, "produceAmount", $"{producedItems}");
                 }
@@ -1559,7 +1545,7 @@ public static class Patches
                     {
                         string resourceName = resources[i].m_resItem.m_itemData.m_shared.m_name;
                         bool isKnown = Player.m_localPlayer.IsMaterialKnown(resourceName);
-                        if (CheckCheats.PlayerWatcher.noCost) isKnown = true;
+                        if (noCost) isKnown = true;
                         int resourceAmount = resources[i].m_amount;
                         Sprite resourceIcon = resources[i].m_resItem.m_itemData.m_shared.m_icons[0];
                         GameObject ResourceBackground =
@@ -1571,7 +1557,7 @@ public static class Patches
                             $"recipe ({i})",
                              isKnown 
                                  ? localizedName
-                                 : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : localizedName
+                                 : _KnowledgeLock.Value == On ? "???" : localizedName
                             );
                         SetImageElement(
                             ResourceBackground,
@@ -1579,7 +1565,7 @@ public static class Patches
                             resourceIcon, 
                             isKnown 
                                 ? Color.white 
-                                : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white
+                                : _KnowledgeLock.Value == On ? Color.black : Color.white
                             );
                         SetTextElement(ResourceBackground, $"recipeAmount", $"{resourceAmount}");
                     }
@@ -1592,7 +1578,7 @@ public static class Patches
             catch (NullReferenceException)
             {
                 // if crafting station is a cooking station
-                foreach (var station in Almanac.CreateAlmanac.cookingStations)
+                foreach (var station in cookingStations)
                 {
                     Piece piece = station.GetComponent<Piece>();
                     CookingStation script = station.GetComponent<CookingStation>();
@@ -1619,7 +1605,7 @@ public static class Patches
                 if (!targetElement.gameObject.activeInHierarchy)
                 {
                     // if crafting station is a fermenter
-                    foreach (var station in Almanac.CreateAlmanac.fermentingStations)
+                    foreach (var station in fermentingStations)
                     {
                         Piece piece = station.GetComponent<Piece>();
                         Fermenter script = station.GetComponent<Fermenter>();
@@ -1647,7 +1633,7 @@ public static class Patches
                 if (!targetElement.gameObject.activeInHierarchy)
                 {
                     // if crafting station is a smelter
-                    foreach (GameObject station in Almanac.CreateAlmanac.smelterStations)
+                    foreach (GameObject station in smelterStations)
                     {
                         Piece piece = station.GetComponent<Piece>();
                         Smelter script = station.GetComponent<Smelter>();
@@ -1730,8 +1716,8 @@ public static class Patches
                 textEditor.SelectAll();
                 textEditor.Copy();
                 
-                MessageHud.instance.ShowMessage(
-                    MessageHud.MessageType.Center, 
+                instance.ShowMessage(
+                    MessageType.Center, 
                     Localization.instance.Localize("$almanac_copy_to_clipboard"));
             });
             
@@ -1983,19 +1969,19 @@ public static class Patches
                     ItemDrop itemDrop = drop.GetComponent<ItemDrop>();
                     string dropItemName = itemDrop.m_itemData.m_shared.m_name;
                     bool isKnown = Player.m_localPlayer.IsMaterialKnown(dropItemName);
-                    if (CheckCheats.PlayerWatcher.noCost) isKnown = true;
+                    if (noCost) isKnown = true;
                     GameObject fishDropBg = Element.transform.Find($"ImageElement (fishDrops ({i}))").gameObject;
                     string localizedName = Localization.instance.Localize(dropItemName);
                     SetImageElement(
                         fishDropBg,
                         "fishDropItemIcon",
                         itemDrop.m_itemData.m_shared.m_icons[0],
-                        isKnown ? Color.white : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white
+                        isKnown ? Color.white : _KnowledgeLock.Value == On ? Color.black : Color.white
                         );
                     SetHoverableText(
                         Element,
                         $"fishDrops ({i})",
-                        isKnown ? localizedName : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : localizedName);
+                        isKnown ? localizedName : _KnowledgeLock.Value == On ? "???" : localizedName);
                     SetActiveElement(Element, "ImageElement", $"fishDrops ({i})", true);
                 }
             }
@@ -2338,9 +2324,9 @@ public static class Patches
                 case HitData.DamageModifier.Weak:
                     return new Color(1f, 0.5f, 0f, 1f);
                 case HitData.DamageModifier.Ignore:
-                    return AlmanacPlugin._ignoreColorConfig.Value;
+                    return _ignoreColorConfig.Value;
                 case HitData.DamageModifier.Immune:
-                    return AlmanacPlugin._immuneColorConfig.Value;
+                    return _immuneColorConfig.Value;
                 case HitData.DamageModifier.VeryResistant:
                     return new Color(0f, 1f, 0f, 1f);
                 case HitData.DamageModifier.VeryWeak:
@@ -2429,17 +2415,17 @@ public static class Patches
                         Sprite icon = itemDrop.m_itemData.GetIcon();
                         string itemName = itemDrop.m_itemData.m_shared.m_name;
                         bool isKnown = player.IsMaterialKnown(itemName);
-                        if (CheckCheats.PlayerWatcher.noCost) isKnown = true;
+                        if (noCost) isKnown = true;
                         string content = $"{itemName} (<color=orange>{dropChance}%</color>)";
                         SetImageElement(
                             dropBgElement.gameObject,
                             $"creatureDrop ({index})", icon,
-                            isKnown ? Color.white : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white
+                            isKnown ? Color.white : _KnowledgeLock.Value == On ? Color.black : Color.white
                         );
                         SetHoverableText(
                             dropBgElement.gameObject,
                             $"creatureDrop ({index})",
-                            isKnown ? content : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : content
+                            isKnown ? content : _KnowledgeLock.Value == On ? "???" : content
                             );
 
                         SetActiveElement(dummyElement, "ImageElement", $"dropIconBg ({index})", true);
@@ -2500,16 +2486,16 @@ public static class Patches
                         Sprite icon = itemDrop.m_itemData.GetIcon();
                         string itemName = itemDrop.m_itemData.m_shared.m_name;
                         bool isKnown = player.IsKnownMaterial(itemName);
-                        if (CheckCheats.PlayerWatcher.noCost) isKnown = true;
+                        if (noCost) isKnown = true;
                         
                         SetImageElement(
                             bgElement.gameObject, $"consumeItem ({index})", icon,
-                            isKnown ? Color.white : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? Color.black : Color.white
+                            isKnown ? Color.white : _KnowledgeLock.Value == On ? Color.black : Color.white
                             );
                         SetHoverableText(
                             bgElement.gameObject,
                             $"consumeItem ({index})",
-                            isKnown ? itemName : AlmanacPlugin._KnowledgeLock.Value == AlmanacPlugin.Toggle.On ? "???" : itemName
+                            isKnown ? itemName : _KnowledgeLock.Value == On ? "???" : itemName
                             );
 
                         SetActiveElement(dummyElement, "ImageElement", $"iconBg ({index})", true);
@@ -2646,13 +2632,13 @@ public static class Patches
         {
             return context switch
             {
-                "Normal" => AlmanacPlugin._normalColorConfig.Value,
-                "Weak" => AlmanacPlugin._weakColorConfig.Value,
-                "VeryWeak" => AlmanacPlugin._veryWeakColorConfig.Value,
-                "Resistant" => AlmanacPlugin._resistantColorConfig.Value,
-                "VeryResistant" => AlmanacPlugin._veryResistantColorConfig.Value,
-                "Ignore" => AlmanacPlugin._ignoreColorConfig.Value,
-                "Immune" => AlmanacPlugin._immuneColorConfig.Value,
+                "Normal" => _normalColorConfig.Value,
+                "Weak" => _weakColorConfig.Value,
+                "VeryWeak" => _veryWeakColorConfig.Value,
+                "Resistant" => _resistantColorConfig.Value,
+                "VeryResistant" => _veryResistantColorConfig.Value,
+                "Ignore" => _ignoreColorConfig.Value,
+                "Immune" => _immuneColorConfig.Value,
                 "N/A" => Color.white,
                 _ => defaultColor
             };

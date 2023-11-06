@@ -258,7 +258,7 @@ almanac_killed_by_label: "Recorded Kill Count"
 almanac_died_to_label: "Recorded Death Count"
 
 # Player Stats
-almanac_custom_powers_label: "Almanac Active Effects"
+almanac_custom_powers_label: "Almanac Passive Effects"
 
 almanac_enemy_title: "Enemies"
 almanac_player_title: "Player"
@@ -424,6 +424,8 @@ almanac_allows_bonemass_power: "Enables quick access to <color=orange>Bonemass</
 almanac_allows_moder_power: "Enables quick access to <color=orange>Moder</color> power"
 almanac_allows_yagluth_power: "Enables quick access to <color=orange>Yagluth</color> power"
 almanac_allows_queen_power: "Enables quick access to <color=orange>Queens</color> power"
+almanac_greydwarf_shaman_heal: "Enables use of the shaman's powers"
+almanac_dverger_heal: "Enables use of great healing powers"
 
 # Achievements Effects
 almanac_achievement_meadow_kill: "Meadow Hunter"
@@ -552,43 +554,55 @@ almanac_adventurer_lore: "As a true adventurer, you've spent a staggering 50,000
 
 almanac_achievement_cultist_hunter: "Preacher"
 almanac_achievement_cultist_hunter_desc: "Hunt down the cultists of the mountains"
-almanac_cultist_hunter_lore: ""
+almanac_cultist_hunter_lore: "A steadfast preacher seeks to eradicate the malevolent mountain cultists, driven by an unshakable faith and determination to cleanse the sacred peaks."
 
 almanac_achievement_goblin_shaman_hunter: "Witch Hunt"
 almanac_achievement_goblin_shaman_hunter_desc: "Hunt down the witches of the plains"
-almanac_goblin_shaman_hunter_lore: ""
+almanac_goblin_shaman_hunter_lore: "A fearless adventurer and goblin shaman slayer who dauntlessly pursues these magical creatures, displaying unmatched bravery and resourcefulness."
 
 almanac_achievement_drake_hunter: "Flies"
 almanac_achievement_drake_hunter_desc: "Hunt down the drakes from the mountains"
-almanac_drake_hunter_lore: ""
+almanac_drake_hunter_lore: "A valiant dragon slayer and renowned drake hunter who has mastered the art of felling these fearsome beasts, earning the respect of Vikings across the land."
 
 almanac_achievement_dragon_killer: "Dragon Hunter"
 almanac_achievement_dragon_killer_desc: "Hunt down the dragon queen"
-almanac_dragon_killer_lore: ""
+almanac_dragon_killer_lore: "A legendary dragon slayer, revered for their countless victories against these formidable creatures. Their skill with a blade is unmatched, and their name strikes fear into the hearts of all dragons."
 
 almanac_achievement_bonemass_killer: "Noxious"
 almanac_achievement_bonemass_killer_desc: "Hunt down bonemass"
-almanac_bonemass_killer_lore: ""
+almanac_bonemass_killer_lore: "The relentless Bonemass slayer, known for braving the swamps and vanquishing this formidable foe countless times. Their resilience and combat prowess have made them a legend among the swamp's denizens."
 
 almanac_achievement_stench: "Putrid"
 almanac_achievement_stench_desc: "Died over <color=orange>100</color> times"
-almanac_stench_lore: ""
+almanac_stench_lore: "Stench, they say, was an adventurer who simply couldn't resist the intoxicating allure of the lethal gas clouds in the swamps. Despite countless deaths, they persisted in their quest, seeking to conquer the dangers of the fetid marshes."
 
 almanac_achievement_vengeful: "Vengeful"
 almanac_achievement_vengeful_desc: "Hunt down the wraiths of the swamps"
-almanac_vengeful_lore: ""
+almanac_vengeful_lore: "The Vengeful Wraith Hunter, a relentless soul, pursued these otherworldly entities to right perceived wrongs. Bound by an insatiable thirst for retribution, they combed through the haunted haunts of Valheim, vanquishing wraiths and avenging the fallen."
 
 almanac_achievement_ghastly: "Ghastly"
 almanac_achievement_ghastly_desc: "Hunt down the crypt ghosts of the black forest"
-almanac_ghostly_lore: ""
+almanac_ghastly_lore: "The Ghastly Hunter, a fearless explorer of the supernatural, scoured the eerie depths of Valheim to unearth the elusive and terrifying Ghasts. These unearthly entities were a test of both bravery and combat prowess, making their slaying a remarkable feat."
 
 almanac_achievement_fenring: "Wolverine"
 almanac_achievement_fenring_desc: "Hunt down the fenrings of the mountains"
-almanac_fenring_lore: ""
+almanac_fenring_lore: "The Fenring Hunter, a valiant warrior, ventured deep into the treacherous swamps of Valheim to face the perilous Fenrings. These amphibious creatures posed a formidable challenge, but the hunter's determination led to their successful conquest."
 
+almanac_achievement_healer: "Forest Dweller"
+almanac_achievement_healer_desc: "Hunt down the shamans of the black forest"
+almanac_healer_lore: "The Healer, a compassionate figure, honed their skills in the mystical arts of restoration. With great dedication, they mended the wounds of countless warriors, ensuring their survival in the unforgiving world of Valheim."
+
+almanac_achievement_dverger_healer: "Supporter"
+almanac_achievement_dverger_healer_desc: "Hunt down the healing dvergers of the mistlands"
+almanac_dverger_healer_lore: "The Dverger Healer, a skilled artisan of the dwarven kind, mastered the sacred arts of mending. In the deep, subterranean realms, they mended their fellow dwarves' wounds, keeping their kin ready for the rigors of the underground world."
+
+almanac_achievement_trophy_hunter: "Trophy Hunter"
+almanac_achievement_trophy_hunter_desc: "Discover all available trophies in this world"
+almanac_trophy_hunter_lore: ""
 
 # Leaderboard 
 almanac_leaderboard: "Leaderboard"
+almanac_leaderboard_labels: "     Player Name                 Achievements"
 
 # Jewelcrafting
 almanac_jewelcrafting_button: "Jewels"

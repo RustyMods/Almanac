@@ -3,6 +3,7 @@ using System.IO;
 using BepInEx;
 using HarmonyLib;
 using YamlDotNet.Serialization;
+using static Almanac.AlmanacPlugin;
 
 namespace Almanac.Almanac;
 
@@ -16,7 +17,7 @@ public static class SaveCustomData
         private static void Postfix(Player __instance)
         {
             if (!__instance) return;
-            if (AlmanacPlugin.WorkingAsType is AlmanacPlugin.WorkingAs.Server) return;
+            if (WorkingAsType is WorkingAs.Server) return;
 
             var TempMonstersKilled = TrackPlayerKills.TempMonstersKilled;
             var TempPlayerDeaths = TrackPlayerDeaths.TempPlayerDeaths;

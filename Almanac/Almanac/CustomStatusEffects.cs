@@ -1,7 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static Almanac.Almanac.AlmanacEffectsManager;
+using static Almanac.Almanac.RegisterAlmanacEffects;
+using Object = UnityEngine.Object;
 
 namespace Almanac.Almanac;
 
@@ -46,6 +50,69 @@ public static class CustomStatusEffects
             
         }
     }
+    
+    [HarmonyPatch(typeof(Player), nameof(Player.Awake))]
+    static class PlayerAwakePatch
+    {
+        private static void Postfix(Player __instance)
+        {
+            if (!__instance) return;
+            // Create new game object to hold custom visual effects on player
+            GameObject playerObj = __instance.gameObject;
+
+            GameObject effectsContainer = new GameObject("almanac_effects");
+            effectsContainer.transform.SetParent(playerObj.transform);
+            Transform containerLocale = effectsContainer.transform;
+            containerLocale.localPosition = new Vector3(0f, 1.8f, 0f);
+            containerLocale.localRotation = Quaternion.identity;
+            
+            effectsContainer.SetActive(true);
+            
+        }
+        
+    }
+
+    // [HarmonyPatch(typeof(Player), nameof(Player.StartGuardianPower))]
+    // static class StartGuardianPowerPatch
+    // {
+    //     private static bool Prefix(Player __instance)
+    //     {
+    //         if (__instance.m_guardianSE == null) return false;
+    //         
+    //         string name = __instance.m_guardianSE.name;
+    //         if (almanacStatusEffects.Exists(x => x.name == name))
+    //         {
+    //             if (__instance.m_guardianPowerCooldown > 0.0)
+    //             {
+    //                 __instance.Message(MessageHud.MessageType.Center, "$hud_powernotready");
+    //                 return false;
+    //             }
+    //             
+    //             // Change the guardian animation
+    //             // Animation working but it disables effect of guardian power
+    //             __instance.m_zanim.SetTrigger(__instance.m_guardianSE.m_activationAnimation);
+    //
+    //             return false;
+    //         }
+    //
+    //         return true;
+    //     }
+    // }
+
+
+    [HarmonyPatch(typeof(Character), nameof(Character.RPC_Heal))]
+    static class CharacterHealPatch
+    {
+        private static void Prefix(Character __instance, long sender, float hp, bool showText)
+        {
+            ZNetPeer senderPeer = ZNet.instance.GetPeer(sender);
+            if (senderPeer != null)
+            {
+                string senderName = senderPeer.m_playerName;
+                AlmanacPlugin.AlmanacLogger.LogWarning(senderName);
+            }
+        }
+    }
 
     [HarmonyPatch(typeof(TreeBase), nameof(TreeBase.RPC_Damage))]
     static class AddExtraDamageTreePatch
@@ -69,11 +136,11 @@ public static class CustomStatusEffects
 
             foreach (StatusEffect effect in activeEffects)
             {
-                if (!RegisterAlmanacEffects.effectsData.Exists(x => x.effectName == effect.name)) continue;
-                AlmanacEffectsManager.BaseEffectData data = RegisterAlmanacEffects.effectsData.Find(x => x.effectName == effect.name);
+                if (!effectsData.Exists(x => x.effectName == effect.name)) continue;
+                BaseEffectData data = effectsData.Find(x => x.effectName == effect.name);
                 switch (data.Modifier)
                 {
-                    case AlmanacEffectsManager.Modifier.ChopDMG:
+                    case Modifier.ChopDMG:
                         hit.m_damage.m_chop += data.m_newValue;
                         break;
                 }
@@ -103,11 +170,11 @@ public static class CustomStatusEffects
 
             foreach (StatusEffect effect in activeEffects)
             {
-                if (!RegisterAlmanacEffects.effectsData.Exists(x => x.effectName == effect.name)) continue;
-                AlmanacEffectsManager.BaseEffectData data = RegisterAlmanacEffects.effectsData.Find(x => x.effectName == effect.name);
+                if (!effectsData.Exists(x => x.effectName == effect.name)) continue;
+                BaseEffectData data = effectsData.Find(x => x.effectName == effect.name);
                 switch (data.Modifier)
                 {
-                    case AlmanacEffectsManager.Modifier.ChopDMG:
+                    case Modifier.ChopDMG:
                         hit.m_damage.m_chop += data.m_newValue;
                         break;
                 }
@@ -146,70 +213,28 @@ public static class CustomStatusEffects
             
             foreach (StatusEffect effect in activeEffects)
             {
-                if (!RegisterAlmanacEffects.effectsData.Exists(x => x.effectName == effect.name)) continue;
-                AlmanacEffectsManager.BaseEffectData data = RegisterAlmanacEffects.effectsData.Find(x => x.effectName == effect.name);
+                if (!effectsData.Exists(x => x.effectName == effect.name)) continue;
+                BaseEffectData data = effectsData.Find(x => x.effectName == effect.name);
                 switch (data.Modifier)
                 {
-                    case AlmanacEffectsManager.Modifier.MeleeDMG:
-                        if (!ranged) hit.m_damage.m_damage += data.m_newValue;
-                        break;
-                    case AlmanacEffectsManager.Modifier.RangedDMG:
-                        if (ranged) hit.m_damage.m_damage += data.m_newValue;
-                        break;
-                    case AlmanacEffectsManager.Modifier.FireDMG:
-                        hit.m_damage.m_fire += data.m_newValue;
-                        break;
-                    case AlmanacEffectsManager.Modifier.FrostDMG:
-                        hit.m_damage.m_frost += data.m_newValue;
-                        break;
-                    case AlmanacEffectsManager.Modifier.LightningDMG:
-                        hit.m_damage.m_lightning += data.m_newValue;
-                        break;
-                    case AlmanacEffectsManager.Modifier.PoisonDMG:
-                        hit.m_damage.m_poison += data.m_newValue;
-                        break;
-                    case AlmanacEffectsManager.Modifier.SpiritDMG:
-                        hit.m_damage.m_spirit += data.m_newValue;
-                        break;
-                    case AlmanacEffectsManager.Modifier.ChopDMG:
-                        hit.m_damage.m_chop += data.m_newValue;
-                        break;
-                    case AlmanacEffectsManager.Modifier.PickaxeDMG:
-                        hit.m_damage.m_pickaxe += data.m_newValue;
-                        break;
-                    case AlmanacEffectsManager.Modifier.BluntDMG:
-                        hit.m_damage.m_blunt += data.m_newValue;
-                        break;
-                    case AlmanacEffectsManager.Modifier.PierceDMG:
-                        hit.m_damage.m_pierce += data.m_newValue;
-                        break;
-                    case AlmanacEffectsManager.Modifier.SlashDMG:
-                        hit.m_damage.m_slash += data.m_newValue;
-                        break;
-
+                    case Modifier.MeleeDMG: if (!ranged) hit.m_damage.m_damage += data.m_newValue; break;
+                    case Modifier.RangedDMG: if (ranged) hit.m_damage.m_damage += data.m_newValue; break;
+                    case Modifier.FireDMG: hit.m_damage.m_fire += data.m_newValue; break;
+                    case Modifier.FrostDMG: hit.m_damage.m_frost += data.m_newValue; break;
+                    case Modifier.LightningDMG: hit.m_damage.m_lightning += data.m_newValue; break;
+                    case Modifier.PoisonDMG: hit.m_damage.m_poison += data.m_newValue; break;
+                    case Modifier.SpiritDMG: hit.m_damage.m_spirit += data.m_newValue; break;
+                    case Modifier.ChopDMG: hit.m_damage.m_chop += data.m_newValue; break;
+                    case Modifier.PickaxeDMG: hit.m_damage.m_pickaxe += data.m_newValue; break;
+                    case Modifier.BluntDMG: hit.m_damage.m_blunt += data.m_newValue; break;
+                    case Modifier.PierceDMG: hit.m_damage.m_pierce += data.m_newValue; break;
+                    case Modifier.SlashDMG: hit.m_damage.m_slash += data.m_newValue; break;
                 }
             }
         }
     }
 
-    [HarmonyPatch(typeof(Player), nameof(Player.Awake))]
-    static class PlayerAwakePatch
-    {
-        private static void Postfix(Player __instance)
-        {
-            if (!__instance) return;
-            
-            GameObject playerObj = __instance.gameObject;
-
-            GameObject effectsContainer = new GameObject("almanac_effects");
-            effectsContainer.transform.SetParent(playerObj.transform);
-            Transform containerLocale = effectsContainer.transform;
-            containerLocale.localPosition = new Vector3(0f, 1.8f, 0f);
-            containerLocale.localRotation = Quaternion.identity;
-            
-            effectsContainer.SetActive(true);
-        }
-    }
+    
 
     [HarmonyPatch(typeof(SEMan),nameof(SEMan.AddStatusEffect), typeof(StatusEffect), typeof(bool), typeof(int), typeof(float))]
     static class AddStatusEffectPatch
@@ -227,17 +252,17 @@ public static class CustomStatusEffects
             
             List<StatusEffect> statusEffects = __instance.m_statusEffects;
 
-            Dictionary<AlmanacEffectsManager.Modifier, float> totalValues = new()
+            Dictionary<Modifier, float> totalValues = new()
             {
-                { AlmanacEffectsManager.Modifier.BaseHP , 25f },
-                { AlmanacEffectsManager.Modifier.BaseStamina , 50f}
+                { Modifier.BaseHP , 25f },
+                { Modifier.BaseStamina , 50f}
             };
             
             // Re-Calculate the bonuses
             foreach (StatusEffect effect in statusEffects)
             {
-                if (!RegisterAlmanacEffects.effectsData.Exists(x => x.effectName == effect.name)) continue;
-                var data = RegisterAlmanacEffects.effectsData.Find(x => x.effectName == effect.name);
+                if (!effectsData.Exists(x => x.effectName == effect.name)) continue;
+                var data = effectsData.Find(x => x.effectName == effect.name);
                 
                 if (!totalValues.ContainsKey(data.Modifier)) totalValues.Add(data.Modifier, data.m_newValue);
                 else totalValues[data.Modifier] += data.m_newValue;
@@ -248,55 +273,54 @@ public static class CustomStatusEffects
         }
     }
 
-    private static void ApplyCustomEffects(Dictionary<AlmanacEffectsManager.Modifier,float> totalValues, Player player, Transform effectsContainer)
+    private static void ApplyCustomEffects(Dictionary<Modifier,float> totalValues, Player player, Transform effectsContainer)
     {
         foreach (var kvp in totalValues)
         {
             switch (kvp.Key)
             {
-                case AlmanacEffectsManager.Modifier.BaseHP:
+                case Modifier.BaseHP:
                     player.m_baseHP = kvp.Value;
                     break;
-                case AlmanacEffectsManager.Modifier.BaseStamina :
+                case Modifier.BaseStamina :
                     player.m_baseStamina = kvp.Value;
                     break;
             }
 
             if (kvp.Value >= visEquipThreshold)
             {
-                if (kvp.Key is AlmanacEffectsManager.Modifier.BaseHP or AlmanacEffectsManager.Modifier.BaseStamina) continue;
-                Debug.LogWarning($"threshold met for {kvp.Key} : at {kvp.Value}");
+                if (kvp.Key is Modifier.BaseHP or Modifier.BaseStamina) continue;
                 switch (kvp.Key)
                 {
-                    case AlmanacEffectsManager.Modifier.FireDMG:
+                    case Modifier.FireDMG:
                     GameObject EmberEffect = Object.Instantiate(embers, effectsContainer, false);
                     Transform emberLocale = EmberEffect.transform;
                     emberLocale.localPosition = new Vector3(0f, 0f, 0.09f);
                     effectsContainer.gameObject.SetActive(true);
                     EmberEffect.SetActive(true);
                     break;
-                case AlmanacEffectsManager.Modifier.FrostDMG:
+                case Modifier.FrostDMG:
                     GameObject SnowEffect = Object.Instantiate(frost, effectsContainer, false);
                     Transform snowLocale = SnowEffect.transform;
                     snowLocale.localPosition = Vector3.zero;
                     effectsContainer.gameObject.SetActive(true);
                     SnowEffect.SetActive(true);
                     break;
-                case AlmanacEffectsManager.Modifier.LightningDMG:
+                case Modifier.LightningDMG:
                     GameObject SparkEffect = Object.Instantiate(sparks, effectsContainer, false);
                     Transform sparkLocale = SparkEffect.transform;
                     sparkLocale.localPosition = new Vector3(0f, -0.3f, 0f);
                     effectsContainer.gameObject.SetActive(true);
                     SparkEffect.SetActive(true);
                     break;
-                case AlmanacEffectsManager.Modifier.PoisonDMG:
+                case Modifier.PoisonDMG:
                     GameObject DripEffect = Object.Instantiate(drip, effectsContainer, false);
                     Transform dripLocale = DripEffect.transform;
                     dripLocale.localPosition = Vector3.zero;
                     effectsContainer.gameObject.SetActive(true);
                     DripEffect.SetActive(true);
                     break;
-                case AlmanacEffectsManager.Modifier.SpiritDMG:
+                case Modifier.SpiritDMG:
                     GameObject SpiritEffect = Object.Instantiate(spirit, effectsContainer, false);
                     Transform spiritLocale = SpiritEffect.transform;
                     spiritLocale.localPosition = new Vector3(0f, 0f, 0.11f);
@@ -332,17 +356,17 @@ public static class CustomStatusEffects
             
             List<StatusEffect> statusEffects = __instance.m_statusEffects;
             
-            Dictionary<AlmanacEffectsManager.Modifier, float> totalValues = new()
+            Dictionary<Modifier, float> totalValues = new()
             {
-                { AlmanacEffectsManager.Modifier.BaseHP , 25f },
-                { AlmanacEffectsManager.Modifier.BaseStamina , 50f}
+                { Modifier.BaseHP , 25f },
+                { Modifier.BaseStamina , 50f}
             };
             
             // Re-calculate the bonuses
             foreach (StatusEffect effect in statusEffects)
             {
-                if (!RegisterAlmanacEffects.effectsData.Exists(x => x.effectName == effect.name)) continue;
-                var data = RegisterAlmanacEffects.effectsData.Find(x => x.effectName == effect.name);
+                if (!effectsData.Exists(x => x.effectName == effect.name)) continue;
+                var data = effectsData.Find(x => x.effectName == effect.name);
                 if (!totalValues.ContainsKey(data.Modifier)) totalValues.Add(data.Modifier, data.m_newValue);
                 else totalValues[data.Modifier] += data.m_newValue;
             }

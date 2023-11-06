@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using GameObject = UnityEngine.GameObject;
+using Object = System.Object;
 using Vector2 = UnityEngine.Vector2;
 
     namespace Almanac.Almanac;
@@ -32,12 +33,12 @@ public static class Almanac
         private static Image weightIcon = null!;
         private static Image armorIcon = null!;
         private static RectTransform creatureRectTransform = null!;
-        private static RectTransform materialRectTransform = null!;
-        private static RectTransform consumeRectTransform = null!;
+        // private static RectTransform materialRectTransform = null!;
+        // private static RectTransform consumeRectTransform = null!;
         private static RectTransform equipmentRectTransform = null!;
         private static RectTransform weaponRectTransform = null!;
         private static RectTransform projectileRectTransform = null!;
-        private static RectTransform fishRectTransform = null!;
+        // private static RectTransform fishRectTransform = null!;
         private static RectTransform piecesRectTransform = null!;
         private static RectTransform playerStatsRectTransform = null!;
 
@@ -66,6 +67,7 @@ public static class Almanac
         public static int consumablesPage;
         public static int materialsPage;
         public static int creaturesPage;
+        public static int jewelPage;
 
         public static int miscPage;
         public static int craftPage;
@@ -76,9 +78,12 @@ public static class Almanac
         public static int modPage;
 
         public static List<ItemDrop> filteredGear = new();
+        public static List<ItemDrop> filteredMaterials = new();
         
         public static bool jewelCraftingLoaded;
         public static List<ItemDrop> jewels = new();
+
+        public static GameObject achievementsPanel = null!;
 
         public static void Postfix(InventoryGui __instance)
         {
@@ -151,9 +156,11 @@ public static class Almanac
             {
                 jewels.Clear();
                 filteredGear.Clear();
+                filteredMaterials.Clear();
 
                 foreach (ItemDrop item in gear)
                 {
+                    // string localizedName = Localization.instance.Localize(item.m_itemData.m_shared.m_name);
                     string name = item.name;
                     if (
                         name.EndsWith("Socket") 
@@ -161,8 +168,29 @@ public static class Almanac
                         || name.Contains("Gemstone") 
                         || name.StartsWith("JC_") 
                         || name.Contains("Boss_Crystal") 
-                        || name.Contains("Crystal_Frame")) jewels.Add(item);
+                        || name.Contains("Crystal_Frame")
+                        ) jewels.Add(item);
                     else filteredGear.Add(item);
+                }
+
+                foreach (ItemDrop item in materials)
+                {
+                    string localizedName = Localization.instance.Localize(item.m_itemData.m_shared.m_name);
+                    string name = item.name;
+                    Recipe? resources = ObjectDB.instance.GetRecipe(item.m_itemData);
+                    if (resources)
+                    {
+                        CraftingStation station = resources.m_craftingStation;
+                        if (station && station.name == "op_transmution_table") jewels.Add(item);
+                        continue;
+                    }
+                    if (name.Contains("Gem") 
+                        || localizedName.Contains("Gem") 
+                        || name.EndsWith("Gem") 
+                        || name.StartsWith("JC_")
+                        || name == "Soulcatcher_CursedDoll"
+                        || name.EndsWith("_Crystal")) jewels.Add(item);
+                    else filteredMaterials.Add(item);
                 }
                 
             }
@@ -180,11 +208,8 @@ public static class Almanac
             trophiesOpenImage.sprite = AlmanacPlugin.AlmanacIconButton;
         }
         
-        private static GameObject CreateAchievementsPanel(string id, List<AchievementsUI.Achievement> list)
+        public static GameObject CreateAchievementsPanel(string id, List<AchievementsUI.Achievement> list)
         {
-            
-            // AlmanacPlugin.AlmanacLogger.LogWarning($"Creating achievement panel: {list.Count} achievements registered");
-            
             Transform trophies = TrophiesFrame.Find("Trophies");
             
             GameObject panel = new GameObject($"{id}Panel") { layer = 5 };
@@ -227,6 +252,7 @@ public static class Almanac
                 string name = data.name;
 
                 GameObject container = new GameObject($"{id}Container ({i})");
+                
                 RectTransform containerRect = container.AddComponent<RectTransform>();
                 containerRect.SetParent(panel.transform);
                 containerRect.anchoredPosition = pos;
@@ -327,7 +353,8 @@ public static class Almanac
             
             if (modPieces.Count > 0) CreateTabs("modPiecesButton", "modPieces", 170f, -425f);
             
-            CreateAchievementsPanel("achievements", AchievementsUI.registeredAchievements);
+            GameObject achievePanel = CreateAchievementsPanel("achievements", AchievementsUI.registeredAchievements);
+            achievementsPanel = achievePanel;
             CreatePlayerStatsPanel("stats");
             
             CreateTabs("achievementsButton", "achievements", 585f, 425f);
@@ -382,13 +409,16 @@ public static class Almanac
             backgroundImageRight.maskable = true;
 
             CreateTextElement(panel.transform, "almanacPowers", "$almanac_no_data",
-            -425f, 300f, 350f, 100f, Color.yellow, 30
+            -415f, 300f, 350f, 100f, Color.yellow, 30
             );
 
             for (int i = 0; i < AchievementsUI.maxPowers; ++i)
             {
-                GameObject effectBackground = CreateImageElement(panel.transform, $"activeEffects ({i})",
-                    -556f + (i * 78f), 225f, 75f, 75f, false, false,
+                GameObject effectBackground = CreateImageElement(
+                    panel.transform, $"activeEffects ({i})",
+                    -556f + (i * 78f), 225f,
+                    75f, 75f,
+                    false, false,
                     iconBg.sprite, 1f, true
                     );
                 
@@ -430,26 +460,47 @@ public static class Almanac
                 40f, 300f, 350f, 100f, Color.yellow, 30,
                 horizontalAlignment: HorizontalAlignmentOptions.Left
             );
-            
-            CreateTextElement(panel.transform, "leaderboard", "- Work in progress -",
-                40f, 200f, 350f, 100f, Color.white, 30,
-                horizontalAlignment: HorizontalAlignmentOptions.Left
-            );
-
-            // for (int i = 0; i < 10; ++i)
+            // CreateTextElement(panel.transform, "leaderboard labels", "$almanac_leaderboard_labels",
+            //     40f, 265f, 350f, 100f, new Color(1f, 0.5f, 0f, 1f), 14,
+            //     horizontalAlignment: HorizontalAlignmentOptions.Left
+            // );
+            //
+            // for (int i = 0; i < 11; ++i)
             // {
-            //     CreateImageElement(panel.transform, "board overlay", 235f, 200f * (i - 52f), 775f, 50f, true, alpha: 0.5f);
+            //     float anchorY = 225f - (i * 52f);
+            //
+            //     GameObject bg = CreateImageElement(
+            //         panel.transform, "player bg",
+            //         235f, anchorY,
+            //         775f, 50f,
+            //         sprite: borderImage.sprite,
+            //         active: true
+            //         );
+            //
+            //     bg.TryGetComponent(out Image bgImage);
+            //     if (bgImage)
+            //     {
+            //         bgImage.material = borderImage.material;
+            //         bgImage.maskable = true;
+            //     }
+            //     
             //     CreateTextElement(
             //         panel.transform, "playerName",
-            //         "$almanac_no_data",
-            //         40f, 200f * (i - 52f),
+            //         $"...",
+            //         0f, anchorY,
             //         200f, 50f,
             //         Color.white, 16,
             //         horizontalAlignment: HorizontalAlignmentOptions.Left
             //     );
+            //     CreateTextElement(
+            //         panel.transform, "playerData",
+            //         $"...",
+            //         200f, anchorY,
+            //         250f, 50f,
+            //         Color.white, 16,
+            //         horizontalAlignment: HorizontalAlignmentOptions.Left
+            //     );
             // }
-            
-            
         }
         
 
@@ -518,7 +569,7 @@ public static class Almanac
                 case "ammo": Patches.OnOpenTrophiesPatch.SetUnknownItems(name, ammunition); break;
                 case "weapon": Patches.OnOpenTrophiesPatch.SetUnknownItems(name, weapons); break;
                 case "gear": Patches.OnOpenTrophiesPatch.SetUnknownItems(name, jewelCraftingLoaded ? filteredGear : gear); break;
-                case "material": Patches.OnOpenTrophiesPatch.SetUnknownItems(name, materials); break;
+                case "material": Patches.OnOpenTrophiesPatch.SetUnknownItems(name, jewelCraftingLoaded ? filteredMaterials : materials); break;
                 case "consummable": Patches.OnOpenTrophiesPatch.SetUnknownItems(name, consumables); break;
                 case "miscPieces": Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, miscPieces); break;
                 case "craftingPieces": Patches.OnOpenTrophiesPatch.SetUnknownPieces(name, craftingPieces); break;
@@ -978,6 +1029,7 @@ public static class Almanac
                 case "otherContainer": otherPage = index; break;
                 case "plantPiecesContainer": plantsPage = index; break;
                 case "modPiecesContainer": modPage = index; break;
+                case "jewelcraftingContainer": jewelPage = index; break;
             }
         }
         private static void CreatePiecesContainer(Transform parentElement, GameObject data, int index, Vector2 position, string id)
@@ -1196,9 +1248,11 @@ public static class Almanac
             backgroundImage.raycastTarget = true;
             backgroundImage.maskable = true;
 
-            int pages = Mathf.CeilToInt(materials.Count / 72f);
+            var list = materials;
+            if (jewelCraftingLoaded) list = filteredMaterials;
+            int pages = Mathf.CeilToInt(list.Count / 72f);
             
-            for (int i = 0; i < materials.Count; ++i)
+            for (int i = 0; i < list.Count; ++i)
             {
                 int wrappedIndex = i % 72;
                 int rowIndex = wrappedIndex / 12;
@@ -1207,7 +1261,7 @@ public static class Almanac
                 float x = -577f + colIndex * 105f;
                 float y = 275f - rowIndex * 110f;
                 
-                ItemDrop data = materials[i];
+                ItemDrop data = list[i];
                 Vector2 pos = new Vector2(x, y);
                 CreateMaterialContainer(newMaterialPanel.transform, data, i, pos);
             }
@@ -1639,12 +1693,12 @@ public static class Almanac
             statsElement.SetActive(false);
 
             creatureRectTransform = AlmanacElement.GetComponent<RectTransform>();
-            materialRectTransform = MaterialElement.GetComponent<RectTransform>();
-            consumeRectTransform = ConsummableElement.GetComponent<RectTransform>();
+            // materialRectTransform = MaterialElement.GetComponent<RectTransform>();
+            // consumeRectTransform = ConsummableElement.GetComponent<RectTransform>();
             equipmentRectTransform = GearElement.GetComponent<RectTransform>();
             weaponRectTransform = WeaponElement.GetComponent<RectTransform>();
             projectileRectTransform = AmmoElement.GetComponent<RectTransform>();
-            fishRectTransform = FishElement.GetComponent<RectTransform>();
+            // fishRectTransform = FishElement.GetComponent<RectTransform>();
             piecesRectTransform = piecesElement.GetComponent<RectTransform>();
             playerStatsRectTransform = statsElement.GetComponent<RectTransform>();
 
@@ -2722,9 +2776,9 @@ public static class Almanac
 
             CreateTextElement(DummyElement, "title",
                 "$almanac_stats_title",
-                0f, 300f,
+                0f, 315f,
                 100f, 100f,
-                Color.white, 20);
+                Color.white, 25);
 
             List<string> statsList = new()
             {
@@ -2855,19 +2909,54 @@ public static class Almanac
 
             for (int i = 0; i < statsList.Count; ++i)
             {
-                CreateTextElement(
-                    DummyElement,
-                    statsList[i],
-                    "$almanac_no_data",
-                    0f,
-                    225f - (i * 25f),
-                    250f, 50f,
-                    Color.white ,
-                    20,
-                    horizontalAlignment: statsList[i].Contains("title") ? HorizontalAlignmentOptions.Center : HorizontalAlignmentOptions.Left,
-                    overflowModes: TextOverflowModes.Overflow,
-                    wrapMode: TextWrappingModes.NoWrap
-                );
+                string labelId = statsList[i] + "_label";
+                string valueId = statsList[i] + "_value";
+                if (statsList[i].Contains("title"))
+                {
+                    CreateTextElement(
+                        DummyElement,
+                        statsList[i],
+                        "$almanac_no_data",
+                        0f,
+                        225f - (i * 25f),
+                        250f, 50f,
+                        Color.white ,
+                        20,
+                        horizontalAlignment: HorizontalAlignmentOptions.Center,
+                        overflowModes: TextOverflowModes.Overflow,
+                        wrapMode: TextWrappingModes.NoWrap
+                    );
+                    
+                }
+                else
+                {
+                    CreateTextElement(
+                        DummyElement,
+                        labelId,
+                        "$almanac_no_data",
+                        -75f,
+                        225f - (i * 25f),
+                        150f, 50f,
+                        Color.white ,
+                        20,
+                        horizontalAlignment: HorizontalAlignmentOptions.Left,
+                        overflowModes: TextOverflowModes.Overflow,
+                        wrapMode: TextWrappingModes.NoWrap
+                    );
+                    CreateTextElement(
+                        DummyElement,
+                        valueId,
+                        "$almanac_na",
+                        75f,
+                        225f - (i * 25f),
+                        100f, 50f,
+                        Color.white,
+                        20,
+                        horizontalAlignment: HorizontalAlignmentOptions.Right,
+                        overflowModes: TextOverflowModes.Overflow,
+                        wrapMode: TextWrappingModes.NoWrap
+                    );
+                }
             }
 
             CreateImageElement(DummyElement, "overlay", 0f, 0f, 390f, 2500f, true, alpha: 0f);
@@ -3009,7 +3098,7 @@ public static class Almanac
             );
             CreateImageElement(
                 DummyElement, "icon", 
-                -130f, 340f, 
+                -130f, 332f, 
                 120f, 120f
             );
             

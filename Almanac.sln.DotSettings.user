@@ -3,4 +3,5 @@
   &lt;Assembly Path="C:\Users\peima\Desktop\VALHEIM MODDING\projects\Almanac\Almanac\Libs\ServerSync.dll" /&gt;&#xD;
   &lt;Assembly Path="C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim_Data\Managed\publicized_assemblies\assembly_valheim_publicized.dll" /&gt;&#xD;
   &lt;Assembly Path="C:\Program Files (x86)\Steam\steamapps\common\Valheim\BepInEx\core\BepInEx.dll" /&gt;&#xD;
+  &lt;Assembly Path="C:\Program Files (x86)\Steam\steamapps\common\Valheim\valheim_Data\Managed\publicized_assemblies\assembly_utils_publicized.dll" /&gt;&#xD;
 &lt;/AssemblyExplorer&gt;</s:String></wpf:ResourceDictionary>

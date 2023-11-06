@@ -2,6 +2,7 @@
 using System.IO;
 using BepInEx;
 using ServerSync;
+using static Almanac.AlmanacPlugin;
 
 namespace Almanac.Almanac;
 
@@ -21,7 +22,7 @@ public static class BlackList
 
     public static void InitBlackList()
     {
-        if (AlmanacPlugin.WorkingAsType is AlmanacPlugin.WorkingAs.Server)
+        if (WorkingAsType is WorkingAs.Server)
         {
             if (!Directory.Exists(Path.Combine(Paths.ConfigPath, folderName)))
             {

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using BepInEx;
+using HarmonyLib;
 using JetBrains.Annotations;
 using ServerSync;
 using UnityEngine;
@@ -11,17 +12,20 @@ using static Almanac.Almanac.AchievementManager.AchievementType;
 using static Almanac.Almanac.AlmanacEffectsManager;
 using static Almanac.Almanac.AlmanacEffectsManager.Modifier;
 using static Almanac.AlmanacPlugin;
+using Object = UnityEngine.Object;
 
 namespace Almanac.Almanac;
 
 public static class AchievementManager
 {
-    // public static readonly CustomSyncedValue<List<AchievementData>> serverAchievements =
-    //     new(AlmanacPlugin.ConfigSync, "ServerAchievements", new());
-
+    public static readonly CustomSyncedValue<List<string>> serverAchievementData =
+        new(AlmanacPlugin.ConfigSync, "ServerAchievements", new()); // To be deserialized
+    
     public static readonly List<Achievement> tempAchievements = new(); // To be used to register to achievements UI, ObjectDB effects and Custom Status Effects
 
     private static List<AchievementData> tempAchievementData = new(); // to be serialized / deserialized
+
+    public static List<string> currentServerData = new();
     public class Achievement
     {
         public BaseEffectData m_statusEffect = null!;
@@ -210,216 +214,229 @@ public static class AchievementManager
     private static readonly string folderPath = Path.Combine(Paths.ConfigPath, folderName);
     public static readonly string achievementPath = folderPath + Path.DirectorySeparatorChar + "AchievementData";
 
-    private static readonly string achievementTutorialPath = achievementPath + Path.DirectorySeparatorChar + "Achievements_README.md";
+    private static readonly string achievementTutorialPath = folderPath + Path.DirectorySeparatorChar + "Achievements_README.md";
 
+
+    [HarmonyPatch(typeof(Game), nameof(Game.Logout))]
+    static class GameLogoutPatch
+    {
+        private static void Postfix()
+        {
+            serverAchievementData.Value.Clear();
+            currentServerData.Clear();
+        }
+    }
+
+    private static void WriteTutorial()
+    {
+        if (File.Exists(achievementTutorialPath)) return;
+        List<string> tutorial = new List<string>()
+        {
+            "# Almanac Achievements",
+            "Users can customize and create their own achievements by manipulating the files within this folder.",
+            "`If almanac recognizes a folder named: 'AchievementData' in config/Almanac folder, then it will use the files within",
+            "as data for achievements.`",
+            "## Features",
+            "- Server shares achievements data to peers",
+            "- Create custom passive or active effects",
+            "- Create achievements for players to reach",
+            "- Use in-game assets to customize your achievements",
+            "## Unique Name",
+            "Make sure each achievement has a unique name or else it will be ignored - no white spaces, use underscore",
+            "## Active vs Passive",
+            "If cooldown is set to anything higher than 0, power is set as guardian power. Effects only applied while active, and countdown is running.",
+            "## Modifiers",
+            "```","Modifier key : description","```",
+            "```yml",
+            "Attack : Damage multiplier",
+            "HealthRegen : Health regeneration multiplier",
+            "StaminaRegen : Stamina regeneration multiplier",
+            "RaiseSkills : Experience multiplier",
+            "Speed : Speed multiplier",
+            "Noise : Noise multiplier",
+            "MaxCarryWeight : Additive carry weight",
+            "Stealth : Stealth multiplier",
+            "RunStaminaDrain : Run stamina drain multiplier",
+            "DamageReduction : Damage reduction multiplier",
+            "FallDamage : Fall damage multiplier",
+            "BaseHP : Additive base health",
+            "BaseStamina : Addive base stamina",
+            "MeleeDMG : Additive melee damage",
+            "RangedDMG : Additive ranged damage",
+            "FireDMG : Additive fire damage",
+            "FrostDMG : Additive frost damage",
+            "LightningDMG : Additive lightning damage",
+            "PoisonDMG : Additive poison damage",
+            "SpiritDMG : Additive spirit damage",
+            "ChopDMG : Additive chop damage",
+            "PickaxedDMG : Additive pickaxe damage",
+            "BluntDMG : Additive blunt damage",
+            "PierceDMG : Additive pierce damage",
+            "SlashDMG : Additive slash damage",
+            "EikthyrPower : On click, switches forsaken power to eikthyr",
+            "ElderPower : On click, switches forsaken power to elder",
+            "BonemassPower : On click, switches forsaken power to bonemass",
+            "ModerPower : On click, switches forsaken power to moder",
+            "YagluthPower : On click, switches forsaken power to yagluth",
+            "QueenPower : On click, switches forsaken power to seeker queen",
+            "```",
+            "## Sprite Name",
+            "You can use any loaded prefabs (ex:HardAntler) with icons or you can choose from almanac's custom icons:",
+            "```","Icon key : description","```",
+            "```yml",
+            "almanac_bone_skull : white bone skull",
+            "almanac_sword_blue : basic sword with a blue hilt",
+            "almanac_sword_brown : basic sword with a brown hilt",
+            "almanac_arrow : basic arrow",
+            "almanac_cape_hood : hooded cape",
+            "almanac_bottle_empty : empty bottle",
+            "almanac_bottle_blue : bottle with blue fluid",
+            "almanac_fish_green : green fish",
+            "almanac_bow : basic bow",
+            "almanac_necklace : silver necklace with red gem",
+            "almanac_mushroom : red mushroom",
+            "almanac_gold_coins : stack of gold coins",
+            "almanac_key_silver : silver key",
+            "almanac_bone_white : white femur bone",
+            "almanac_book_red : red book",
+            "almanac_bottle_green : bottle with green fluid",
+            "almanac_crown_gold : golden crown",
+            "almanac_gem_red : red gem",
+            "almanac_gold_bars : stack of gold bars",
+            "almanac_silver_coins : stack of silver coins",
+            "almanac_wood_log : one wood log",
+            "almanac_wood_stack : stack of wood logs",
+            "```",
+            "## Available Trackers - Achievement Type",
+            "List of currently available types of trackers to use:",
+            "```","achievement type key : description","```",
+            "```yml",
+            "Fish : tracks total currently known fish - goal irrelevant",
+            "Materials : tracks total currently known materials - goal irrelevant",
+            "Consumables : tracks total currently known consumables - goal irrelevant",
+            "Weapons : tracks total currently known weapons - goal irrelevant",
+            "Swords : tracks total currently known swords - goal irrelevant",
+            "Axes : tracks total currently known axes - goal irrelevant",
+            "Polearms : tracks total currently known atgeirs - goal irrelevant",
+            "Spears : tracks total currently known spears - goal irrelevant",
+            "Maces : tracks total currently known maces - goal irrelevant",
+            "Knives : tracks total currently known knives - goal irrelevant",
+            "Shields : tracks total currently known shields - goal irrelevant",
+            "Staves : tracks total currently known staves - goal irrelevant",
+            "Arrows : tracks total currently known arrows - goal irrelevant",
+            "Bows : tracks total currently known bows - goal irrelevant",
+            "Valuables : tracks total currently known sellable items - goal irrelevant",
+            "Potions : tracks total currently known mead bases - goal irrelevant",
+            "Trophies : tracks total currently known trophies - goal irrelevant",
+            "Creatures : tracks total currently known creatures - goal irrelevant",
+            "MeadowCreatures : tracks total currently known meadow creatures - goal irrelevant",
+            "BlackForestCreatures : tracks total currently known black forest creatures - goal irrelevant",
+            "SwampCreatures : tracks total currently known swamp creatures - goal irrelevant",
+            "MountainCreatures : tracks total currently known mountain creatures - goal irrelevant",
+            "PlainsCreatures : tracks total currently known plains creatures - goal irrelevant",
+            "MistLandCreatures : tracks total currently known mistlands creatures - goal irrelevant",
+            "EikthyrKills : tracks total eikthyr kills - use goal to set up threshold",
+            "ElderKills : tracks total elder kills - use goal to set up threshold",
+            "BonemassKills : tracks total bonemass kills - use goal to set up threshold",
+            "ModerKills : tracks total moder kills - use goal to set up threshold",
+            "YagluthKills : tracks total yagluth kills - use goal to set up threshold",
+            "QueenKills : tracks total seeker queen kills - use goal to set up threshold",
+            "Deaths : tracks total player deaths - use goal to set up threshold",
+            "DistanceRan : tracks total distance ran - use goal to set up threshold",
+            "DistanceSailed : tracks total distance sailed - use goal to set up threshold",
+            "TotalKills : tracks total enemy kills - use goal to set up threshold",
+            "TotalAchievements : tracks total achievements - use goal to set up threshold",
+            "TrollKills : tracks total troll kills - use goal to set up threshold",
+            "SerpentKills : tracks total serpent kills - use goal to set up threshold",
+            "CultistKills : tracks total fenring cultists kills - use goal to set up threshold",
+            "StoneGolemKills : tracks total stone golem kills - use goal to set up threshold",
+            "TarBlobKills : tracks total tar blob kills - use goal to set up threshold",
+            "DeathByFall : tracks total deaths by falling - use goal to set up threshold",
+            "Trees : tracks total trees chopped - use goal to set up threshold",
+            "DeathByTree : tracks total death by trees - use goal to set up threshold",
+            "DeathByEdge : tracks total death by falling off edge of world - use goal to set up threshold",
+            "TimeInBase : tracks total time in base - use goal to set up threshold",
+            "TimeOutOfBase : tracks total time out of base - use goal to set up threshold",
+            "ArrowsShot : tracks total arrows shot - use goal to set up threshold",
+            "GoblinShamanKills : tracks total goblin shaman kills - use goal to set up threshold",
+            "DrakeKills : tracks total drake kills - use goal to set up threshold",
+            "WraithKills : tracks total wraith kills - use goal to set up threshold",
+            "ComfortPieces : tracks total known comfort pieces - goal irrelevant",
+            "GreydwarfShamanKills : tracks total greydwarf shaman kills - use goal to set up threshold",
+            "DvergerKills : tracks total dverger kills - use goal to set up threshold",
+            "DvergerFireKills : tracks total dverger fire mage kills - use goal to set up threshold",
+            "DvergerFrostKills : tracks total dverger frost mage kills - use goal to set up threshold",
+            "DvergerSupportKills : tracks total dverger support mage kills - use goal to set up threshold",
+            "TotalJumps : tracks total jumps - use goal to set up threshold",
+            "TotalCraftsOrUpgrades : tracks total crafts and upgrades of items - use goal to set up threshold",
+            "TotalBuilds : tracks total built pieces - use goal to set up threshold",
+            "EnemyHits : tracks total hits against creatures - use goal to set up threshold",
+            "PlayerKills : tracks total player kills - pvp - - use goal to set up threshold",
+            "HitsTaken : tracks total hits taken - use goal to set up threshold",
+            "ItemsPicked : tracks total items picked up - use goal to set up threshold",
+            "DistanceWalked : tracks total distance walked - use goal to set up threshold",
+            "DistanceInAir : tracks total air time - use goal to set up threshold",
+            "MineHits : tracks total pickaxe mine hits - use goal to set up threshold",
+            "CreatureTamed : tracks total successful tame - use goal to set up threshold",
+            "FoodEaten : tracks total food eaten - use goal to set up threshold",
+            "SkeletonSummoned : tracks total f riendly skeleton summoned - use goal to set up threshold",
+            "DeathByDrowning : tracks total death by drowning - use goal to set up threshold",
+            "DeathByBurning : tracks total death by drowning - use goal to set up threshold",
+            "DeathByFreezing : tracks total death by freezing - use goal to set up threshold",
+            "DeathByPoisoned : tracks total death by poisoned - use goal to set up threshold",
+            "DeathBySmoke : tracks total death by smoke - use goal to set up threshold",
+            "DeathByWater : tracks total death by water - use goal to set up threshold",
+            "DeathByCart : tracks total death by cart - use goal to set up threshold",
+            "DeathBySelf : tracks total suicides - use goal to set up threshold",
+            "DeathByStalagtite : tracks total death by stalagtite - use goal to set up threshold",
+            "BeesHarvested : tracks total bees harvested - use goal to set up threshold",
+            "SapHarvested : tracks total sap harvested - use goal to set up threshold",
+            "TrapsArmed : tracks total traps armed - use goal to set up threshold",
+            "StacksPlaced : tracks total stacks placed - use goal to set up threshold",
+            "BossKills : tracks total boss kills - use goal to set up threshold",
+            "```",
+            "## Resistance Modifier",
+            "This can be used to apply damage modifiers `on the player`,",
+            "It can be read as list if seperated by commas.",
+            "(ex: Fire = Weak, Frost = Resistant)",
+            "This affects any damages from status effects such as `burning` but not direct damages.",
+            "### Acceptable resistances:",
+            "```yml",
+            "Physical",
+            "Elemental",
+            "Fire",
+            "Frost",
+            "Lightning",
+            "Poison",
+            "Spirit",
+            "```",
+            "### Acceptable modifier:",
+            "```yml",
+            "VeryWeak",
+            "Weak",
+            "Normal",
+            "Resistant",
+            "VeryResistant",
+            "```",
+            "## Activation animation [NOT WORKING]",
+            "Only applies to active powers that use the 'F' key to engage forsaken power (aka guardian power)",
+            "Work in progress, need to figure out how to make custom animations invoke the guardian power",
+            "Currently all set to default of 'gpower'",
+            "## Extra",
+            "Please come find me on OdinPlus discord if you have any ideas on how to improve the system",
+            "Best, Rusty"
+        };
+            
+        File.WriteAllLines(achievementTutorialPath, tutorial);
+    }
     public static void SaveAchievementData()
     {
-        var serializer = new SerializerBuilder().Build();
-
+        ISerializer serializer = new SerializerBuilder().Build();
+        
         if (!Directory.Exists(achievementPath)) Directory.CreateDirectory(achievementPath);
 
-        if (!File.Exists(achievementTutorialPath))
-        {
-            List<string> tutorial = new List<string>()
-            {
-                "# Almanac Achievements",
-                "Users can customize and create their own achievements by manipulating the files within this folder.",
-                "Make sure that you distribute this folder to your players or else they will use default achievements.",
-                "`If almanac recognizes a folder named: 'AchievementData' in config/Almanac folder, then it will use the files within",
-                "as data for achievements.`",
-                "## Features",
-                "- Create custom passive or active effects",
-                "- Create achievements for players to reach",
-                "- Use in-game assets to customize your achievements",
-                "## Unique Name",
-                "Make sure each achievement has a unique name or else it will be ignored - no white spaces, use underscore",
-                "## Active vs Passive",
-                "If cooldown is set to anything higher than 0, power is set as guardian power. Effects only applied while active, and countdown is running.",
-                "## Modifiers",
-                "```","Modifier key : description","```",
-                "```yml",
-                "Attack : Damage multiplier",
-                "HealthRegen : Health regeneration multiplier",
-                "StaminaRegen : Stamina regeneration multiplier",
-                "RaiseSkills : Experience multiplier",
-                "Speed : Speed multiplier",
-                "Noise : Noise multiplier",
-                "MaxCarryWeight : Additive carry weight",
-                "Stealth : Stealth multiplier",
-                "RunStaminaDrain : Run stamina drain multiplier",
-                "DamageReduction : Damage reduction multiplier",
-                "FallDamage : Fall damage multiplier",
-                "BaseHP : Additive base health",
-                "BaseStamina : Addive base stamina",
-                "MeleeDMG : Additive melee damage",
-                "RangedDMG : Additive ranged damage",
-                "FireDMG : Additive fire damage",
-                "FrostDMG : Additive frost damage",
-                "LightningDMG : Additive lightning damage",
-                "PoisonDMG : Additive poison damage",
-                "SpiritDMG : Additive spirit damage",
-                "ChopDMG : Additive chop damage",
-                "PickaxedDMG : Additive pickaxe damage",
-                "BluntDMG : Additive blunt damage",
-                "PierceDMG : Additive pierce damage",
-                "SlashDMG : Additive slash damage",
-                "EikthyrPower : On click, switches forsaken power to eikthyr",
-                "ElderPower : On click, switches forsaken power to elder",
-                "BonemassPower : On click, switches forsaken power to bonemass",
-                "ModerPower : On click, switches forsaken power to moder",
-                "YagluthPower : On click, switches forsaken power to yagluth",
-                "QueenPower : On click, switches forsaken power to seeker queen",
-                "```",
-                "## Sprite Name",
-                "You can use any loaded prefabs (ex:HardAntler) with icons or you can choose from almanac's custom icons:",
-                "```","Icon key : description","```",
-                "```yml",
-                "almanac_bone_skull : white bone skull",
-                "almanac_sword_blue : basic sword with a blue hilt",
-                "almanac_sword_brown : basic sword with a brown hilt",
-                "almanac_arrow : basic arrow",
-                "almanac_cape_hood : hooded cape",
-                "almanac_bottle_empty : empty bottle",
-                "almanac_bottle_blue : bottle with blue fluid",
-                "almanac_fish_green : green fish",
-                "almanac_bow : basic bow",
-                "almanac_necklace : silver necklace with red gem",
-                "almanac_mushroom : red mushroom",
-                "almanac_gold_coins : stack of gold coins",
-                "almanac_key_silver : silver key",
-                "almanac_bone_white : white femur bone",
-                "almanac_book_red : red book",
-                "almanac_bottle_green : bottle with green fluid",
-                "almanac_crown_gold : golden crown",
-                "almanac_gem_red : red gem",
-                "almanac_gold_bars : stack of gold bars",
-                "almanac_silver_coins : stack of silver coins",
-                "almanac_wood_log : one wood log",
-                "almanac_wood_stack : stack of wood logs",
-                "```",
-                "## Available Trackers - Achievement Type",
-                "List of currently available types of trackers to use:",
-                "```","achievement type key : description","```",
-                "```yml",
-                "Fish : tracks total currently known fish - goal irrelevant",
-                "Materials : tracks total currently known materials - goal irrelevant",
-                "Consumables : tracks total currently known consumables - goal irrelevant",
-                "Weapons : tracks total currently known weapons - goal irrelevant",
-                "Swords : tracks total currently known swords - goal irrelevant",
-                "Axes : tracks total currently known axes - goal irrelevant",
-                "Polearms : tracks total currently known atgeirs - goal irrelevant",
-                "Spears : tracks total currently known spears - goal irrelevant",
-                "Maces : tracks total currently known maces - goal irrelevant",
-                "Knives : tracks total currently known knives - goal irrelevant",
-                "Shields : tracks total currently known shields - goal irrelevant",
-                "Staves : tracks total currently known staves - goal irrelevant",
-                "Arrows : tracks total currently known arrows - goal irrelevant",
-                "Bows : tracks total currently known bows - goal irrelevant",
-                "Valuables : tracks total currently known sellable items - goal irrelevant",
-                "Potions : tracks total currently known mead bases - goal irrelevant",
-                "Trophies : tracks total currently known trophies - goal irrelevant",
-                "Creatures : tracks total currently known creatures - goal irrelevant",
-                "MeadowCreatures : tracks total currently known meadow creatures - goal irrelevant",
-                "BlackForestCreatures : tracks total currently known black forest creatures - goal irrelevant",
-                "SwampCreatures : tracks total currently known swamp creatures - goal irrelevant",
-                "MountainCreatures : tracks total currently known mountain creatures - goal irrelevant",
-                "PlainsCreatures : tracks total currently known plains creatures - goal irrelevant",
-                "MistLandCreatures : tracks total currently known mistlands creatures - goal irrelevant",
-                "EikthyrKills : tracks total eikthyr kills - use goal to set up threshold",
-                "ElderKills : tracks total elder kills - use goal to set up threshold",
-                "BonemassKills : tracks total bonemass kills - use goal to set up threshold",
-                "ModerKills : tracks total moder kills - use goal to set up threshold",
-                "YagluthKills : tracks total yagluth kills - use goal to set up threshold",
-                "QueenKills : tracks total seeker queen kills - use goal to set up threshold",
-                "Deaths : tracks total player deaths - use goal to set up threshold",
-                "DistanceRan : tracks total distance ran - use goal to set up threshold",
-                "DistanceSailed : tracks total distance sailed - use goal to set up threshold",
-                "TotalKills : tracks total enemy kills - use goal to set up threshold",
-                "TotalAchievements : tracks total achievements - use goal to set up threshold",
-                "TrollKills : tracks total troll kills - use goal to set up threshold",
-                "SerpentKills : tracks total serpent kills - use goal to set up threshold",
-                "CultistKills : tracks total fenring cultists kills - use goal to set up threshold",
-                "StoneGolemKills : tracks total stone golem kills - use goal to set up threshold",
-                "TarBlobKills : tracks total tar blob kills - use goal to set up threshold",
-                "DeathByFall : tracks total deaths by falling - use goal to set up threshold",
-                "Trees : tracks total trees chopped - use goal to set up threshold",
-                "DeathByTree : tracks total death by trees - use goal to set up threshold",
-                "DeathByEdge : tracks total death by falling off edge of world - use goal to set up threshold",
-                "TimeInBase : tracks total time in base - use goal to set up threshold",
-                "TimeOutOfBase : tracks total time out of base - use goal to set up threshold",
-                "ArrowsShot : tracks total arrows shot - use goal to set up threshold",
-                "GoblinShamanKills : tracks total goblin shaman kills - use goal to set up threshold",
-                "DrakeKills : tracks total drake kills - use goal to set up threshold",
-                "WraithKills : tracks total wraith kills - use goal to set up threshold",
-                "ComfortPieces : tracks total known comfort pieces - goal irrelevant",
-                "GreydwarfShamanKills : tracks total greydwarf shaman kills - use goal to set up threshold",
-                "DvergerKills : tracks total dverger kills - use goal to set up threshold",
-                "DvergerFireKills : tracks total dverger fire mage kills - use goal to set up threshold",
-                "DvergerFrostKills : tracks total dverger frost mage kills - use goal to set up threshold",
-                "DvergerSupportKills : tracks total dverger support mage kills - use goal to set up threshold",
-                "TotalJumps : tracks total jumps - use goal to set up threshold",
-                "TotalCraftsOrUpgrades : tracks total crafts and upgrades of items - use goal to set up threshold",
-                "TotalBuilds : tracks total built pieces - use goal to set up threshold",
-                "EnemyHits : tracks total hits against creatures - use goal to set up threshold",
-                "PlayerKills : tracks total player kills - pvp - - use goal to set up threshold",
-                "HitsTaken : tracks total hits taken - use goal to set up threshold",
-                "ItemsPicked : tracks total items picked up - use goal to set up threshold",
-                "DistanceWalked : tracks total distance walked - use goal to set up threshold",
-                "DistanceInAir : tracks total air time - use goal to set up threshold",
-                "MineHits : tracks total pickaxe mine hits - use goal to set up threshold",
-                "CreatureTamed : tracks total successful tame - use goal to set up threshold",
-                "FoodEaten : tracks total food eaten - use goal to set up threshold",
-                "SkeletonSummoned : tracks total f riendly skeleton summoned - use goal to set up threshold",
-                "DeathByDrowning : tracks total death by drowning - use goal to set up threshold",
-                "DeathByBurning : tracks total death by drowning - use goal to set up threshold",
-                "DeathByFreezing : tracks total death by freezing - use goal to set up threshold",
-                "DeathByPoisoned : tracks total death by poisoned - use goal to set up threshold",
-                "DeathBySmoke : tracks total death by smoke - use goal to set up threshold",
-                "DeathByWater : tracks total death by water - use goal to set up threshold",
-                "DeathByCart : tracks total death by cart - use goal to set up threshold",
-                "DeathBySelf : tracks total suicides - use goal to set up threshold",
-                "DeathByStalagtite : tracks total death by stalagtite - use goal to set up threshold",
-                "BeesHarvested : tracks total bees harvested - use goal to set up threshold",
-                "SapHarvested : tracks total sap harvested - use goal to set up threshold",
-                "TrapsArmed : tracks total traps armed - use goal to set up threshold",
-                "StacksPlaced : tracks total stacks placed - use goal to set up threshold",
-                "BossKills : tracks total boss kills - use goal to set up threshold",
-                "```",
-                "## Resistance Modifier",
-                "This can be used to apply damage modifiers `on the player`,",
-                "It can be read as list if seperated by commas.",
-                "(ex: Fire = Weak, Frost = Resistant)",
-                "This affects any damages from status effects such as `burning` but not direct damages.",
-                "### Acceptable resistances:",
-                "```yml",
-                "Physical",
-                "Elemental",
-                "Fire",
-                "Frost",
-                "Lightning",
-                "Poison",
-                "Spirit",
-                "```",
-                "### Acceptable modifier:",
-                "```yml",
-                "VeryWeak",
-                "Weak",
-                "Normal",
-                "Resistant",
-                "VeryResistant",
-                "```",
-                "## Activation animation",
-                "Only applies to active powers that use the 'F' key to engage forsaken power (aka guardian power)",
-                "Work in progress",
-                "Currently all set to default of 'gpower'",
-                "## Extra",
-                "Please come find me on OdinPlus discord if you have any ideas on how to improve the system",
-                "Best, Rusty"
-            };
-            
-            File.WriteAllLines(achievementTutorialPath, tutorial);
-        }
-
+        WriteTutorial();
+        
         foreach (var data in tempAchievementData)
         {
             string serializedData = serializer.Serialize(data);
@@ -433,13 +450,13 @@ public static class AchievementManager
 
     public static void ResetAchievementData()
     {
-        var serializer = new SerializerBuilder().Build();
+        ISerializer serializer = new SerializerBuilder().Build();
 
         if (!Directory.Exists(achievementPath)) Directory.CreateDirectory(achievementPath);
 
-        var defaultData = CreateDefaultAchievements();
+        List<AchievementData> defaultData = CreateDefaultAchievements();
 
-        foreach (var data in defaultData)
+        foreach (AchievementData? data in defaultData)
         {
             string serializedData = serializer.Serialize(data);
             
@@ -450,17 +467,79 @@ public static class AchievementManager
         }
     }
 
+    public static void ReBuildAchievements()
+    {
+        if (!Player.m_localPlayer) return;
+        // Remove all currently active Base Effects
+        foreach (var effect in CustomStatusEffects.activeAlmanacEffects)
+        {
+            Player.m_localPlayer.GetSEMan().RemoveStatusEffect(effect);
+        }
+        CustomStatusEffects.activeAlmanacEffects.Clear();
+        
+        AlmanacLogger.LogInfo("Rebuilding achievements");
+        if (serverAchievementData.Value.Count == 0)
+        {
+            AlmanacLogger.LogInfo($"Found no server data, loading local data");
+            InitAchievements(); // Read files
+            RegisterAlmanacEffects.AddStatusEffectsToObjectDB(); // Remove BaseEffects from ObjectDB and Instantiate new status effects
+            AchievementsUI.RegisterAchievements(); // Setup UI
+        }
+        else
+        {
+            AlmanacLogger.LogInfo($"Loading {serverAchievementData.Value.Count} achievements");
+            IDeserializer deserializer = new DeserializerBuilder().Build();
+            List<AchievementData> serverData = new();
+            foreach (string? serializedData in serverAchievementData.Value)
+            {
+                AchievementData data = deserializer.Deserialize<AchievementData>(serializedData);
+                serverData.Add(data);
+            }
+            AddAchievementToRegistrar(serverData); // Build server achievements
+            RegisterAlmanacEffects.AddStatusEffectsToObjectDB();
+            AchievementsUI.RegisterAchievements();
+            currentServerData = new List<string>(serverAchievementData.Value);
+        }
+        // If new or deleted achievement data
+        Object.DestroyImmediate(Almanac.CreateAlmanac.achievementsPanel, true); // Destroy old achievements panel
+        // Re-build achievement panel
+        GameObject panel = Almanac.CreateAlmanac.CreateAchievementsPanel("achievements", AchievementsUI.registeredAchievements);
+        Almanac.CreateAlmanac.achievementsPanel = panel;
+    }
+
+    public static void InitSyncedAchievementData()
+    {
+        if (WorkingAsType is WorkingAs.Server)
+        {
+            if (!Directory.Exists(achievementPath))
+            {
+                // If no achievement data, write defaults
+                AlmanacLogger.LogInfo($"Writing default achievements to file");
+                ResetAchievementData();
+            } 
+            WriteTutorial(); // If no tutorial, write tutorial
+
+            AlmanacLogger.LogInfo("Initializing achievements");
+            InitAchievements();
+        }
+        else
+        {
+            InitAchievements();
+        }
+    }
+
     public static void InitAchievements()
     {
         tempAchievementData.Clear();
+        serverAchievementData.Value.Clear();
         
         if (Directory.Exists(achievementPath))
         {
-            var deserializer = new DeserializerBuilder().Build();
+            IDeserializer deserializer = new DeserializerBuilder().Build();
             string[] filePaths = Directory.GetFiles(achievementPath, "*.yml");
 
             List<AchievementData> newData = new();
-            
+            List<string> newServerData = new();
             foreach (string filePath in filePaths)
             {
                 try
@@ -469,18 +548,20 @@ public static class AchievementManager
                     AchievementData data = deserializer.Deserialize<AchievementData>(serializedData);
                     if (newData.Exists(x => x.unique_name == data.unique_name)) continue;
                     newData.Add(data);
+                    newServerData.Add(serializedData);
                 }
                 catch (Exception ex) { AlmanacLogger.LogWarning($"Error reading file '{filePath}': {ex.Message}"); }
             }
             
-            AlmanacLogger.LogInfo($"Loading [Almanac Custom Achievements]: {newData.Count} achievements on file" );
-
+            if (ZNet.instance.IsServer()) AlmanacLogger.LogInfo($"Loading {newData.Count} local achievements" );
+            serverAchievementData.Value = newServerData; 
             tempAchievementData = newData;
         }
         else { tempAchievementData = CreateDefaultAchievements(); } // If achievement data folder does not exist, use default data
+        
         AddAchievementToRegistrar(tempAchievementData); // Add read files or data to registry to be added to temp achievements
     }
-    
+
     private static void AddAchievementToRegistrar(List<AchievementData> deserializedData)
     {
         tempAchievements.Clear();
@@ -518,6 +599,7 @@ public static class AchievementManager
                 case "FallDamage": mod = FallDamage; modifiers[FallDamage] = achievement.modifier_value; break;
                 case "BaseHP": mod = BaseHP; break;
                 case "BaseStamina": mod = BaseStamina; break;
+                case "BaseEitr": mod = BaseEitr; break;
                 case "MeleeDMG": mod = MeleeDMG; break;
                 case "RangedDMG": mod = RangedDMG; break;
                 case "FireDMG": mod = FireDMG; break;
@@ -1384,13 +1466,13 @@ public static class AchievementManager
                 description = "$almanac_achievement_trophy_hunter_desc",
                 lore = "$almanac_trophy_hunter_lore",
                 sprite_name = "almanac_silver_coins",
-                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_very_resistant</color> VS <color=orange>$almanac_spirit</color>\n$almanac_reduce_health_by <color=orange>5</color>",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_very_resistant</color> VS <color=orange>$almanac_spirit</color>\n$almanac_increase_eitr_by <color=orange>50</color>",
                 stop_message = "$almanac_removed_achievement_power",
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "Trophies",
                 resistance_modifier = "Spirit = VeryResistant",
-                modifier = "BaseHP",
-                modifier_value = -5f
+                modifier = "BaseEitr",
+                modifier_value = 50f
             },
         };
         
@@ -1407,8 +1489,8 @@ public static class AchievementManager
         public string lore = "";
         public string tool_tip = "";
         public string stop_message = "$almanac_removed_achievement_power";
-        public string[] start_effects;
-        public string[] stop_effects;
+        public string[] start_effects = null!;
+        public string[] stop_effects = null!;
         public string achievement_type = "";
         public int goal = 0;
         public string resistance_modifier = "";
@@ -1460,44 +1542,34 @@ public static class AchievementManager
             activation_animation = pkg.ReadString();
 
         }
-    }
 
-    private static AchievementData CreateAchievementData(
-        string uniqueName,
-        int goal,
-        string spriteName,
-        string toolTip,
-        string achievementType,
-        string stopMsg,
-        string[] startEffects,
-        string[] stopEffects,
-        string resistanceMod,
-        string modifier,
-        float value
-    )
-    {
-        string displayName = $"$almanac_achievement_{uniqueName}";
-        string description = $"$almanac_achievement_{uniqueName}_desc";
-        string lore = $"$almanac_{uniqueName}_lore";
-        string toolTipValued = $"{toolTip} <color=orange>{value}</color>";
-
-        AchievementData data = new AchievementData()
+        public override bool Equals(object? obj)
         {
-            unique_name = uniqueName,
-            display_name = displayName,
-            goal = goal,
-            description = description,
-            sprite_name = spriteName,
-            lore = lore,
-            tool_tip = toolTipValued,
-            achievement_type = achievementType,
-            stop_message = stopMsg,
-            start_effects = startEffects,
-            stop_effects = stopEffects,
-            resistance_modifier = resistanceMod,
-            modifier = modifier,
-            modifier_value = value
-        };
-        return data;
+            if (obj == null || GetType() != obj.GetType()) return false;
+
+            AchievementData other = (AchievementData)obj;
+
+            return unique_name == other.unique_name &&
+                   display_name == other.display_name &&
+                   description == other.description &&
+                   sprite_name == other.sprite_name &&
+                   lore == other.lore &&
+                   tool_tip == other.tool_tip &&
+                   stop_message == other.stop_message &&
+                   achievement_type == other.achievement_type &&
+                   goal == other.goal &&
+                   resistance_modifier == other.resistance_modifier &&
+                   modifier == other.modifier &&
+                   activation_animation == other.activation_animation &&
+                   cooldown == other.cooldown;
+        }
+
+        public override int GetHashCode()
+        {
+            int hashCode = (unique_name != null ? unique_name.GetHashCode() : 0);
+
+            return hashCode;
+        }
+
     }
 }

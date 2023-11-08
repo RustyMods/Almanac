@@ -29,10 +29,7 @@ public static class TrackPlayerKills
         TempMonstersKilled = initialData;
     }
 
-    public static void ResetTempMonstersKilled()
-    {
-        TempMonstersKilled = zeroMonstersKilled;
-    }
+    public static void ResetTempMonstersKilled() => TempMonstersKilled = zeroMonstersKilled;
 
     public static Dictionary<string, int> GetCurrentKilledMonsters()
     {
@@ -58,9 +55,14 @@ public static class TrackPlayerKills
             string hoverName = attacker.GetHoverName();
             string defeatKey = __instance.m_defeatSetGlobalKey;
 
-            if (localPlayer == hoverName)
+            if (localPlayer != hoverName) return;
+            if (TempMonstersKilled.ContainsKey(defeatKey))
             {
                 TempMonstersKilled[defeatKey] += 1;
+            }
+            else
+            {
+                TempMonstersKilled.Add(defeatKey, 1);
             }
         }
     }

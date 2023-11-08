@@ -47,23 +47,6 @@ public static class RegisterAlmanacEffects
             effectData.Init();
         }
     }
-
-    public static void ReCreateStatusEffect(StatusEffect effect)
-    {
-        if (!ZNetScene.instance) return;
-
-        ObjectDB.instance.m_StatusEffects.Remove(effect);
-        var originalData = effectsData.Find(x => x.effectName == effect.name);
-
-        effectsData.Remove(originalData);
-
-        var newData = tempAchievements.Find(x => x.m_statusEffect.effectName == effect.name);
-        
-        effectsData.Add(newData.m_statusEffect);
-        
-        newData.m_statusEffect.Init();
-    }
-    
 }
 
 public static class AlmanacEffectsManager
@@ -84,6 +67,7 @@ public static class AlmanacEffectsManager
         FallDamage,
         BaseHP,
         BaseStamina,
+        BaseEitr,
         MeleeDMG,
         RangedDMG,
         FireDMG,
@@ -145,7 +129,7 @@ public static class AlmanacEffectsManager
 
             if (!damageMod.IsNullOrWhiteSpace())
             {
-                string normalizedDamageMod = damageMod.Replace(" ", "");
+                string normalizedDamageMod = damageMod!.Replace(" ", "");
                 string[] resistanceMods = normalizedDamageMod.Split(',');
                 foreach (string resistance in resistanceMods)
                 {

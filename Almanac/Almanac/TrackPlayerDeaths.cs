@@ -20,7 +20,7 @@ public static class TrackPlayerDeaths
     public static void SetInitialData(List<CreatureData> creatures)
     {
         Dictionary<string, int> initialData = new();
-        foreach (var creature in creatures)
+        foreach (CreatureData? creature in creatures)
         {
             initialData[creature.defeatedKey] = 0;
         }
@@ -29,11 +29,7 @@ public static class TrackPlayerDeaths
         TempPlayerDeaths = initialData;
     }
 
-    public static void ResetTempPlayerDeaths()
-    {
-        TempPlayerDeaths = zeroPlayerDeaths;
-    }
-
+    public static void ResetTempPlayerDeaths() => TempPlayerDeaths = zeroPlayerDeaths;
     public static Dictionary<string, int> GetCurrentPlayerDeaths()
     {
         if (!File.Exists(filePath)) return TempPlayerDeaths;
@@ -51,15 +47,21 @@ public static class TrackPlayerDeaths
         private static void Postfix(Character __instance, ref HitData hit)
         {
             if(__instance != Player.m_localPlayer) return;
+
+            if (!(Player.m_localPlayer.GetHealth() <= 0)) return;
             
-            if (Player.m_localPlayer.GetHealth() <= 0)
+            if (hit.GetAttacker() is not { } killer) return;
+                
+            killer.TryGetComponent(out Character character);
+            if (!character) return;
+            string defeatKey = character.m_defeatSetGlobalKey;
+            if (TempPlayerDeaths.ContainsKey(defeatKey))
             {
-                if (hit.GetAttacker() is { } killer)
-                {
-                    killer.TryGetComponent(out Character character);
-                    string defeatKey = character.m_defeatSetGlobalKey;
-                    TempPlayerDeaths[defeatKey] += 1;
-                }
+                TempPlayerDeaths[defeatKey] += 1;
+            }
+            else
+            {
+                TempPlayerDeaths.Add(defeatKey, 1);
             }
         }
     }

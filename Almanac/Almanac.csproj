@@ -129,6 +129,7 @@
         <Compile Include="Almanac\AlmanacBaseEffect.cs" />
         <Compile Include="Almanac\Commands.cs" />
         <Compile Include="Almanac\CustomStatusEffects.cs" />
+        <Compile Include="Almanac\FileSystem.cs" />
         <Compile Include="Almanac\FixTrophiesPositions.cs" />
         <Compile Include="Almanac\ItemDataCollector.cs" />
         <Compile Include="Almanac\Leaderboard.cs" />

@@ -13,7 +13,7 @@ using GameObject = UnityEngine.GameObject;
 using Object = System.Object;
 using Vector2 = UnityEngine.Vector2;
 
-    namespace Almanac.Almanac;
+namespace Almanac.Almanac;
 
 public static class Almanac
 {
@@ -77,18 +77,22 @@ public static class Almanac
         public static int otherPage;
         public static int modPage;
 
-        public static List<ItemDrop> filteredGear = new();
-        public static List<ItemDrop> filteredMaterials = new();
-        
         public static bool jewelCraftingLoaded;
-        public static List<ItemDrop> jewels = new();
-
+        public static readonly List<ItemDrop> filteredGear = new();
+        public static readonly List<ItemDrop> filteredMaterials = new();
+        public static readonly List<ItemDrop> jewels = new();
+        
         public static GameObject achievementsPanel = null!;
+
+        private static Vector2 FrameSize;
+        private static Image buttonGlow = null!;
 
         public static void Postfix(InventoryGui __instance)
         {
             if (!__instance) return;
+            AchievementManager.InitSyncedAchievementData();
             if (AlmanacPlugin.WorkingAsType == AlmanacPlugin.WorkingAs.Server) return;
+            
             SetInitialData(__instance);
             AchievementsUI.RegisterAchievements();
             EditInventoryGUI();
@@ -102,6 +106,7 @@ public static class Almanac
             trophyElement = __instance.m_trophieElementPrefab;
             TrophiesPanel = __instance.m_trophiesPanel.transform;
             TrophiesFrame = TrophiesPanel.Find("TrophiesFrame");
+            buttonGlow = __instance.m_repairButtonGlow;
 
             Transform closeButton = TrophiesFrame.Find("Closebutton");
             Transform closeButtonText = closeButton.Find("Text");
@@ -118,6 +123,7 @@ public static class Almanac
             border.TryGetComponent(out Image borderImg);
             weightIconElement.TryGetComponent(out Image weightImg);
             armorIconElement.TryGetComponent(out Image armorImg);
+            TrophiesFrame.TryGetComponent(out RectTransform frameRect);
 
             if (!textMesh || !button || !buttonSfx || !buttonImage || !iconImage || !borderImg || !weightImg || !armorImg) return;
             
@@ -129,6 +135,7 @@ public static class Almanac
             borderImage = borderImg;
             weightIcon = weightImg;
             armorIcon = armorImg;
+            FrameSize = frameRect.sizeDelta;
             
             PieceDataCollector.GetBuildPieces();
 
@@ -160,7 +167,6 @@ public static class Almanac
 
                 foreach (ItemDrop item in gear)
                 {
-                    // string localizedName = Localization.instance.Localize(item.m_itemData.m_shared.m_name);
                     string name = item.name;
                     if (
                         name.EndsWith("Socket") 
@@ -184,15 +190,21 @@ public static class Almanac
                         if (station && station.name == "op_transmution_table") jewels.Add(item);
                         continue;
                     }
-                    if (name.Contains("Gem") 
-                        || localizedName.Contains("Gem") 
-                        || name.EndsWith("Gem") 
+
+                    if (name.Contains("Gem")
+                        || localizedName.Contains("Gem")
+                        || name.EndsWith("Gem")
                         || name.StartsWith("JC_")
                         || name == "Soulcatcher_CursedDoll"
-                        || name.EndsWith("_Crystal")) jewels.Add(item);
-                    else filteredMaterials.Add(item);
+                        || name.EndsWith("_Crystal"))
+                    {
+                        jewels.Add(item);
+                    }
+                    else
+                    {
+                        filteredMaterials.Add(item);
+                    }
                 }
-                
             }
         }
         
@@ -217,7 +229,7 @@ public static class Almanac
             RectTransform panelRect = panel.AddComponent<RectTransform>();
             panelRect.SetParent(TrophiesFrame);
             panelRect.anchoredPosition = new Vector2(0f, 10f);
-            panelRect.sizeDelta = new Vector2(1310f, 800f);
+            panelRect.sizeDelta = FrameSize;
 
             panel.SetActive(false);
 
@@ -229,7 +241,9 @@ public static class Almanac
             
             Image backgroundImage = background.AddComponent<Image>();
             
-            Image trophiesImage = trophies.gameObject.GetComponent<Image>();
+            trophies.TryGetComponent(out Image trophiesImage);
+            if (!trophiesImage) return panel;
+            
             backgroundImage.color = trophiesImage.color;
             backgroundImage.raycastTarget = true;
             backgroundImage.maskable = true;
@@ -276,6 +290,19 @@ public static class Almanac
                 iconImage.pixelsPerUnitMultiplier = 1f;
                 
                 AddHoverableText(container, name, 16, anchoredY: -50f);
+
+                GameObject containerGlow = new GameObject($"glow ({i})");
+                RectTransform glowRect = containerGlow.AddComponent<RectTransform>();
+                glowRect.SetParent(container.transform);
+                glowRect.anchoredPosition = Vector2.zero;
+                glowRect.sizeDelta = new Vector2(80f, 80f);
+                
+                Image glowImage = containerGlow.AddComponent<Image>();
+                glowImage.sprite = buttonGlow.sprite;
+                glowImage.color = new Color(0.8f, 1f, 0f, 1f);
+                glowImage.maskable = true;
+                glowImage.fillCenter = true;
+                glowImage.type = buttonGlow.type;
                 
                 if (i > 71) container.SetActive(false);
                 
@@ -377,7 +404,7 @@ public static class Almanac
             RectTransform panelRect = panel.AddComponent<RectTransform>();
             panelRect.SetParent(TrophiesFrame);
             panelRect.anchoredPosition = new Vector2(0f, 10f);
-            panelRect.sizeDelta = new Vector2(1310f, 800f);
+            panelRect.sizeDelta = FrameSize; // 1310 x 800
 
             panel.SetActive(false);
 
@@ -387,8 +414,8 @@ public static class Almanac
             GameObject backgroundLeft = new GameObject($"{id}Background (1)");
             RectTransform rectTransformLeft = backgroundLeft.AddComponent<RectTransform>();
             rectTransformLeft.SetParent(panel.transform);
-            rectTransformLeft.anchoredPosition = new Vector2(-400f, 0f);
-            rectTransformLeft.sizeDelta = new Vector2(450f, 650f);
+            rectTransformLeft.anchoredPosition = new Vector2(-425f, 0f);
+            rectTransformLeft.sizeDelta = new Vector2(((FrameSize.x - 75f) / 3f) * 1f, 650f);
             
             Image backgroundImageLeft = backgroundLeft.AddComponent<Image>();
             
@@ -399,8 +426,8 @@ public static class Almanac
             GameObject backgroundRight = new GameObject($"{id}Background (2)");
             RectTransform rectTransformRight = backgroundRight.AddComponent<RectTransform>();
             rectTransformRight.SetParent(panel.transform);
-            rectTransformRight.anchoredPosition = new Vector2(235f, 0f);
-            rectTransformRight.sizeDelta = new Vector2(775f, 650f);
+            rectTransformRight.anchoredPosition = new Vector2(218f, 0f);
+            rectTransformRight.sizeDelta = new Vector2(((FrameSize.x - 75f) / 3f) * 2f, 650f);
             
             Image backgroundImageRight = backgroundRight.AddComponent<Image>();
             
@@ -409,7 +436,7 @@ public static class Almanac
             backgroundImageRight.maskable = true;
 
             CreateTextElement(panel.transform, "almanacPowers", "$almanac_no_data",
-            -415f, 300f, 350f, 100f, Color.yellow, 30
+            -425f, 300f, ((FrameSize.x - 75f) / 3f) * 1f, 100f, Color.yellow, 30
             );
 
             for (int i = 0; i < AchievementsUI.maxPowers; ++i)
@@ -457,50 +484,50 @@ public static class Almanac
             }
             
             CreateTextElement(panel.transform, "leaderboard", "$almanac_leaderboard",
-                40f, 300f, 350f, 100f, Color.yellow, 30,
+                218f, 300f, ((FrameSize.x - 75f) / 3f) * 2f, 100f, Color.yellow, 30,
+                horizontalAlignment: HorizontalAlignmentOptions.Center
+            );
+            CreateTextElement(panel.transform, "leaderboard labels", "$almanac_leaderboard_labels",
+                218f, 265f, ((FrameSize.x - 75f) / 3f) * 2f, 100f, new Color(1f, 0.5f, 0f, 1f), 14,
                 horizontalAlignment: HorizontalAlignmentOptions.Left
             );
-            // CreateTextElement(panel.transform, "leaderboard labels", "$almanac_leaderboard_labels",
-            //     40f, 265f, 350f, 100f, new Color(1f, 0.5f, 0f, 1f), 14,
-            //     horizontalAlignment: HorizontalAlignmentOptions.Left
-            // );
-            //
-            // for (int i = 0; i < 11; ++i)
-            // {
-            //     float anchorY = 225f - (i * 52f);
-            //
-            //     GameObject bg = CreateImageElement(
-            //         panel.transform, "player bg",
-            //         235f, anchorY,
-            //         775f, 50f,
-            //         sprite: borderImage.sprite,
-            //         active: true
-            //         );
-            //
-            //     bg.TryGetComponent(out Image bgImage);
-            //     if (bgImage)
-            //     {
-            //         bgImage.material = borderImage.material;
-            //         bgImage.maskable = true;
-            //     }
-            //     
-            //     CreateTextElement(
-            //         panel.transform, "playerName",
-            //         $"...",
-            //         0f, anchorY,
-            //         200f, 50f,
-            //         Color.white, 16,
-            //         horizontalAlignment: HorizontalAlignmentOptions.Left
-            //     );
-            //     CreateTextElement(
-            //         panel.transform, "playerData",
-            //         $"...",
-            //         200f, anchorY,
-            //         250f, 50f,
-            //         Color.white, 16,
-            //         horizontalAlignment: HorizontalAlignmentOptions.Left
-            //     );
-            // }
+            
+            for (int i = 0; i < 11; ++i)
+            {
+                float anchorY = 225f - (i * 52f);
+            
+                GameObject bg = CreateImageElement(
+                    panel.transform, $"player bg ({i})",
+                    218f, anchorY,
+                    (((FrameSize.x - 75f) / 3f) * 2f) - 10f, 50f,
+                    sprite: borderImage.sprite,
+                    active: true
+                    );
+            
+                bg.TryGetComponent(out Image bgImage);
+                if (bgImage)
+                {
+                    bgImage.material = borderImage.material;
+                    bgImage.maskable = true;
+                }
+                
+                CreateTextElement(
+                    panel.transform, $"playerName ({i})",
+                    $"...",
+                    -50f, anchorY,
+                    200f, 50f,
+                    Color.white, 16,
+                    horizontalAlignment: HorizontalAlignmentOptions.Left
+                );
+                CreateTextElement(
+                    panel.transform, $"playerData ({i})",
+                    $"...",
+                    200f, anchorY,
+                    250f, 50f,
+                    Color.white, 16,
+                    horizontalAlignment: HorizontalAlignmentOptions.Left
+                );
+            }
         }
         
 
@@ -699,7 +726,9 @@ public static class Almanac
             
             Image backgroundImage = background.AddComponent<Image>();
             
-            Image trophiesImage = trophies.gameObject.GetComponent<Image>();
+            trophies.TryGetComponent(out Image trophiesImage);
+            if (!trophiesImage) return panel;
+            
             backgroundImage.color = trophiesImage.color;
             backgroundImage.raycastTarget = true;
             backgroundImage.maskable = true;

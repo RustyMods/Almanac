@@ -2,17 +2,15 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Xml.Schema;
-using Almanac.MonoBehaviors;
 using BepInEx;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using YamlDotNet.Serialization;
+using static Almanac.Almanac.AchievementManager;
 using static Almanac.Almanac.AchievementsUI;
 using static Almanac.Almanac.Almanac.CreateAlmanac;
-using static Almanac.Almanac.CheckCheats.PlayerWatcher;
 using static Almanac.Almanac.CustomStatusEffects;
 using static Almanac.Almanac.TrackPlayerStats;
 using static Almanac.AlmanacPlugin;
@@ -28,7 +26,7 @@ public static class Patches
     {
         private static AlmanacPlugin.Toggle knowledgeLockToggle;
         private static List<GameObject> trophyList = null!;
-        private static Transform trophyFrame = null!;
+        public static Transform trophyFrame = null!;
         private static Transform contentPanel = null!;
         private static Transform AlmanacList = null!;
         private static Transform closeButton = null!;
@@ -74,8 +72,11 @@ public static class Patches
             SetPlayerStats();
             
             UpdateAchievements();
-            SetUnknownAchievements(trophyFrame.Find("achievementsPanel"));
-            foreach (Achievement achievement in registeredAchievements) SetAchievementsData(achievementsElement, achievement);
+            Transform? achievementPanel = trophyFrame.Find("achievementsPanel");
+            SetUnknownAchievements(achievementPanel);
+            foreach (AchievementsUI.Achievement achievement in registeredAchievements) SetAchievementsData(achievementsElement, achievement);
+
+            achievementPanel.transform.localScale = new Vector3(_AchievementPanelSize.Value.x, _AchievementPanelSize.Value.y, 0f);
         }
 
         private static void SetPlayerElementData(Transform parentElement)
@@ -201,7 +202,7 @@ public static class Patches
 
             SetTextElement(parentElement.gameObject, "title", Player.m_localPlayer.GetHoverName() + " " + "$almanac_stats_button");
 
-            foreach (var kvp in conversionMap)
+            foreach (KeyValuePair<string, string> kvp in conversionMap)
             {
                 if (kvp.Key.Contains("title"))
                 {
@@ -218,33 +219,34 @@ public static class Patches
             }
         }
 
-        public static void SetAchievementsData(Transform parentElement, Achievement data)
+        public static void SetAchievementsData(Transform parentElement, AchievementsUI.Achievement data)
         {
             Transform achievementIconBg = parentElement.Find("ImageElement (achievementIcon)");
             Transform achievementIcon = achievementIconBg.Find("ImageElement (icon)");
 
             achievementIcon.TryGetComponent(out Button button);
+            if (!button) return;
+            
             float progress = data.value * 100f / data.total;
             progress = Mathf.Clamp(progress, 0f, 100f);
 
-            if (!button) return;
-            button.interactable = noCost || data.isCompleted;
+            button.interactable = Player.m_localPlayer.NoCostCheat() || data.isCompleted;
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(() =>
             {
-                if (_AchievementPowers.Value is On || noCost) SetAlmanacPowers(data);
+                if (_AchievementPowers.Value is On || Player.m_localPlayer.NoCostCheat()) SetAlmanacPowers(data);
             });
             
-            SetTextElement(parentElement.gameObject, "achievementTooltip", noCost ? data.powerToolTip 
+            SetTextElement(parentElement.gameObject, "achievementTooltip", Player.m_localPlayer.NoCostCheat() ? data.powerToolTip 
                     : data.isCompleted && _AchievementPowers.Value == On ? data.powerToolTip : "");
-            SetTextElement(parentElement.gameObject, "achievementTitle", noCost ? data.name : data.isCompleted ? data.name : "???");
+            SetTextElement(parentElement.gameObject, "achievementTitle", Player.m_localPlayer.NoCostCheat() ? data.name : data.isCompleted ? data.name : "???");
             SetTextElement(parentElement.gameObject, "achievementDescription", data.description ?? "$almanac_no_data");
-            SetImageElement(achievementIconBg.gameObject, "icon", data.sprite, noCost ? Color.white : data.isCompleted ? Color.white : Color.black);
+            SetImageElement(achievementIconBg.gameObject, "icon", data.sprite, Player.m_localPlayer.NoCostCheat() ? Color.white : data.isCompleted ? Color.white : Color.black);
             SetTextElement(parentElement.gameObject, "achievementProgress", $"<color=orange>{data.value}</color> / {data.total} (<color=orange>{progress}</color>%)");
-            SetTextElement(parentElement.gameObject, "achievementLore", noCost ? data.lore : data.isCompleted ? data.lore : "");
+            SetTextElement(parentElement.gameObject, "achievementLore", Player.m_localPlayer.NoCostCheat() ? data.lore : data.isCompleted ? data.lore : "");
         }
 
-        private static void SetAlmanacPowers(Achievement data)
+        private static void SetAlmanacPowers(AchievementsUI.Achievement data)
         {
             if (data.power.IsNullOrWhiteSpace())
             {
@@ -265,8 +267,7 @@ public static class Patches
             if (data.power.StartsWith("GP"))
             {
                 player.SetGuardianPower(data.power);
-                player.GetGuardianPowerHUD(out StatusEffect GP, out float coolDown);
-                instance.ShowMessage(MessageType.Center, $"$almanac_set_guardian_power {GP.m_name} $almanac_power");
+                instance.ShowMessage(MessageType.Center, $"$almanac_set_guardian_power {player.m_guardianSE.m_name} $almanac_power");
             }
             else
             {
@@ -279,9 +280,7 @@ public static class Patches
                 }
                 else
                 {
-                    if (activeAlmanacEffects.Count >= (noCost
-                            ? maxPowers
-                            : powerLimit))
+                    if (activeAlmanacEffects.Count >= (Player.m_localPlayer.NoCostCheat() ? maxPowers : powerLimit))
                     {
                         instance.ShowMessage(MessageType.Center, "$almanac_max_powers");
                         return;
@@ -291,10 +290,37 @@ public static class Patches
                     player.m_seman.AddStatusEffect(customPower);
                 }
             }
+            
+            // Turn the glow on or off
+            SetAchievementGlow();
         }
 
         public static void SetPlayerStats()
         {
+            if (!ZNet.instance.IsServer())
+            {
+                if (serverAchievementData.Value.Count != currentServerData.Count)
+                {
+                    AlmanacLogger.LogInfo("Server achievement data count changed");
+                    ReBuildAchievements();
+                }
+                else
+                {
+                    // If they are the same size, compare them to find if anything changed
+                    IDeserializer deserializer = new DeserializerBuilder().Build();
+                    for (int i = 0; i < serverAchievementData.Value.Count; ++i)
+                    {
+                        AchievementData currentData = deserializer.Deserialize<AchievementData>(currentServerData[i]);
+                        AchievementData serverData = deserializer.Deserialize<AchievementData>(serverAchievementData.Value[i]);
+
+                        if (currentData.Equals(serverData)) continue;
+                    
+                        AlmanacLogger.LogInfo("Server achievement data changed");
+                        ReBuildAchievements();
+                        break;
+                    }
+                }
+            }
             SetPlayerElementData(playerStatsElement);
             SetPlayerPanel();
         }
@@ -306,6 +332,27 @@ public static class Patches
             SetTextElement(panel.gameObject, "almanacPowers", "$almanac_custom_powers_label");
             
             SetActivePowersUI();
+            SetLeaderboardData(panel);
+        }
+
+        private static void SetLeaderboardData(Transform panel)
+        {
+            for (int i = 0; i < 11; ++i)
+            {
+                SetActiveElement(panel.gameObject, "ImageElement", $"player bg ({i})", false);
+                SetActiveElement(panel.gameObject, "TextElement", $"playerName ({i})", false);
+                SetActiveElement(panel.gameObject, "TextElement", $"playerData ({i})", false);
+            }
+
+            var deserializer = new DeserializerBuilder().Build();
+            for (int i = 0; i < Leaderboard.SyncedLeaderboard.Value.Count; ++i)
+            {
+                Leaderboard.LeaderboardData? data = deserializer.Deserialize<Leaderboard.LeaderboardData>(Leaderboard.SyncedLeaderboard.Value[i]);
+                SetActiveElement(panel.gameObject, "ImageElement", $"player bg ({i})", true);
+                SetTextElement(panel.gameObject, $"playerName ({i})", data.playerName);
+                // string content = $"{data.kills}";
+                // SetTextElement(panel.gameObject, $"playerData ({i})", content);
+            }
         }
 
         private static void SetActivePowersUI()
@@ -321,7 +368,7 @@ public static class Patches
                 SetActiveElement(panel.gameObject, "TextElement", $"activeDesc ({i})", false);
             }
 
-            if (_AchievementPowers.Value is Off && !noCost) return;
+            if (_AchievementPowers.Value is Off && !Player.m_localPlayer.NoCostCheat()) return;
             
             for (int i = 0; i < activePowers.Count; ++i)
             {
@@ -389,7 +436,7 @@ public static class Patches
 
                 string prefab = piece.name;
                 string name = piece.m_name;
-                bool isRecipeKnown = Player.m_localPlayer.IsRecipeKnown(name) || noCost;
+                bool isRecipeKnown = Player.m_localPlayer.IsRecipeKnown(name) || Player.m_localPlayer.NoCostCheat();
                 string localizedName = Localization.instance.Localize(name);
 
                 button.interactable = knowledgeLockToggle != On || isRecipeKnown;
@@ -488,7 +535,7 @@ public static class Patches
                     isWise = globalKeys.Contains(defeatedKey);
                 }
 
-                if (noCost) isWise = true;
+                if (Player.m_localPlayer.NoCostCheat()) isWise = true;
                 
                 // Set values
                 button.interactable = isWise;
@@ -526,7 +573,7 @@ public static class Patches
                     string prefab = list[i].name;
                     string name = list[i].m_itemData.m_shared.m_name;
                     string localizedName = Localization.instance.Localize(name);
-                    bool isKnown = Player.m_localPlayer.IsMaterialKnown(name) || noCost;
+                    bool isKnown = Player.m_localPlayer.IsMaterialKnown(name) || Player.m_localPlayer.NoCostCheat();
 
                     iconImage.color = knowledgeLockToggle == On
                         ? (isKnown ? Color.white : Color.black)
@@ -902,8 +949,8 @@ public static class Patches
             data.TryGetComponent(out WispSpawner wispSpawner);
             data.TryGetComponent(out Turret turret);
             data.TryGetComponent(out Fermenter fermenter);
-            data.TryGetComponent(out ItemStand itemStand);
-            data.TryGetComponent(out Ship ship);
+            // data.TryGetComponent(out ItemStand itemStand);
+            // data.TryGetComponent(out Ship ship);
             data.TryGetComponent(out Plant plant);
             data.TryGetComponent(out Destructible destructible);
             data.TryGetComponent(out CookingStation cookingStation);
@@ -921,7 +968,7 @@ public static class Patches
             bool groundPiece = piece.m_groundPiece;
             bool cultivatedGroundOnly = piece.m_cultivatedGroundOnly;
             bool allowedInDungeons = piece.m_allowedInDungeons;
-            Heightmap.Biome onlyInBiome = piece.m_onlyInBiome;
+            // Heightmap.Biome onlyInBiome = piece.m_onlyInBiome;
 
             CraftingStation? pieceCraftingStation = piece.m_craftingStation;
             Piece.Requirement[] resources = piece.m_resources;
@@ -961,7 +1008,7 @@ public static class Patches
                 if (i >= 5) continue;
                 string resourceName = resources[i].m_resItem.m_itemData.m_shared.m_name;
                 bool isKnown = Player.m_localPlayer.IsMaterialKnown(resourceName);
-                if (noCost) isKnown = true;
+                if (Player.m_localPlayer.NoCostCheat()) isKnown = true;
                 int resourceAmount = resources[i].m_amount;
                 Sprite resourceIcon = resources[i].m_resItem.m_itemData.m_shared.m_icons[0];
                 GameObject ResourceBackground =
@@ -1116,7 +1163,7 @@ public static class Patches
                         int dropMax = defaultItems[i].m_stackMax;
     
                         bool isKnown = Player.m_localPlayer.IsMaterialKnown(dropName);
-                        if (noCost) isKnown = true;
+                        if (Player.m_localPlayer.NoCostCheat()) isKnown = true;
                         string elementName = $"containerDrops ({i})";
                         GameObject ResourceBackground = Element.transform.Find($"ImageElement ({elementName})").gameObject;
                         string localizedContent =
@@ -1128,7 +1175,7 @@ public static class Patches
                         SetImageElement(ResourceBackground, "item", dropIcon, isKnown ? Color.white : _KnowledgeLock.Value == On ? Color.black : Color.white);
                         SetTextElement(ResourceBackground, $"recipeAmount", $"{dropMin}<color=white>-</color>{dropMax}");
                     }
-                };
+                }
                 SetActiveElement(Element, "TextElement", "containerSizeLabel", true);
                 SetActiveElement(Element, "TextElement", "checkGuardLabel", true);
                 SetActiveElement(Element, "TextElement", "autoDestroyLabel", true);
@@ -1181,7 +1228,7 @@ public static class Patches
                     float cookTime = cookingConversion.m_cookTime;
         
                     bool isKnown = Player.m_localPlayer.IsMaterialKnown(cookingItemName);
-                    if (noCost) isKnown = true;
+                    if (Player.m_localPlayer.NoCostCheat()) isKnown = true;
                     string elementName = $"cookingConversion ({i})";
                     GameObject ResourceBackground = Element.transform.Find($"ImageElement ({elementName})").gameObject;
                     string localizedName = Localization.instance.Localize($"{cookingItemName}");
@@ -1245,7 +1292,7 @@ public static class Patches
                     
                     string elementName = $"fireplaceFireworks ({i})";
                     bool isKnown = Player.m_localPlayer.IsMaterialKnown(fireworkName);
-                    if (noCost) isKnown = true;
+                    if (Player.m_localPlayer.NoCostCheat()) isKnown = true;
                     GameObject ResourceBackground = Element.transform.Find($"ImageElement ({elementName})").gameObject;
                     string localizedName = Localization.instance.Localize($"{fireworkName}");
                     SetActiveElement(Element, "ImageElement", elementName, true);
@@ -1286,7 +1333,7 @@ public static class Patches
                     
                     string FromElementId = $"smelterConversion from ({i})";
                     bool fromIsKnown = Player.m_localPlayer.IsMaterialKnown(fromItemName);
-                    if (noCost) fromIsKnown = true;
+                    if (Player.m_localPlayer.NoCostCheat()) fromIsKnown = true;
                     GameObject smelterFrom = Element.transform.Find($"ImageElement ({FromElementId})").gameObject;
                     string fromLocalizedName = Localization.instance.Localize($"{fromItemName}");
                     SetActiveElement(Element, "ImageElement", FromElementId, true);
@@ -1300,7 +1347,7 @@ public static class Patches
                     
                     string toElementId = $"smelterConversion to ({i})";
                     bool toIsKnown = Player.m_localPlayer.IsMaterialKnown(toItemName);
-                    if (noCost) toIsKnown = true;
+                    if (Player.m_localPlayer.NoCostCheat()) toIsKnown = true;
                     GameObject smelterTo = Element.transform.Find($"ImageElement ({toElementId})").gameObject;
                     string toLocalizedName = Localization.instance.Localize($"{toItemName}");
                     SetActiveElement(Element, "ImageElement", toElementId, true);
@@ -1381,7 +1428,7 @@ public static class Patches
                         Sprite? ammoIcon = ammoItemDrop.m_itemData.GetIcon();
                         
                         bool isKnown = Player.m_localPlayer.IsMaterialKnown(ammoName);
-                        if (noCost) isKnown = true;
+                        if (Player.m_localPlayer.NoCostCheat()) isKnown = true;
                         string elementId = $"turretAmmo ({i})";
                         GameObject resourceBackground = Element.transform.Find($"ImageElement ({elementId})").gameObject;
                         string localizedName = Localization.instance.Localize($"{ammoName}");
@@ -1545,7 +1592,7 @@ public static class Patches
                     {
                         string resourceName = resources[i].m_resItem.m_itemData.m_shared.m_name;
                         bool isKnown = Player.m_localPlayer.IsMaterialKnown(resourceName);
-                        if (noCost) isKnown = true;
+                        if (Player.m_localPlayer.NoCostCheat()) isKnown = true;
                         int resourceAmount = resources[i].m_amount;
                         Sprite resourceIcon = resources[i].m_resItem.m_itemData.m_shared.m_icons[0];
                         GameObject ResourceBackground =
@@ -1969,7 +2016,7 @@ public static class Patches
                     ItemDrop itemDrop = drop.GetComponent<ItemDrop>();
                     string dropItemName = itemDrop.m_itemData.m_shared.m_name;
                     bool isKnown = Player.m_localPlayer.IsMaterialKnown(dropItemName);
-                    if (noCost) isKnown = true;
+                    if (Player.m_localPlayer.NoCostCheat()) isKnown = true;
                     GameObject fishDropBg = Element.transform.Find($"ImageElement (fishDrops ({i}))").gameObject;
                     string localizedName = Localization.instance.Localize(dropItemName);
                     SetImageElement(
@@ -2415,7 +2462,7 @@ public static class Patches
                         Sprite icon = itemDrop.m_itemData.GetIcon();
                         string itemName = itemDrop.m_itemData.m_shared.m_name;
                         bool isKnown = player.IsMaterialKnown(itemName);
-                        if (noCost) isKnown = true;
+                        if (Player.m_localPlayer.NoCostCheat()) isKnown = true;
                         string content = $"{itemName} (<color=orange>{dropChance}%</color>)";
                         SetImageElement(
                             dropBgElement.gameObject,
@@ -2486,7 +2533,7 @@ public static class Patches
                         Sprite icon = itemDrop.m_itemData.GetIcon();
                         string itemName = itemDrop.m_itemData.m_shared.m_name;
                         bool isKnown = player.IsKnownMaterial(itemName);
-                        if (noCost) isKnown = true;
+                        if (Player.m_localPlayer.NoCostCheat()) isKnown = true;
                         
                         SetImageElement(
                             bgElement.gameObject, $"consumeItem ({index})", icon,
@@ -2537,7 +2584,7 @@ public static class Patches
                 { $"attackBlockable ({index})", $"{attackItem.blockable}" },
                 { $"attackStatusEffect ({index})", Localization.instance.Localize(attackItem.statusEffect) },
             };
-            foreach (var data in attackKeyValues) SetTextElement(element, data.Key, data.Value);
+            foreach (KeyValuePair<string, string> data in attackKeyValues) SetTextElement(element, data.Key, data.Value);
         }
 
         private static void SetAttackDefault(GameObject element, int index)
@@ -2560,7 +2607,7 @@ public static class Patches
                 { $"attackBlockable ({index})", "N/A" },
                 { $"attackStatusEffect ({index})", "N/A" },
             };
-            foreach (var data in defaultDataMap) SetTextElement(element, data.Key, data.Value);
+            foreach (KeyValuePair<string, string> data in defaultDataMap) SetTextElement(element, data.Key, data.Value);
         }
 
         private static void SetHoverableText(GameObject dummyElement, string id, string content)
@@ -2586,7 +2633,7 @@ public static class Patches
 
             text.text = SetLocalizedText(content);
 
-            var exclusionColorMap = new List<string>()
+            List<string> exclusionColorMap = new List<string>()
             {
                 "weakSpot",
                 "consumeItems (no data)",
@@ -2599,7 +2646,7 @@ public static class Patches
 
         private static string SetLocalizedText(string originalContent)
         {
-            var conversionMap = new Dictionary<string, string>()
+            Dictionary<string, string> conversionMap = new Dictionary<string, string>()
             {
                 { "Weak", "$almanac_weak" },
                 { "VeryWeak", "$almanac_very_weak" },
@@ -2762,11 +2809,6 @@ public static class Patches
             }
 
             return true;
-        }
-
-        private static List<CreatureDataCollector.CreatureData> GetAllCreatureData()
-        {
-            return Almanac.CreateAlmanac.creatures;
         }
     }
 }

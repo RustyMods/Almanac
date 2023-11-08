@@ -19,8 +19,8 @@ public static class SaveCustomData
             if (!__instance) return;
             if (WorkingAsType is WorkingAs.Server) return;
 
-            var TempMonstersKilled = TrackPlayerKills.TempMonstersKilled;
-            var TempPlayerDeaths = TrackPlayerDeaths.TempPlayerDeaths;
+            Dictionary<string, int> TempMonstersKilled = TrackPlayerKills.TempMonstersKilled;
+            Dictionary<string, int> TempPlayerDeaths = TrackPlayerDeaths.TempPlayerDeaths;
                 
             if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
             
@@ -29,7 +29,7 @@ public static class SaveCustomData
                 { "AlmanacMonsterKilled.yml", TempMonstersKilled },
                 { "AlmanacPlayerDeaths.yml", TempPlayerDeaths }
             };
-            foreach (var kvp in conversionMap)
+            foreach (KeyValuePair<string, Dictionary<string, int>> kvp in conversionMap)
             {
                 SaveAlmanac(kvp.Key, kvp.Value);
             }
@@ -42,8 +42,8 @@ public static class SaveCustomData
         {
             string filePath = folderPath + Path.DirectorySeparatorChar + fileName;
             
-            var serializer = new SerializerBuilder().Build();
-            var deserializer = new DeserializerBuilder().Build();
+            ISerializer serializer = new SerializerBuilder().Build();
+            IDeserializer deserializer = new DeserializerBuilder().Build();
             if (!File.Exists(filePath))
             {
                 string serializedData = serializer.Serialize(data);

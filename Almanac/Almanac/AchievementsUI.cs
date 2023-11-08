@@ -11,7 +11,7 @@ using UnityEngine.UI;
 using YamlDotNet.Core.Tokens;
 using static Almanac.Almanac.AchievementManager;
 using static Almanac.Almanac.AchievementManager.AchievementType;
-using static Almanac.Almanac.CheckCheats.PlayerWatcher;
+using static Almanac.Almanac.Commands;
 using static Almanac.Almanac.CreatureDataCollector;
 using static Almanac.Almanac.ItemDataCollector;
 using static Almanac.Almanac.PieceDataCollector;
@@ -98,16 +98,6 @@ public static class AchievementsUI
         "defeated_seekerbrute",
         "defeated_queen"
     };
-    
-    private static readonly List<ItemDrop> allFish = GetFishes();
-    private static readonly List<ItemDrop> allMaterials = GetMaterials();
-    private static readonly List<ItemDrop> allConsumables = GetConsumables();
-    private static readonly List<ItemDrop> allWeapons = GetWeapons();
-    private static readonly List<ItemDrop> allProjectiles = GetAmmunition();
-    private static readonly List<ItemDrop> allBows = allWeapons.FindAll(weapon => weapon.name.Contains("Bow") || weapon.name.Contains("Crossbow"));
-    private static readonly List<ItemDrop> allArrows = allProjectiles.FindAll(projectile => projectile.name.Contains("Arrow"));
-    private static readonly List<ItemDrop> allValuables = allMaterials.FindAll(item => item.m_itemData.m_shared.m_value > 0);
-    private static readonly List<ItemDrop> allTrophies = GetTrophies();
     public class Achievement
     {
         public AchievementType type;
@@ -173,23 +163,23 @@ public static class AchievementsUI
             // Conversion map to get total values to set
             switch (achievement.m_type)
             {
-                case AchievementType.Fish: m_goal = allFish.Count; break;
-                case Materials: m_goal = allMaterials.Count; break;
-                case Consumables: m_goal = allConsumables.Count; break;
-                case Weapons: m_goal = allWeapons.Count; break;
-                case Swords: m_goal = allWeapons.FindAll(item => item.name.Contains("Sword")).Count; break;
-                case Axes: m_goal = allWeapons.FindAll(item => item.name.Contains("Axe")).Count; break;
-                case PoleArms: m_goal = allWeapons.FindAll(item => item.name.Contains("Atgeir")).Count; break;
-                case Spears: m_goal = allWeapons.FindAll(item => item.name.Contains("Spear")).Count; break;
-                case Maces: m_goal = allWeapons.FindAll(item => item.name.Contains("Mace")).Count; break;
-                case Knives: m_goal = allWeapons.FindAll(item => item.name.Contains("Knife")).Count; break;
-                case Shields: m_goal = allWeapons.FindAll(item => item.name.Contains("Shield")).Count; break;
-                case Staves: m_goal = allWeapons.FindAll(item => item.name.Contains("Staff")).Count; break;
-                case Arrows: m_goal = allArrows.Count; break;
-                case Bows: m_goal = allBows.Count; break;
-                case Valuables: m_goal = allValuables.Count; break;
-                case Potions: m_goal = allMaterials.FindAll(item => item.name.Contains("Base")).Count; break;
-                case Trophies: m_goal = allTrophies.Count; break;
+                case AchievementType.Fish: m_goal = GetFishes().Count; break;
+                case Materials: m_goal = GetMaterials().Count; break;
+                case Consumables: m_goal = GetConsumables().Count; break;
+                case Weapons: m_goal = GetWeapons().Count; break;
+                case Swords: m_goal = GetWeapons().FindAll(item => item.name.Contains("Sword")).Count; break;
+                case Axes: m_goal = GetWeapons().FindAll(item => item.name.Contains("Axe")).Count; break;
+                case PoleArms: m_goal = GetWeapons().FindAll(item => item.name.Contains("Atgeir")).Count; break;
+                case Spears: m_goal = GetWeapons().FindAll(item => item.name.Contains("Spear")).Count; break;
+                case Maces: m_goal = GetWeapons().FindAll(item => item.name.Contains("Mace")).Count; break;
+                case Knives: m_goal = GetWeapons().FindAll(item => item.name.Contains("Knife")).Count; break;
+                case Shields: m_goal = GetWeapons().FindAll(item => item.name.Contains("Shield")).Count; break;
+                case Staves: m_goal = GetWeapons().FindAll(item => item.name.Contains("Staff")).Count; break;
+                case Arrows: m_goal = GetAmmunition().FindAll(projectile => projectile.name.Contains("Arrow")).Count; break;
+                case Bows: m_goal = GetWeapons().FindAll(weapon => weapon.name.Contains("Bow") || weapon.name.Contains("Crossbow")).Count; break;
+                case Valuables: m_goal = GetMaterials().FindAll(item => item.m_itemData.m_shared.m_value > 0).Count; break;
+                case Potions: m_goal = GetMaterials().FindAll(item => item.name.Contains("Base")).Count; break;
+                case Trophies: m_goal = GetTrophies().Count; break;
                 case Creatures: m_goal = tempCreatureData.Count; break;
                 case MeadowCreatures: m_goal = meadowCreatures.Count; break;
                 case BlackForestCreatures: m_goal = blackForestCreatures.Count; break;
@@ -224,6 +214,7 @@ public static class AchievementsUI
             if (!container) continue;
             Transform icon = container.Find("iconObj");
             Transform hoverText = container.Find("hoverTextElement");
+            Transform glowContainer = container.Find($"glow ({i})");
             
             icon.TryGetComponent(out Image containerImage);
             hoverText.TryGetComponent(out TextMeshProUGUI textMesh);
@@ -234,9 +225,26 @@ public static class AchievementsUI
 
             string localizedAchievementName = Localization.instance.Localize(achievement.name);
 
-            containerImage.color = noCost ? Color.white : achievement.isCompleted ? Color.white : Color.black;
-            textMesh.text = noCost ? localizedAchievementName : achievement.isCompleted ? localizedAchievementName : "???";
+            containerImage.color = Player.m_localPlayer.NoCostCheat() ? Color.white : achievement.isCompleted ? Color.white : Color.black;
+            textMesh.text = Player.m_localPlayer.NoCostCheat() ? localizedAchievementName : achievement.isCompleted ? localizedAchievementName : "???";
+
+            glowContainer.gameObject.SetActive(CustomStatusEffects.activeAlmanacEffects.Find(x => x.name == achievement.power));
         }
+    }
+
+    public static void SetAchievementGlow()
+    {
+        Transform? panel = Patches.OnOpenTrophiesPatch.trophyFrame.Find("achievementsPanel");
+
+        for (int i = 0; i < registeredAchievements.Count; ++i)
+        {
+            Transform container = panel.Find($"achievementsContainer ({i})");
+            Transform glowContainer = container.Find($"glow ({i})");
+            Achievement achievement = registeredAchievements[i];
+
+            glowContainer.gameObject.SetActive(CustomStatusEffects.activeAlmanacEffects.Find(x => x.name == achievement.power));
+        }
+
     }
 
     private static Dictionary<string,int> CombineDict(Dictionary<string, int> dict1, Dictionary<string, int> dict2)
@@ -275,23 +283,23 @@ public static class AchievementsUI
 
         Dictionary<AchievementType, int> updateAchievementMap = new()
         {
-            { AchievementType.Fish , allFish.Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
-            { Materials , allMaterials.Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
-            { Consumables , allConsumables.Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
-            { Weapons , allWeapons.Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
-            { Swords , allWeapons.FindAll(item => item.name.Contains("Sword")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
-            { Axes , allWeapons.FindAll(item => item.name.Contains("Axe")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
-            { PoleArms , allWeapons.FindAll(item => item.name.Contains("Atgeir")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
-            { Spears , allWeapons.FindAll(item => item.name.Contains("Spear")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
-            { Maces , allWeapons.FindAll(item => item.name.Contains("Mace")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
-            { Knives , allWeapons.FindAll(item => item.name.Contains("Knife")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
-            { Shields , allWeapons.FindAll(item => item.name.Contains("Shield")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
-            { Staves , allWeapons.FindAll(item => item.name.Contains("Staff")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
-            { Arrows , allArrows.Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
-            { Bows , allBows.Count(item => player.IsKnownMaterial(item.m_itemData.m_shared.m_name)) },
-            { Valuables , allValuables.Count(item => player.IsKnownMaterial(item.m_itemData.m_shared.m_name)) },
-            { Potions , allMaterials.FindAll(item => item.name.Contains("Mead")).Count(item => player.IsKnownMaterial(item.m_itemData.m_shared.m_name)) },
-            { Trophies , allTrophies.Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
+            { AchievementType.Fish , GetFishes().Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
+            { Materials , GetMaterials().Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
+            { Consumables , GetConsumables().Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
+            { Weapons , GetWeapons().Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
+            { Swords , GetWeapons().FindAll(item => item.name.Contains("Sword")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
+            { Axes , GetWeapons().FindAll(item => item.name.Contains("Axe")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
+            { PoleArms , GetWeapons().FindAll(item => item.name.Contains("Atgeir")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
+            { Spears , GetWeapons().FindAll(item => item.name.Contains("Spear")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
+            { Maces , GetWeapons().FindAll(item => item.name.Contains("Mace")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
+            { Knives , GetWeapons().FindAll(item => item.name.Contains("Knife")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
+            { Shields , GetWeapons().FindAll(item => item.name.Contains("Shield")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
+            { Staves , GetWeapons().FindAll(item => item.name.Contains("Staff")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name))},
+            { Arrows , GetAmmunition().FindAll(projectile => projectile.name.Contains("Arrow")).Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
+            { Bows , GetWeapons().FindAll(weapon => weapon.name.Contains("Bow") || weapon.name.Contains("Crossbow")).Count(item => player.IsKnownMaterial(item.m_itemData.m_shared.m_name)) },
+            { Valuables , GetMaterials().FindAll(item => item.m_itemData.m_shared.m_value > 0).Count(item => player.IsKnownMaterial(item.m_itemData.m_shared.m_name)) },
+            { Potions , GetMaterials().FindAll(item => item.name.Contains("Mead")).Count(item => player.IsKnownMaterial(item.m_itemData.m_shared.m_name)) },
+            { Trophies , GetTrophies().Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
             { MeadowCreatures , GetBiomeKills(meadowCreatures, totalMonstersKilled) },
             { BlackForestCreatures , GetBiomeKills(blackForestCreatures, totalMonstersKilled) },
             { SwampCreatures , GetBiomeKills(swampCreatures, totalMonstersKilled) },

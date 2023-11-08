@@ -14,7 +14,6 @@ public static class TrackPlayerStats
     public static float GetPlayerStat(PlayerStatType type)
     {
         PlayerStats.TryGetValue(type, out float value);
-        // Debug.LogWarning($"{type.ToString()} : {value}");
         return value;
     }
 }

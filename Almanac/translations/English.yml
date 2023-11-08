@@ -394,6 +394,7 @@ almanac_stamina_default: "Stamina returned to normal"
 
 almanac_increase_health_by: "Increase base health by"
 almanac_increase_stamina_by: "Increase base stamina by"
+almanac_increase_eitr_by: "Increase base eitr by"
 almanac_increase_projectile_damage_by: "Increase projectile damage by"
 almanac_increase_fire_damage_by: "Increase fire damage by"
 almanac_increase_frost_damage_by: "Increase frost damage by"
@@ -602,7 +603,7 @@ almanac_trophy_hunter_lore: ""
 
 # Leaderboard 
 almanac_leaderboard: "Leaderboard"
-almanac_leaderboard_labels: "     Player Name                 Achievements"
+almanac_leaderboard_labels: "     Player Name                       Achievements"
 
 # Jewelcrafting
 almanac_jewelcrafting_button: "Jewels"

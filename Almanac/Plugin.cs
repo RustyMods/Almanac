@@ -40,12 +40,12 @@ namespace Almanac
             BepInEx.Logging.Logger.CreateLogSource(ModName);
 
         public static readonly ConfigSync ConfigSync = new(ModGUID)
-            { 
-                DisplayName = ModName, 
-                ModRequired = false,
-                CurrentVersion = ModVersion
-            };
-        
+        { 
+            DisplayName = ModName, 
+            ModRequired = false,
+            MinimumRequiredVersion = "0.0.0"
+            // CurrentVersion = ModVersion
+        };
         public enum Toggle
         {
             On = 1,
@@ -106,9 +106,6 @@ namespace Almanac
             _KnowledgeLock = config("3 - Utilities", "Knowledge Wall", Toggle.On,
                 "If on, data is locked behind knowledge of item", true);
 
-            _AchievementPowers = config("4 - Achievements", "Powers Enabled", Toggle.On,
-                "If on, achievements reward players with powers");
-            
             List<string> IgnoredList = new()
             {
                 "StaminaUpgrade_Greydwarf",
@@ -137,11 +134,24 @@ namespace Almanac
 
             _IgnoredPrefabs = config("3 - Utilities", "Ignored Prefabs", ignoredPrefabs,
                 "List of prefabs ignored by almanac upon launch");
+            
+            _AchievementPowers = config("4 - Achievements", "Powers Enabled", Toggle.On,
+                "If on, achievements reward players with powers");
+
+            _VisualEffectThreshold = config("4 - Achievements", "Visual Effects Threshold", 15f,
+                "Determines the value threshold for the visual effects to be activated");
+
+            _VisualEffects = config("4 - Achievements", "Visual Effects Enabled", Toggle.On,
+                "If on, when player passes threshold, visual effects are applied to character", false);
+
+            _AchievementPanelSize = config("4 - Achievements", "Panel Size", new Vector2(1f, 1f),
+                "Set the size of the achievement panel", false);
+
+            _LeaderboardRefreshRate = config("5 - Leaderboard", "Refresh rate", 5f,
+                "Leaderboard refresh rate in minutes", false);
 
             WorkingAsType = SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null
                 ? WorkingAs.Server : WorkingAs.Client;
-            
-            AchievementManager.InitAchievements();
             
             Localizer.Load();
             
@@ -150,6 +160,7 @@ namespace Almanac
             SetupWatcher();
             
             BlackList.InitBlackList();
+            FileSystem.InitializeFileSystemWatch();
         }
 
         private void OnDestroy()
@@ -215,6 +226,10 @@ namespace Almanac
         public static ConfigEntry<string> _IgnoredPrefabs = null!;
 
         public static ConfigEntry<Toggle> _AchievementPowers = null!;
+        public static ConfigEntry<float> _VisualEffectThreshold = null!;
+        public static ConfigEntry<Toggle> _VisualEffects = null!;
+        public static ConfigEntry<Vector2> _AchievementPanelSize = null!;
+        public static ConfigEntry<float> _LeaderboardRefreshRate = null!;
 
         private ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description,
             bool synchronizedSetting = true)
@@ -239,26 +254,26 @@ namespace Almanac
             return config(group, name, value, new ConfigDescription(description), synchronizedSetting);
         }
 
-        private class ConfigurationManagerAttributes
-        {
-            [UsedImplicitly] public int? Order;
-            [UsedImplicitly] public bool? Browsable;
-            [UsedImplicitly] public string? Category;
-            [UsedImplicitly] public Action<ConfigEntryBase>? CustomDrawer;
-        }
+        // private class ConfigurationManagerAttributes
+        // {
+        //     [UsedImplicitly] public int? Order;
+        //     [UsedImplicitly] public bool? Browsable;
+        //     [UsedImplicitly] public string? Category;
+        //     [UsedImplicitly] public Action<ConfigEntryBase>? CustomDrawer;
+        // }
 
-        class AcceptableShortcuts : AcceptableValueBase
-        {
-            public AcceptableShortcuts() : base(typeof(KeyboardShortcut))
-            {
-            }
-
-            public override object Clamp(object value) => value;
-            public override bool IsValid(object value) => true;
-
-            public override string ToDescriptionString() =>
-                "# Acceptable values: " + string.Join(", ", KeyboardShortcut.AllKeyCodes);
-        }
+        // class AcceptableShortcuts : AcceptableValueBase
+        // {
+        //     public AcceptableShortcuts() : base(typeof(KeyboardShortcut))
+        //     {
+        //     }
+        //
+        //     public override object Clamp(object value) => value;
+        //     public override bool IsValid(object value) => true;
+        //
+        //     public override string ToDescriptionString() =>
+        //         "# Acceptable values: " + string.Join(", ", KeyboardShortcut.AllKeyCodes);
+        // }
 
         #endregion
     }

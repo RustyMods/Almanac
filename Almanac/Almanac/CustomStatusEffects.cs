@@ -13,7 +13,7 @@ public static class CustomStatusEffects
 {
     public static readonly List<StatusEffect> activeAlmanacEffects = new();
 
-    private static readonly float visEquipThreshold = 15f;
+    private static readonly float visEquipThreshold = AlmanacPlugin._VisualEffectThreshold.Value;
     public static void AddAlmanacEffect(StatusEffect statusEffect) => activeAlmanacEffects.Add(statusEffect);
     public static void RemoveAlmanacEffect(StatusEffect statusEffect) => activeAlmanacEffects.Remove(statusEffect);
 
@@ -22,15 +22,35 @@ public static class CustomStatusEffects
     private static GameObject frost = null!;
     private static GameObject drip = null!;
     private static GameObject spirit = null!;
+    private static GameObject eyes = null!;
 
     [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.Awake))]
     static class ZNetSceneAwakePatch
     {
         private static void Postfix(ZNetScene __instance)
         {
-            GameObject TrophySurtling = __instance.GetPrefab("TrophySurtling");
-            Transform surtlingEmbers = TrophySurtling.transform.Find("attach").Find("fx_Torch_Carried").Find("Embers");
-            embers = surtlingEmbers.gameObject;
+            // GameObject TrophySurtling = __instance.GetPrefab("TrophySurtling");
+            // Transform surtlingEmbers = TrophySurtling.transform.Find("attach").Find("fx_Torch_Carried").Find("Embers");
+
+            GameObject TrophySkeletonHildr = __instance.GetPrefab("TrophySkeletonHildir");
+            Transform skeletonFire = TrophySkeletonHildr.transform.Find("attach").Find("model");
+            Transform fxTorchCarried = skeletonFire.Find("fx_Torch_Carried");
+            GameObject leftEye = skeletonFire.Find("eye_l (1)").gameObject;
+            GameObject rightEye = skeletonFire.Find("eye_r (1)").gameObject;
+            
+            embers = fxTorchCarried.gameObject;
+
+            GameObject eyesContainer = new GameObject("eyes container");
+            GameObject clonedLeft = Object.Instantiate(leftEye, eyesContainer.transform, false);
+            GameObject clonedRight = Object.Instantiate(rightEye, eyesContainer.transform, false);
+
+            Transform leftTransform = clonedLeft.transform;
+            Transform rightTransform = clonedRight.transform;
+
+            leftTransform.localPosition = new Vector3(0.0345f, -0.007f, 0.1369f);
+            rightTransform.localPosition = new Vector3(-0.0361f, -0.0063f, 0.1371f);
+
+            eyes = eyesContainer;
 
             GameObject MaceSilver = __instance.GetPrefab("MaceSilver");
             Transform frostParticles = MaceSilver.transform.Find("attach").Find("effects").Find("vfx_BloodHit 1");
@@ -52,7 +72,7 @@ public static class CustomStatusEffects
     }
     
     [HarmonyPatch(typeof(Player), nameof(Player.Awake))]
-    static class PlayerAwakePatch
+    static class CreateVisualEffectsContainer
     {
         private static void Postfix(Player __instance)
         {
@@ -67,39 +87,35 @@ public static class CustomStatusEffects
             containerLocale.localRotation = Quaternion.identity;
             
             effectsContainer.SetActive(true);
-            
         }
-        
     }
 
-    // [HarmonyPatch(typeof(Player), nameof(Player.StartGuardianPower))]
-    // static class StartGuardianPowerPatch
-    // {
-    //     private static bool Prefix(Player __instance)
-    //     {
-    //         if (__instance.m_guardianSE == null) return false;
-    //         
-    //         string name = __instance.m_guardianSE.name;
-    //         if (almanacStatusEffects.Exists(x => x.name == name))
-    //         {
-    //             if (__instance.m_guardianPowerCooldown > 0.0)
-    //             {
-    //                 __instance.Message(MessageHud.MessageType.Center, "$hud_powernotready");
-    //                 return false;
-    //             }
-    //             
-    //             // Change the guardian animation
-    //             // Animation working but it disables effect of guardian power
-    //             __instance.m_zanim.SetTrigger(__instance.m_guardianSE.m_activationAnimation);
-    //
-    //             return false;
-    //         }
-    //
-    //         return true;
-    //     }
-    // }
+    [HarmonyPatch(typeof(Player), nameof(Player.GetTotalFoodValue))]
+    static class GetTotalFoodValuePatch
+    {
+        private static void Postfix(Player __instance, ref float eitr)
+        {
+            if (!__instance) return;
 
+            if (__instance.GetHoverName() != Player.m_localPlayer.GetHoverName()) return;
+            
+            Dictionary<Modifier, float> totalValues = new()
+            {
+                { Modifier.BaseEitr, 0f }
+            };
 
+            foreach (StatusEffect? effect in activeAlmanacEffects)
+            {
+                BaseEffectData? data = effectsData.Find(x => x.effectName == effect.name);
+                switch (data.Modifier)
+                {
+                    case Modifier.BaseEitr: totalValues[Modifier.BaseEitr] += data.m_newValue; break;
+                }
+            }
+            
+            eitr += totalValues[Modifier.BaseEitr];
+        }
+    }    
     [HarmonyPatch(typeof(Character), nameof(Character.RPC_Heal))]
     static class CharacterHealPatch
     {
@@ -114,6 +130,40 @@ public static class CustomStatusEffects
         }
     }
 
+    [HarmonyPatch(typeof(MineRock), nameof(MineRock.RPC_Hit))]
+    static class MineRockHitPatch
+    {
+        private static void Prefix(MineRock __instance, HitData hit)
+        {
+            if (!__instance) return;
+            if (!Player.m_localPlayer) return;
+            if (hit.m_attacker.IsNone()) return;
+            if (hit.m_hitType is not HitData.HitType.PlayerHit) return;
+
+            Player localPlayer = Player.m_localPlayer;
+
+            List<StatusEffect> activeEffects = localPlayer.GetSEMan().GetStatusEffects();
+
+            GameObject attacker = ZNetScene.instance.FindInstance(hit.m_attacker);
+            attacker.TryGetComponent(out Player player);
+            if (!player) return;
+            
+            if (player.GetHoverName() != localPlayer.GetHoverName()) return;
+
+            foreach (StatusEffect effect in activeEffects)
+            {
+                if (!effectsData.Exists(x => x.effectName == effect.name)) continue;
+                BaseEffectData data = effectsData.Find(x => x.effectName == effect.name);
+                switch (data.Modifier)
+                {
+                    case Modifier.PickaxeDMG:
+                        hit.m_damage.m_pickaxe += data.m_newValue;
+                        break;
+                }
+            }
+        }
+    }
+
     [HarmonyPatch(typeof(TreeBase), nameof(TreeBase.RPC_Damage))]
     static class AddExtraDamageTreePatch
     {
@@ -121,12 +171,12 @@ public static class CustomStatusEffects
         {
             if (!__instance) return;
             if (!Player.m_localPlayer) return;
+            if (hit.m_attacker.IsNone()) return;
+            if (hit.m_hitType is not HitData.HitType.PlayerHit) return;
 
             Player localPlayer = Player.m_localPlayer;
             List<StatusEffect> activeEffects = localPlayer.m_seman.GetStatusEffects();
 
-            if (hit.m_attacker.IsNone()) return;
-            if (hit.m_hitType is not HitData.HitType.PlayerHit) return;
             
             GameObject attacker = ZNetScene.instance.FindInstance(hit.m_attacker);
             attacker.TryGetComponent(out Player player);
@@ -255,80 +305,121 @@ public static class CustomStatusEffects
             Dictionary<Modifier, float> totalValues = new()
             {
                 { Modifier.BaseHP , 25f },
-                { Modifier.BaseStamina , 50f}
+                { Modifier.BaseStamina  , 50f }
             };
             
             // Re-Calculate the bonuses
             foreach (StatusEffect effect in statusEffects)
             {
                 if (!effectsData.Exists(x => x.effectName == effect.name)) continue;
-                var data = effectsData.Find(x => x.effectName == effect.name);
+                BaseEffectData? data = effectsData.Find(x => x.effectName == effect.name);
                 
                 if (!totalValues.ContainsKey(data.Modifier)) totalValues.Add(data.Modifier, data.m_newValue);
                 else totalValues[data.Modifier] += data.m_newValue;
             }
             
             // Apply the total values
-            ApplyCustomEffects(totalValues, player, effectsContainer);
+            player.m_baseHP = totalValues[Modifier.BaseHP];
+            player.m_baseStamina = totalValues[Modifier.BaseStamina];
+            
+            if (player.m_baseHP < 0f) player.m_baseHP = 1.0f;
+            if (player.m_baseStamina < 0f) player.m_baseStamina = 0.0f;
+            
+            ApplyVisualEffects(totalValues, effectsContainer);
         }
     }
 
-    private static void ApplyCustomEffects(Dictionary<Modifier,float> totalValues, Player player, Transform effectsContainer)
+    private static void ApplyVisualEffects(Dictionary<Modifier,float> totalValues, Transform effectsContainer)
     {
-        foreach (var kvp in totalValues)
+        foreach (KeyValuePair<Modifier, float> kvp in totalValues)
         {
-            switch (kvp.Key)
+            if (kvp.Key is Modifier.BaseHP or Modifier.BaseStamina or Modifier.BaseEitr) continue;
+            
+            if (kvp.Value >= visEquipThreshold && AlmanacPlugin._VisualEffects.Value is AlmanacPlugin.Toggle.On)
             {
-                case Modifier.BaseHP:
-                    player.m_baseHP = kvp.Value;
-                    break;
-                case Modifier.BaseStamina :
-                    player.m_baseStamina = kvp.Value;
-                    break;
-            }
-
-            if (kvp.Value >= visEquipThreshold)
-            {
-                if (kvp.Key is Modifier.BaseHP or Modifier.BaseStamina) continue;
                 switch (kvp.Key)
                 {
                     case Modifier.FireDMG:
-                    GameObject EmberEffect = Object.Instantiate(embers, effectsContainer, false);
-                    Transform emberLocale = EmberEffect.transform;
-                    emberLocale.localPosition = new Vector3(0f, 0f, 0.09f);
-                    effectsContainer.gameObject.SetActive(true);
-                    EmberEffect.SetActive(true);
-                    break;
-                case Modifier.FrostDMG:
-                    GameObject SnowEffect = Object.Instantiate(frost, effectsContainer, false);
-                    Transform snowLocale = SnowEffect.transform;
-                    snowLocale.localPosition = Vector3.zero;
-                    effectsContainer.gameObject.SetActive(true);
-                    SnowEffect.SetActive(true);
-                    break;
-                case Modifier.LightningDMG:
-                    GameObject SparkEffect = Object.Instantiate(sparks, effectsContainer, false);
-                    Transform sparkLocale = SparkEffect.transform;
-                    sparkLocale.localPosition = new Vector3(0f, -0.3f, 0f);
-                    effectsContainer.gameObject.SetActive(true);
-                    SparkEffect.SetActive(true);
-                    break;
-                case Modifier.PoisonDMG:
-                    GameObject DripEffect = Object.Instantiate(drip, effectsContainer, false);
-                    Transform dripLocale = DripEffect.transform;
-                    dripLocale.localPosition = Vector3.zero;
-                    effectsContainer.gameObject.SetActive(true);
-                    DripEffect.SetActive(true);
-                    break;
-                case Modifier.SpiritDMG:
-                    GameObject SpiritEffect = Object.Instantiate(spirit, effectsContainer, false);
-                    Transform spiritLocale = SpiritEffect.transform;
-                    spiritLocale.localPosition = new Vector3(0f, 0f, 0.11f);
-                    Transform sphere = SpiritEffect.transform.Find("Sphere");
-                    sphere.gameObject.SetActive(false);
-                    effectsContainer.gameObject.SetActive(true);
-                    SpiritEffect.SetActive(true);
-                    break;
+                        GameObject EmberEffect1 = Object.Instantiate(embers, effectsContainer, false);
+
+                        for (int i = 0; i < EmberEffect1.transform.childCount; ++i)
+                        {
+                            Transform child1 = EmberEffect1.transform.GetChild(i);
+                            switch (child1.name)
+                            {
+                                case "flare" or "Local Flames":
+                                    child1.gameObject.SetActive(false);
+                                    break;
+                            }
+                        }
+                        Transform emberLocale1 = EmberEffect1.transform;
+                        emberLocale1.localPosition = new Vector3(0f, 0f, 0.1f);
+
+                        effectsContainer.gameObject.SetActive(true);
+                        EmberEffect1.SetActive(true);
+                        
+                        break;
+
+                    case Modifier.LightningDMG:
+                        GameObject SparkEffect = Object.Instantiate(sparks, effectsContainer, false);
+                        Transform sparkLocale = SparkEffect.transform;
+                        sparkLocale.localPosition = new Vector3(0f, -0.3f, 0f);
+                        effectsContainer.gameObject.SetActive(true);
+                        SparkEffect.SetActive(true);
+                        break;
+                    
+                    case Modifier.PoisonDMG:
+                        GameObject DripEffect = Object.Instantiate(drip, effectsContainer, false);
+                        Transform dripLocale = DripEffect.transform;
+                        dripLocale.localPosition = Vector3.zero;
+                        effectsContainer.gameObject.SetActive(true);
+                        DripEffect.SetActive(true);
+                        break;
+                    
+                    case Modifier.SpiritDMG or Modifier.FrostDMG:
+                        GameObject SpiritEffect = Object.Instantiate(spirit, effectsContainer, false);
+                        Color effectColor = new Color();
+
+                        switch (kvp.Key)
+                        {
+                            case Modifier.FrostDMG:
+                                effectColor = new Color(0.5f, 0.5f, 1f, 1f);
+                                break;
+                            case Modifier.SpiritDMG:
+                                effectColor = new Color(1f, 1f, 1f, 1f);
+                                break;
+                        }
+                        for (int i = 0; i < SpiritEffect.transform.childCount; ++i)
+                        {
+                            Transform child = SpiritEffect.transform.GetChild(i);
+                            child.TryGetComponent(out ParticleSystem PS);
+                            child.TryGetComponent(out Light light);
+                            switch (child.name)
+                            {
+                                case "Point light":
+                                    child.gameObject.SetActive(false);
+                                    if (light) light.color = effectColor;
+                                    break;
+                                case "smoke" or "smoke (1)":
+                                    if (!PS) break;
+                                    ParticleSystem.MainModule mainMod = PS.main;
+                                    mainMod.startColor = effectColor;
+                                    break;
+                                case "Sphere" or "flare":
+                                    child.gameObject.SetActive(false);
+                                    break;
+                            }
+                        }
+
+                        Transform spiritLocale = SpiritEffect.transform;
+                        spiritLocale.localPosition = new Vector3(0f, 0f, 0.11f);
+                        
+                        effectsContainer.gameObject.SetActive(true);
+                        SpiritEffect.SetActive(true);
+                        break;
+                    
+                    default:
+                        break;
                 }
             }
         }
@@ -344,7 +435,7 @@ public static class CustomStatusEffects
             GameObject playerObj = player.gameObject;
             Transform effectsContainer = playerObj.transform.Find("almanac_effects");
             // Destroy any instances of active almanac effects
-            for (int i = 0; i < effectsContainer.GetChildCount(); ++i)
+            for (int i = 0; i < effectsContainer.childCount; ++i)
             {
                 Transform effect = effectsContainer.GetChild(i);
                 Object.Destroy(effect.gameObject);
@@ -366,12 +457,12 @@ public static class CustomStatusEffects
             foreach (StatusEffect effect in statusEffects)
             {
                 if (!effectsData.Exists(x => x.effectName == effect.name)) continue;
-                var data = effectsData.Find(x => x.effectName == effect.name);
+                BaseEffectData? data = effectsData.Find(x => x.effectName == effect.name);
                 if (!totalValues.ContainsKey(data.Modifier)) totalValues.Add(data.Modifier, data.m_newValue);
                 else totalValues[data.Modifier] += data.m_newValue;
             }
             // Set the values
-            ApplyCustomEffects(totalValues, player, effectsContainer);
+            ApplyVisualEffects(totalValues, effectsContainer);
         }
     }
     
@@ -389,7 +480,7 @@ public static class CustomStatusEffects
             Transform effectsContainer = playerObj.transform.Find("almanac_effects");
             
             // Destroy instances of active almanac visual effects on player
-            for (int i = 0; i < effectsContainer.GetChildCount(); ++i)
+            for (int i = 0; i < effectsContainer.childCount; ++i)
             {
                 Transform effect = effectsContainer.GetChild(i);
                 Object.Destroy(effect.gameObject);

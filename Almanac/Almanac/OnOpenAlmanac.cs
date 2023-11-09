@@ -286,6 +286,9 @@ public static class Patches
             SetImageElement(achievementIconBg.gameObject, "icon", data.sprite, Player.m_localPlayer.NoCostCheat() ? Color.white : data.isCompleted ? Color.white : Color.black);
             SetTextElement(parentElement.gameObject, "achievementProgress", $"<color=orange>{data.value}</color> / {data.total} (<color=orange>{progress}</color>%)");
             SetTextElement(parentElement.gameObject, "achievementLore", Player.m_localPlayer.NoCostCheat() ? data.lore : data.isCompleted ? data.lore : "");
+            
+            // Turn the glow on or off
+            SetAchievementGlow();
         }
 
         private static void SetAlmanacPowers(AchievementsUI.Achievement data)
@@ -428,6 +431,8 @@ public static class Patches
                     RemoveAlmanacEffect(power);
                     player.m_seman.RemoveStatusEffect(power);
                     SetPassivePowersUI();
+                    // On click, glow is removed from achievement panel
+                    SetAchievementGlow();
                 });
 
                 string desc = $"<color=orange>{power.m_name}</color>\n{power.m_tooltip}";
@@ -1076,9 +1081,9 @@ public static class Patches
             if (wearNTear)
             {
                 float health = wearNTear.m_health;
-                var materialType = wearNTear.m_materialType;
-                var modifiers = wearNTear.m_damages;
-                var modifierConversionMap = new Dictionary<string, HitData.DamageModifier>()
+                WearNTear.MaterialType materialType = wearNTear.m_materialType;
+                HitData.DamageModifiers modifiers = wearNTear.m_damages;
+                Dictionary<string, HitData.DamageModifier> modifierConversionMap = new Dictionary<string, HitData.DamageModifier>()
                 {
                     { "blunt", modifiers.m_blunt},
                     { "slash", modifiers.m_slash},
@@ -1105,8 +1110,8 @@ public static class Patches
             if (destructible)
             {
                 float health = destructible.m_health;
-                var modifiers = destructible.m_damages;
-                var modifierConversionMap = new Dictionary<string, HitData.DamageModifier>()
+                HitData.DamageModifiers modifiers = destructible.m_damages;
+                Dictionary<string, HitData.DamageModifier> modifierConversionMap = new Dictionary<string, HitData.DamageModifier>()
                 {
                     { "blunt", modifiers.m_blunt},
                     { "slash", modifiers.m_slash},
@@ -1321,26 +1326,30 @@ public static class Patches
                     SetTextElement(Element, fireplaceConversion.Key, fireplaceConversion.Value);
                 }
 
-                for (int i = 0; i < fireplace.m_fireworkItemList.Length; ++i)
+                Fireplace.FireworkItem[]? fireworkItemList = fireplace.m_fireworkItemList;
+                if (fireworkItemList != null)
                 {
-                    if (i >= 11) continue;
-                    Fireplace.FireworkItem firework = fireplace.m_fireworkItemList[i];
-                    string fireworkName = firework.m_fireworkItem.m_itemData.m_shared.m_name;
-                    Sprite? fireworkIcon = firework.m_fireworkItem.m_itemData.GetIcon();
-                    int fireworkCount = firework.m_fireworkItemCount;
-                    
-                    string elementName = $"fireplaceFireworks ({i})";
-                    bool isKnown = Player.m_localPlayer.IsMaterialKnown(fireworkName);
-                    if (Player.m_localPlayer.NoCostCheat()) isKnown = true;
-                    GameObject ResourceBackground = Element.transform.Find($"ImageElement ({elementName})").gameObject;
-                    string localizedName = Localization.instance.Localize($"{fireworkName}");
-                    SetActiveElement(Element, "ImageElement", elementName, true);
-                    SetHoverableText(Element, elementName, isKnown 
-                        ? localizedName
-                        : _KnowledgeLock.Value == On ? "???" : localizedName);
-                    SetImageElement(ResourceBackground, "item", fireworkIcon, isKnown ? Color.white : _KnowledgeLock.Value == On ? Color.black : Color.white);
-                    SetTextElement(ResourceBackground, $"itemCount", $"{fireworkCount}");
-                    
+                    for (int i = 0; i < fireworkItemList.Length; ++i)
+                    {
+                        if (i >= 11) continue;
+                        Fireplace.FireworkItem firework = fireplace.m_fireworkItemList[i];
+                        string fireworkName = firework.m_fireworkItem.m_itemData.m_shared.m_name;
+                        Sprite? fireworkIcon = firework.m_fireworkItem.m_itemData.GetIcon();
+                        int fireworkCount = firework.m_fireworkItemCount;
+                        
+                        string elementName = $"fireplaceFireworks ({i})";
+                        bool isKnown = Player.m_localPlayer.IsMaterialKnown(fireworkName);
+                        if (Player.m_localPlayer.NoCostCheat()) isKnown = true;
+                        GameObject ResourceBackground = Element.transform.Find($"ImageElement ({elementName})").gameObject;
+                        string localizedName = Localization.instance.Localize($"{fireworkName}");
+                        SetActiveElement(Element, "ImageElement", elementName, true);
+                        SetHoverableText(Element, elementName, isKnown 
+                            ? localizedName
+                            : _KnowledgeLock.Value == On ? "???" : localizedName);
+                        SetImageElement(ResourceBackground, "item", fireworkIcon, isKnown ? Color.white : _KnowledgeLock.Value == On ? Color.black : Color.white);
+                        SetTextElement(ResourceBackground, $"itemCount", $"{fireworkCount}");
+                        
+                    }
                 }
             }
 
@@ -1563,8 +1572,6 @@ public static class Patches
                     SetActiveElement(Element, "TextElement", extensionLabel, true);
                 }
             }
-            
-            
         }
         public static void SetItemsData(GameObject Element, ItemDrop data)
         {

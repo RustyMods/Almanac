@@ -939,52 +939,18 @@ public static class Almanac
 
         private static void SetBlackList(Transform element, string prefab, string id)
         {
+            GameObject obj = element.gameObject;
             switch (id)
             {
                 case "CreatureContainer": 
-                    element.gameObject.SetActive(!BlackList.CreatureBlackList.Value.Contains(prefab));
+                    obj.SetActive(!BlackList.CreatureBlackList.Value.Contains(prefab));
                     break;
-                case "materialContainer": 
-                    element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
+                case "materialContainer" or "consummableContainer" or "weaponContainer" or "gearContainer" or "ammoContainer" or "fishContainer": 
+                    obj.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
                     break;
-                case "consummableContainer": 
-                    element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
-                    break;
-                case "weaponContainer": 
-                    element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
-                    break;
-                case "gearContainer": 
-                    element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
-                    break;
-                case "ammoContainer": 
-                    element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
-                    break;
-                case "fishContainer": 
-                    element.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefab));
-                    break;
-                case "miscPiecesContainer":
-                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
-                    break;
-                case "craftingPiecesContainer":
-                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
-                    break;
-                case "buildPiecesContainer":
-                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
-                    break;
-                case "furniturePiecesContainer":
-                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
-                    break;
-                case "piecesContainer":
-                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
-                    break;
-                case "plantPiecesContainer":
-                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
-                    break;
-                case "otherContainer":
-                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
-                    break;
-                case "modPiecesContainer":
-                    element.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
+                case "miscPiecesContainer" or "craftingPiecesContainer" or "buildPiecesContainer" or "furniturePiecesContainer" 
+                    or "piecesContainer" or "plantPiecesContainer" or "otherContainer" or "modPiecesContainer":
+                    obj.SetActive(!BlackList.PieceBlackList.Value.Contains(prefab));
                     break;
                 default:
                     element.gameObject.SetActive(true);

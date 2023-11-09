@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO.Ports;
+﻿using System.Collections.Generic;
 using System.Linq;
 using BepInEx;
 using HarmonyLib;
@@ -8,7 +6,6 @@ using JetBrains.Annotations;
 using UnityEngine;
 using static Almanac.Almanac.AchievementManager;
 using static Almanac.Almanac.AlmanacEffectsManager;
-using static Almanac.Almanac.RegisterAlmanacEffects;
 using static Almanac.AlmanacPlugin;
 
 namespace Almanac.Almanac;
@@ -19,11 +16,8 @@ public static class RegisterAlmanacEffects
     
     [HarmonyPatch(typeof(ObjectDB), nameof(ObjectDB.Awake))]
     static class ObjectDBAwakePatch
-    {
-        [UsedImplicitly]
-        [HarmonyPriority(Priority.VeryLow)]
+    { 
         private static void Postfix() => AddStatusEffectsToObjectDB();
-        
     }
     public static void AddStatusEffectsToObjectDB()
     {

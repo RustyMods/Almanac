@@ -70,6 +70,18 @@ public static class CustomStatusEffects
             
         }
     }
+
+    // [HarmonyPatch(typeof(Player), nameof(Player.StartGuardianPower))]
+    // static class StartGuardianPowerPatch
+    // {
+    //     private static void Prefix(Player __instance)
+    //     {
+    //         // Successfully modified guardian power animation
+    //         // But due to trigger name change, the RPC does not recognize 
+    //         // to set guardian power status effect
+    //         __instance.m_zanim.SetTrigger(__instance.m_guardianSE.m_activationAnimation);
+    //     }
+    // }
     
     [HarmonyPatch(typeof(Player), nameof(Player.Awake))]
     static class CreateVisualEffectsContainer
@@ -129,6 +141,7 @@ public static class CustomStatusEffects
             }
         }
     }
+    
 
     [HarmonyPatch(typeof(MineRock), nameof(MineRock.RPC_Hit))]
     static class MineRockHitPatch
@@ -141,7 +154,7 @@ public static class CustomStatusEffects
             if (hit.m_hitType is not HitData.HitType.PlayerHit) return;
 
             Player localPlayer = Player.m_localPlayer;
-
+            
             List<StatusEffect> activeEffects = localPlayer.GetSEMan().GetStatusEffects();
 
             GameObject attacker = ZNetScene.instance.FindInstance(hit.m_attacker);
@@ -156,9 +169,7 @@ public static class CustomStatusEffects
                 BaseEffectData data = effectsData.Find(x => x.effectName == effect.name);
                 switch (data.Modifier)
                 {
-                    case Modifier.PickaxeDMG:
-                        hit.m_damage.m_pickaxe += data.m_newValue;
-                        break;
+                    case Modifier.PickaxeDMG: hit.m_damage.m_pickaxe += data.m_newValue; break;
                 }
             }
         }
@@ -190,9 +201,7 @@ public static class CustomStatusEffects
                 BaseEffectData data = effectsData.Find(x => x.effectName == effect.name);
                 switch (data.Modifier)
                 {
-                    case Modifier.ChopDMG:
-                        hit.m_damage.m_chop += data.m_newValue;
-                        break;
+                    case Modifier.ChopDMG: hit.m_damage.m_chop += data.m_newValue; break;
                 }
             }
         }
@@ -224,9 +233,7 @@ public static class CustomStatusEffects
                 BaseEffectData data = effectsData.Find(x => x.effectName == effect.name);
                 switch (data.Modifier)
                 {
-                    case Modifier.ChopDMG:
-                        hit.m_damage.m_chop += data.m_newValue;
-                        break;
+                    case Modifier.ChopDMG: hit.m_damage.m_chop += data.m_newValue; break;
                 }
             }
         }

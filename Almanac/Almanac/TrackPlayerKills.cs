@@ -20,7 +20,7 @@ public static class TrackPlayerKills
     public static void SetInitialData(List<CreatureData> creatures)
     {
         Dictionary<string, int> initialData = new();
-        foreach (var creature in creatures)
+        foreach (CreatureData? creature in creatures)
         {
             initialData[creature.defeatedKey] = 0;
         }
@@ -34,7 +34,7 @@ public static class TrackPlayerKills
     public static Dictionary<string, int> GetCurrentKilledMonsters()
     {
         if (!File.Exists(filePath)) return TempMonstersKilled;
-        var deserializer = new DeserializerBuilder().Build();
+        IDeserializer deserializer = new DeserializerBuilder().Build();
         string deserializedData = File.ReadAllText(filePath);
         Dictionary<string, int> currentData = deserializer.Deserialize<Dictionary<string, int>>(deserializedData);
 
@@ -50,12 +50,12 @@ public static class TrackPlayerKills
             if (!Player.m_localPlayer) return;
             if (!__instance.m_lastHit.GetAttacker()) return;
             
-            string localPlayer = Player.m_localPlayer.GetHoverName();
             Character attacker = __instance.m_lastHit.GetAttacker();
-            string hoverName = attacker.GetHoverName();
             string defeatKey = __instance.m_defeatSetGlobalKey;
 
-            if (localPlayer != hoverName) return;
+            // Comparing hover names caused multiplayer issue recording kills
+            if (attacker.GetOwner() != Player.m_localPlayer.GetOwner()) return;
+            
             if (TempMonstersKilled.ContainsKey(defeatKey))
             {
                 TempMonstersKilled[defeatKey] += 1;

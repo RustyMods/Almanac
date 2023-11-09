@@ -197,6 +197,7 @@ almanac_ammo_type_label: "Ammo Type"
 almanac_ferment_duration_label: "Ferment Duration"
 
 almanac_furniturePieces_button: "Furniture"
+almanac_comfortPieces_button: "Comfort"
 almanac_buildPieces_button: "Build"
 almanac_craftingPieces_button: "Crafting"
 almanac_miscPieces_button: "Miscellaneous"
@@ -478,7 +479,7 @@ almanac_achievement_undying_desc: "Died over <color=orange>200</color> times"
 almanac_undying_lore: "Through countless battles and treacherous challenges, this Viking has met death head-on over a thousand times, only to rise again with unwavering determination. Each rebirth has brought wisdom and strength, making them a true legend among the warriors of Valheim."
 
 almanac_achievement_stag_slayer: "Stag Slayer"
-almanac_achievement_stag_slayer_desc: "Defeated <color=orange>Eikthyr</color> over <color=orange>100</color> times"
+almanac_achievement_stag_slayer_desc: "Defeated <color=orange>Eikthyr</color> over <color=orange>25</color> times"
 almanac_stag_slayer_lore: "In their relentless pursuit of mastery, this Viking has felled Eikthyr, the Stag, a staggering 100 times. Each encounter with this mythical creature only served to refine their hunting skills, earning them the title of the Stag Slayer in the land of Valheim."
 
 almanac_achievement_gluttony: "Gluttony"
@@ -490,11 +491,11 @@ almanac_achievement_completion_desc: "Complete all achievements"
 almanac_completion_lore: "Completionists are the valiant souls who have achieved the impossible, collecting every achievement in Valheim. Their journeys have been marked by countless battles, adventures, and challenges. These relentless seekers of glory have conquered all aspects of the Viking world, leaving no stone unturned, and earning their place among the legends of Valheim."
 
 almanac_achievement_runner: "Long Dark"
-almanac_achievement_runner_desc: "Run over <color=orange>999,999</color> meters"
+almanac_achievement_runner_desc: "Run over <color=orange>100,000</color> meters"
 almanac_runner_lore: "To achieve the incredible feat of running over 999,999 meters in Valheim, you must have traversed the land tirelessly, conquering each terrain, and witnessing the vast beauty of the Viking world. Your journey, marked by endurance and exploration, is a testament to your commitment to Valheim's unique adventures."
 
 almanac_achievement_killer: "Slayer"
-almanac_achievement_killer_desc: "Kill over <color=orange>999,999</color> creatures"
+almanac_achievement_killer_desc: "Kill over <color=orange>100,000</color> creatures"
 almanac_killer_lore: "Slaying 999,999 creatures in Valheim is a monumental achievement that speaks volumes about your prowess and the countless battles you've endured. Your name shall echo throughout the Viking world as a legendary hunter, having faced innumerable foes to become the ultimate predator of the realm."
 
 almanac_achievement_sailor: "Seaman"
@@ -538,7 +539,7 @@ almanac_achievement_lumberjack_desc: "Chop down over <color=orange>1000</color> 
 almanac_lumberjack_lore: "With each mighty swing, you've felled a thousand trees in Valheim, reshaping the forest into an arena of your conquest. Your lumberjack skills have become legendary, and the echo of your axe striking wood rings through the land."
 
 almanac_achievement_lumberer: "Lumbered"
-almanac_achievement_lumberer_desc: "Die over <color=orange>100</color> times by a tree"
+almanac_achievement_lumberer_desc: "Die over <color=orange>25</color> times by a tree"
 almanac_lumberer_lore: "A hundred times, the weight of the forest sought to claim you, yet you rose again, each time a testament to your unwavering spirit and determination. Being crushed by falling trees has only made you stronger, teaching you to dance through the woods with greater agility."
 
 almanac_achievement_daredevil: "Daredevil"

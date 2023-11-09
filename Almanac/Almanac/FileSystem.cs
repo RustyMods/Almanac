@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using BepInEx;
-using YamlDotNet.Serialization;
 using static Almanac.Almanac.AchievementManager;
 using static Almanac.Almanac.BlackList;
 using static Almanac.AlmanacPlugin;
@@ -34,7 +33,6 @@ public static class FileSystem
     private static void OnChanged(object sender, FileSystemEventArgs e)
     {
         if (e.ChangeType is not (WatcherChangeTypes.Changed or WatcherChangeTypes.Deleted)) return;
-        
         string fName = Path.GetFileName(e.Name);
         
         if (e.FullPath.StartsWith(achievementPath))
@@ -43,7 +41,7 @@ public static class FileSystem
             InitAchievements();
             return;
         }
-        
+
         List<string> blacklist = new List<string>();
         foreach (string line in File.ReadLines(Path.Combine(folderPath, fName)))
         {

@@ -75,7 +75,7 @@ public static class CreatureDataCollector
         creatureData.RemoveAt(0);
         List<CreatureData> filteredCreatures = new();
         
-        foreach (var data in creatureData)
+        foreach (CreatureData? data in creatureData)
         {
             RenameCreatureData(data);
             if (exclusionMap.Contains(data.name)) continue;
@@ -99,7 +99,7 @@ public static class CreatureDataCollector
         Dictionary<string, int> currentKilledMonsters = TrackPlayerKills.GetCurrentKilledMonsters();
         Dictionary<string, int> currentPlayerDeaths = TrackPlayerDeaths.GetCurrentPlayerDeaths();
         
-        foreach (var creature in list)
+        foreach (CreatureData? creature in list)
         {
             currentKilledMonsters.TryGetValue(creature.defeatedKey, out int killCount);
             currentPlayerDeaths.TryGetValue(creature.defeatedKey, out int deathCount);
@@ -307,7 +307,7 @@ public static class CreatureDataCollector
             data.health = script.m_health;
             data.faction = script.m_faction.ToString();
 
-            var damageModifiers = script.m_damageModifiers;
+            HitData.DamageModifiers damageModifiers = script.m_damageModifiers;
             
             data.blunt = damageModifiers.m_blunt.ToString();
             data.slash = damageModifiers.m_slash.ToString();
@@ -345,7 +345,7 @@ public static class CreatureDataCollector
             data.health = script.m_health;
             data.faction = script.m_faction.ToString();
 
-            var damageModifiers = script.m_damageModifiers;
+            HitData.DamageModifiers damageModifiers = script.m_damageModifiers;
                         
             data.blunt = damageModifiers.m_blunt.ToString();
             data.slash = damageModifiers.m_slash.ToString();

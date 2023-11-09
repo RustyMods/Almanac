@@ -46,36 +46,61 @@ public static class Patches
             if (!__instance) return;
             if (WorkingAsType == WorkingAs.Server) return;
             
-            SetInitialData(__instance);
+            CacheInitialData(__instance);
             
             foreach (GameObject trophy in trophyList) AddButtonComponent(trophy);
             
             SetUnknownCreatures();
-            
-            SetUnknownItems("material", jewelCraftingLoaded ? filteredMaterials : materials);
-            SetUnknownItems("consummable", consumables);
-            SetUnknownItems("weapon", weapons);
-            SetUnknownItems("gear", jewelCraftingLoaded ? filteredGear : gear);
-            SetUnknownItems("ammo", ammunition);
-            SetUnknownItems("fish", fish);
-            if (jewelCraftingLoaded) SetUnknownItems("jewelcrafting", jewels);
-            
-            SetUnknownPieces("miscPieces", miscPieces);
-            SetUnknownPieces("craftingPieces", craftingPieces);
-            SetUnknownPieces("buildPieces", buildPieces);
-            SetUnknownPieces("furniturePieces", furniturePieces);
-            SetUnknownPieces("other", defaultPieces);
-            SetUnknownPieces("plantPieces", plantPieces);
-            SetUnknownPieces("modPieces", modPieces);
-            
+
+            Dictionary<string, List<ItemDrop>> itemConversion = new()
+            {
+                { "material", jewelCraftingLoaded ? filteredMaterials : materials },
+                { "consummable", consumables },
+                { "weapon" , weapons },
+                { "gear", jewelCraftingLoaded ? filteredGear : gear },
+                { "ammo", ammunition },
+                { "fish", fish },
+                { "jewelcrafting", jewels }
+            };
+
+            foreach (KeyValuePair<string, List<ItemDrop>> kvp in itemConversion)
+            {
+                switch (kvp.Key)
+                {
+                    case "jewelcrafting":
+                        if (jewelCraftingLoaded) SetUnknownItems(kvp.Key, kvp.Value);
+                        break;
+                    default:
+                        SetUnknownItems(kvp.Key, kvp.Value);
+                        break;
+                }
+            }
+
+            Dictionary<string, List<GameObject>> piecesConversion = new()
+            {
+                { "miscPieces", miscPieces },
+                { "craftingPieces", craftingPieces },
+                { "buildPieces", buildPieces },
+                { "furniturePieces", furniturePieces },
+                { "other", defaultPieces },
+                { "plantPieces", plantPieces },
+                { "modPieces", modPieces }
+            };
+
+            foreach (KeyValuePair<string, List<GameObject>> kvp in piecesConversion)
+            {
+                SetUnknownPieces(kvp.Key, kvp.Value);
+            }
+
             UpdatePlayerStats();
             SetPlayerStats();
-            
+
             UpdateAchievements();
             Transform? achievementPanel = trophyFrame.Find("achievementsPanel");
             SetUnknownAchievements(achievementPanel);
             foreach (AchievementsUI.Achievement achievement in registeredAchievements) SetAchievementsData(achievementsElement, achievement);
 
+            // To manipulate achievement panel size
             achievementPanel.transform.localScale = new Vector3(_AchievementPanelSize.Value.x, _AchievementPanelSize.Value.y, 0f);
         }
 
@@ -221,6 +246,23 @@ public static class Patches
 
         public static void SetAchievementsData(Transform parentElement, AchievementsUI.Achievement data)
         {
+            if (_AchievementPowers.Value is Off)
+            {
+                // If powers are disabled, remove any almanac effects when player opens almanac
+                Player player = Player.m_localPlayer;
+                List<StatusEffect> effects = player.GetSEMan().GetStatusEffects();
+                List<StatusEffect> effectsToRemove = new();
+                foreach (StatusEffect? effect in effects)
+                {
+                    if (!RegisterAlmanacEffects.effectsData.Exists(x => x.effectName == effect.name)) continue;
+                    effectsToRemove.Add(effect);
+                }
+
+                foreach (StatusEffect? effect in effectsToRemove) player.GetSEMan().RemoveStatusEffect(effect);
+                
+                CustomStatusEffects.activeAlmanacEffects.Clear();
+            } 
+            
             Transform achievementIconBg = parentElement.Find("ImageElement (achievementIcon)");
             Transform achievementIcon = achievementIconBg.Find("ImageElement (icon)");
 
@@ -297,28 +339,25 @@ public static class Patches
 
         public static void SetPlayerStats()
         {
-            if (!ZNet.instance.IsServer())
+            if (serverAchievementData.Value.Count != currentServerData.Count)
             {
-                if (serverAchievementData.Value.Count != currentServerData.Count)
+                AlmanacLogger.LogInfo("Server achievement data count changed");
+                ReBuildAchievements();
+            }
+            else
+            {
+                // If they are the same size, compare them to find if anything changed
+                IDeserializer deserializer = new DeserializerBuilder().Build();
+                for (int i = 0; i < serverAchievementData.Value.Count; ++i)
                 {
-                    AlmanacLogger.LogInfo("Server achievement data count changed");
-                    ReBuildAchievements();
-                }
-                else
-                {
-                    // If they are the same size, compare them to find if anything changed
-                    IDeserializer deserializer = new DeserializerBuilder().Build();
-                    for (int i = 0; i < serverAchievementData.Value.Count; ++i)
-                    {
-                        AchievementData currentData = deserializer.Deserialize<AchievementData>(currentServerData[i]);
-                        AchievementData serverData = deserializer.Deserialize<AchievementData>(serverAchievementData.Value[i]);
+                    AchievementData currentData = deserializer.Deserialize<AchievementData>(currentServerData[i]);
+                    AchievementData serverData = deserializer.Deserialize<AchievementData>(serverAchievementData.Value[i]);
 
-                        if (currentData.Equals(serverData)) continue;
-                    
-                        AlmanacLogger.LogInfo("Server achievement data changed");
-                        ReBuildAchievements();
-                        break;
-                    }
+                    if (currentData.Equals(serverData)) continue;
+                
+                    AlmanacLogger.LogInfo("Server achievement data changed");
+                    ReBuildAchievements();
+                    break;
                 }
             }
             SetPlayerElementData(playerStatsElement);
@@ -331,7 +370,7 @@ public static class Patches
             
             SetTextElement(panel.gameObject, "almanacPowers", "$almanac_custom_powers_label");
             
-            SetActivePowersUI();
+            SetPassivePowersUI();
             SetLeaderboardData(panel);
         }
 
@@ -343,8 +382,7 @@ public static class Patches
                 SetActiveElement(panel.gameObject, "TextElement", $"playerName ({i})", false);
                 SetActiveElement(panel.gameObject, "TextElement", $"playerData ({i})", false);
             }
-
-            var deserializer = new DeserializerBuilder().Build();
+            IDeserializer deserializer = new DeserializerBuilder().Build();
             for (int i = 0; i < Leaderboard.SyncedLeaderboard.Value.Count; ++i)
             {
                 Leaderboard.LeaderboardData? data = deserializer.Deserialize<Leaderboard.LeaderboardData>(Leaderboard.SyncedLeaderboard.Value[i]);
@@ -355,7 +393,7 @@ public static class Patches
             }
         }
 
-        private static void SetActivePowersUI()
+        private static void SetPassivePowersUI()
         {
             Player player = Player.m_localPlayer;
             Transform panel = trophyFrame.Find("statsPanel");
@@ -389,7 +427,7 @@ public static class Patches
                     // On click, effect is removed from UI and SEMan status effects
                     RemoveAlmanacEffect(power);
                     player.m_seman.RemoveStatusEffect(power);
-                    SetActivePowersUI();
+                    SetPassivePowersUI();
                 });
 
                 string desc = $"<color=orange>{power.m_name}</color>\n{power.m_tooltip}";
@@ -397,7 +435,7 @@ public static class Patches
             }
         }
 
-        private static void SetInitialData(InventoryGui __instance)
+        private static void CacheInitialData(InventoryGui __instance)
         {
             trophyList = __instance.m_trophyList;
             trophyFrame = __instance.m_trophiesPanel.transform.Find("TrophiesFrame");
@@ -488,6 +526,7 @@ public static class Patches
                 case "ammo": currentPage = projectilePage; break;
                 case "fish": currentPage = fishPage; break;
                 case "jewelcrafting": currentPage = jewelPage; break;
+                case "comfortPieces": currentPage = comfortPage; break;
                 // Add category here to check against saved current page 
             }
 
@@ -509,6 +548,7 @@ public static class Patches
                 case "ammo": container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName)); break;
                 case "fish": container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName)); break;
                 case "jewelcrafting": container.gameObject.SetActive(!BlackList.ItemBlackList.Value.Contains(prefabName)); break;
+                case "comfortPieces": container.gameObject.SetActive(!BlackList.PieceBlackList.Value.Contains(prefabName)); break;
                 // Add new categories here to be affected by blacklist
             }
         }
@@ -630,7 +670,7 @@ public static class Patches
             button.onClick = new Button.ButtonClickedEvent();
             button.onClick.AddListener(() =>
             {
-                setAlmanacData(AlmanacElement.gameObject, localizedName, TrophyIcon);
+                SetCreatureData(AlmanacElement.gameObject, localizedName, TrophyIcon);
                 SetActiveElement(AlmanacList.gameObject, "AlmanacElement", "0", true);
                 
                 SetActiveElement(contentPanel.gameObject, "WelcomePanel", "0", false);
@@ -640,11 +680,10 @@ public static class Patches
                 SetActiveElement(AlmanacList.gameObject, "weaponElement", "0", false);
                 SetActiveElement(AlmanacList.gameObject, "ammoElement", "0", false);
                 SetActiveElement(AlmanacList.gameObject, "fishElement", "0", false);
-                
                 SetActiveElement(AlmanacList.gameObject, "piecesElement", "0", false);
-                
                 SetActiveElement(AlmanacList.gameObject, "achievementsElement", "0", false);
                 SetActiveElement(AlmanacList.gameObject, "statsElement", "0", false);
+                // Add new element categories here to be affected when trophies are clicked
             });
         }
 
@@ -2335,28 +2374,17 @@ public static class Patches
         {
             switch (id)
             {
-                case { } when id.Contains("Blunt"):
-                    return "$almanac_blunt";
-                case { } when id.Contains("Slash"):
-                    return "$almanac_slash";
-                case { } when id.Contains("Pierce"):
-                    return "$almanac_pierce";
-                case { } when id.Contains("Chop"):
-                    return "$almanac_chop";
-                case { } when id.Contains("Pickaxe"):
-                    return "$almanac_pickaxe";
-                case { } when id.Contains("Fire"):
-                    return "$almanac_fire";
-                case { } when id.Contains("Ice"):
-                    return "$almanac_frost";
-                case { } when id.Contains("Lightning"):
-                    return "$almanac_lightning";
-                case { } when id.Contains("Poison"):
-                    return "$almanac_poison";
-                case { } when id.Contains("Spirit"):
-                    return "$almanac_spirit";
-                default:
-                    throw new ArgumentOutOfRangeException();
+                case { } when id.Contains("Blunt"): return "$almanac_blunt";
+                case { } when id.Contains("Slash"): return "$almanac_slash";
+                case { } when id.Contains("Pierce"): return "$almanac_pierce";
+                case { } when id.Contains("Chop"): return "$almanac_chop";
+                case { } when id.Contains("Pickaxe"): return "$almanac_pickaxe";
+                case { } when id.Contains("Fire"): return "$almanac_fire";
+                case { } when id.Contains("Ice"): return "$almanac_frost";
+                case { } when id.Contains("Lightning"): return "$almanac_lightning";
+                case { } when id.Contains("Poison"): return "$almanac_poison";
+                case { } when id.Contains("Spirit"): return "$almanac_spirit";
+                default: return "";
             }
         }
 
@@ -2379,7 +2407,7 @@ public static class Patches
                 case HitData.DamageModifier.VeryWeak:
                     return new Color(1f, 0f, 0f, 1f);
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    return Color.white;
             }
         }
         private static void ColorizeImageElement(GameObject parentElement, string id, Color color)
@@ -2389,7 +2417,7 @@ public static class Patches
             image.color = color;
         }
 
-        public static void setAlmanacData(GameObject dummyElement, string creatureName, Image trophyIcon = null!, string prefabName = "")
+        public static void SetCreatureData(GameObject dummyElement, string creatureName, Image trophyIcon = null!, string prefabName = "")
         {
             Player player = Player.m_localPlayer;
             List<CreatureDataCollector.CreatureData> creatureData = Almanac.CreateAlmanac.creatures;
@@ -2565,7 +2593,7 @@ public static class Patches
 
         private static void SetAttackValues(GameObject element, int index, CreatureDataCollector.AttackData attackItem)
         {
-            var attackKeyValues = new Dictionary<string, string>()
+            Dictionary<string, string> attackKeyValues = new Dictionary<string, string>()
             {
                 { $"attackName ({index})", attackItem.name },
                 { $"attackBlunt ({index})", $"{attackItem.blunt}" },
@@ -2589,7 +2617,7 @@ public static class Patches
 
         private static void SetAttackDefault(GameObject element, int index)
         {
-            var defaultDataMap = new Dictionary<string, string>()
+            Dictionary<string, string> defaultDataMap = new Dictionary<string, string>()
             {
                 { $"attackName ({index})", "No data" },
                 { $"attackBlunt ({index})", "N/A" },
@@ -2728,17 +2756,15 @@ public static class Patches
 
             if (prefabName != "")
             {
-                foreach (var creature in data)
+                foreach (CreatureDataCollector.CreatureData? creature in data)
                 {
-                    if (creature.name == prefabName)
-                    {
-                        return creature;
-                    }
+                    if (creature.name != prefabName) continue;
+                    return creature;
                 }
             }
             for (int i = data.Count - 1; i >= 0; --i)
             {
-                var creature = data[i];
+                CreatureDataCollector.CreatureData? creature = data[i];
                 string prefab = creature.name;
 
                 string displayName = Localization.instance.Localize(creature.display_name);
@@ -2750,7 +2776,7 @@ public static class Patches
                 return creature;
             }
             
-            foreach (var creature in data)
+            foreach (CreatureDataCollector.CreatureData? creature in data)
             {
                 string prefab = creature.name;
                 string trophyName = Localization.instance.Localize(creature.trophyName);
@@ -2797,10 +2823,10 @@ public static class Patches
             mainString = mainString.ToLower();
             subString = subString.ToLower();
 
-            var mainFreq = mainString.GroupBy(c => c).ToDictionary(g => g.Key, g => g.Count());
-            var subFreq = subString.GroupBy(c => c).ToDictionary(g => g.Key, g => g.Count());
+            Dictionary<char, int> mainFreq = mainString.GroupBy(c => c).ToDictionary(g => g.Key, g => g.Count());
+            Dictionary<char, int> subFreq = subString.GroupBy(c => c).ToDictionary(g => g.Key, g => g.Count());
 
-            foreach (var kvp in subFreq)
+            foreach (KeyValuePair<char, int> kvp in subFreq)
             {
                 if (!mainFreq.ContainsKey(kvp.Key) || mainFreq[kvp.Key] < kvp.Value)
                 {

@@ -148,7 +148,106 @@ namespace Almanac
                 "Set the size of the achievement panel", false);
 
             _LeaderboardRefreshRate = config("5 - Leaderboard", "Refresh rate", 5f,
-                "Leaderboard refresh rate in minutes", false);
+                "Leaderboard refresh rate in minutes", true);
+            
+            List<string> meadowCreatures = new()
+            {
+                "defeated_greyling",
+                "defeated_neck",
+                "defeated_boar",
+                "defeated_deer",
+                "defeated_eikthyr"
+            };
+
+            List<string> blackForestCreatures = new()
+            {
+                "defeated_skeleton",
+                "KilledTroll",
+                "defeated_ghost",
+                "defeated_greydwarf",
+                "defeated_greydwarf_elite",
+                "defeated_greydwarf_shaman",
+                "defeated_gdking"
+            };
+
+            List<string> swampCreatures = new()
+            {
+                "defeated_blob",
+                "defeated_blobelite",
+                "defeated_draugr",
+                "defeated_draugr_elite",
+                "defeated_skeleton_poison",
+                "killed_surtling",
+                "defeated_wraith",
+                "defeated_leech",
+                "defeated_bonemass"
+            };
+
+            List<string> mountainCreatures = new()
+            {
+                "defeated_wolf",
+                "defeated_fenring",
+                "defeated_hatchling",
+                "KilledBat",
+                "defeated_fenring_cultist",
+                "defeated_stonegolem",
+                "defeated_ulv",
+                "defeated_dragon"
+            };
+
+            List<string> plainsCreatures = new()
+            {
+                "defeated_deathsquito",
+                "defeated_goblin",
+                "defeated_goblinbrute",
+                "defeated_goblinshaman",
+                "defeated_lox",
+                "defeated_blobtar",
+                "defeated_goblinking"
+            };
+
+            List<string> mistLandCreatures = new()
+            {
+                "defeated_dverger",
+                "defeated_dvergermagefire",
+                "defeated_dvergermagesupport",
+                "defeated_dvergermageice",
+                "defeated_gjall",
+                "defeated_tick",
+                "defeated_hare",
+                "defeated_seeker",
+                "defeated_seekerbrood",
+                "defeated_seekerbrute",
+                "defeated_queen"
+            };
+
+            List<string> deepNorthCreatures = new();
+            List<string> ashlandsCreatures = new();
+
+            _MeadowCreatures = config("4 - Achievements", "01 - Meadow List", ConvertListToString(meadowCreatures),
+                "List of meadow creature defeat keys to track biome kills");
+
+            _BlackForestCreatures = config("4 - Achievements", "02 - Black Forest List",
+                ConvertListToString(blackForestCreatures), "List of black forest defeat keys to track biome kills");
+
+            _SwampCreatures = config("4 - Achievements", "03 - Swamp List", ConvertListToString(swampCreatures),
+                "List of swamp defeat keys to track biome kills");
+
+            _MountainCreatures = config("4 - Achievements", "04 - Mountain List", ConvertListToString(mountainCreatures),
+                "List of mountain defeat keys to track biome kills");
+
+            _PlainsCreatures = config("4 - Achievements", "05 - Plains List", ConvertListToString(plainsCreatures),
+                "List of plains defeat keys to track biome kills");
+
+            _MistLandCreatures = config("4 - Achievements", "06 - Mistland List", ConvertListToString(mistLandCreatures),
+                "List of mistland defeat keys to track biome kills");
+
+            _DeepNorthCreatures = config("4 - Achievements", "07 - Deep North List", "",
+                "List of deep north creatures to track biome kills");
+
+            _AshLandsCreatures = config("4 - Achievements", "08 - AshLands List", "",
+                "List of ashland defeat keys to track for biome kills");
+            
 
             WorkingAsType = SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null
                 ? WorkingAs.Server : WorkingAs.Client;
@@ -161,6 +260,32 @@ namespace Almanac
             
             BlackList.InitBlackList();
             FileSystem.InitializeFileSystemWatch();
+        }
+
+        private static string ConvertListToString(List<string> input)
+        {
+            string output = input[0];
+            for (int i = 1; i < input.Count; ++i)
+            {
+                output += ",";
+                output += input[i];
+            }
+
+            return output;
+        }
+
+        public static List<string> StringToListDefeatKeys(string input)
+        {
+            List<string> output = new();
+            string[] inputList = input.Split(',');
+            foreach (string item in inputList)
+            {
+                AlmanacLogger.LogDebug($"Failed to find key: {item}");
+                if (!CreatureDataCollector.tempCreatureData.Exists(x => x.defeatedKey == item)) continue;
+                output.Add(item);
+            }
+
+            return output;
         }
 
         private void OnDestroy()
@@ -231,6 +356,15 @@ namespace Almanac
         public static ConfigEntry<Vector2> _AchievementPanelSize = null!;
         public static ConfigEntry<float> _LeaderboardRefreshRate = null!;
 
+        public static ConfigEntry<string> _MeadowCreatures = null!;
+        public static ConfigEntry<string> _BlackForestCreatures = null!;
+        public static ConfigEntry<string> _SwampCreatures = null!;
+        public static ConfigEntry<string> _MountainCreatures = null!;
+        public static ConfigEntry<string> _PlainsCreatures = null!;
+        public static ConfigEntry<string> _MistLandCreatures = null!;
+        public static ConfigEntry<string> _DeepNorthCreatures = null!;
+        public static ConfigEntry<string> _AshLandsCreatures = null!;
+ 
         private ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description,
             bool synchronizedSetting = true)
         {

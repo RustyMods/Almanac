@@ -1,22 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.Common;
+﻿using System.Collections.Generic;
 using System.Linq;
 using BepInEx;
-using HarmonyLib;
-using JetBrains.Annotations;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using YamlDotNet.Core.Tokens;
 using static Almanac.Almanac.AchievementManager;
 using static Almanac.Almanac.AchievementManager.AchievementType;
-using static Almanac.Almanac.Commands;
 using static Almanac.Almanac.CreatureDataCollector;
 using static Almanac.Almanac.ItemDataCollector;
 using static Almanac.Almanac.PieceDataCollector;
 using static Almanac.Almanac.TrackPlayerStats;
-using Object = UnityEngine.Object;
+using static Almanac.AlmanacPlugin;
 
 namespace Almanac.Almanac;
 
@@ -27,77 +21,6 @@ public static class AchievementsUI
     public const int maxPowers = 5;
 
     public static int powerLimit = 3;
-
-    private static readonly List<string> meadowCreatures = new()
-    {
-        "defeated_greyling",
-        "defeated_neck",
-        "defeated_boar",
-        "defeated_deer",
-        "defeated_eikthyr"
-    };
-
-    private static readonly List<string> blackForestCreatures = new()
-    {
-        "defeated_skeleton",
-        "KilledTroll",
-        "defeated_ghost",
-        "defeated_greydwarf",
-        "defeated_greydwarf_elite",
-        "defeated_greydwarf_shaman",
-        "defeated_gdking"
-    };
-
-    private static readonly List<string> swampCreatures = new()
-    {
-        "defeated_blob",
-        "defeated_blobelite",
-        "defeated_draugr",
-        "defeated_draugr_elite",
-        "defeated_skeleton_poison",
-        "killed_surtling",
-        "defeated_wraith",
-        "defeated_leech",
-        "defeated_bonemass"
-    };
-
-    private static readonly List<string> mountainCreatures = new()
-    {
-        "defeated_wolf",
-        "defeated_fenring",
-        "defeated_hatchling",
-        "KilledBat",
-        "defeated_fenring_cultist",
-        "defeated_stonegolem",
-        "defeated_ulv",
-        "defeated_dragon"
-    };
-
-    private static readonly List<string> plainsCreatures = new()
-    {
-        "defeated_deathsquito",
-        "defeated_goblin",
-        "defeated_goblinbrute",
-        "defeated_goblinshaman",
-        "defeated_lox",
-        "defeated_blobtar",
-        "defeated_goblinking"
-    };
-
-    private static readonly List<string> mistLandCreatures = new()
-    {
-        "defeated_dverger",
-        "defeated_dvergermagefire",
-        "defeated_dvergermagesupport",
-        "defeated_dvergermageice",
-        "defeated_gjall",
-        "defeated_tick",
-        "defeated_hare",
-        "defeated_seeker",
-        "defeated_seekerbrood",
-        "defeated_seekerbrute",
-        "defeated_queen"
-    };
     public class Achievement
     {
         public AchievementType type;
@@ -110,6 +33,7 @@ public static class AchievementsUI
         public string lore = null!;
         public string power = null!;
         public string powerToolTip = null!;
+        public string defeatKey = null!;
     }
 
     private static Sprite? GetSprite(string? prefabName)
@@ -126,10 +50,11 @@ public static class AchievementsUI
         int goal, Sprite? sprite,
         string lore, string powerName,
         string powerToolTip,
-        AchievementType type)
+        AchievementType type,
+        string defeatKey = "")
     {
         if (powerName.IsNullOrWhiteSpace() || name.IsNullOrWhiteSpace()) return;
-        if (!sprite) sprite = AlmanacPlugin.AlmanacIconButton;
+        if (!sprite) sprite = AlmanacIconButton;
         
         Achievement data = new Achievement()
         {
@@ -141,7 +66,8 @@ public static class AchievementsUI
             lore = lore,
             power = powerName,
             powerToolTip = powerToolTip,
-            type = type
+            type = type,
+            defeatKey = defeatKey
         };
         registeredAchievements.Add(data);
     }
@@ -153,7 +79,7 @@ public static class AchievementsUI
         // Therefore temp achievements ends up becoming empty as they have already been registered.
         if (tempAchievements.Count == 0) return;
         registeredAchievements.Clear();
-        
+
         // Register achievements to the UI
         
         foreach (AchievementManager.Achievement achievement in tempAchievements)
@@ -181,16 +107,16 @@ public static class AchievementsUI
                 case Potions: m_goal = GetMaterials().FindAll(item => item.name.Contains("Base")).Count; break;
                 case Trophies: m_goal = GetTrophies().Count; break;
                 case Creatures: m_goal = tempCreatureData.Count; break;
-                case MeadowCreatures: m_goal = meadowCreatures.Count; break;
-                case BlackForestCreatures: m_goal = blackForestCreatures.Count; break;
-                case SwampCreatures: m_goal = swampCreatures.Count; break;
-                case MountainCreatures: m_goal = mountainCreatures.Count; break;
-                case PlainsCreatures: m_goal = plainsCreatures.Count; break;
-                case MistLandCreatures: m_goal = mistLandCreatures.Count; break;
+                case MeadowCreatures: m_goal = StringToListDefeatKeys(_MeadowCreatures.Value).Count; break;
+                case BlackForestCreatures: m_goal = StringToListDefeatKeys(_BlackForestCreatures.Value).Count; break;
+                case SwampCreatures: m_goal = StringToListDefeatKeys(_SwampCreatures.Value).Count; break;
+                case MountainCreatures: m_goal = StringToListDefeatKeys(_MountainCreatures.Value).Count; break;
+                case PlainsCreatures: m_goal = StringToListDefeatKeys(_PlainsCreatures.Value).Count; break;
+                case MistLandCreatures: m_goal = StringToListDefeatKeys(_MistLandCreatures.Value).Count; break;
                 case TotalAchievements: m_goal = tempAchievements.Count - 1; break;
                 case ComfortPieces: m_goal = comfortPieces.Count; break;
-                case AshLandCreatures: break;
-                case DeepNorthCreatures: break;
+                case AshLandCreatures: m_goal = StringToListDefeatKeys(_AshLandsCreatures.Value).Count; break;
+                case DeepNorthCreatures: m_goal = StringToListDefeatKeys(_DeepNorthCreatures.Value).Count ;break;
                 default: m_goal = achievement.m_goal; break; // The rest are threshold achievement
             }
 
@@ -202,7 +128,8 @@ public static class AchievementsUI
                 lore: achievement.m_lore,
                 powerName: achievement.m_statusEffect.effectName,
                 powerToolTip: achievement.m_toolTip,
-                type: achievement.m_type
+                type: achievement.m_type,
+                defeatKey: achievement.m_defeatKey
             );
         }
     }
@@ -251,13 +178,13 @@ public static class AchievementsUI
     {
         Dictionary<string, int> combinedDict = new();
 
-        foreach (var kvp in dict1)
+        foreach (KeyValuePair<string, int> kvp in dict1)
         {
             if (combinedDict.ContainsKey(kvp.Key)) combinedDict[kvp.Key] += kvp.Value;
             else combinedDict[kvp.Key] = kvp.Value;
         }
 
-        foreach (var kvp in dict2)
+        foreach (KeyValuePair<string, int> kvp in dict2)
         {
             if (combinedDict.ContainsKey(kvp.Key)) combinedDict[kvp.Key] += kvp.Value;
             else combinedDict[kvp.Key] = kvp.Value;
@@ -300,12 +227,12 @@ public static class AchievementsUI
             { Valuables , GetMaterials().FindAll(item => item.m_itemData.m_shared.m_value > 0).Count(item => player.IsKnownMaterial(item.m_itemData.m_shared.m_name)) },
             { Potions , GetMaterials().FindAll(item => item.name.Contains("Mead")).Count(item => player.IsKnownMaterial(item.m_itemData.m_shared.m_name)) },
             { Trophies , GetTrophies().Count(item => player.IsMaterialKnown(item.m_itemData.m_shared.m_name)) },
-            { MeadowCreatures , GetBiomeKills(meadowCreatures, totalMonstersKilled) },
-            { BlackForestCreatures , GetBiomeKills(blackForestCreatures, totalMonstersKilled) },
-            { SwampCreatures , GetBiomeKills(swampCreatures, totalMonstersKilled) },
-            { MountainCreatures , GetBiomeKills(mountainCreatures, totalMonstersKilled) },
-            { PlainsCreatures , GetBiomeKills(plainsCreatures, totalMonstersKilled)},
-            { MistLandCreatures , GetBiomeKills(mistLandCreatures, totalMonstersKilled) },
+            { MeadowCreatures , GetBiomeKills(StringToListDefeatKeys(_MeadowCreatures.Value), totalMonstersKilled) },
+            { BlackForestCreatures , GetBiomeKills(StringToListDefeatKeys(_BlackForestCreatures.Value), totalMonstersKilled) },
+            { SwampCreatures , GetBiomeKills(StringToListDefeatKeys(_SwampCreatures.Value), totalMonstersKilled) },
+            { MountainCreatures , GetBiomeKills(StringToListDefeatKeys(_MountainCreatures.Value), totalMonstersKilled) },
+            { PlainsCreatures , GetBiomeKills(StringToListDefeatKeys(_PlainsCreatures.Value), totalMonstersKilled)},
+            { MistLandCreatures , GetBiomeKills(StringToListDefeatKeys(_MistLandCreatures.Value), totalMonstersKilled) },
             { Deaths , (int)GetPlayerStat(PlayerStatType.Deaths) },
             { EikthyrKills , totalMonstersKilled["defeated_eikthyr"] },
             { ElderKills , totalMonstersKilled["defeated_gdking"] },
@@ -366,13 +293,25 @@ public static class AchievementsUI
             { SapHarvested , (int)GetPlayerStat(PlayerStatType.SapHarvested)},
             { TrapsArmed , (int)GetPlayerStat(PlayerStatType.TrapArmed)},
             { StacksPlaced , (int)GetPlayerStat(PlayerStatType.PlaceStacks)},
-            { BossKills , (int)GetPlayerStat(PlayerStatType.BossKills)}
-
+            { BossKills , (int)GetPlayerStat(PlayerStatType.BossKills)},
+            { CustomKills, 0 }
         };
         
         foreach (Achievement achievement in registeredAchievements)
         {
             int value = updateAchievementMap[achievement.type];
+            switch (achievement.type)
+            {
+                case CustomKills:
+                    if (!totalMonstersKilled.ContainsKey(achievement.defeatKey))
+                    {
+                        AlmanacLogger.LogInfo($"Failed to find key: {achievement.defeatKey}");
+                        break;
+                    }
+                    totalMonstersKilled.TryGetValue(achievement.defeatKey, out int customValue);
+                    value = customValue;
+                    break;
+            }
             achievement.isCompleted = value >= achievement.total;
             achievement.value = value;
         }
@@ -382,7 +321,7 @@ public static class AchievementsUI
     private static int GetBiomeKills(List<string> creatureList, Dictionary<string, int> totalMonstersKilled)
     {
         int totalKills = 0;
-        foreach (var defeatKey in creatureList)
+        foreach (string? defeatKey in creatureList)
         {
             int killCount = totalMonstersKilled[defeatKey];
             if (killCount > 0) totalKills += 1;

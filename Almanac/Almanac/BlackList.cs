@@ -48,17 +48,9 @@ public static class BlackList
 
         switch (fileName)
         {
-            case "ItemBlackList.yml":
-                ItemBlackList.Value = blacklist;
-                break;
-
-            case "CreatureBlackList.yml":
-                CreatureBlackList.Value = blacklist;
-                break;
-            
-            case "PieceBlackList.yml":
-                PieceBlackList.Value = blacklist;
-                break;
+            case "ItemBlackList.yml": ItemBlackList.Value = blacklist; break;
+            case "CreatureBlackList.yml": CreatureBlackList.Value = blacklist; break;
+            case "PieceBlackList.yml": PieceBlackList.Value = blacklist; break;
         }
     }
 

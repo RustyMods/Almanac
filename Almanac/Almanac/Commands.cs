@@ -1,8 +1,4 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using HarmonyLib;
-using UnityEngine;
-using YamlDotNet.Serialization;
+﻿using HarmonyLib;
 using static Almanac.Almanac.AchievementManager;
 using static Almanac.AlmanacPlugin;
 
@@ -35,6 +31,14 @@ public static class Commands
                 {
                     if (!Player.m_localPlayer) return;
                     Player.m_localPlayer.m_guardianPowerCooldown = 0.0f;
+                }) { OnlyAdmin = true };
+            
+            Terminal.ConsoleCommand AlmanacRebuildAchievements = new Terminal.ConsoleCommand("almanac_rebuild_achievements",
+                "Rebuilds the achievements",
+                args =>
+                {
+                    if (!Player.m_localPlayer) return;
+                    AchievementManager.ReBuildAchievements();
                 }) { OnlyAdmin = true };
         }
     }

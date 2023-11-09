@@ -23,6 +23,7 @@ public static class PieceDataCollector
     public static readonly List<GameObject> cookingStations = new ();
     public static readonly List<GameObject> fermentingStations = new ();
     public static readonly List<GameObject> smelterStations = new ();
+
     public static void GetBuildPieces()
     {
         GetPieces();

@@ -38,6 +38,7 @@ public static class AchievementManager
         public string? m_spriteName;
         public string m_lore = "";
         public string m_toolTip = "";
+        public string m_defeatKey = "";
         public bool isCompleted;
     }
 
@@ -132,7 +133,7 @@ public static class AchievementManager
         TrapsArmed,
         StacksPlaced,
         BossKills,
-        
+        CustomKills
     }
 
     private static void CreateAchievement(
@@ -153,7 +154,8 @@ public static class AchievementManager
         string statusEffectStopMsg = "",
         string activationAnimation = "gpower",
         float newValue = 0f,
-        int statusEffectDuration = 0
+        int statusEffectDuration = 0,
+        string defeatKey = ""
     )
     {
         if (type is AchievementType.None)
@@ -204,7 +206,8 @@ public static class AchievementManager
             m_spriteName = spriteName,
             m_lore = lore,
             m_toolTip = toolTip,
-            m_type = type
+            m_type = type,
+            m_defeatKey = defeatKey
         };
         
         tempAchievements.Add(data);
@@ -254,13 +257,14 @@ public static class AchievementManager
             "RaiseSkills : Experience multiplier",
             "Speed : Speed multiplier",
             "Noise : Noise multiplier",
-            "MaxCarryWeight : Additive carry weight",
+            "MaxCarryWeight : Modify carry weight",
             "Stealth : Stealth multiplier",
             "RunStaminaDrain : Run stamina drain multiplier",
             "DamageReduction : Damage reduction multiplier",
             "FallDamage : Fall damage multiplier",
-            "BaseHP : Additive base health",
-            "BaseStamina : Addive base stamina",
+            "BaseHP : Modify base health",
+            "BaseStamina : Modify base stamina",
+            "BaseEitr : Additive base eitr",
             "MeleeDMG : Additive melee damage",
             "RangedDMG : Additive ranged damage",
             "FireDMG : Additive fire damage",
@@ -269,7 +273,7 @@ public static class AchievementManager
             "PoisonDMG : Additive poison damage",
             "SpiritDMG : Additive spirit damage",
             "ChopDMG : Additive chop damage",
-            "PickaxedDMG : Additive pickaxe damage",
+            "PickaxedDMG : Additive pickaxe damage - Only works on ore veins",
             "BluntDMG : Additive blunt damage",
             "PierceDMG : Additive pierce damage",
             "SlashDMG : Additive slash damage",
@@ -394,16 +398,21 @@ public static class AchievementManager
             "TrapsArmed : tracks total traps armed - use goal to set up threshold",
             "StacksPlaced : tracks total stacks placed - use goal to set up threshold",
             "BossKills : tracks total boss kills - use goal to set up threshold",
+            "CustomKills : tracks total custom defeat keys - set defeat key attribute with this type and use goal to setup threshold",
             "```",
             "## Resistance Modifier",
             "This can be used to apply damage modifiers `on the player`,",
             "It can be read as list if seperated by commas.",
             "(ex: Fire = Weak, Frost = Resistant)",
-            "This affects any damages from status effects such as `burning` but not direct damages.",
             "### Acceptable resistances:",
             "```yml",
-            "Physical",
-            "Elemental",
+            "Blunt",
+            "Slash",
+            "Pierce",
+            "Chop",
+            "Pickaxe",
+            "Physical : Pickaxe, Chop, Pierce, Slash, Blunt",
+            "Elemental : Fire, Frost, Lightning",
             "Fire",
             "Frost",
             "Lightning",
@@ -437,7 +446,7 @@ public static class AchievementManager
 
         WriteTutorial();
         
-        foreach (var data in tempAchievementData)
+        foreach (AchievementData? data in tempAchievementData)
         {
             string serializedData = serializer.Serialize(data);
             
@@ -471,14 +480,14 @@ public static class AchievementManager
     {
         if (!Player.m_localPlayer) return;
         // Remove all currently active Base Effects
-        foreach (var effect in CustomStatusEffects.activeAlmanacEffects)
+        foreach (StatusEffect? effect in CustomStatusEffects.activeAlmanacEffects)
         {
             Player.m_localPlayer.GetSEMan().RemoveStatusEffect(effect);
         }
         CustomStatusEffects.activeAlmanacEffects.Clear();
         
         AlmanacLogger.LogInfo("Rebuilding achievements");
-        if (serverAchievementData.Value.Count == 0)
+        if (serverAchievementData.Value.Count == 0 || ZNet.instance.IsServer())
         {
             AlmanacLogger.LogInfo($"Found no server data, loading local data");
             InitAchievements(); // Read files
@@ -667,7 +676,8 @@ public static class AchievementManager
                 statusEffectStopMsg: achievement.stop_message,
                 newValue: achievement.modifier_value,
                 activationAnimation: achievement.activation_animation,
-                statusEffectDuration: achievement.cooldown
+                statusEffectDuration: achievement.cooldown,
+                defeatKey: achievement.defeat_key
             );
         }
     }
@@ -764,6 +774,7 @@ public static class AchievementManager
             case "TrapsArmed": return TrapsArmed;
             case "StacksPlaced": return StacksPlaced;
             case "BossKills": return BossKills;
+            case "CustomKills": return CustomKills;
             default: return AchievementType.None;
         }
     }
@@ -956,7 +967,7 @@ public static class AchievementManager
                 unique_name = "stag_slayer",
                 display_name = "$almanac_achievement_stag_slayer",
                 description = "$almanac_achievement_stag_slayer_desc",
-                goal = 100,
+                goal = 25,
                 sprite_name = "TrophyEikthyr",
                 stop_message = "$almanac_removed_achievement_power",
                 lore = "$almanac_stag_slayer_lore",
@@ -1010,7 +1021,7 @@ public static class AchievementManager
                 stop_message = "$almanac_removed_achievement_power",
                 modifier = "RunStaminaDrain",
                 modifier_value = 0.5f,
-                goal = 999999
+                goal = 100000
             },
             new AchievementData()
             {
@@ -1026,7 +1037,7 @@ public static class AchievementManager
                 resistance_modifier = "Fire = Weak",
                 stop_message = "$almanac_removed_achievement_power",
                 modifier_value = 1.5f,
-                goal = 999999
+                goal = 100000
             },
             new AchievementData()
             {
@@ -1132,7 +1143,7 @@ public static class AchievementManager
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "EikthyrKills",
                 stop_message = "$almanac_removed_achievement_power",
-                goal = 200,
+                goal = 50,
                 resistance_modifier = "Lightning = Weak",
                 modifier = "LightningDMG",
                 modifier_value = 5f
@@ -1148,7 +1159,7 @@ public static class AchievementManager
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "EikthyrKills",
                 stop_message = "$almanac_removed_achievement_power",
-                goal = 400,
+                goal = 100,
                 resistance_modifier = "Lightning = Weak",
                 modifier = "LightningDMG",
                 modifier_value = 5f
@@ -1165,7 +1176,7 @@ public static class AchievementManager
                 achievement_type = "EikthyrKills",
                 stop_message = "$almanac_removed_achievement_power",
                 resistance_modifier = "Lightning = Weak",
-                goal = 600,
+                goal = 200,
                 modifier = "LightningDMG",
                 modifier_value = 5f
             },
@@ -1206,12 +1217,12 @@ public static class AchievementManager
                 description = "$almanac_achievement_lumberjack_desc",
                 lore = "$almanac_lumberjack_lore",
                 sprite_name = "almanac_wood_stack",
-                tool_tip = "$almanac_increase_chop_damage_by <color=orange>5</color>",
+                tool_tip = "$almanac_increase_chop_damage_by <color=orange>10</color>",
                 start_effects = new []{"sfx_coins_placed"},
                 stop_message = "$almanac_removed_achievement_power",
                 achievement_type = "Trees",
                 modifier = "ChopDMG",
-                modifier_value = 5f,
+                modifier_value = 10f,
                 goal = 1000
             },
             new AchievementData()
@@ -1227,7 +1238,7 @@ public static class AchievementManager
                 achievement_type = "DeathByTree",
                 modifier = "ChopDMG",
                 modifier_value = 5f,
-                goal = 100
+                goal = 25
             },
             new AchievementData()
             {
@@ -1236,13 +1247,13 @@ public static class AchievementManager
                 description = "$almanac_achievement_daredevil_desc",
                 lore = "$almanac_daredevil_lore",
                 sprite_name = "YagluthDrop",
-                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_spirit</color>\n$almanac_increase_stamina_by <color=orange>15</color>",
+                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_spirit</color>\n$almanac_increase_stamina_by <color=orange>5</color>",
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "DeathByEdge",
                 stop_message = "$almanac_removed_achievement_power",
                 resistance_modifier = "Spirit = Weak",
                 modifier = "BaseStamina",
-                modifier_value = 15f,
+                modifier_value = 5f,
                 goal = 1
             },
             new AchievementData()
@@ -1259,7 +1270,7 @@ public static class AchievementManager
                 resistance_modifier = "Fire = Weak",
                 modifier = "RangedDMG",
                 modifier_value = 5f,
-                goal = 5000
+                goal = 1000
             },
             new AchievementData()
             {
@@ -1336,7 +1347,7 @@ public static class AchievementManager
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "ModerKills",
                 stop_message = "$almanac_removed_achievement_power",
-                goal = 100,
+                goal = 25,
                 resistance_modifier = "Fire = Weak",
                 modifier = "FrostDMG",
                 modifier_value = 5f
@@ -1352,7 +1363,7 @@ public static class AchievementManager
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "BonemassKills",
                 stop_message = "$almanac_removed_achievement_power",
-                goal = 100,
+                goal = 25,
                 resistance_modifier = "Spirit = Weak",
                 modifier = "PoisonDMG",
                 modifier_value = 5f
@@ -1400,7 +1411,7 @@ public static class AchievementManager
                 stop_message = "$almanac_removed_achievement_power",
                 start_effects = new []{"sfx_coins_placed"},
                 achievement_type = "GhostKills",
-                goal = 100,
+                goal = 50,
                 resistance_modifier = "Spirit = Weak",
                 modifier = "SpiritDMG",
                 modifier_value = 5f
@@ -1498,6 +1509,7 @@ public static class AchievementManager
         public float modifier_value = 0f;
         public string activation_animation = "gpower";
         [FormerlySerializedAs("statusEffectDuration")] public int cooldown = 0;
+        public string defeat_key = "";
         public void Serialize(ref ZPackage pkg)
         {
             pkg.Write(unique_name);
@@ -1517,6 +1529,7 @@ public static class AchievementManager
             pkg.Write(modifier);
             pkg.Write(modifier_value);
             pkg.Write(activation_animation);
+            pkg.Write(defeat_key);
         }
 
         public void Deserialize(ref ZPackage pkg)
@@ -1540,7 +1553,7 @@ public static class AchievementManager
             modifier = pkg.ReadString();
             modifier_value = pkg.ReadSingle();
             activation_animation = pkg.ReadString();
-
+            defeat_key = pkg.ReadString();
         }
 
         public override bool Equals(object? obj)

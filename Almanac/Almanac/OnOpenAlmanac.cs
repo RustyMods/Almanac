@@ -10,6 +10,7 @@ using UnityEngine.UI;
 using YamlDotNet.Serialization;
 using static Almanac.Almanac.AchievementManager;
 using static Almanac.Almanac.AchievementsUI;
+using static Almanac.Almanac.Almanac;
 using static Almanac.Almanac.Almanac.CreateAlmanac;
 using static Almanac.Almanac.CustomStatusEffects;
 using static Almanac.Almanac.TrackPlayerStats;
@@ -38,7 +39,6 @@ public static class Patches
         // private static Transform materialPanel = null!;
         private static Transform AlmanacElement = null!;
         private static ButtonSfx buttonSfx = null!;
-        private static readonly List<CreatureDataCollector.CreatureData> creatures = new(Almanac.CreateAlmanac.creatures);
         private static readonly List<string> modifiersTags = new() { "blunt", "slash", "pierce", "chop", "pickaxe", "fire", "frost", "lightning", "poison", "spirit" };
         
         private static void Postfix(InventoryGui __instance)
@@ -93,15 +93,10 @@ public static class Patches
             }
 
             UpdatePlayerStats();
-            SetPlayerStats();
-
-            UpdateAchievements();
-            Transform? achievementPanel = trophyFrame.Find("achievementsPanel");
-            SetUnknownAchievements(achievementPanel);
-            foreach (AchievementsUI.Achievement achievement in registeredAchievements) SetAchievementsData(achievementsElement, achievement);
-
-            // To manipulate achievement panel size
-            achievementPanel.transform.localScale = new Vector3(_AchievementPanelSize.Value.x, _AchievementPanelSize.Value.y, 0f);
+            SetPlayerElementData(playerStatsElement);
+            SetMetricData();
+            
+            SetAchievementPanel();
         }
 
         private static void SetPlayerElementData(Transform parentElement)
@@ -340,7 +335,7 @@ public static class Patches
             SetAchievementGlow();
         }
 
-        public static void SetPlayerStats()
+        public static void SetAchievementPanel()
         {
             if (serverAchievementData.Value.Count != currentServerData.Count)
             {
@@ -363,11 +358,21 @@ public static class Patches
                     break;
                 }
             }
-            SetPlayerElementData(playerStatsElement);
-            SetPlayerPanel();
+            
+            int knownCount = registeredAchievements.FindAll(x => x.isCompleted).Count;
+            string countContent = $"<color=orange>{knownCount}</color>/{registeredAchievements.Count}";
+            SetTextElement(achievementsPanel, "numberOfItems", countContent);
+            
+            UpdateAchievements();
+            Transform? achievementPanel = trophyFrame.Find("achievementsPanel");
+            SetUnknownAchievements(achievementPanel);
+            foreach (AchievementsUI.Achievement achievement in registeredAchievements) SetAchievementsData(achievementsElement, achievement);
+
+            // To manipulate achievement panel size
+            achievementPanel.transform.localScale = new Vector3(_AchievementPanelSize.Value.x, _AchievementPanelSize.Value.y, 0f);
         }
 
-        private static void SetPlayerPanel()
+        private static void SetMetricData()
         {
             Transform panel = trophyFrame.Find("statsPanel");
             
@@ -462,6 +467,14 @@ public static class Patches
         public static void SetUnknownPieces(string id, List<GameObject> list)
         {
             Transform panel = trophyFrame.Find($"{id}Panel");
+            int knownCount = list.FindAll(x =>
+            {
+                x.TryGetComponent(out Piece piece);
+                if (!piece) return false;
+                return Player.m_localPlayer.IsRecipeKnown(piece.m_name);
+            }).Count;
+            string countContent = $"<color=orange>{knownCount}</color>/{list.Count}";
+            SetTextElement(panel.gameObject, "numberOfItems", countContent);
             for (int i = 0; i < list.Count; ++i)
             {
                 Transform container = panel.Find($"{id}Container ({i})");
@@ -560,7 +573,6 @@ public static class Patches
         public static void SetUnknownCreatures()
         {
             List<string> globalKeys = ZoneSystem.instance.GetGlobalKeys();
-            
             for (int i = 0; i < creatures.Count; ++i)
             {
                 Transform container = creaturePanel.Find($"CreatureContainer ({i})");
@@ -573,14 +585,7 @@ public static class Patches
                 
                 string prefab = creatures[i].name;
                 string defeatedKey = creatures[i].defeatedKey;
-                bool isWise = true;
-                
-                if (knowledgeLockToggle == On)
-                {
-                    isWise = globalKeys.Contains(defeatedKey);
-                }
-
-                if (Player.m_localPlayer.NoCostCheat()) isWise = true;
+                bool isWise = knowledgeLockToggle != On || globalKeys.Contains(defeatedKey) || Player.m_localPlayer.NoCostCheat();
                 
                 // Set values
                 button.interactable = isWise;
@@ -590,51 +595,51 @@ public static class Patches
                 text.color = isWise
                     ? Color.yellow
                     : Color.gray;
-                
                 // Check against blacklist
                 if (BlackList.CreatureBlackList.Value.Count == 0) continue;
                 SetBlackListByPage(container, "Creature", prefab, i, BlackListTypes.creatures);
             }
+
+            int knownCount = creatures.FindAll(x => globalKeys.Contains(x.defeatedKey)).Count;
+            string countContent =
+                $"<color=orange>{knownCount}</color>/{creatures.Count}";
+            SetTextElement(creaturePanel.gameObject, "numberOfItems", countContent);
         }
 
         public static void SetUnknownItems(string id, List<ItemDrop> list)
         {
+            Transform panel = trophyFrame.Find($"{id}Panel");
+            int knownCount = list.FindAll(x => Player.m_localPlayer.IsMaterialKnown(x.m_itemData.m_shared.m_name)).Count;
+            string countContent = $"<color=orange>{knownCount}</color>/{list.Count}";
+            SetTextElement(panel.gameObject, "numberOfItems", countContent);
             for (int i = 0; i < list.Count; ++i)
             {
-                try
-                {
-                    Transform panel = trophyFrame.Find($"{id}Panel");
-                    Transform container = panel.Find($"{id}Container ({i})");
-                    Transform icon = container.Find("iconObj");
-                    Transform hoverText = container.Find("hoverTextElement");
+                Transform container = panel.Find($"{id}Container ({i})");
+                Transform icon = container.Find("iconObj");
+                Transform hoverText = container.Find("hoverTextElement");
 
-                    icon.TryGetComponent(out Image iconImage);
-                    hoverText.TryGetComponent(out TextMeshProUGUI text);
-                    container.TryGetComponent(out Button button);
+                icon.TryGetComponent(out Image iconImage);
+                hoverText.TryGetComponent(out TextMeshProUGUI text);
+                container.TryGetComponent(out Button button);
 
-                    ItemDrop? data = list[i];
-                    if (!iconImage || !text || !button || !data) continue;
+                ItemDrop? data = list[i];
+                if (!iconImage || !text || !button || !data) continue;
 
-                    string prefab = list[i].name;
-                    string name = list[i].m_itemData.m_shared.m_name;
-                    string localizedName = Localization.instance.Localize(name);
-                    bool isKnown = Player.m_localPlayer.IsMaterialKnown(name) || Player.m_localPlayer.NoCostCheat();
+                string prefab = list[i].name;
+                string name = list[i].m_itemData.m_shared.m_name;
+                string localizedName = Localization.instance.Localize(name);
+                bool isKnown = Player.m_localPlayer.IsMaterialKnown(name) || Player.m_localPlayer.NoCostCheat();
 
-                    iconImage.color = knowledgeLockToggle == On
-                        ? (isKnown ? Color.white : Color.black)
-                        : Color.white;
-                    text.text = knowledgeLockToggle == On
-                        ? (isKnown ? localizedName : "???")
-                        : localizedName;
-                    button.interactable = knowledgeLockToggle != On || isKnown;
-                    // Check against blacklist
-                    if (BlackList.ItemBlackList.Value.Count == 0) continue;
-                    SetBlackListByPage(container, id, prefab, i, BlackListTypes.items);
-                }
-                catch (NullReferenceException)
-                {
-                    // Some fringe exceptions still looking to nail down
-                }
+                iconImage.color = knowledgeLockToggle == On
+                    ? (isKnown ? Color.white : Color.black)
+                    : Color.white;
+                text.text = knowledgeLockToggle == On
+                    ? (isKnown ? localizedName : "???")
+                    : localizedName;
+                button.interactable = knowledgeLockToggle != On || isKnown;
+                // Check against blacklist
+                if (BlackList.ItemBlackList.Value.Count == 0) continue;
+                SetBlackListByPage(container, id, prefab, i, BlackListTypes.items);
             }
         }
 
@@ -1575,7 +1580,188 @@ public static class Patches
         }
         public static void SetItemsData(GameObject Element, ItemDrop data)
         {
-            var sharedData = data.m_itemData.m_shared;
+            for (int i = 0; i < 5; ++i)
+            {
+                SetActiveElement(Element, "ImageElement", $"recipe ({i})", false);
+            }
+            
+            SetActiveElement(Element, "ImageElement", "craftingStation", false);
+            
+            // Set default values
+            SetTextElement(Element, "setDescription", "$almanac_not_part_of_set");
+            SetTextElement(Element, "setName", "");
+            SetTextElement(Element, "modifySkill", "");
+            SetTextElement(Element, "damageMod", "");
+            SetTextElement(Element, "floating", "$almanac_item_can_float");
+            
+            // Set values
+            GameObject item = data.gameObject;
+            item.TryGetComponent(out Floating floatingScript);
+            if (!floatingScript) SetTextElement(Element, "floating", "$almanac_item_can_not_float");
+            SetItemElementData(Element, data); // Set text and image data
+            // Set prefab button clipboard data
+            Transform? prefabButton = Element.transform.Find("ImageElement (prefabImage)");
+            prefabButton.TryGetComponent(out Button prefabImageButton);
+            if (prefabImageButton)
+            {
+                prefabImageButton.onClick.AddListener(() =>
+                {
+                    TextEditor textEditor = new TextEditor
+                    {
+                        text = data.name
+                    };
+                    textEditor.SelectAll();
+                    textEditor.Copy();
+                
+                    instance.ShowMessage(
+                        MessageType.Center, 
+                        Localization.instance.Localize("$almanac_copy_to_clipboard"));
+                });
+            }
+
+            Recipe recipe = ObjectDB.instance.GetRecipe(data.m_itemData);
+            // Set visibility of crafting station and recipe titles
+            SetActiveElement(Element, "TextElement", "recipeTitle", recipe);
+            SetActiveElement(Element, "TextElement", "recipeNull", !recipe);
+            if (recipe)
+            {
+                if (recipe.m_resources != null)
+                {
+                    Piece.Requirement[]? resources = recipe.m_resources;
+                    for (int i = 0; i < resources.Length; ++i)
+                    {
+                        if (i == 5) break;
+                        SetActiveElement(Element, "ImageElement", $"recipe ({i})", false);
+                        GameObject ResourceBackground = Element.transform.Find($"ImageElement (recipe ({i}))").gameObject;
+                        string resourceName = resources[i].m_resItem.m_itemData.m_shared.m_name;
+                        string localizedName = Localization.instance.Localize(resourceName);
+                        int resourceAmount = resources[i].m_amount;
+                        
+                        bool isKnown = Player.m_localPlayer.IsMaterialKnown(resourceName) || Player.m_localPlayer.NoCostCheat() || _KnowledgeLock.Value == Off;
+
+                        Sprite? resourceIcon = resources[i].m_resItem.m_itemData.GetIcon();
+                        SetTextElement(ResourceBackground, $"recipeAmount", $"{resourceAmount}");
+                        SetHoverableText(Element, $"recipe ({i})", isKnown ? localizedName : "???");
+
+                        if (resourceIcon) SetImageElement(ResourceBackground, "item", resourceIcon, isKnown ? Color.white : Color.black);
+                        
+                        SetActiveElement(Element, "ImageElement", $"recipe ({i})", true);
+                    }
+                }
+                if (recipe.m_craftingStation != null)
+                {
+                    CraftingStation? craftingStation = recipe.m_craftingStation;
+                
+                    Sprite? stationIcon = craftingStation.m_icon;
+                    if (stationIcon) SetImageElement(Element, "craftingStation", stationIcon, Color.white);
+                    SetHoverableText(Element, "craftingStation", $"{craftingStation.m_name}");
+                    SetActiveElement(Element, "ImageElement", "craftingStation", true);
+                }
+                else
+                {
+                    bool foundMatch = false;
+
+                    // Compare conversion tables of cooking stations to find a match for the item
+                    foreach (GameObject? station in cookingStations)
+                    {
+                        station.TryGetComponent(out Piece piece);
+                        station.TryGetComponent(out CookingStation script);
+                        if (!piece || !script) continue;
+                            
+                        foreach (CookingStation.ItemConversion conversion in script.m_conversion)
+                        {
+                            if (conversion.m_to != data) continue;
+                    
+                            string localizedName = Localization.instance.Localize(conversion.m_from.m_itemData.m_shared.m_name);
+                                
+                            SetImageElement(Element, "craftingStation", piece.m_icon, Color.white);
+                            SetHoverableText(Element, "craftingStation", $"{piece.m_name}");
+                            SetActiveElement(Element, "ImageElement", "craftingStation", true);
+                            GameObject ResourceBackground = Element.transform.Find($"ImageElement (recipe (0))").gameObject;
+                            SetImageElement(ResourceBackground, "item", conversion.m_from.m_itemData.GetIcon(), Color.white);
+                            SetHoverableText(Element, $"recipe (0)", localizedName);
+                            SetActiveElement(Element, "ImageElement", $"recipe (0)", true);
+                            SetTextElement(ResourceBackground, $"recipeAmount", "1");
+
+                            foundMatch = true;
+                            break;
+                        }
+                    }
+
+                    if (foundMatch == false)
+                    {
+                        // Compare conversion table of ferment stations to find a match
+                        foreach (GameObject? station in fermentingStations)
+                        {
+                            station.TryGetComponent(out Piece piece);
+                            station.TryGetComponent(out Fermenter script);
+                            if (!piece || !script) continue;
+                            
+                            foreach (Fermenter.ItemConversion conversion in script.m_conversion)
+                            {
+                                if (conversion.m_to != data) continue;
+                                SetImageElement(Element, "craftingStation", piece.m_icon, Color.white);
+                                SetHoverableText(Element, "craftingStation", $"{piece.m_name}");
+                                SetActiveElement(Element, "ImageElement", "craftingStation", true);
+                                GameObject ResourceBackground =
+                                    Element.transform.Find($"ImageElement (recipe (0))").gameObject;
+                                SetImageElement(ResourceBackground, "item",
+                                    conversion.m_from.m_itemData.m_shared.m_icons[0], Color.white);
+                                SetHoverableText(Element, $"recipe (0)",
+                                    Localization.instance.Localize(conversion.m_from.m_itemData.m_shared.m_name));
+                                SetActiveElement(Element, "ImageElement", $"recipe (0)", true);
+                                SetTextElement(ResourceBackground, $"recipeAmount", "1");
+                                foundMatch = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (foundMatch == false)
+                    {
+                        // Compare conversion table of smelter stations to find a match
+                        foreach (GameObject station in smelterStations)
+                        {
+                            station.TryGetComponent(out Piece piece);
+                            station.TryGetComponent(out Smelter script);
+                            if (!piece || !script) continue;
+                    
+                            foreach (Smelter.ItemConversion conversion in script.m_conversion)
+                            {
+                                if (conversion.m_to != data) continue;
+                                SetImageElement(Element, "craftingStation", piece.m_icon, Color.white);
+                                SetHoverableText(Element, "craftingStation", $"{piece.m_name}");
+                                SetActiveElement(Element, "ImageElement", "craftingStation", true);
+                                GameObject ore = Element.transform.Find($"ImageElement (recipe (0))").gameObject;
+                                SetImageElement(ore, "item",
+                                    conversion.m_from.m_itemData.GetIcon(), Color.white);
+                                SetHoverableText(Element, $"recipe (0)",
+                                    Localization.instance.Localize(conversion.m_from.m_itemData.m_shared.m_name));
+                                SetActiveElement(Element, "ImageElement", $"recipe (0)", true);
+                                SetTextElement(ore, $"recipeAmount", "1");
+                    
+                                if (script.m_fuelItem != null)
+                                {
+                                    GameObject fuel = Element.transform.Find($"ImageElement (recipe (1))").gameObject;
+                                    SetImageElement(fuel, "item",
+                                        script.m_fuelItem.m_itemData.GetIcon(), Color.white);
+                                    SetHoverableText(Element, $"recipe (1)",
+                                        Localization.instance.Localize(script.m_fuelItem.m_itemData.m_shared.m_name));
+                                    SetActiveElement(Element, "ImageElement", $"recipe (1)", true);
+                                    SetTextElement(fuel, $"recipeAmount", $"{script.m_fuelPerProduct}");
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            };
+        }
+
+        private static void SetItemElementData(GameObject Element, ItemDrop data)
+        {
+            ItemDrop.ItemData.SharedData? sharedData = data.m_itemData.m_shared;
+
             string name = Localization.instance.Localize(sharedData.m_name);
             string description = Localization.instance.Localize(sharedData.m_description);
             
@@ -1594,226 +1780,8 @@ public static class Patches
             float eitrRegenMod = sharedData.m_eitrRegenModifier * 100f;
             float staminaMod = sharedData.m_baseItemsStaminaModifier * 100f;
             bool teleportable = sharedData.m_teleportable;
-            
-            GameObject item = data.gameObject;
-            item.TryGetComponent(out Floating floatingScript);
 
-            bool itemFloats = floatingScript != null;
-
-            Recipe recipe = ObjectDB.instance.GetRecipe(data.m_itemData);
-            
-            // Set all data to default
-            SetActiveElement(Element, "TextElement", "recipeTitle", true);
-            SetActiveElement(Element, "TextElement", "recipeNull", false);
-            
-            for (int i = 0; i < 5; ++i)
-            {
-                SetActiveElement(Element, "ImageElement", $"recipe ({i})", false);
-            }
-            
-            SetActiveElement(Element, "ImageElement", "craftingStation", false);
-            
-            SetTextElement(Element, "setDescription", "$almanac_not_part_of_set");
-            SetTextElement(Element, "setName", "");
-            SetTextElement(Element, "modifySkill", "");
-            SetTextElement(Element, "damageMod", "");
-            SetTextElement(Element, "floating", "$almanac_item_can_float");
-            
-            if (!itemFloats) SetTextElement(Element, "floating", "$almanac_item_can_not_float");
-
-            try
-            {
-                // If data has a crafting station and resources
-                var resources = recipe.m_resources;
-                CraftingStation craftingStation = recipe.m_craftingStation;
-                Sprite stationIcon = craftingStation.m_icon;
-
-                SetImageElement(Element, "craftingStation", stationIcon, Color.white);
-                SetHoverableText(Element, "craftingStation", $"{craftingStation.m_name}");
-                SetActiveElement(Element, "ImageElement", "craftingStation", true);
-
-                for (int i = 0; i < 5; ++i)
-                {
-                    try
-                    {
-                        string resourceName = resources[i].m_resItem.m_itemData.m_shared.m_name;
-                        bool isKnown = Player.m_localPlayer.IsMaterialKnown(resourceName);
-                        if (Player.m_localPlayer.NoCostCheat()) isKnown = true;
-                        int resourceAmount = resources[i].m_amount;
-                        Sprite resourceIcon = resources[i].m_resItem.m_itemData.m_shared.m_icons[0];
-                        GameObject ResourceBackground =
-                            Element.transform.Find($"ImageElement (recipe ({i}))").gameObject;
-                        string localizedName = Localization.instance.Localize(resourceName);
-                        SetActiveElement(Element, "ImageElement", $"recipe ({i})", true);
-                        SetHoverableText(
-                            Element,
-                            $"recipe ({i})",
-                             isKnown 
-                                 ? localizedName
-                                 : _KnowledgeLock.Value == On ? "???" : localizedName
-                            );
-                        SetImageElement(
-                            ResourceBackground,
-                            "item", 
-                            resourceIcon, 
-                            isKnown 
-                                ? Color.white 
-                                : _KnowledgeLock.Value == On ? Color.black : Color.white
-                            );
-                        SetTextElement(ResourceBackground, $"recipeAmount", $"{resourceAmount}");
-                    }
-                    catch (IndexOutOfRangeException)
-                    {
-                        SetActiveElement(Element, "ImageElement", $"recipe ({i})", false);
-                    }
-                }
-            }
-            catch (NullReferenceException)
-            {
-                // if crafting station is a cooking station
-                foreach (var station in cookingStations)
-                {
-                    Piece piece = station.GetComponent<Piece>();
-                    CookingStation script = station.GetComponent<CookingStation>();
-                    foreach (CookingStation.ItemConversion conversion in script.m_conversion)
-                    {
-                        if (conversion.m_to == data)
-                        {
-                            SetImageElement(Element, "craftingStation", piece.m_icon, Color.white);
-                            SetHoverableText(Element, "craftingStation", $"{piece.m_name}");
-                            SetActiveElement(Element, "ImageElement", "craftingStation", true);
-                            GameObject ResourceBackground =
-                                Element.transform.Find($"ImageElement (recipe (0))").gameObject;
-                            SetImageElement(ResourceBackground, "item", conversion.m_from.m_itemData.m_shared.m_icons[0], Color.white);
-                            SetHoverableText(Element, $"recipe (0)", Localization.instance.Localize(conversion.m_from.m_itemData.m_shared.m_name));
-                            SetActiveElement(Element, "ImageElement", $"recipe (0)", true);
-                            SetTextElement(ResourceBackground, $"recipeAmount", "1");
-                            break;
-                        }
-                    }
-                }
-
-                Transform targetElement = Element.transform.Find("ImageElement (craftingStation)");
-                
-                if (!targetElement.gameObject.activeInHierarchy)
-                {
-                    // if crafting station is a fermenter
-                    foreach (var station in fermentingStations)
-                    {
-                        Piece piece = station.GetComponent<Piece>();
-                        Fermenter script = station.GetComponent<Fermenter>();
-                        foreach (Fermenter.ItemConversion conversion in script.m_conversion)
-                        {
-                            if (conversion.m_to == data)
-                            {
-                                SetImageElement(Element, "craftingStation", piece.m_icon, Color.white);
-                                SetHoverableText(Element, "craftingStation", $"{piece.m_name}");
-                                SetActiveElement(Element, "ImageElement", "craftingStation", true);
-                                GameObject ResourceBackground =
-                                    Element.transform.Find($"ImageElement (recipe (0))").gameObject;
-                                SetImageElement(ResourceBackground, "item",
-                                    conversion.m_from.m_itemData.m_shared.m_icons[0], Color.white);
-                                SetHoverableText(Element, $"recipe (0)",
-                                    Localization.instance.Localize(conversion.m_from.m_itemData.m_shared.m_name));
-                                SetActiveElement(Element, "ImageElement", $"recipe (0)", true);
-                                SetTextElement(ResourceBackground, $"recipeAmount", "1");
-                                break;
-                            }
-                        }
-                    }
-                }
-                
-                if (!targetElement.gameObject.activeInHierarchy)
-                {
-                    // if crafting station is a smelter
-                    foreach (GameObject station in smelterStations)
-                    {
-                        Piece piece = station.GetComponent<Piece>();
-                        Smelter script = station.GetComponent<Smelter>();
-                        foreach (Smelter.ItemConversion conversion in script.m_conversion)
-                        {
-                            if (conversion.m_to == data)
-                            {
-                                SetImageElement(Element, "craftingStation", piece.m_icon, Color.white);
-                                SetHoverableText(Element, "craftingStation", $"{piece.m_name}");
-                                SetActiveElement(Element, "ImageElement", "craftingStation", true);
-                                GameObject ore = Element.transform.Find($"ImageElement (recipe (0))").gameObject;
-                                SetImageElement(ore, "item",
-                                    conversion.m_from.m_itemData.m_shared.m_icons[0], Color.white);
-                                SetHoverableText(Element, $"recipe (0)",
-                                    Localization.instance.Localize(conversion.m_from.m_itemData.m_shared.m_name));
-                                SetActiveElement(Element, "ImageElement", $"recipe (0)", true);
-                                SetTextElement(ore, $"recipeAmount", "1");
-
-                                if (script.m_fuelItem != null)
-                                {
-                                    GameObject fuel = Element.transform.Find($"ImageElement (recipe (1))").gameObject;
-                                    SetImageElement(fuel, "item",
-                                        script.m_fuelItem.m_itemData.m_shared.m_icons[0], Color.white);
-                                    SetHoverableText(Element, $"recipe (1)",
-                                        Localization.instance.Localize(script.m_fuelItem.m_itemData.m_shared.m_name));
-                                    SetActiveElement(Element, "ImageElement", $"recipe (1)", true);
-                                    SetTextElement(fuel, $"recipeAmount", $"{script.m_fuelPerProduct}");
-                                }
-                                break;
-                            }
-                        }
-                    }
-                }
-                
-                if (!targetElement.gameObject.activeInHierarchy)
-                {
-                    try
-                    {
-                        // if craft is made on player
-                        var resources = recipe.m_resources;
-                        for (int i = 0; i < 5; ++i)
-                        {
-                            try
-                            {
-                                string resourceName = resources[i].m_resItem.m_itemData.m_shared.m_name;
-                                var resourceAmount = resources[i].m_amount;
-                                Sprite resourceIcon = resources[i].m_resItem.m_itemData.m_shared.m_icons[0];
-                                GameObject ResourceBackground =
-                                    Element.transform.Find($"ImageElement (recipe ({i}))").gameObject;
-
-                                SetActiveElement(Element, "ImageElement", $"recipe ({i})", true);
-                                SetHoverableText(Element, $"recipe ({i})",
-                                    Localization.instance.Localize(resourceName));
-                                SetImageElement(ResourceBackground, "item", resourceIcon, Color.white);
-                                SetTextElement(ResourceBackground, $"recipeAmount", $"{resourceAmount}");
-                            }
-                            catch (IndexOutOfRangeException)
-                            {
-                                SetActiveElement(Element, "ImageElement", $"recipe ({i})", false);
-                            }
-                        }
-                    }
-                    catch (NullReferenceException)
-                    {
-                        SetActiveElement(Element, "TextElement", "recipeTitle", false);
-                        SetActiveElement(Element, "TextElement", "recipeNull", true);
-                    }
-                }
-            }
-
-            Sprite sprite = sharedData.m_icons[0];
-            
-            Button prefabImageButton = Element.transform.Find("ImageElement (prefabImage)").GetComponent<Button>();
-            prefabImageButton.onClick.AddListener(() =>
-            {
-                TextEditor textEditor = new TextEditor
-                {
-                    text = data.name
-                };
-                textEditor.SelectAll();
-                textEditor.Copy();
-                
-                instance.ShowMessage(
-                    MessageType.Center, 
-                    Localization.instance.Localize("$almanac_copy_to_clipboard"));
-            });
-            
+            Sprite? sprite = data.m_itemData.GetIcon();
             Dictionary<string, string> staticTextData = new Dictionary<string, string>
             {
                 { "Name", name },
@@ -2040,7 +2008,7 @@ public static class Patches
                 SetTextElement(Element, weaponAttackInfo.Key, weaponAttackInfo.Value);
             }
             // Fish
-            item.TryGetComponent(out Fish fishScript);
+            data.gameObject.TryGetComponent(out Fish fishScript);
             if (fishScript != null)
             {
                 SetImageElement(
@@ -2427,7 +2395,7 @@ public static class Patches
         public static void SetCreatureData(GameObject dummyElement, string creatureName, Image trophyIcon = null!, string prefabName = "")
         {
             Player player = Player.m_localPlayer;
-            List<CreatureDataCollector.CreatureData> creatureData = Almanac.CreateAlmanac.creatures;
+            List<CreatureDataCollector.CreatureData> creatureData = CreateAlmanac.creatures;
             CreatureDataCollector.CreatureData creature = getCreature(creatureData, creatureName, prefabName);
 
             Transform? clipBoard = dummyElement.transform.Find("ImageElement (Clipboard)");
@@ -2479,7 +2447,7 @@ public static class Patches
             SetTextElement(dummyElement, "poison", $"{creature.poison}");
             SetTextElement(dummyElement, "spirit", $"{creature.spirit}");
 
-            for (var index = 0; index < 7; ++index)
+            for (int index = 0; index < 7; ++index)
             {
                 Transform dropBgElement = dummyElement.transform.Find($"ImageElement (dropIconBg ({index}))");
                 try

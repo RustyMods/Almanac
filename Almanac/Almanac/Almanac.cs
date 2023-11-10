@@ -6,6 +6,7 @@ using HarmonyLib;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static Almanac.Almanac.Almanac.CreateAlmanac;
 using static Almanac.Almanac.Patches.OnOpenTrophiesPatch;
 using GameObject = UnityEngine.GameObject;
 using Vector2 = UnityEngine.Vector2;
@@ -24,6 +25,8 @@ public static class Almanac
         private static Button closeButtonScript = null!;
         private static ButtonSfx closeButtonSfx = null!;
         private static TMP_FontAsset font = null!;
+        private static Material fontMaterial = null!;
+        private static Material fontSharedMat = null!;
         private static Image closeButtonImage = null!;
         private static Image borderImage = null!;
         private static Image iconBg = null!;
@@ -84,8 +87,10 @@ public static class Almanac
 
         private static Vector2 FrameSize;
         private static Image buttonGlow = null!;
-        
 
+        private static Image birdIcon = null!;
+        private static Sprite guardstoneSprite = null!;
+        private static Sprite borderSprite = null!;
 
         private static readonly List<string> otherIDs = new()
         {
@@ -101,14 +106,14 @@ public static class Almanac
             AchievementManager.InitSyncedAchievementData();
             if (AlmanacPlugin.WorkingAsType == AlmanacPlugin.WorkingAs.Server) return;
             
-            SetInitialData(__instance);
+            CacheInitialData(__instance);
             AchievementsUI.RegisterAchievements();
             EditInventoryGUI();
             RepositionTrophyPanel(-220f, 0f);
             CreateAllPanels();
         }
         
-        private static void SetInitialData(InventoryGui __instance)
+        private static void CacheInitialData(InventoryGui __instance)
         {
             root = __instance.gameObject.transform.Find("root").gameObject;
             trophyElement = __instance.m_trophieElementPrefab;
@@ -122,6 +127,8 @@ public static class Almanac
             Transform border = TrophiesFrame.Find("border (1)");
             Transform weightIconElement = __instance.m_player.Find("Weight").Find("weight_icon");
             Transform armorIconElement = __instance.m_player.Find("Armor").Find("armor_icon");
+            Transform compendiumIconElement = root.transform.Find("Info").Find("Texts").Find("Icon");
+            Transform compendiumBg = root.transform.Find("Texts").Find("Texts_frame").Find("bkg");
             
             closeButtonText.TryGetComponent(out TextMeshProUGUI textMesh);
             closeButton.TryGetComponent(out Button button);
@@ -132,6 +139,8 @@ public static class Almanac
             weightIconElement.TryGetComponent(out Image weightImg);
             armorIconElement.TryGetComponent(out Image armorImg);
             TrophiesFrame.TryGetComponent(out RectTransform frameRect);
+            compendiumIconElement.TryGetComponent(out Image birdImage);
+            compendiumBg.TryGetComponent(out Image compendiumImage);
 
             if (!textMesh || !button || !buttonSfx || !buttonImage || !iconImage || !borderImg || !weightImg || !armorImg) return;
             
@@ -144,6 +153,11 @@ public static class Almanac
             weightIcon = weightImg;
             armorIcon = armorImg;
             FrameSize = frameRect.sizeDelta;
+            birdIcon = birdImage;
+            borderSprite = borderImg.sprite;
+            guardstoneSprite = compendiumImage.sprite;
+            fontMaterial = textMesh.fontMaterial;
+            fontSharedMat = textMesh.fontSharedMaterial;
             
             PieceDataCollector.GetBuildPieces();
 
@@ -248,6 +262,11 @@ public static class Almanac
             rectTransform.sizeDelta = new Vector2(1260f, 650f);
             
             Image backgroundImage = background.AddComponent<Image>();
+            
+            CreateTextElement(panel.transform, "numberOfItems", "$almanac_na",
+                610f, 355f, 100f, 50f,
+                Color.white, 15, true, TextOverflowModes.Overflow,
+                HorizontalAlignmentOptions.Center, VerticalAlignmentOptions.Middle, TextWrappingModes.NoWrap);
             
             trophies.TryGetComponent(out Image trophiesImage);
             if (!trophiesImage) return panel;
@@ -382,6 +401,7 @@ public static class Almanac
                 {
                     case "jewelcrafting": if (jewelCraftingLoaded) CreatePanel(kvp.Key, kvp.Value); break;
                     case "gear": CreatePanel(kvp.Key, jewelCraftingLoaded ? filteredGear : kvp.Value); break;
+                    case "material": CreatePanel(kvp.Key, jewelCraftingLoaded ? filteredMaterials : kvp.Value); break;
                     default: CreatePanel(kvp.Key, kvp.Value); break;
                 }
             }
@@ -629,6 +649,7 @@ public static class Almanac
                 case "plantPieces": SetUnknownPieces(name, plantPieces); break;
                 case "modPieces": SetUnknownPieces(name, modPieces); break;
                 case "creature": SetUnknownCreatures(); break;
+                case "jewelcrafting": SetUnknownItems(name, jewels); break;
                 case "comfortPieces": SetUnknownPieces(name, PieceDataCollector.comfortPieces); break;
                 case "achievements": break;
                 case "stats": break;
@@ -638,9 +659,11 @@ public static class Almanac
         {
             Transform topic = TrophiesFrame.Find("topic");
             Transform trophies = TrophiesFrame.Find("Trophies");
+            Transform border = TrophiesFrame.Find("border (1)");
 
+            border.TryGetComponent(out Image panelImage);
             topic.TryGetComponent(out TextMeshProUGUI textMesh);
-            if (!textMesh) return;
+            if (!textMesh || !panelImage) return;
             
             List<string> topicNames = new List<string>()
             {
@@ -678,8 +701,19 @@ public static class Almanac
             if (name == "stats")
             {
                 SetActivePanelElement(name);
-                SetPlayerStats();
+                SetAchievementPanel();
             }
+            // Set panel background
+            switch (name)
+            {
+                case "stats":
+                    panelImage.sprite = guardstoneSprite;
+                    break;
+                default:
+                    panelImage.sprite = borderSprite;
+                    break;
+            }
+            
 
         }
         private static void CreatePiecesPanel(string id, List<GameObject> list)
@@ -729,6 +763,11 @@ public static class Almanac
             {
                 CreatePageButtons(panel.transform, i, 72, $"{id}Container", list);
             }
+            
+            CreateTextElement(panel.transform, "numberOfItems", "$almanac_na",
+                610f, 355f, 100f, 50f,
+                Color.white, 15, true, TextOverflowModes.Overflow,
+                HorizontalAlignmentOptions.Center, VerticalAlignmentOptions.Middle, TextWrappingModes.NoWrap);
         }
         private static GameObject CreatePanel(string id, List<ItemDrop> list)
         {
@@ -784,6 +823,11 @@ public static class Almanac
             {
                 CreatePageButtons(panel.transform, i, 72, $"{id}Container", list);
             }
+            
+            CreateTextElement(panel.transform, "numberOfItems", "$almanac_na",
+                610f, 355f, 100f, 50f,
+                Color.white, 15, true, TextOverflowModes.Overflow,
+                HorizontalAlignmentOptions.Center, VerticalAlignmentOptions.Middle, TextWrappingModes.NoWrap);
 
             return panel;
         }
@@ -1132,6 +1176,8 @@ public static class Almanac
             image.pixelsPerUnitMultiplier = 1f;
             image.color = iconBg.color;
 
+            container.AddComponent<Shadow>();
+
             GameObject iconObj = new GameObject("iconObj");
             RectTransform iconRect = iconObj.AddComponent<RectTransform>();
             iconRect.SetParent(container.transform);
@@ -1142,6 +1188,8 @@ public static class Almanac
             iconImage.sprite = iconSprite;
             iconImage.color = new Color(1f, 1f, 1f, 1f);
             iconImage.pixelsPerUnitMultiplier = 1f;
+
+            iconObj.AddComponent<Shadow>();
             
             AddHoverableText(container, name, 16, anchoredY: -50f);
             
@@ -1297,6 +1345,11 @@ public static class Almanac
             backgroundImage.maskable = true;
             
             CreateCreatureContainers(creaturePanel.transform);
+
+            CreateTextElement(creaturePanel.transform, "numberOfItems", "$almanac_na",
+                610f, 355f, 100f, 50f,
+                Color.white, 15, true, TextOverflowModes.Overflow,
+                HorizontalAlignmentOptions.Center, VerticalAlignmentOptions.Middle, TextWrappingModes.NoWrap);
         }
 
         private static void CreateCreaturePageButtons(Transform parentElement, int index)

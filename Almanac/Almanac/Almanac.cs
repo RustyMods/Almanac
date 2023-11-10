@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using Almanac.MonoBehaviors;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using static Almanac.Almanac.Almanac.CreateAlmanac;
 using static Almanac.Almanac.Patches.OnOpenTrophiesPatch;
@@ -26,8 +28,6 @@ public static class Almanac
         private static Button closeButtonScript = null!;
         private static ButtonSfx closeButtonSfx = null!;
         private static TMP_FontAsset font = null!;
-        private static Material fontMaterial = null!;
-        private static Material fontSharedMat = null!;
         private static Image closeButtonImage = null!;
         private static Image borderImage = null!;
         private static Image iconBg = null!;
@@ -90,7 +90,7 @@ public static class Almanac
         private static Image buttonGlow = null!;
 
         private static Image birdIcon = null!;
-        private static Sprite guardstoneSprite = null!;
+        private static Sprite guardStoneSprite = null!;
         private static Sprite borderSprite = null!;
 
         private static readonly List<string> otherIDs = new()
@@ -106,31 +106,38 @@ public static class Almanac
             if (!__instance) return;
             AchievementManager.InitSyncedAchievementData();
             if (AlmanacPlugin.WorkingAsType == AlmanacPlugin.WorkingAs.Server) return;
-            
+
             CacheInitialData(__instance);
+
             AchievementsUI.RegisterAchievements();
             EditInventoryGUI();
             RepositionTrophyPanel(-220f, 0f);
             CreateAllPanels();
+            
+            TrophiesPanel.TryGetComponent(out UIGroupHandler groupHandler);
+            if (groupHandler)
+            {
+                groupHandler.m_defaultElement = TrophiesFrame.gameObject;
+            }
         }
 
-        public static Transform TryCatchFind(Transform parentElement, string id)
+        private static Transform TryCatchFind(Transform parentElement, string id)
         {
             if (parentElement == null)
             {
-                AlmanacPlugin.AlmanacLogger.LogWarning($"Invalid parent element of : {id}");
+                AlmanacPlugin.AlmanacLogger.LogDebug($"Invalid parent element of : {id}");
                 return InventoryGui.instance.m_info;
             }
             try
             {
                 Transform? result = parentElement.Find(id);
                 if (result) return result;
-                AlmanacPlugin.AlmanacLogger.LogInfo($"Failed to find UI element {id}");
+                AlmanacPlugin.AlmanacLogger.LogDebug($"Failed to find UI element {id}");
                 return parentElement;
             }
             catch (Exception e)
             {
-                AlmanacPlugin.AlmanacLogger.LogWarning($"Failed to find child of {parentElement.name} : {id}");
+                AlmanacPlugin.AlmanacLogger.LogDebug($"Failed to find child of {parentElement.name} : {id}");
                 Debug.LogWarning(e.Message);
                 return parentElement;
             }
@@ -143,7 +150,6 @@ public static class Almanac
             TrophiesPanel = __instance.m_trophiesPanel.transform;
             TrophiesFrame = TryCatchFind(TrophiesPanel, "TrophiesFrame");
             buttonGlow = __instance.m_repairButtonGlow;
-
             Transform closeButton = TryCatchFind(TrophiesFrame, "Closebutton");
             Transform closeButtonText = TryCatchFind(closeButton, "Text");
             Transform iconBkg = TryCatchFind(trophyElement.transform, "icon_bkg");
@@ -182,7 +188,7 @@ public static class Almanac
             if (frameRect) FrameSize = frameRect.sizeDelta;
             if (birdImage) birdIcon = birdImage;
             if (borderImg) borderSprite = borderImg.sprite;
-            if (compendiumImage) guardstoneSprite = compendiumImage.sprite;
+            if (compendiumImage) guardStoneSprite = compendiumImage.sprite;
 
             PieceDataCollector.GetBuildPieces();
 
@@ -679,7 +685,7 @@ public static class Almanac
                 case "stats": break;
             }
         }
-        private static void SetTopic(string name)
+        public static void SetTopic(string name)
         {
             Transform topic = TrophiesFrame.Find("topic");
             Transform trophies = TrophiesFrame.Find("Trophies");
@@ -717,6 +723,7 @@ public static class Almanac
                 if (!panel) continue;
                 panel.gameObject.SetActive(topicName == name);
             }
+
             // Set trophy panel
             trophies.gameObject.SetActive(name == "trophies");
             // Set topic title
@@ -731,14 +738,12 @@ public static class Almanac
             switch (name)
             {
                 case "stats":
-                    panelImage.sprite = guardstoneSprite;
+                    panelImage.sprite = guardStoneSprite;
                     break;
                 default:
                     panelImage.sprite = borderSprite;
                     break;
             }
-            
-
         }
         private static void CreatePiecesPanel(string id, List<GameObject> list)
         {
@@ -852,6 +857,9 @@ public static class Almanac
                 610f, 355f, 100f, 50f,
                 Color.white, 15, true, TextOverflowModes.Overflow,
                 HorizontalAlignmentOptions.Center, VerticalAlignmentOptions.Middle, TextWrappingModes.NoWrap);
+
+            UIGroupHandler groupHandler = panel.AddComponent<UIGroupHandler>();
+            groupHandler.m_defaultElement = panel.transform.Find("Button (0)").gameObject;
 
             return panel;
         }
@@ -1200,7 +1208,18 @@ public static class Almanac
             image.pixelsPerUnitMultiplier = 1f;
             image.color = iconBg.color;
 
-            container.AddComponent<Shadow>();
+            // GameObject containerGlow = new GameObject("glow");
+            // RectTransform glowRect = containerGlow.AddComponent<RectTransform>();
+            // glowRect.SetParent(container.transform);
+            // glowRect.anchoredPosition = Vector2.zero;
+            // glowRect.sizeDelta = new Vector2(90f, 100f);
+            //
+            // Image glowImage = containerGlow.AddComponent<Image>();
+            // glowImage.sprite = buttonGlow.sprite;
+            // glowImage.material = buttonGlow.material;
+            // glowImage.color = new Color(0f, 0.5f, 1f, 1f);
+            //
+            // containerGlow.SetActive(false);
 
             GameObject iconObj = new GameObject("iconObj");
             RectTransform iconRect = iconObj.AddComponent<RectTransform>();

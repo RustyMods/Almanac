@@ -131,6 +131,7 @@
         <Compile Include="Almanac\CustomStatusEffects.cs" />
         <Compile Include="Almanac\FileSystem.cs" />
         <Compile Include="Almanac\FixTrophiesPositions.cs" />
+        <Compile Include="Almanac\GamePadUI.cs" />
         <Compile Include="Almanac\ItemDataCollector.cs" />
         <Compile Include="Almanac\Leaderboard.cs" />
         <Compile Include="Almanac\OnCloseAlmanac.cs" />

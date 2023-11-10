@@ -602,8 +602,7 @@ public static class Patches
             }
 
             int knownCount = creatures.FindAll(x => globalKeys.Contains(x.defeatedKey)).Count;
-            string countContent =
-                $"<color=orange>{knownCount}</color>/{creatures.Count}";
+            string countContent = $"<color=orange>{knownCount}</color>/{creatures.Count}";
             SetTextElement(creaturePanel.gameObject, "numberOfItems", countContent);
         }
 

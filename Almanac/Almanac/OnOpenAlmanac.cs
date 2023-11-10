@@ -45,7 +45,7 @@ public static class Patches
         {
             if (!__instance) return;
             if (WorkingAsType == WorkingAs.Server) return;
-            
+            GamePadUI.AlmanacActive = true;
             CacheInitialData(__instance);
             
             foreach (GameObject trophy in trophyList) AddButtonComponent(trophy);

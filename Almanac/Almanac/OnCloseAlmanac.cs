@@ -14,6 +14,7 @@ static class OnCloseAlmanac
         {
             if (!__instance) return;
             if (WorkingAsType == WorkingAs.Server) return;
+            GamePadUI.AlmanacActive = false;
             
             Transform trophyFrame = __instance.m_trophiesPanel.transform.Find("TrophiesFrame");
             Transform contentPanel = trophyFrame.transform.Find("ContentPanel");

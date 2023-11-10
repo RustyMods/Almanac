@@ -93,14 +93,31 @@ public static class Almanac
         private static Sprite guardStoneSprite = null!;
         private static Sprite borderSprite = null!;
 
-        private static readonly List<string> otherIDs = new()
-        {
-            "achievements",
-            "stats",
-            "trophies",
-            "creature"
-        };
+        private static Image selectedFrame = null!;
 
+        public static GameObject ElementSelectFrame = null!;
+        public static GameObject TrophyListScroll = null!;
+        public static GameObject AlmanacScrollBar = null!;
+
+        public static GameObject jewelTab = null!;
+        public static GameObject fishTab = null!;
+        public static GameObject ammoTab = null!;
+        public static GameObject weaponTab = null!;
+        public static GameObject gearTab = null!;
+        public static GameObject consumeTab = null!;
+        public static GameObject materialTab = null!;
+        public static GameObject trophyTab = null!;
+        public static GameObject creatureTab = null!;
+        public static GameObject achievementTab = null!;
+        public static GameObject metricTab = null!;
+        public static GameObject miscTab = null!;
+        public static GameObject craftTab = null!;
+        public static GameObject buildTab = null!;
+        public static GameObject furnitureTab = null!;
+        public static GameObject plantTab = null!;
+        public static GameObject otherTab = null!;
+        public static GameObject comfortTab = null!;
+        public static GameObject modTab = null!;
         public static void Postfix(InventoryGui __instance)
         {
             if (!__instance) return;
@@ -164,6 +181,9 @@ public static class Almanac
             Transform compendium = TryCatchFind(root.transform, "Texts");
             Transform compendiumFrame = TryCatchFind(compendium, "Texts_frame");
             Transform compendiumBg = TryCatchFind(compendiumFrame, "bkg");
+            Transform frame = TryCatchFind(info, "selected_frame");
+            Transform trophiesContainer = TryCatchFind(TrophiesFrame, "Trophies");
+            TrophyListScroll = TryCatchFind(trophiesContainer, "TrophyListScroll").gameObject;
             
             closeButtonText.TryGetComponent(out TextMeshProUGUI textMesh);
             closeButton.TryGetComponent(out Button button);
@@ -176,6 +196,7 @@ public static class Almanac
             TrophiesFrame.TryGetComponent(out RectTransform frameRect);
             compendiumIconElement.TryGetComponent(out Image birdImage);
             compendiumBg.TryGetComponent(out Image compendiumImage);
+            frame.TryGetComponent(out Image selectFrame);
             
             if (textMesh) font = textMesh.font;
             if (button) closeButtonScript = button;
@@ -189,6 +210,7 @@ public static class Almanac
             if (birdImage) birdIcon = birdImage;
             if (borderImg) borderSprite = borderImg.sprite;
             if (compendiumImage) guardStoneSprite = compendiumImage.sprite;
+            if (frame) selectedFrame = selectFrame;
 
             PieceDataCollector.GetBuildPieces();
 
@@ -265,7 +287,7 @@ public static class Almanac
             Transform info = Utils.FindChild(root.transform, "Info");
             Transform trophiesOpenButton = Utils.FindChild(info, "Trophies");
             Transform image = Utils.FindChild(trophiesOpenButton, "Image");
-            
+
             trophiesOpenButton.TryGetComponent(out UITooltip openTrophiesToolTip);
             image.TryGetComponent(out Image trophiesOpenImage);
             
@@ -443,31 +465,31 @@ public static class Almanac
             achievementsPanel = CreateAchievementsPanel("achievements", AchievementsUI.registeredAchievements);
             CreatePlayerStatsPanel("stats");
 
-            CreateTabs("fishButton", "fish", -760f, 425f);
-            CreateTabs("ammoButton", "ammo", -605f, 425f);
-            CreateTabs("weaponButton", "weapon", -450f, 425f);
-            CreateTabs("gearButton", "gear", -295f, 425f);
-            CreateTabs("ConsummableButton", "consummable", -140f, 425f);
-            CreateTabs("MaterialButton", "material", 15f, 425f);
-            CreateTabs("TrophiesButton", "trophies", 170f, 425f);
-            CreateTabs("CreatureButton", "creature", 325f, 425f);
+            fishTab = CreateTabs("fishButton", "fish", -760f, 425f);
+            ammoTab = CreateTabs("ammoButton", "ammo", -605f, 425f);
+            weaponTab = CreateTabs("weaponButton", "weapon", -450f, 425f);
+            gearTab = CreateTabs("gearButton", "gear", -295f, 425f);
+            consumeTab = CreateTabs("ConsummableButton", "consummable", -140f, 425f);
+            materialTab = CreateTabs("MaterialButton", "material", 15f, 425f);
+            trophyTab = CreateTabs("TrophiesButton", "trophies", 170f, 425f);
+            creatureTab = CreateTabs("CreatureButton", "creature", 325f, 425f);
             
-            CreateTabs("miscPiecesButton", "miscPieces", -760f, -425f);
-            CreateTabs("craftingPiecesButton", "craftingPieces", -605f, -425f);
-            CreateTabs("buildPiecesButton", "buildPieces", -450f, -425f);
-            CreateTabs("furniturePiecesButton", "furniturePieces", -295f, -425f);
-            CreateTabs("plantPiecesButton", "plantPieces", -140f, -425f);
+            miscTab = CreateTabs("miscPiecesButton", "miscPieces", -760f, -425f);
+            craftTab = CreateTabs("craftingPiecesButton", "craftingPieces", -605f, -425f);
+            buildTab = CreateTabs("buildPiecesButton", "buildPieces", -450f, -425f);
+            furnitureTab = CreateTabs("furniturePiecesButton", "furniturePieces", -295f, -425f);
+            plantTab = CreateTabs("plantPiecesButton", "plantPieces", -140f, -425f);
             
-            CreateTabs("comfortPiecesButton", "comfortPieces", -295f, -478f);
+            comfortTab = CreateTabs("comfortPiecesButton", "comfortPieces", -295f, -478f);
             
-            CreateTabs("defaultPiecesButton", "other", 15f, -425f);
+            otherTab = CreateTabs("defaultPiecesButton", "other", 15f, -425f);
             
-            if (modPieces.Count > 0) CreateTabs("modPiecesButton", "modPieces", 170f, -425f);
+            if (modPieces.Count > 0) modTab = CreateTabs("modPiecesButton", "modPieces", 170f, -425f);
             
-            CreateTabs("achievementsButton", "achievements", 585f, 425f);
-            CreateTabs("playerStatsButton", "stats", 740f, 425f);
+            achievementTab = CreateTabs("achievementsButton", "achievements", 585f, 425f);
+            metricTab = CreateTabs("playerStatsButton", "stats", 740f, 425f);
 
-            if (jewelCraftingLoaded) CreateTabs("jewelcraftingButton", "jewelcrafting", -760f, 477f);
+            if (jewelCraftingLoaded) jewelTab = CreateTabs("jewelcraftingButton", "jewelcrafting", -760f, 477f);
         }
 
         private static void CreatePlayerStatsPanel(string id)
@@ -604,7 +626,7 @@ public static class Almanac
                 );
             }
         }
-        private static void CreateTabs(string id, string name, float anchorX, float anchorY)
+        private static GameObject CreateTabs(string id, string name, float anchorX, float anchorY)
         {
             GameObject tabButton = new GameObject(id);
             RectTransform buttonRectTransform = tabButton.AddComponent<RectTransform>();
@@ -659,6 +681,8 @@ public static class Almanac
 
             ButtonSfx sfx = tabButton.AddComponent<ButtonSfx>();
             sfx.m_sfxPrefab = closeButtonSfx.m_sfxPrefab;
+
+            return tabButton;
         }
 
         private static void SetUnknown(string name)
@@ -857,9 +881,6 @@ public static class Almanac
                 610f, 355f, 100f, 50f,
                 Color.white, 15, true, TextOverflowModes.Overflow,
                 HorizontalAlignmentOptions.Center, VerticalAlignmentOptions.Middle, TextWrappingModes.NoWrap);
-
-            UIGroupHandler groupHandler = panel.AddComponent<UIGroupHandler>();
-            groupHandler.m_defaultElement = panel.transform.Find("Button (0)").gameObject;
 
             return panel;
         }
@@ -1589,8 +1610,9 @@ public static class Almanac
 
             CreateBorder(position);
             GameObject AlmanacContentPanel = CreateContentPanel(position);
-            GameObject AlmanacScroll = CreateScrollElement(AlmanacContentPanel.transform, 190f, 0f);
-            GameObject AlmanacSlidingArea = CreateSlidingArea(AlmanacScroll.transform);
+
+            AlmanacScrollBar = CreateScrollElement(AlmanacContentPanel.transform, 190f, 0f);
+            GameObject AlmanacSlidingArea = CreateSlidingArea(AlmanacScrollBar.transform);
             GameObject AlmanacScrollHandle = CreateScrollHandle(AlmanacSlidingArea.transform);
             GameObject AlmanacList = CreateList(AlmanacContentPanel.transform);
             
@@ -1647,7 +1669,8 @@ public static class Almanac
             
             creatureRectTransform = AlmanacElement.GetComponent<RectTransform>();
 
-            Scrollbar scrollbar = AddScrollbarComponent(AlmanacScroll, AlmanacScrollHandle);
+            Scrollbar scrollbar = AddScrollbarComponent(AlmanacScrollBar, AlmanacScrollHandle);
+            
             GameObject AlmanacListRoot = CreateListRoot(AlmanacList.transform);
 
             AddListScrollRect(AlmanacList, AlmanacListRoot, scrollbar);
@@ -1690,6 +1713,26 @@ public static class Almanac
 
         private static void CreateBorder(Vector2 pos)
         {
+            GameObject selectElementFrame = new GameObject("select_frame");
+            RectTransform selectRect = selectElementFrame.AddComponent<RectTransform>();
+            selectRect.SetParent(TrophiesFrame);
+            selectRect.anchoredPosition = pos;
+            selectRect.sizeDelta = new Vector2(410f, 810f);
+
+            Image selectImage = selectElementFrame.AddComponent<Image>();
+            selectImage.sprite = selectedFrame.sprite;
+            selectImage.color = selectedFrame.color;
+            selectImage.maskable = true;
+            selectImage.useSpriteMesh = true;
+            selectImage.raycastTarget = true;
+            selectImage.type = Image.Type.Sliced;
+            selectImage.fillCenter = true;
+            selectImage.pixelsPerUnitMultiplier = 1f;
+            
+            selectElementFrame.SetActive(false);
+
+            ElementSelectFrame = selectElementFrame;
+            
             GameObject AlmanacBorder = new GameObject("Border");
 
             RectTransform AlmanacBorderRectTransform = AlmanacBorder.AddComponent<RectTransform>();
@@ -1724,6 +1767,8 @@ public static class Almanac
 
             Image AlmanacContentImage = AlmanacContentPanel.AddComponent<Image>();
             AlmanacContentImage.color = new Color(0f, 0f, 0f, 0.8f);
+            
+            
 
             return AlmanacContentPanel;
         }
@@ -3029,7 +3074,6 @@ public static class Almanac
             
             Transform DummyElement = DummyPanel.transform;
 
-            Color gray = new Color(0.5f, 0.5f, 0.5f, 1f);
             Color orange = new Color(1f, 0.6f, 0f, 1f);
 
             CreateTextElement(
@@ -3192,6 +3236,7 @@ public static class Almanac
                     sprite: iconBg.sprite,
                     active: false
                 );
+
                 CreateImageElement(ResourceBackground.transform, "item",
                     0f, 0f,
                     40f, 40f

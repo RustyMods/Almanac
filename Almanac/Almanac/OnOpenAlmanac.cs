@@ -329,6 +329,7 @@ public static class Patches
                     AddAlmanacEffect(customPower);
                     player.m_seman.AddStatusEffect(customPower);
                 }
+                SetPassivePowersUI();
             }
             
             // Turn the glow on or off
@@ -374,7 +375,7 @@ public static class Patches
 
         private static void SetMetricData()
         {
-            Transform panel = trophyFrame.Find("statsPanel");
+            Transform panel = Utils.FindChild(trophyFrame, "statsPanel");
             
             SetTextElement(panel.gameObject, "almanacPowers", "$almanac_custom_powers_label");
             
@@ -404,7 +405,7 @@ public static class Patches
         private static void SetPassivePowersUI()
         {
             Player player = Player.m_localPlayer;
-            Transform panel = trophyFrame.Find("statsPanel");
+            Transform panel = Utils.FindChild(trophyFrame, "statsPanel");
 
             List<StatusEffect> activePowers = activeAlmanacEffects;
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using Almanac.MonoBehaviors;
 using HarmonyLib;
 using TMPro;
@@ -113,7 +114,7 @@ public static class Almanac
             CreateAllPanels();
         }
 
-        private static Transform TryCatchFind(Transform parentElement, string id)
+        public static Transform TryCatchFind(Transform parentElement, string id)
         {
             if (parentElement == null)
             {
@@ -124,6 +125,7 @@ public static class Almanac
             {
                 Transform? result = parentElement.Find(id);
                 if (result) return result;
+                AlmanacPlugin.AlmanacLogger.LogInfo($"Failed to find UI element {id}");
                 return parentElement;
             }
             catch (Exception e)
@@ -151,7 +153,7 @@ public static class Almanac
             Transform armorContainer = TryCatchFind(__instance.m_player, "Armor");
             Transform armorIconElement = TryCatchFind(armorContainer, "armor_icon");
             Transform info = TryCatchFind(root.transform, "Info");
-            Transform texts = TryCatchFind(info, "Texts");
+            Transform texts = Utils.FindChild(info, "Texts");
             Transform compendiumIconElement = TryCatchFind(texts, "Icon");
             Transform compendium = TryCatchFind(root.transform, "Texts");
             Transform compendiumFrame = TryCatchFind(compendium, "Texts_frame");
@@ -252,12 +254,11 @@ public static class Almanac
                 }
             }
         }
-        
         private static void EditInventoryGUI()
         {
-            Transform info = TryCatchFind(root.transform, "Info");
-            Transform trophiesOpenButton = TryCatchFind(info, "Trophies");
-            Transform image = TryCatchFind(trophiesOpenButton, "Image");
+            Transform info = Utils.FindChild(root.transform, "Info");
+            Transform trophiesOpenButton = Utils.FindChild(info, "Trophies");
+            Transform image = Utils.FindChild(trophiesOpenButton, "Image");
             
             trophiesOpenButton.TryGetComponent(out UITooltip openTrophiesToolTip);
             image.TryGetComponent(out Image trophiesOpenImage);
@@ -375,9 +376,9 @@ public static class Almanac
                 containerButton.onClick = new Button.ButtonClickedEvent();
                 containerButton.onClick.AddListener(() =>
                 {
-                    Transform AlmanacPanel = TrophiesFrame.Find("ContentPanel");
-                    Transform AlmanacList = AlmanacPanel.Find("AlmanacList");
-                    Transform element = AlmanacList.Find($"{id}Element (0)");
+                    Transform AlmanacPanel = TryCatchFind(TrophiesFrame, "ContentPanel");
+                    Transform AlmanacList = TryCatchFind(AlmanacPanel, "AlmanacList");
+                    Transform element = TryCatchFind(AlmanacList, $"{id}Element (0)");
                     SetActivePanelElement(id); 
                     SetAchievementsData(element, data);
                 });

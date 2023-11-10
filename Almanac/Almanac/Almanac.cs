@@ -112,23 +112,50 @@ public static class Almanac
             RepositionTrophyPanel(-220f, 0f);
             CreateAllPanels();
         }
+
+        private static Transform TryCatchFind(Transform parentElement, string id)
+        {
+            if (parentElement == null)
+            {
+                AlmanacPlugin.AlmanacLogger.LogWarning($"Invalid parent element of : {id}");
+                return InventoryGui.instance.m_info;
+            }
+            try
+            {
+                Transform? result = parentElement.Find(id);
+                if (result) return result;
+                return parentElement;
+            }
+            catch (Exception e)
+            {
+                AlmanacPlugin.AlmanacLogger.LogWarning($"Failed to find child of {parentElement.name} : {id}");
+                Debug.LogWarning(e.Message);
+                return parentElement;
+            }
+        }
         
         private static void CacheInitialData(InventoryGui __instance)
         {
-            root = __instance.gameObject.transform.Find("root").gameObject;
+            root = TryCatchFind(__instance.gameObject.transform, "root").gameObject;
             trophyElement = __instance.m_trophieElementPrefab;
             TrophiesPanel = __instance.m_trophiesPanel.transform;
-            TrophiesFrame = TrophiesPanel.Find("TrophiesFrame");
+            TrophiesFrame = TryCatchFind(TrophiesPanel, "TrophiesFrame");
             buttonGlow = __instance.m_repairButtonGlow;
 
-            Transform closeButton = TrophiesFrame.Find("Closebutton");
-            Transform closeButtonText = closeButton.Find("Text");
-            Transform iconBkg = trophyElement.transform.Find("icon_bkg");
-            Transform border = TrophiesFrame.Find("border (1)");
-            Transform weightIconElement = __instance.m_player.Find("Weight").Find("weight_icon");
-            Transform armorIconElement = __instance.m_player.Find("Armor").Find("armor_icon");
-            Transform compendiumIconElement = root.transform.Find("Info").Find("Texts").Find("Icon");
-            Transform compendiumBg = root.transform.Find("Texts").Find("Texts_frame").Find("bkg");
+            Transform closeButton = TryCatchFind(TrophiesFrame, "Closebutton");
+            Transform closeButtonText = TryCatchFind(closeButton, "Text");
+            Transform iconBkg = TryCatchFind(trophyElement.transform, "icon_bkg");
+            Transform border = TryCatchFind(TrophiesFrame, "border (1)");
+            Transform weightContainer = TryCatchFind(__instance.m_player, "Weight");
+            Transform weightIconElement = TryCatchFind(weightContainer, "weight_icon");
+            Transform armorContainer = TryCatchFind(__instance.m_player, "Armor");
+            Transform armorIconElement = TryCatchFind(armorContainer, "armor_icon");
+            Transform info = TryCatchFind(root.transform, "Info");
+            Transform texts = TryCatchFind(info, "Texts");
+            Transform compendiumIconElement = TryCatchFind(texts, "Icon");
+            Transform compendium = TryCatchFind(root.transform, "Texts");
+            Transform compendiumFrame = TryCatchFind(compendium, "Texts_frame");
+            Transform compendiumBg = TryCatchFind(compendiumFrame, "bkg");
             
             closeButtonText.TryGetComponent(out TextMeshProUGUI textMesh);
             closeButton.TryGetComponent(out Button button);
@@ -141,24 +168,20 @@ public static class Almanac
             TrophiesFrame.TryGetComponent(out RectTransform frameRect);
             compendiumIconElement.TryGetComponent(out Image birdImage);
             compendiumBg.TryGetComponent(out Image compendiumImage);
+            
+            if (textMesh) font = textMesh.font;
+            if (button) closeButtonScript = button;
+            if (buttonSfx) closeButtonSfx = buttonSfx;
+            if (buttonImage) closeButtonImage = buttonImage;
+            if (iconImage) iconBg = iconImage;
+            if (borderImg) borderImage = borderImg;
+            if (weightImg) weightIcon = weightImg;
+            if (armorImg) armorIcon = armorImg;
+            if (frameRect) FrameSize = frameRect.sizeDelta;
+            if (birdImage) birdIcon = birdImage;
+            if (borderImg) borderSprite = borderImg.sprite;
+            if (compendiumImage) guardstoneSprite = compendiumImage.sprite;
 
-            if (!textMesh || !button || !buttonSfx || !buttonImage || !iconImage || !borderImg || !weightImg || !armorImg) return;
-            
-            font = textMesh.font;
-            closeButtonScript = button;
-            closeButtonSfx = buttonSfx;
-            closeButtonImage = buttonImage;
-            iconBg = iconImage;
-            borderImage = borderImg;
-            weightIcon = weightImg;
-            armorIcon = armorImg;
-            FrameSize = frameRect.sizeDelta;
-            birdIcon = birdImage;
-            borderSprite = borderImg.sprite;
-            guardstoneSprite = compendiumImage.sprite;
-            fontMaterial = textMesh.fontMaterial;
-            fontSharedMat = textMesh.fontSharedMaterial;
-            
             PieceDataCollector.GetBuildPieces();
 
             materials = ItemDataCollector.GetMaterials();
@@ -232,20 +255,20 @@ public static class Almanac
         
         private static void EditInventoryGUI()
         {
-            Transform info = root.transform.Find("Info");
-            Transform trophiesOpenButton = info.Find("Trophies");
-
-            UITooltip openTrophiesToolTip = trophiesOpenButton.GetComponent<UITooltip>();
-            Image trophiesOpenImage = trophiesOpenButton.Find("Image").GetComponent<Image>();
+            Transform info = TryCatchFind(root.transform, "Info");
+            Transform trophiesOpenButton = TryCatchFind(info, "Trophies");
+            Transform image = TryCatchFind(trophiesOpenButton, "Image");
             
-            openTrophiesToolTip.m_text = "$almanac_name";
-            trophiesOpenImage.sprite = AlmanacPlugin.AlmanacIconButton;
+            trophiesOpenButton.TryGetComponent(out UITooltip openTrophiesToolTip);
+            image.TryGetComponent(out Image trophiesOpenImage);
+            
+            if (openTrophiesToolTip) openTrophiesToolTip.m_text = "$almanac_name";
+            if (trophiesOpenImage) trophiesOpenImage.sprite = AlmanacPlugin.AlmanacIconButton;
         }
         
         public static GameObject CreateAchievementsPanel(string id, List<AchievementsUI.Achievement> list)
         {
-            Transform trophies = TrophiesFrame.Find("Trophies");
-            
+            Transform trophies = TryCatchFind(TrophiesFrame, "Trophies");
             GameObject panel = new GameObject($"{id}Panel") { layer = 5 };
 
             RectTransform panelRect = panel.AddComponent<RectTransform>();

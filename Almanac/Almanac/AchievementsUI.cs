@@ -171,7 +171,6 @@ public static class AchievementsUI
 
             glowContainer.gameObject.SetActive(CustomStatusEffects.activeAlmanacEffects.Find(x => x.name == achievement.power));
         }
-
     }
 
     private static Dictionary<string,int> CombineDict(Dictionary<string, int> dict1, Dictionary<string, int> dict2)

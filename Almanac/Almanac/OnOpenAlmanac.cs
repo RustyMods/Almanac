@@ -2498,7 +2498,7 @@ public static class Patches
                 }
                 catch (IndexOutOfRangeException)
                 {
-                    Debug.Log("failed to set almanac default item data");
+                    
                 }
             }
 

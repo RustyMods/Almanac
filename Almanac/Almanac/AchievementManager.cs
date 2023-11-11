@@ -160,7 +160,7 @@ public static class AchievementManager
     {
         if (type is AchievementType.None)
         {
-            AlmanacLogger.LogWarning($"[{uniqueName}] : Failed to recognize achievement type");
+            AlmanacLogger.LogInfo($"[{uniqueName}] : Failed to recognize achievement type");
             return;
         }
         if (tempAchievements.Exists(x => x.m_uniqueName == uniqueName)) return;

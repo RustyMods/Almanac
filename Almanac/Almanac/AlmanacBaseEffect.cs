@@ -225,10 +225,34 @@ public static class AlmanacEffectsManager
                 GameObject prefab = scene.GetPrefab(effect);
                 if (!prefab)
                 {
-                    AlmanacLogger.LogWarning( $"[{baseEffectName}]" + " : " + "Failed to find prefab: " + effect);
+                    AlmanacLogger.LogDebug( $"[{baseEffectName}]" + " : " + "Failed to find prefab: " + effect);
                     continue;
                 }
-                validatedPrefabs.Add(prefab);
+                // 0 = Default
+                // 9 = Character
+                // 12 = Item
+                // 15 = Static Solid
+                // 22 = Weapon
+                switch (prefab.layer)
+                {
+                    case 0:
+                        prefab.TryGetComponent(out TimedDestruction timedDestruction);
+                        prefab.TryGetComponent(out ParticleSystem particleSystem);
+                        if (timedDestruction || particleSystem)
+                        {
+                            validatedPrefabs.Add(prefab);
+                            continue;
+                        }
+                        
+                        AlmanacLogger.LogInfo($"[{baseEffectName}] Failed to create effect: " + prefab.name + " is invalid layer type " + prefab.layer);
+                        break;
+                    case 8 or 22:
+                        validatedPrefabs.Add(prefab);
+                        break;
+                    default:
+                        AlmanacLogger.LogInfo($"[{baseEffectName}] Failed to create effect: " + prefab.name + " is invalid layer type " + prefab.layer);
+                        break;
+                }
             }
             
             EffectList.EffectData[] allEffects = new EffectList.EffectData[validatedPrefabs.Count];

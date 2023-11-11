@@ -51,6 +51,7 @@ public static class GamePadUI
     {
         private static void Postfix(Selectable __instance)
         {
+            if (!__instance) return;
             Transform? iconObj = __instance.transform.Find("iconObj");
             if (iconObj)
             {

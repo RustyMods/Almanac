@@ -130,12 +130,9 @@ public static class Almanac
             EditInventoryGUI();
             RepositionTrophyPanel(-220f, 0f);
             CreateAllPanels();
-            
+            // Modify group handler to redirect to trophy frame instead of trophy scroll list
             TrophiesPanel.TryGetComponent(out UIGroupHandler groupHandler);
-            if (groupHandler)
-            {
-                groupHandler.m_defaultElement = TrophiesFrame.gameObject;
-            }
+            if (groupHandler) groupHandler.m_defaultElement = TrophiesFrame.gameObject;
         }
 
         private static Transform TryCatchFind(Transform parentElement, string id)
@@ -152,10 +149,9 @@ public static class Almanac
                 AlmanacPlugin.AlmanacLogger.LogDebug($"Failed to find UI element {id}");
                 return parentElement;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 AlmanacPlugin.AlmanacLogger.LogDebug($"Failed to find child of {parentElement.name} : {id}");
-                Debug.LogWarning(e.Message);
                 return parentElement;
             }
         }
@@ -709,7 +705,8 @@ public static class Almanac
                 case "stats": break;
             }
         }
-        public static void SetTopic(string name)
+
+        private static void SetTopic(string name)
         {
             Transform topic = TrophiesFrame.Find("topic");
             Transform trophies = TrophiesFrame.Find("Trophies");

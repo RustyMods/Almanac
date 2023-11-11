@@ -71,18 +71,57 @@ public static class CustomStatusEffects
         }
     }
 
-    // [HarmonyPatch(typeof(Player), nameof(Player.StartGuardianPower))]
-    // static class StartGuardianPowerPatch
-    // {
-    //     private static void Prefix(Player __instance)
-    //     {
-    //         // Successfully modified guardian power animation
-    //         // But due to trigger name change, the RPC does not recognize 
-    //         // to set guardian power status effect
-    //         __instance.m_zanim.SetTrigger(__instance.m_guardianSE.m_activationAnimation);
-    //     }
-    // }
-    
+    [HarmonyPatch(typeof(Player), nameof(Player.StartGuardianPower))]
+    static class StartGuardianPowerPatch
+    {
+        private static bool Prefix(Player __instance)
+        {
+            if (!__instance) return false;
+            if (__instance.m_guardianPowerCooldown > 0.0) return false;
+            if (__instance.m_guardianSE.name is "GP_Ashlands" or "GP_Bonemass" or "GP_Eikthyr" or "GP_Moder" or "GP_Queen" or "GP_TheElder" or "GP_Yagluth") { return true; }
+            bool isEmote = true;
+            Emotes? emote = Emotes.Bow;
+            switch (__instance.m_guardianSE.m_activationAnimation)
+            {
+                case "Wave": emote = Emotes.Wave; break;
+                case "Sit": emote = Emotes.Sit; break;
+                case "Challenge": emote = Emotes.Challenge; break;
+                case "Cheer": emote = Emotes.Cheer; break;
+                case "NoNoNo": emote = Emotes.NoNoNo; break;
+                case "ThumbsUp": emote = Emotes.ThumbsUp; break;
+                case "Point": emote = Emotes.Point; break;
+                case "BlowKiss": emote = Emotes.BlowKiss; break;
+                case "Bow": emote = Emotes.Bow; break;
+                case "Cower": emote = Emotes.Cower; break;
+                case "Cry": emote = Emotes.Cry; break;
+                case "Despair": emote = Emotes.Despair; break;
+                case "Flex": emote = Emotes.Flex; break;
+                case "ComeHere": emote = Emotes.ComeHere; break;
+                case "Headbang": emote = Emotes.Headbang; break;
+                case "Kneel": emote = Emotes.Kneel; break;
+                case "Laugh": emote = Emotes.Laugh; break;
+                case "Roar": emote = Emotes.Roar; break;
+                case "Shrug": emote = Emotes.Shrug; break;
+                case "Dance": emote = Emotes.Dance; break;
+                case "Count": emote = Emotes.Count; break;
+                default: isEmote = false; emote = new Emotes(); break;
+            }
+            
+            __instance.m_zanim.SetTrigger(__instance.m_guardianSE.m_activationAnimation);
+            if (isEmote)
+            {
+                Emote attributeOfType = emote.GetAttributeOfType<Emote>();
+                if (!__instance.StartEmote(emote.ToString().ToLower(),
+                        attributeOfType == null || attributeOfType.OneShot ||
+                        attributeOfType.FaceLookDirection)) return false;
+                __instance.FaceLookDirection();
+                
+            }
+            __instance.ActivateGuardianPower();
+            return false;
+        }
+    }
+
     [HarmonyPatch(typeof(Player), nameof(Player.Awake))]
     static class CreateVisualEffectsContainer
     {

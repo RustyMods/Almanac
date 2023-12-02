@@ -4,6 +4,7 @@ using BepInEx;
 using HarmonyLib;
 using JetBrains.Annotations;
 using UnityEngine;
+using UnityEngine.UI;
 using static Almanac.Almanac.AchievementManager;
 using static Almanac.Almanac.AlmanacEffectsManager;
 using static Almanac.AlmanacPlugin;
@@ -13,7 +14,7 @@ namespace Almanac.Almanac;
 public static class RegisterAlmanacEffects
 {
     public static readonly List<BaseEffectData> effectsData = new();
-    
+
     [HarmonyPatch(typeof(ObjectDB), nameof(ObjectDB.Awake))]
     static class ObjectDBAwakePatch
     { 
@@ -114,7 +115,7 @@ public static class AlmanacEffectsManager
 
         public readonly List<HitData.DamageModPair> damageMods = new();
         
-        public void Init()
+        public void Init() 
         {
             ObjectDB obd = ObjectDB.instance;
 
@@ -181,14 +182,20 @@ public static class AlmanacEffectsManager
                 else
                 {
                     item.TryGetComponent(out ItemDrop itemDrop);
-                    if (itemDrop) icon = itemDrop.m_itemData.GetIcon();
+                    if (itemDrop)
+                    {
+                        icon = itemDrop.m_itemData.GetIcon();
+                        // Add sprite icon to effect data to use for UI
+                        BaseEffectData? data = RegisterAlmanacEffects.effectsData.Find(x => x.effectName == effectName);
+                        if (data != null) data.sprite = icon;
+                    }
                 }
             }
 
             BaseEffect baseEffect = ScriptableObject.CreateInstance<BaseEffect>();
             baseEffect.name = effectName;
             baseEffect.data = this;
-            baseEffect.m_icon = icon;
+            baseEffect.m_icon = _EnableHudIcons.Value is AlmanacPlugin.Toggle.On ? icon : effectName.StartsWith("GP") ? icon : null;
             baseEffect.m_name = displayName;
             baseEffect.m_cooldown = duration + 60; // guardian power cool down
             baseEffect.m_ttl = duration; // status effect cool down
@@ -243,14 +250,13 @@ public static class AlmanacEffectsManager
                             validatedPrefabs.Add(prefab);
                             continue;
                         }
-                        
-                        AlmanacLogger.LogInfo($"[{baseEffectName}] Failed to create effect: " + prefab.name + " is invalid layer type " + prefab.layer);
+                        // AlmanacLogger.LogInfo($"[{baseEffectName}] Failed to create effect: " + prefab.name + " is invalid layer type " + prefab.layer);
                         break;
                     case 8 or 22:
                         validatedPrefabs.Add(prefab);
                         break;
                     default:
-                        AlmanacLogger.LogInfo($"[{baseEffectName}] Failed to create effect: " + prefab.name + " is invalid layer type " + prefab.layer);
+                        // AlmanacLogger.LogInfo($"[{baseEffectName}] Failed to create effect: " + prefab.name + " is invalid layer type " + prefab.layer);
                         break;
                 }
             }
@@ -347,6 +353,7 @@ public static class AlmanacEffectsManager
 
         public override void ModifyFallDamage(float baseDamage, ref float damage)
         {
+            if (this.m_character.m_seman.m_statusEffects.Exists(x => x.m_name == "$se_slowfall_name")) return;
             damage = baseDamage * data.Modifiers[Modifier.FallDamage];
             if (damage >= 0.0) return;
             damage = 0.0f;

@@ -1,34 +1,26 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
-using System.Linq;
-using System.Net.WebSockets;
 using System.Reflection;
-using System.Threading;
 using Almanac.Almanac;
 using Almanac.Managers;
 using BepInEx;
+using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using JetBrains.Annotations;
 using ServerSync;
 using UnityEngine;
 using UnityEngine.Rendering;
-using YamlDotNet.Serialization;
-using CompressionLevel = UnityEngine.CompressionLevel;
-using Patches = Almanac.Almanac.Patches;
-
 
 namespace Almanac
 {
     [BepInPlugin(ModGUID, ModName, ModVersion)]
+    [BepInIncompatibility("randyknapp.mods.auga")]
+    [BepInDependency("Krumpac.Krumpac_Reforge_Core", BepInDependency.DependencyFlags.SoftDependency)]
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "2.2.2";
+        internal const string ModVersion = "2.2.9";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         private static string ConfigFileName = ModGUID + ".cfg";
@@ -36,8 +28,7 @@ namespace Almanac
         internal static string ConnectionError = "";
         private readonly Harmony _harmony = new(ModGUID);
 
-        public static readonly ManualLogSource AlmanacLogger =
-            BepInEx.Logging.Logger.CreateLogSource(ModName);
+        public static readonly ManualLogSource AlmanacLogger = BepInEx.Logging.Logger.CreateLogSource(ModName);
 
         public static readonly ConfigSync ConfigSync = new(ModGUID)
         { 
@@ -87,11 +78,13 @@ namespace Almanac
             Both
         }
 
+        public static bool KrumpacLoaded = false;
+
         public static WorkingAs WorkingAsType;
 
         public void Awake()
         {
-            _serverConfigLocked = config("1 - General", "Lock Configuration", Toggle.On,
+            _serverConfigLocked = config("1 - General", "0 - Lock Configuration", Toggle.On,
                 "If on, the configuration is locked and can be changed by server admins only.");
             _ = ConfigSync.AddLockingConfigEntry(_serverConfigLocked);
             
@@ -106,34 +99,34 @@ namespace Almanac
             _KnowledgeLock = config("3 - Utilities", "Knowledge Wall", Toggle.On,
                 "If on, data is locked behind knowledge of item", true);
 
-            List<string> IgnoredList = new()
-            {
-                "StaminaUpgrade_Greydwarf",
-                "StaminaUpgrade_Troll",
-                "StaminaUpgrade_Wraith",
-                "IronOre",
-                "DvergerArbalest_shoot",
-                "DvergerArbalest",
-                "CapeTest",
-                "SledgeCheat",
-                "SwordCheat",
-                "HealthUpgrade_Bonemass",
-                "HealthUpgrade_GDKing",
-                "guard_stone_test",
-                "Trailership",
-                "Player",
-                "TorchMist",
-                "NPC_HelmetIron_Worn0",
-                "NPC_HelmetBronze_Worn0",
-                "NPC_ArmorIronChest_Worn",
-                "NPC_ArmorIronLegs_Worn",
-                "TrainingDummy",
-                "VegvisirShard_Bonemass"
-            };
-            string ignoredPrefabs = string.Join(",", IgnoredList);
+            // List<string> IgnoredList = new()
+            // {
+            //     "StaminaUpgrade_Greydwarf",
+            //     "StaminaUpgrade_Troll",
+            //     "StaminaUpgrade_Wraith",
+            //     "IronOre",
+            //     "DvergerArbalest_shoot",
+            //     "DvergerArbalest",
+            //     "CapeTest",
+            //     "SledgeCheat",
+            //     "SwordCheat",
+            //     "HealthUpgrade_Bonemass",
+            //     "HealthUpgrade_GDKing",
+            //     "guard_stone_test",
+            //     "Trailership",
+            //     "Player",
+            //     "TorchMist",
+            //     "NPC_HelmetIron_Worn0",
+            //     "NPC_HelmetBronze_Worn0",
+            //     "NPC_ArmorIronChest_Worn",
+            //     "NPC_ArmorIronLegs_Worn",
+            //     "TrainingDummy",
+            //     "VegvisirShard_Bonemass"
+            // };
+            // string ignoredPrefabs = string.Join(",", IgnoredList);
 
-            _IgnoredPrefabs = config("3 - Utilities", "Ignored Prefabs", ignoredPrefabs,
-                "List of prefabs ignored by almanac upon launch");
+            // _IgnoredPrefabs = config("3 - Utilities", "Ignored Prefabs", ignoredPrefabs,
+            //     "List of prefabs ignored by almanac upon launch");
             
             _AchievementPowers = config("4 - Achievements", "Powers Enabled", Toggle.On,
                 "If on, achievements reward players with powers");
@@ -247,17 +240,34 @@ namespace Almanac
 
             _AshLandsCreatures = config("4 - Achievements", "08 - AshLands List", "",
                 "List of ashland defeat keys to track for biome kills");
-            
 
+            _TransparentPanel = config("1 - General", "Transparent Background", Toggle.Off,
+                "If on, almanac panels become transparent", false);
+
+            _UsePrivateKeys = config("1 - General", "Use Private Keys", Toggle.Off,
+                "If on, creature data is unlocked using private keys, to be used with world advancement progression",
+                false);
+
+            _EnableHudIcons = config("1 - General", "HUD Icons", Toggle.Off,
+                "If on, HUD displays almanac status effects");
             WorkingAsType = SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null
                 ? WorkingAs.Server : WorkingAs.Client;
             
             Localizer.Load();
+
+            if (Chainloader.PluginInfos.ContainsKey("Krumpac.Krumpac_Reforge_Core"))
+            {
+                AlmanacLogger.LogWarning("Krumpac is loaded by chainloader");
+                
+                KrumpacLoaded = true;
+            }
+            
             
             Assembly assembly = Assembly.GetExecutingAssembly();
             _harmony.PatchAll(assembly);
             SetupWatcher();
             
+            IgnoreList.InitIgnoreList();
             BlackList.InitBlackList();
             FileSystem.InitializeFileSystemWatch();
         }
@@ -348,7 +358,7 @@ namespace Almanac
         public static ConfigEntry<Color> _ignoreColorConfig = null!;
         public static ConfigEntry<Color> _immuneColorConfig = null!;
         public static ConfigEntry<Toggle> _KnowledgeLock = null!;
-        public static ConfigEntry<string> _IgnoredPrefabs = null!;
+        // public static ConfigEntry<string> _IgnoredPrefabs = null!;
 
         public static ConfigEntry<Toggle> _AchievementPowers = null!;
         public static ConfigEntry<float> _VisualEffectThreshold = null!;
@@ -364,7 +374,11 @@ namespace Almanac
         public static ConfigEntry<string> _MistLandCreatures = null!;
         public static ConfigEntry<string> _DeepNorthCreatures = null!;
         public static ConfigEntry<string> _AshLandsCreatures = null!;
- 
+
+        public static ConfigEntry<Toggle> _TransparentPanel = null!;
+        public static ConfigEntry<Toggle> _UsePrivateKeys = null!;
+        public static ConfigEntry<Toggle> _EnableHudIcons = null!;
+
         private ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description,
             bool synchronizedSetting = true)
         {

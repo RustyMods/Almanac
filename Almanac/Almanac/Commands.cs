@@ -1,4 +1,6 @@
-﻿using HarmonyLib;
+﻿using System.Collections.Generic;
+using HarmonyLib;
+using UnityEngine;
 using static Almanac.Almanac.AchievementManager;
 using static Almanac.AlmanacPlugin;
 
@@ -40,6 +42,34 @@ public static class Commands
                     if (!Player.m_localPlayer) return;
                     AchievementManager.ReBuildAchievements();
                 }) { OnlyAdmin = true };
+
+            Terminal.ConsoleCommand AlmanacListKeys = new Terminal.ConsoleCommand("almanac_list_keys",
+                "List of defeat keys",
+                args =>
+                {
+                    List<string> globalKeys = ZoneSystem.instance.GetGlobalKeys();
+                    AlmanacLogger.LogInfo("Global keys: ");
+                    foreach (var key in globalKeys)
+                    {
+                        AlmanacLogger.LogInfo(key);
+                    }
+                    AlmanacLogger.LogInfo("Private Keys: ");
+                    foreach (var creature in Almanac.CreateAlmanac.creatures)
+                    {
+                        string key = creature.defeatedKey;
+                        if (ZoneSystem.instance.GetGlobalKey(key))
+                        {
+                            AlmanacLogger.LogInfo(key);
+                        };
+                    }
+                });
+            // Terminal.ConsoleCommand AlmanacFishList = new("almanac_list_fishes", "List of fish", args =>
+            // {
+            //     foreach (GameObject fish in CreatureDataCollector.fishObj)
+            //     {
+            //         AlmanacLogger.LogWarning(fish.name);
+            //     }
+            // });
         }
     }
 }

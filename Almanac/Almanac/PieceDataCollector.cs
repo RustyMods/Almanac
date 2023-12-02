@@ -7,8 +7,9 @@ namespace Almanac.Almanac;
 
 public static class PieceDataCollector
 {
-    private static readonly List<string> exclusionMap = AlmanacPlugin._IgnoredPrefabs.Value.Split(',').ToList();
-    
+    // private static readonly List<string> exclusionMap = AlmanacPlugin._IgnoredPrefabs.Value.Split(',').ToList();
+    private static readonly List<string> exclusionMap = IgnoreList.serverIgnoreList;
+
     public static readonly List<GameObject> plantPieces = new();
     public static readonly List<GameObject> furniturePieces = new();
     public static readonly List<GameObject> modPieces = new();
@@ -74,6 +75,9 @@ public static class PieceDataCollector
             
             if (!pieceScript) continue;
 
+            // Piece.PieceCategory category = pieceScript.m_category;
+            // AlmanacPlugin.AlmanacLogger.LogWarning(category.ToString());
+            
             if (exclusionMap.Contains(piece.name)) continue;
             
             string name = pieceScript.name;

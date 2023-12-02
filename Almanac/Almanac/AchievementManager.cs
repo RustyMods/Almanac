@@ -133,7 +133,8 @@ public static class AchievementManager
         TrapsArmed,
         StacksPlaced,
         BossKills,
-        CustomKills
+        CustomKills,
+        GoalLore,
     }
 
     private static void CreateAchievement(
@@ -399,6 +400,7 @@ public static class AchievementManager
             "StacksPlaced : tracks total stacks placed - use goal to set up threshold",
             "BossKills : tracks total boss kills - use goal to set up threshold",
             "CustomKills : tracks total custom defeat keys - set defeat key attribute with this type and use goal to setup threshold",
+            "GoalLore : tracks known lore against goal - use goal to set up threshold", 
             "```",
             "## Resistance Modifier",
             "This can be used to apply damage modifiers `on the player`,",
@@ -835,6 +837,7 @@ public static class AchievementManager
             case "StacksPlaced": return StacksPlaced;
             case "BossKills": return BossKills;
             case "CustomKills": return CustomKills;
+            case "GoalLore": return GoalLore;
             default: return AchievementType.None;
         }
     }
@@ -1210,38 +1213,6 @@ public static class AchievementManager
             },
             new AchievementData()
             {
-                unique_name = "spark_1",
-                display_name = "$almanac_achievement_spark II",
-                description = "$almanac_achievement_spark_desc",
-                lore = "$almanac_spark_lore",
-                sprite_name = "Thunderstone",
-                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_lightning</color>\n$almanac_increase_lightning_damage_by <color=orange>5</color>",
-                start_effects = new []{"sfx_coins_placed"},
-                achievement_type = "EikthyrKills",
-                stop_message = "$almanac_removed_achievement_power",
-                goal = 100,
-                resistance_modifier = "Lightning = Weak",
-                modifier = "LightningDMG",
-                modifier_value = 5f
-            },
-            new AchievementData()
-            {
-                unique_name = "spark_2",
-                display_name = "$almanac_achievement_spark III",
-                description = "$almanac_achievement_spark_desc",
-                lore = "$almanac_spark_lore",
-                sprite_name = "Thunderstone",
-                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_lightning</color>\n$almanac_increase_lightning_damage_by <color=orange>5</color>",
-                start_effects = new []{"sfx_coins_placed"},
-                achievement_type = "EikthyrKills",
-                stop_message = "$almanac_removed_achievement_power",
-                resistance_modifier = "Lightning = Weak",
-                goal = 200,
-                modifier = "LightningDMG",
-                modifier_value = 5f
-            },
-            new AchievementData()
-            {
                 unique_name = "sword_master",
                 display_name = "$almanac_achievement_sword_master",
                 description = "$almanac_achievement_sword_master_desc",
@@ -1491,44 +1462,6 @@ public static class AchievementManager
                 resistance_modifier = "Spirit = Weak",
                 modifier = "SpiritDMG",
                 modifier_value = 5f
-            },
-            new AchievementData()
-            {
-                unique_name = "healer",
-                display_name = "$almanac_achievement_healer",
-                description = "$almanac_achievement_healer_desc",
-                lore = "$almanac_healer_lore",
-                sprite_name = "TrophyGreydwarfShaman",
-                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_slash</color>\n$almanac_greydwarf_shaman_heal\n$almanac_reduce_health_by <color=orange>5</color>",
-                stop_message = "$almanac_removed_achievement_power",
-                start_effects = new []{"shaman_heal_aoe","sfx_greydwarf_shaman_heal"},
-                stop_effects = new []{"shaman_heal_aoe","sfx_greydwarf_shaman_heal"},
-                achievement_type = "GreydwarfShamanKills",
-                goal = 100,
-                resistance_modifier = "Slash = Weak",
-                modifier = "BaseHP",
-                activation_animation = "fishingrod_throw",
-                modifier_value = -5f,
-                cooldown = 30
-            },
-            new AchievementData()
-            {
-                unique_name = "dverger_healer",
-                display_name = "$almanac_achievement_dverger_healer",
-                description = "$almanac_achievement_dverger_healer_desc",
-                lore = "$almanac_dverger_healer_lore",
-                sprite_name = "Lantern",
-                tool_tip = "$almanac_modify_damage_by <color=orange>$almanac_weak</color> VS <color=orange>$almanac_elemental</color>\n$almanac_dverger_heal\n$almanac_reduce_health_by <color=orange>5</color>",
-                stop_message = "$almanac_removed_achievement_power",
-                start_effects = new []{"DvergerStaffHeal_aoe","sfx_dverger_heal_start"},
-                stop_effects = new []{"DvergerStaffHeal_aoe","sfx_dverger_heal_finish"},
-                achievement_type = "GreydwarfShamanKills",
-                goal = 100,
-                resistance_modifier = "Elemental = Weak",
-                modifier = "BaseHP",
-                activation_animation = "staff_shield",
-                modifier_value = -5f,
-                cooldown = 30
             },
             new AchievementData()
             {

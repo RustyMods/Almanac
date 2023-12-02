@@ -142,11 +142,9 @@ public static class AchievementsUI
             Transform icon = container.Find("iconObj");
             Transform hoverText = container.Find("hoverTextElement");
             Transform glowContainer = container.Find($"glow ({i})");
-            
-            icon.TryGetComponent(out Image containerImage);
-            hoverText.TryGetComponent(out TextMeshProUGUI textMesh);
 
-            if (!containerImage || !textMesh) return;
+            if (!icon.TryGetComponent(out Image containerImage)) continue;
+            if (!hoverText.TryGetComponent(out TextMeshProUGUI textMesh)) continue;
 
             Achievement achievement = registeredAchievements[i];
 
@@ -293,6 +291,7 @@ public static class AchievementsUI
             { TrapsArmed , (int)GetPlayerStat(PlayerStatType.TrapArmed)},
             { StacksPlaced , (int)GetPlayerStat(PlayerStatType.PlaceStacks)},
             { BossKills , (int)GetPlayerStat(PlayerStatType.BossKills)},
+            { GoalLore , GetKnownTextCount() },
             { CustomKills, 0 }
         };
         

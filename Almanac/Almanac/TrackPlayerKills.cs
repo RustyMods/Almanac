@@ -48,9 +48,12 @@ public static class TrackPlayerKills
         {
             if (!__instance) return;
             if (!Player.m_localPlayer) return;
+            HitData? lastHit = __instance.m_lastHit;
+            if (lastHit == null) return;
             if (!__instance.m_lastHit.GetAttacker()) return;
             
-            Character attacker = __instance.m_lastHit.GetAttacker();
+            Character? attacker = __instance.m_lastHit.GetAttacker();
+            if (!attacker) return;
             string defeatKey = __instance.m_defeatSetGlobalKey;
 
             // Comparing hover names caused multiplayer issue recording kills

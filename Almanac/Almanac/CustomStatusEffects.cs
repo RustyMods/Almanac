@@ -78,6 +78,8 @@ public static class CustomStatusEffects
         {
             if (!__instance) return false;
             if (__instance.m_guardianPowerCooldown > 0.0) return false;
+            if (__instance.m_guardianPower == null) return true;
+            if (__instance.m_guardianSE == null) return true;
             if (__instance.m_guardianSE.name is "GP_Ashlands" or "GP_Bonemass" or "GP_Eikthyr" or "GP_Moder" or "GP_Queen" or "GP_TheElder" or "GP_Yagluth") { return true; }
             bool isEmote = true;
             Emotes? emote = Emotes.Bow;
@@ -115,7 +117,6 @@ public static class CustomStatusEffects
                         attributeOfType == null || attributeOfType.OneShot ||
                         attributeOfType.FaceLookDirection)) return false;
                 __instance.FaceLookDirection();
-                
             }
             __instance.ActivateGuardianPower();
             return false;
@@ -147,13 +148,15 @@ public static class CustomStatusEffects
         private static void Postfix(Player __instance, ref float eitr)
         {
             if (!__instance) return;
-
+            if (!Player.m_localPlayer) return;
             if (__instance.GetHoverName() != Player.m_localPlayer.GetHoverName()) return;
-            
+
             Dictionary<Modifier, float> totalValues = new()
             {
                 { Modifier.BaseEitr, 0f }
             };
+
+            if (activeAlmanacEffects.Count == 0) return;
 
             foreach (StatusEffect? effect in activeAlmanacEffects)
             {

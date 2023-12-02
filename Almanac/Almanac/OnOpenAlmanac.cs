@@ -13,6 +13,7 @@ using static Almanac.Almanac.AchievementsUI;
 using static Almanac.Almanac.Almanac;
 using static Almanac.Almanac.Almanac.CreateAlmanac;
 using static Almanac.Almanac.CustomStatusEffects;
+using static Almanac.Almanac.RegisterAlmanacEffects;
 using static Almanac.Almanac.TrackPlayerStats;
 using static Almanac.AlmanacPlugin;
 using static Almanac.AlmanacPlugin.Toggle;
@@ -97,6 +98,8 @@ public static class Patches
             SetMetricData();
             
             SetAchievementPanel();
+            
+            SetPanelTransparency(__instance);
         }
 
         private static void SetPlayerElementData(Transform parentElement)
@@ -249,7 +252,7 @@ public static class Patches
                 List<StatusEffect> effectsToRemove = new();
                 foreach (StatusEffect? effect in effects)
                 {
-                    if (!RegisterAlmanacEffects.effectsData.Exists(x => x.effectName == effect.name)) continue;
+                    if (!effectsData.Exists(x => x.effectName == effect.name)) continue;
                     effectsToRemove.Add(effect);
                 }
 
@@ -424,7 +427,10 @@ public static class Patches
                 SetActiveElement(panel.gameObject, "ImageElement", $"activeEffects ({i})", true);
                 SetHoverableText(panel.gameObject, $"activeEffects ({i})", activePowers[i].m_name);
                 Transform iconBackground = panel.Find($"ImageElement (activeEffects ({i}))");
-                SetImageElement(iconBackground.gameObject, "icon", activePowers[i].m_icon, Color.white);
+
+                Sprite? sprite = effectsData.Find(x => x.effectName == activePowers[i].name).sprite;
+                
+                SetImageElement(iconBackground.gameObject, "icon", sprite, Color.white);
 
                 Transform achievementIcon = iconBackground.Find("ImageElement (icon)");
                 achievementIcon.TryGetComponent(out Button button);
@@ -463,6 +469,19 @@ public static class Patches
             closeButton.TryGetComponent(out ButtonSfx buttonSfxScript);
             if (!buttonSfxScript) return;
             buttonSfx = buttonSfxScript;
+        }
+
+        private static void SetPanelTransparency(InventoryGui __instance)
+        {
+            ElementImage.color = _TransparentPanel.Value is Off ? Color.white : Color.clear;
+            var PanelBorder = trophyFrame.Find("border (1)");
+            if (PanelBorder)
+            {
+                if (PanelBorder.TryGetComponent(out Image panelImage))
+                {
+                    panelImage.color = _TransparentPanel.Value is Off ? Color.white : Color.clear;
+                };
+            }
         }
 
         public static void SetUnknownPieces(string id, List<GameObject> list)
@@ -578,16 +597,14 @@ public static class Patches
             {
                 Transform container = creaturePanel.Find($"CreatureContainer ({i})");
                 Transform textMesh = container.Find($"CreatureContainer Text ({i})");
-                
-                container.TryGetComponent(out Button button);
-                textMesh.TryGetComponent(out TextMeshProUGUI text);
 
-                if (!button || !text) continue;
-                
+                if (!container.TryGetComponent(out Button button)) continue;
+                if (!textMesh.TryGetComponent(out TextMeshProUGUI text)) continue;
+
                 string prefab = creatures[i].name;
                 string defeatedKey = creatures[i].defeatedKey;
                 bool isWise = knowledgeLockToggle != On || globalKeys.Contains(defeatedKey) || Player.m_localPlayer.NoCostCheat();
-                
+                if (_UsePrivateKeys.Value is On) isWise = ZoneSystem.instance.GetGlobalKey(defeatedKey);
                 // Set values
                 button.interactable = isWise;
                 text.text = isWise
@@ -1832,7 +1849,7 @@ public static class Patches
                 { "consumeEffectSpirit", Color.white }
             };
             List<KeyValuePair<string, Color>> consumeEffectDefaultList = consumeEffectDefault.ToList();
-            foreach (var consumeEffectData in consumeEffectDefaultList)
+            foreach (KeyValuePair<string, Color> consumeEffectData in consumeEffectDefaultList)
             {
                 ColorizeImageElement(Element, consumeEffectData.Key, consumeEffectData.Value);
                 string tag = Localization.instance.Localize(GetTagFromID(consumeEffectData.Key));
@@ -2008,6 +2025,11 @@ public static class Patches
                 SetTextElement(Element, weaponAttackInfo.Key, weaponAttackInfo.Value);
             }
             // Fish
+            SetActiveElement(Element, "ImageElement", "baitIcon", false);
+            for (int i =0; i < 3; ++i)
+            {
+                SetActiveElement(Element, "ImageElement", $"fishDrops ({i})", false);
+            }
             data.gameObject.TryGetComponent(out Fish fishScript);
             if (fishScript != null)
             {
@@ -2020,10 +2042,7 @@ public static class Patches
                     Element, "baitIcon",
                     $"{fishScript.m_baits[0].m_bait.m_itemData.m_shared.m_name}"
                     );
-                for (int i =0; i < 3; ++i)
-                {
-                    SetActiveElement(Element, "ImageElement", $"fishDrops ({i})", false);
-                }
+                
                 for (int i = 0; i < fishScript.m_extraDrops.m_drops.Count; ++i)
                 {
                     GameObject drop = fishScript.m_extraDrops.m_drops[i].m_item;

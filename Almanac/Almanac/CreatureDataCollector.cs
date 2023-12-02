@@ -5,6 +5,7 @@ using System.Linq;
 using BepInEx;
 using JetBrains.Annotations;
 using UnityEngine;
+using static Almanac.AlmanacPlugin;
 
 namespace Almanac.Almanac;
 public static class CreatureDataCollector
@@ -67,7 +68,9 @@ public static class CreatureDataCollector
         public string statusEffectTooltip = "";
     }
 
-    private static readonly List<string> exclusionMap = AlmanacPlugin._IgnoredPrefabs.Value.Split(',').ToList();
+    // private static readonly List<string> exclusionMap = _IgnoredPrefabs.Value.Split(',').ToList();
+    private static readonly List<string> exclusionMap = IgnoreList.serverIgnoreList;
+
     public static List<CreatureData> tempCreatureData = new();
     public static List<CreatureData> GetSortedCreatureData()
     {
@@ -198,6 +201,7 @@ public static class CreatureDataCollector
             obj.TryGetComponent(out Humanoid humanoidScript);
             obj.TryGetComponent(out MonsterAI monsterAIScript);
             obj.TryGetComponent(out AnimalAI animalAI);
+            
             if (obj.name.Contains("(Clone)") || obj.name is "DvergerTest" or "TheHive" or "Hive") continue;
             if (humanoidScript)
             {

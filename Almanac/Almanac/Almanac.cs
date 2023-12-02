@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Sockets;
-using System.Runtime.CompilerServices;
 using Almanac.MonoBehaviors;
+using BepInEx;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using static Almanac.Almanac.Almanac.CreateAlmanac;
 using static Almanac.Almanac.Patches.OnOpenTrophiesPatch;
+using static Almanac.AlmanacPlugin;
 using GameObject = UnityEngine.GameObject;
 using Vector2 = UnityEngine.Vector2;
 
@@ -49,6 +47,7 @@ public static class Almanac
         public static List<ItemDrop> weapons = null!;
         public static List<ItemDrop> fish = null!;
         public static List<ItemDrop> ammunition = null!;
+        
         public static List<CreatureDataCollector.CreatureData> creatures = null!;
         public static List<GameObject> cookingStations = null!;
         public static List<GameObject> fermentingStations = null!;
@@ -82,6 +81,8 @@ public static class Almanac
         public static bool jewelCraftingLoaded;
         public static readonly List<ItemDrop> filteredGear = new();
         public static readonly List<ItemDrop> filteredMaterials = new();
+        public static List<ItemDrop> filteredConsumables = new();
+
         public static readonly List<ItemDrop> jewels = new();
         
         public static GameObject achievementsPanel = null!;
@@ -118,40 +119,40 @@ public static class Almanac
         public static GameObject otherTab = null!;
         public static GameObject comfortTab = null!;
         public static GameObject modTab = null!;
+
+        public static Image ElementImage = null!;
         public static void Postfix(InventoryGui __instance)
         {
             if (!__instance) return;
             AchievementManager.InitSyncedAchievementData();
-            if (AlmanacPlugin.WorkingAsType == AlmanacPlugin.WorkingAs.Server) return;
-
+            if (WorkingAsType == WorkingAs.Server) return;
+            
             CacheInitialData(__instance);
-
             AchievementsUI.RegisterAchievements();
             EditInventoryGUI();
             RepositionTrophyPanel(-220f, 0f);
             CreateAllPanels();
             // Modify group handler to redirect to trophy frame instead of trophy scroll list
-            TrophiesPanel.TryGetComponent(out UIGroupHandler groupHandler);
-            if (groupHandler) groupHandler.m_defaultElement = TrophiesFrame.gameObject;
+            if (TrophiesPanel.TryGetComponent(out UIGroupHandler groupHandler)) groupHandler.m_defaultElement = TrophiesFrame.gameObject;
         }
 
         private static Transform TryCatchFind(Transform parentElement, string id)
         {
             if (parentElement == null)
             {
-                AlmanacPlugin.AlmanacLogger.LogDebug($"Invalid parent element of : {id}");
+                AlmanacLogger.LogDebug($"Invalid parent element of : {id}");
                 return InventoryGui.instance.m_info;
             }
             try
             {
                 Transform? result = parentElement.Find(id);
                 if (result) return result;
-                AlmanacPlugin.AlmanacLogger.LogDebug($"Failed to find UI element {id}");
+                AlmanacLogger.LogDebug($"Failed to find UI element {id}");
                 return parentElement;
             }
             catch (Exception)
             {
-                AlmanacPlugin.AlmanacLogger.LogDebug($"Failed to find child of {parentElement.name} : {id}");
+                AlmanacLogger.LogDebug($"Failed to find child of {parentElement.name} : {id}");
                 return parentElement;
             }
         }
@@ -211,9 +212,9 @@ public static class Almanac
             PieceDataCollector.GetBuildPieces();
 
             materials = ItemDataCollector.GetMaterials();
-            consumables = ItemDataCollector.GetConsumables();
             gear = ItemDataCollector.GetEquipments();
             weapons = ItemDataCollector.GetWeapons();
+            consumables = ItemDataCollector.GetConsumables();
             fish = ItemDataCollector.GetFishes();
             ammunition = ItemDataCollector.GetAmmunition();
             creatures = CreatureDataCollector.GetSortedCreatureData();
@@ -277,6 +278,12 @@ public static class Almanac
                     }
                 }
             }
+
+            if (KrumpacLoaded)
+            {
+                fish.AddRange(consumables.FindAll(x => x.name.StartsWith("Krump_Mat_") && !x.name.EndsWith("Dried") && !x.name.Contains("Krump_Mat_Oil") && !x.name.EndsWith("_Meat")));
+                consumables.RemoveAll(x => x.name.EndsWith("_Raw"));
+            }
         }
         private static void EditInventoryGUI()
         {
@@ -288,7 +295,7 @@ public static class Almanac
             image.TryGetComponent(out Image trophiesOpenImage);
             
             if (openTrophiesToolTip) openTrophiesToolTip.m_text = "$almanac_name";
-            if (trophiesOpenImage) trophiesOpenImage.sprite = AlmanacPlugin.AlmanacIconButton;
+            if (trophiesOpenImage) trophiesOpenImage.sprite = AlmanacIconButton;
         }
         
         public static GameObject CreateAchievementsPanel(string id, List<AchievementsUI.Achievement> list)
@@ -1708,7 +1715,7 @@ public static class Almanac
                 "Almanac.icons.AlmanacLogo.png", true, false, 1f);
         }
 
-        private static void CreateBorder(Vector2 pos)
+        private static GameObject CreateBorder(Vector2 pos)
         {
             GameObject selectElementFrame = new GameObject("select_frame");
             RectTransform selectRect = selectElementFrame.AddComponent<RectTransform>();
@@ -1737,7 +1744,9 @@ public static class Almanac
             AlmanacBorderRectTransform.anchoredPosition = pos;
             AlmanacBorderRectTransform.sizeDelta = new Vector2(400f, 800f);
 
-            CreateBorderImageClone(AlmanacBorder);
+            ElementImage = CreateBorderImageClone(AlmanacBorder);
+            
+            return AlmanacBorder;
         }
 
         private static Image CreateBorderImageClone(GameObject GO)
@@ -3705,7 +3714,7 @@ public static class Almanac
                 0f, 0f,
                 20f, 20f,
                 true,
-                sprite: AlmanacPlugin.AlmanacIconButton,
+                sprite: AlmanacIconButton,
                 alpha: 0.7f
                 );
             

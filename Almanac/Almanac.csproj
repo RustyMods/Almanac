@@ -132,6 +132,7 @@
         <Compile Include="Almanac\FileSystem.cs" />
         <Compile Include="Almanac\FixTrophiesPositions.cs" />
         <Compile Include="Almanac\GamePadUI.cs" />
+        <Compile Include="Almanac\IgnoreList.cs" />
         <Compile Include="Almanac\ItemDataCollector.cs" />
         <Compile Include="Almanac\Leaderboard.cs" />
         <Compile Include="Almanac\OnCloseAlmanac.cs" />
@@ -207,7 +208,7 @@
         <Content Include="Libs\ServerSync.dll" />
         <Content Include="LICENSE.md" />
         <EmbeddedResource Include="translations\English.yml" />
-        <EmbeddedResource Include="translations\French.yml" />
+        <Content Include="translations\French.yml" />
         <Content Include="UpdateManifest.ps1" />
     </ItemGroup>
     <ItemGroup>

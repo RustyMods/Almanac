@@ -8,7 +8,9 @@ namespace Almanac.Almanac;
 
 public static class ItemDataCollector
 {
-    private static readonly List<string> exclusionMap = AlmanacPlugin._IgnoredPrefabs.Value.Split(',').ToList();
+    // private static readonly List<string> exclusionMap = AlmanacPlugin._IgnoredPrefabs.Value.Split(',').ToList();
+    private static readonly List<string> exclusionMap = IgnoreList.serverIgnoreList;
+
     public static List<ItemDrop> GetNoneItems()
     {
         return GetValidItemDropList(ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.None, ""));
@@ -28,7 +30,6 @@ public static class ItemDataCollector
             if (exclusionMap.Contains(item.name)) continue;
             filteredFishes.Add(item);
         }
-
         return filteredFishes;
     }
     public static List<ItemDrop> GetConsumables()
@@ -148,6 +149,18 @@ public static class ItemDataCollector
             {
                 ItemDrop data = itemDrop;
                 Sprite sprite = data.m_itemData.GetIcon();
+
+                // List<string> krumpBait = new()
+                // {
+                //     "Krump_Mat_FishingBaits_NeckTails",
+                //     "Krump_Mat_FishingBaits_Forest",
+                //     "Krump_Mat_FishingBaits_Entrails",
+                //     "Krump_Mat_FishingBaits_Chicken",
+                //     "Krump_Mat_FishingBaits_Dragon",
+                //     "Krump_Mat_FishingBaits_Vermin",
+                //     "Krump_Mat_FishingBaits_Wolf"
+                // };
+                
                 if (!sprite) continue;
                 output.Add(data);
             }

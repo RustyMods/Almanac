@@ -666,6 +666,7 @@ public static class Almanac
             });
 
             GameObject text = new GameObject($"{name}ButtonText");
+
             RectTransform textRect = text.AddComponent<RectTransform>();
             textRect.SetParent(tabButton.transform);
             textRect.anchoredPosition = new Vector2(0f, 0f);

@@ -20,7 +20,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "2.2.9";
+        internal const string ModVersion = "2.3.0";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         private static string ConfigFileName = ModGUID + ".cfg";
@@ -99,35 +99,6 @@ namespace Almanac
             _KnowledgeLock = config("3 - Utilities", "Knowledge Wall", Toggle.On,
                 "If on, data is locked behind knowledge of item", true);
 
-            // List<string> IgnoredList = new()
-            // {
-            //     "StaminaUpgrade_Greydwarf",
-            //     "StaminaUpgrade_Troll",
-            //     "StaminaUpgrade_Wraith",
-            //     "IronOre",
-            //     "DvergerArbalest_shoot",
-            //     "DvergerArbalest",
-            //     "CapeTest",
-            //     "SledgeCheat",
-            //     "SwordCheat",
-            //     "HealthUpgrade_Bonemass",
-            //     "HealthUpgrade_GDKing",
-            //     "guard_stone_test",
-            //     "Trailership",
-            //     "Player",
-            //     "TorchMist",
-            //     "NPC_HelmetIron_Worn0",
-            //     "NPC_HelmetBronze_Worn0",
-            //     "NPC_ArmorIronChest_Worn",
-            //     "NPC_ArmorIronLegs_Worn",
-            //     "TrainingDummy",
-            //     "VegvisirShard_Bonemass"
-            // };
-            // string ignoredPrefabs = string.Join(",", IgnoredList);
-
-            // _IgnoredPrefabs = config("3 - Utilities", "Ignored Prefabs", ignoredPrefabs,
-            //     "List of prefabs ignored by almanac upon launch");
-            
             _AchievementPowers = config("4 - Achievements", "Powers Enabled", Toggle.On,
                 "If on, achievements reward players with powers");
 
@@ -250,9 +221,9 @@ namespace Almanac
 
             _EnableHudIcons = config("1 - General", "HUD Icons", Toggle.Off,
                 "If on, HUD displays almanac status effects");
-            WorkingAsType = SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null
-                ? WorkingAs.Server : WorkingAs.Client;
             
+            WorkingAsType = SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null ? WorkingAs.Server : WorkingAs.Client;
+
             Localizer.Load();
 
             if (Chainloader.PluginInfos.ContainsKey("Krumpac.Krumpac_Reforge_Core"))

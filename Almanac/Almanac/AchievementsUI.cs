@@ -301,12 +301,11 @@ public static class AchievementsUI
             switch (achievement.type)
             {
                 case CustomKills:
-                    if (!totalMonstersKilled.ContainsKey(achievement.defeatKey))
+                    if (!totalMonstersKilled.TryGetValue(achievement.defeatKey, out int customValue))
                     {
                         AlmanacLogger.LogInfo($"Failed to find key: {achievement.defeatKey}");
-                        break;
-                    }
-                    totalMonstersKilled.TryGetValue(achievement.defeatKey, out int customValue);
+                        continue;
+                    };
                     value = customValue;
                     break;
             }

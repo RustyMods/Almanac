@@ -18,8 +18,7 @@ namespace Almanac.Almanac;
 
 public static class AchievementManager
 {
-    public static readonly CustomSyncedValue<List<string>> serverAchievementData =
-        new(AlmanacPlugin.ConfigSync, "ServerAchievements", new()); // To be deserialized
+    public static readonly CustomSyncedValue<List<string>> serverAchievementData = new(AlmanacPlugin.ConfigSync, "ServerAchievements", new()); // To be deserialized
     
     public static readonly List<Achievement> tempAchievements = new(); // To be used to register to achievements UI, ObjectDB effects and Custom Status Effects
 

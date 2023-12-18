@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using BepInEx;
 using ServerSync;
+using YamlDotNet.Serialization;
 
 namespace Almanac.Almanac;
 
@@ -46,6 +48,7 @@ public static class IgnoreList
             "TrainingDummy",
             "VegvisirShard_Bonemass"
         };
+
 
         if (!File.Exists(filePath))
         {

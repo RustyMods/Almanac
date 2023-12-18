@@ -1568,7 +1568,7 @@ public static class Patches
                 }
             }
             
-            if (stationExtension && !fermenter)
+            if (stationExtension && !fermenter && !smelter)
             {
                 CraftingStation? extensionCraftingStation = stationExtension.m_craftingStation;
                 Sprite extCraftIcon = extensionCraftingStation.m_icon;

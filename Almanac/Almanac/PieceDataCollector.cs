@@ -66,6 +66,60 @@ public static class PieceDataCollector
             "guard_stone_test",
             "ML_TreasureChestOcean"
         };
+
+        List<string> krumpToCraftMap = new()
+        {
+            "D_Alchemy_Cauldron",
+            "D_Alchemy_Table",
+            "D_Seed_Table",
+            "D_Alchemy_Library",
+            "D_Water_Catcher",
+            "D_Roasting_Spit",
+            "D_Preparation_Table",
+            "D_Beehive",
+            "D_Mortar_and_Pestle",
+            "D_Stone_Griddle",
+            "D_Big_Stone_Griddle",
+            "D_Honey_Extractor",
+            "D_Butcher_Table",
+            "D_Oven",
+            "D_Beverage_Station",
+            "D_Butcher_Tools",
+            "D_Cutting_Table",
+            "D_ABronze_Caouldron",
+            "D_Alchemy_Altar",
+            "D_Chicken_Coop",
+            "D_Book_Stand",
+            "D_Bronze_Caouldron",
+            "D_Bronze_HangCaouldron",
+            "Krump_CS_Shipyard",
+            "Krump_CS_Fishing_Trap",
+            "Krump_CS_Crab_Trap",
+            "Krump_CS_Fermenter_Oil",
+            "Krump_CS_Shipyard_Crane",
+            "Krump_Spawner_Thrall_Trader",
+            "Krump_CS_Shipyard_Ship_Construction",
+            "Krump_CS_Shipyard_Horn",
+            
+        };
+        List<string> krumpToOtherMap = new()
+        {
+            "Krump_Spawner_Treasure_BlackForest_Crypt",
+            "Krump_Spawner_Treasure_BlackForest_Crypt",
+            "Krump_Spawner_Treasure_Mountain_Cave",
+            "Krump_Spawner_Treasure_Meadows_Dungeon",
+            "Krump_Spawner_Treasure_Swamps",
+            "Krump_Spawner_Treasure_BlackForest",
+            "Krump_Spawner_Treasure_Meadows",
+            
+        };
+        List<string> krumpToMiscMap = new()
+        {
+            "Krump_Ship_Raft",
+            "Krump_Ship_Karve",
+            "Krump_Ship_Knarr_Transporter",
+            
+        };
         
         foreach (GameObject piece in allPieces)
         {
@@ -78,11 +132,29 @@ public static class PieceDataCollector
             // Piece.PieceCategory category = pieceScript.m_category;
             // AlmanacPlugin.AlmanacLogger.LogWarning(category.ToString());
             
+            
             if (exclusionMap.Contains(piece.name)) continue;
             
             string name = pieceScript.name;
             string hoverName = pieceScript.m_name;
 
+            if (krumpToCraftMap.Contains(name))
+            {
+                craftingPieces.Add(piece);
+                continue;
+            }
+
+            if (krumpToMiscMap.Contains(name))
+            {
+                miscPieces.Add(piece);
+                continue;
+            }
+
+            if (krumpToOtherMap.Contains(name))
+            {
+                defaultPieces.Add(piece);
+                continue;
+            }
             if (name == "kg_EnchantmentScrollStation")
             {
                 craftingPieces.Add(piece);

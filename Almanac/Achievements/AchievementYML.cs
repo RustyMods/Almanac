@@ -386,7 +386,7 @@ public static class AchievementYML
                     { Modifier.Noise, 0.5f },
                     { Modifier.MaxCarryWeight, 0f },
                     { Modifier.Stealth, 1f },
-                    { Modifier.RunStaminaDrain, 0f },
+                    { Modifier.RunStaminaDrain, 1f },
                     { Modifier.DamageReduction, 0.05f },
                     { Modifier.FallDamage, 1f },
                     { Modifier.EitrRegen, 1f }
@@ -437,7 +437,7 @@ public static class AchievementYML
                     { Modifier.Noise, 0.5f },
                     { Modifier.MaxCarryWeight, 0f },
                     { Modifier.Stealth, 1f },
-                    { Modifier.RunStaminaDrain, 0f },
+                    { Modifier.RunStaminaDrain, 1f },
                     { Modifier.DamageReduction, 0f },
                     { Modifier.FallDamage, 1f },
                     { Modifier.EitrRegen, 1f }
@@ -488,7 +488,7 @@ public static class AchievementYML
                     { Modifier.Noise, 1.5f },
                     { Modifier.MaxCarryWeight, 0f },
                     { Modifier.Stealth, 1f },
-                    { Modifier.RunStaminaDrain, 0f },
+                    { Modifier.RunStaminaDrain, 1f },
                     { Modifier.DamageReduction, 0f },
                     { Modifier.FallDamage, 1f },
                     { Modifier.EitrRegen, 1f }
@@ -539,10 +539,1846 @@ public static class AchievementYML
                     { Modifier.Noise, 1.5f },
                     { Modifier.MaxCarryWeight, 50f },
                     { Modifier.Stealth, 0.5f },
-                    { Modifier.RunStaminaDrain, 0f },
+                    { Modifier.RunStaminaDrain, 1f },
                     { Modifier.DamageReduction, 0f },
                     { Modifier.FallDamage, 1f },
                     { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "skeleton_kill",
+                display_name = "Break A Leg",
+                sprite_name = "bone",
+                description = "Kill over <color=orange>100</color> Skeletons",
+                lore =
+                    "Break a leg so many times that the gods can't be unfavorable towards you.",
+                defeat_key = "defeated_skeleton",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1.0f },
+                    { Modifier.HealthRegen, 1.0f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1f },
+                    { Modifier.Speed, 1.05f },
+                    { Modifier.Noise, 1.5f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 0f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 0.95f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "ghost_kill",
+                display_name = "Ghastly",
+                sprite_name = "YagluthDrop",
+                description = "Kill over <color=orange>100</color> Ghosts",
+                lore =
+                    "Practically impossible to find any damn ghosts.",
+                defeat_key = "defeated_ghost",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Resistant, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Resistant, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1.0f },
+                    { Modifier.HealthRegen, 1.0f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1f },
+                    { Modifier.Speed, 1.05f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 0f },
+                    { Modifier.RunStaminaDrain, 0.5f },
+                    { Modifier.DamageReduction, 0.85f },
+                    { Modifier.FallDamage, 0.5f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "gdking_1",
+                display_name = "Slenderman",
+                sprite_name = "TrophyTheElder",
+                description = "Kill the Elder over <color=orange>10</color> times",
+                lore =
+                    "The Ents will forever strike your lineage with all their might.",
+                defeat_key = "defeated_gdking",
+                goal = 10,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1.0f },
+                    { Modifier.HealthRegen, 1.1f },
+                    { Modifier.StaminaRegen, 1.1f },
+                    { Modifier.RaiseSkills, 1.2f },
+                    { Modifier.Speed, 1.0f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "blob_1",
+                display_name = "Yuck",
+                sprite_name = "TrophyBlob",
+                description = "Kill over <color=orange>100</color> Blobs",
+                lore =
+                    "Don't let their slime fool you. It is actually gross.",
+                defeat_key = "defeated_blob",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1.05f },
+                    { Modifier.HealthRegen, 1.1f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1.05f },
+                    { Modifier.Speed, 1.0f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "oozer_1",
+                display_name = "Ooze",
+                sprite_name = "bottle_green",
+                description = "Kill over <color=orange>100</color> Oozers",
+                lore =
+                    "The stench emitting from these creatures is unbearable.",
+                defeat_key = "defeated_blobelite",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Resistant, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1.05f },
+                    { Modifier.HealthRegen, 1.1f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1.05f },
+                    { Modifier.Speed, 1.0f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "draugr_1",
+                display_name = "Walkers",
+                sprite_name = "TrophyDraugr",
+                description = "Kill over <color=orange>100</color> Draugrs",
+                lore =
+                    "Even the flies around these creatures harm you.",
+                defeat_key = "defeated_draugr",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1.1f },
+                    { Modifier.HealthRegen, 1f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1.05f },
+                    { Modifier.Speed, 0.95f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1.1f },
+                    { Modifier.DamageReduction, 0.05f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "draugr_2",
+                display_name = "Walkers II",
+                sprite_name = "TrophyDraugr",
+                description = "Kill over <color=orange>100</color> Female Draugrs",
+                lore =
+                    "Even the flies around these creatures harm you.",
+                defeat_key = "defeated_draugr_ranged",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1.1f },
+                    { Modifier.HealthRegen, 1f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1.05f },
+                    { Modifier.Speed, 0.95f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1.1f },
+                    { Modifier.DamageReduction, 0.05f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "draugr_3",
+                display_name = "Walkers III",
+                sprite_name = "TrophyDraugrElite",
+                description = "Kill over <color=orange>100</color> Elite Draugrs",
+                lore =
+                    "Even the flies around these creatures harm you.",
+                defeat_key = "defeated_draugr_elite",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Resistant, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1.1f },
+                    { Modifier.HealthRegen, 1f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1.05f },
+                    { Modifier.Speed, 0.95f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1.1f },
+                    { Modifier.DamageReduction, 0.05f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "wraith_1",
+                display_name = "Wrath",
+                sprite_name = "TrophyWraith",
+                description = "Kill over <color=orange>100</color> Wraiths",
+                lore =
+                    "These apparitions can only for tale unresolved issues.",
+                defeat_key = "defeated_wraith",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1f },
+                    { Modifier.HealthRegen, 1f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1.05f },
+                    { Modifier.Speed, 1.05f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 0.95f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 0.95f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "abomination_1",
+                display_name = "A-Bomb",
+                sprite_name = "TrophyAbomination",
+                description = "Kill over <color=orange>100</color> Abominations",
+                lore =
+                    "The swamps are full of un-goldy entities. ",
+                defeat_key = "defeated_abomination",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1f },
+                    { Modifier.HealthRegen, 1f },
+                    { Modifier.StaminaRegen, 1.1f },
+                    { Modifier.RaiseSkills, 1.05f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 0.95f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "leech_1",
+                display_name = "Blood Sucker",
+                sprite_name = "TrophyLeech",
+                description = "Kill over <color=orange>100</color> Leeches",
+                lore =
+                    "The blood sucking critters of the swamps is by far the worst of the bunch.",
+                defeat_key = "defeated_leech",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1f },
+                    { Modifier.HealthRegen, 1.1f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1.05f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "bonemass_1",
+                display_name = "Mass",
+                sprite_name = "TrophyBonemass",
+                description = "Kill Bonemass over <color=orange>10</color> times",
+                lore =
+                    "It is apt that the swamp king is so bloated and full of himself.",
+                defeat_key = "defeated_bonemass",
+                goal = 10,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Resistant, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1f },
+                    { Modifier.HealthRegen, 1.15f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1.1f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 100f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "wolf_1",
+                display_name = "Husky",
+                sprite_name = "TrophyWolf",
+                description = "Kill over <color=orange>100</color> Wolves",
+                lore =
+                    "These creatures are actually quite adorable, once they stop biting.",
+                defeat_key = "defeated_wolf",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1f },
+                    { Modifier.HealthRegen, 1f },
+                    { Modifier.StaminaRegen, 1.1f },
+                    { Modifier.RaiseSkills, 1.05f },
+                    { Modifier.Speed, 1.05f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "fenring_1",
+                display_name = "Darkly",
+                sprite_name = "TrophyFenring",
+                description = "Kill over <color=orange>100</color> Fenrings",
+                lore =
+                    "These wolves look awe-fully different in the dark. Almost human.",
+                defeat_key = "defeated_fenring",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1.05f },
+                    { Modifier.HealthRegen, 1f },
+                    { Modifier.StaminaRegen, 1.1f },
+                    { Modifier.RaiseSkills, 1.05f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "cultist_1",
+                display_name = "Cult",
+                sprite_name = "TrophyCultist",
+                description = "Kill over <color=orange>100</color> Fenring Cultists",
+                lore =
+                    "To be honest, their cult seems like a good time.",
+                defeat_key = "defeated_fenring_cultist",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1f },
+                    { Modifier.HealthRegen, 1.1f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1.05f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 0.9f },
+                    { Modifier.EitrRegen, 1.1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "golem_1",
+                display_name = "Golem",
+                sprite_name = "TrophySGolem",
+                description = "Kill over <color=orange>100</color> Stone Golems",
+                lore =
+                    "The absolute worst thing about the mountains. Yet is what makes my blood pump and keeps me warm.",
+                defeat_key = "defeated_stonegolem",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Resistant, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1.1f },
+                    { Modifier.HealthRegen, 1f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1.05f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 100f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "hatchling_1",
+                display_name = "Glands",
+                sprite_name = "TrophyHatchling",
+                description = "Kill over <color=orange>100</color> Drakes",
+                lore =
+                    "Their is beauty in the joy of shooting down a drake from a high mountain top.",
+                defeat_key = "defeated_leech",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1f },
+                    { Modifier.HealthRegen, 1f },
+                    { Modifier.StaminaRegen, 1.1f },
+                    { Modifier.RaiseSkills, 1f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 0.9f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "dragon_1",
+                display_name = "Dragon",
+                sprite_name = "TrophyDragonQueen",
+                description = "Kill Moder over <color=orange>100</color> times",
+                lore =
+                    "The cries of the dragon queen brings relief to all who lived under her reign.",
+                defeat_key = "defeated_dragon",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Resistant, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1.1f },
+                    { Modifier.HealthRegen, 1.1f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1.1f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "goblin_1",
+                display_name = "Gubbers",
+                sprite_name = "TrophyGoblin",
+                description = "Kill over <color=orange>100</color> Fulings",
+                lore =
+                    "Their laughs haunt the dreams of their unfortunate neighbors.",
+                defeat_key = "defeated_goblin",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1f },
+                    { Modifier.HealthRegen, 1.1f },
+                    { Modifier.StaminaRegen, 1.1f },
+                    { Modifier.RaiseSkills, 1f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "goblin_2",
+                display_name = "Shamanistic",
+                sprite_name = "TrophyGoblinShaman",
+                description = "Kill over <color=orange>100</color> Fuling Shamans",
+                lore =
+                    "The witches of the plains who harness the powers of the gods are a true nightmare.",
+                defeat_key = "defeated_goblinshaman",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1f },
+                    { Modifier.HealthRegen, 1.1f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1.05f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1.1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "goblin_3",
+                display_name = "Brutish",
+                sprite_name = "TrophyGoblinBrute",
+                description = "Kill over <color=orange>100</color> Fuling Brutes",
+                lore =
+                    "With great determination and skill, it is possible to overcome the beasts of the plains.",
+                defeat_key = "defated_goblinbrute",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Resistant, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1.1f },
+                    { Modifier.HealthRegen, 1.1f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1.05f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 50f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0.05f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "lox_1",
+                display_name = "Loxen",
+                sprite_name = "TrophyLox",
+                description = "Kill over <color=orange>100</color> Loxens",
+                lore =
+                    "After consideration, these mighty beasts are a delight to tame and ride around.",
+                defeat_key = "defeated_lox",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1f },
+                    { Modifier.HealthRegen, 1f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 150f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "deathsquito_1",
+                display_name = "Pistol",
+                sprite_name = "TrophyDeathsquito",
+                description = "Kill over <color=orange>100</color> Deathsquitoes",
+                lore =
+                    "The mere sound of their buzz makes any viking shiver in their wet boots.",
+                defeat_key = "defeated_deathsquito",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Resistant, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1f },
+                    { Modifier.HealthRegen, 1f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "blobtar_1",
+                display_name = "Growth",
+                sprite_name = "TrophyGrowth",
+                description = "Kill over <color=orange>100</color> Tar Blobs",
+                lore =
+                    "The ages have been unkind to these creatures, and for that, they are unkind to anything that meets their gaze.",
+                defeat_key = "defeated_blobtar",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1f },
+                    { Modifier.HealthRegen, 1.1f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1.05f },
+                    { Modifier.Speed, 1.25f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "yagluth_1",
+                display_name = "The King",
+                sprite_name = "TrophyGoblinKing",
+                description = "Kill Yagluth over <color=orange>10</color> times",
+                lore =
+                    "The gates of hell are protected by the dragging corpse that we call Yagluth.",
+                defeat_key = "defeated_goblinking",
+                goal = 10,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Resistant, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1f },
+                    { Modifier.HealthRegen, 1.15f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1.15f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1.1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "serpent_1",
+                display_name = "Growl",
+                sprite_name = "TrophySerpent",
+                description = "Kill over <color=orange>100</color> Serpents",
+                lore =
+                    "The hunt of the serpent is one of the greatest past-times of a viking.",
+                defeat_key = "defeated_serpent",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1f },
+                    { Modifier.HealthRegen, 1f },
+                    { Modifier.StaminaRegen, 1.25f },
+                    { Modifier.RaiseSkills, 1.1f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "seeker_1",
+                display_name = "Bug Off",
+                sprite_name = "TrophySeeker",
+                description = "Kill over <color=orange>100</color> Seekers",
+                lore =
+                    "Through the mist, one peers at true horror when faced with a seeker.",
+                defeat_key = "defeated_seeker",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1.1f },
+                    { Modifier.HealthRegen, 1f },
+                    { Modifier.StaminaRegen, 1.1f },
+                    { Modifier.RaiseSkills, 1f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 0.95f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "seekerbrood_1",
+                display_name = "Broods",
+                sprite_name = "CookedBugMeat",
+                description = "Kill over <color=orange>100</color> Seekers Broods",
+                lore =
+                    "Somehow, they get worse when their smaller.",
+                defeat_key = "defeated_seekerbrood",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1f },
+                    { Modifier.HealthRegen, 1.1f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0.1f },
+                    { Modifier.FallDamage, 0.95f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "seeker_soldier_1",
+                display_name = "Soldier On",
+                sprite_name = "TrophySeekerBrute",
+                description = "Kill over <color=orange>100</color> Seeker Soldiers",
+                lore =
+                    "Through the mist, one peers at true horror when faced with a seeker soldier.",
+                defeat_key = "defeated_seekerbrute",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1.1f },
+                    { Modifier.HealthRegen, 1f },
+                    { Modifier.StaminaRegen, 1.1f },
+                    { Modifier.RaiseSkills, 1f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 100f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 0.9f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "tick_1",
+                display_name = "Blood Suckers",
+                sprite_name = "TrophyTick",
+                description = "Kill over <color=orange>100</color> Seekers",
+                lore =
+                    "The terror of having a creature follow you through a portal.",
+                defeat_key = "defeated_seeker",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1f },
+                    { Modifier.HealthRegen, 1.1f },
+                    { Modifier.StaminaRegen, 1.1f },
+                    { Modifier.RaiseSkills, 1f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 0.95f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "gjall_1",
+                display_name = "Y'all",
+                sprite_name = "TrophyGjall",
+                description = "Kill over <color=orange>100</color> Gjalls",
+                lore =
+                    "The sound of a gjall shakes the seas and the skies",
+                defeat_key = "defeated_gjall",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1.1f },
+                    { Modifier.HealthRegen, 1f },
+                    { Modifier.StaminaRegen, 1.1f },
+                    { Modifier.RaiseSkills, 1f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 0.9f },
+                    { Modifier.EitrRegen, 1.1f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "dverger_fire_1",
+                display_name = "Fireball",
+                sprite_name = "FlametalOre",
+                description = "Kill over <color=orange>100</color> Fire Mage Dverger",
+                lore =
+                    "They may look innocent and simple, but they are full of might and magic.",
+                defeat_key = "defeated_dvergermagefire",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Resistant, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1f },
+                    { Modifier.HealthRegen, 1f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1.2f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "dverger_ice_1",
+                display_name = "Freeze Shards",
+                sprite_name = "FreezeGland",
+                description = "Kill over <color=orange>100</color> Ice Mage Dverger",
+                lore =
+                    "They may look innocent and simple, but they are full of might and magic.",
+                defeat_key = "defeated_dvergermageice",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Resistant, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1f },
+                    { Modifier.HealthRegen, 1f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1.2f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "dverger_support_1",
+                display_name = "Supporter",
+                sprite_name = "Lantern",
+                description = "Kill over <color=orange>100</color> Support Mage Dverger",
+                lore =
+                    "They may look innocent and simple, but they are full of might and magic.",
+                defeat_key = "defeated_dvergermagesupport",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Resistant, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1f },
+                    { Modifier.HealthRegen, 1f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1.2f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "dverger_fire_1",
+                display_name = "Rogue",
+                sprite_name = "TrophyDvergr",
+                description = "Kill over <color=orange>100</color> Dverger",
+                lore =
+                    "They may look innocent and simple, but they are full of might and magic.",
+                defeat_key = "defeated_dverger",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Resistant, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1f },
+                    { Modifier.HealthRegen, 1f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1.2f }
+                }
+            },
+            new AchievementData()
+            {
+                unique_name = "seeker_queen_1",
+                display_name = "Queen",
+                sprite_name = "TrophySeekerQueen",
+                description = "Kill the Seeker Queen over <color=orange>100</color> times",
+                lore =
+                    "In the depths of the chambers of the mistland realms, the seeker queen lies and waits for her next prey.",
+                defeat_key = "defeated_queen",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Resistant, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Resistant, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1f },
+                    { Modifier.HealthRegen, 1f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 2f }
                 }
             },
         };
@@ -761,7 +2597,6 @@ public static class AchievementYML
                 unique_name = "staves_1",
                 display_name = "Blaster",
                 sprite_name = "StaffSkeleton",
-                duration = 100,
                 description = "Uncover <color=orange>all</color> staves",
                 lore =
                     "The remains of a scarred battlefield left behind by magic leaves deep wounds to the earth itself.",
@@ -814,7 +2649,6 @@ public static class AchievementYML
                 unique_name = "shields_1",
                 display_name = "Defender",
                 sprite_name = "shield",
-                duration = 100,
                 description = "Uncover <color=orange>all</color> shields",
                 lore =
                     "Defence is sometimes the greatest offense.",
@@ -849,7 +2683,7 @@ public static class AchievementYML
                 modifiers = new Dictionary<Modifier, float>()
                 {
                     { Modifier.Attack, 1f },
-                    { Modifier.HealthRegen, 0f },
+                    { Modifier.HealthRegen, 0.5f },
                     { Modifier.StaminaRegen, 1f },
                     { Modifier.RaiseSkills, 1f },
                     { Modifier.Speed, 1f },
@@ -867,7 +2701,6 @@ public static class AchievementYML
                 unique_name = "knives_1",
                 display_name = "Backstabber",
                 sprite_name = "KnifeSkollAndHati",
-                duration = 100,
                 description = "Uncover <color=orange>all</color> knives",
                 lore =
                     "The deadly silence of death by knives brings terror to all.",
@@ -920,7 +2753,6 @@ public static class AchievementYML
                 unique_name = "maces_1",
                 display_name = "Bludgeon",
                 sprite_name = "MaceSilver",
-                duration = 100,
                 description = "Uncover <color=orange>all</color> maces",
                 lore =
                     "The bloody remains of a bludgeoned warrior brings fear through generations.",
@@ -973,7 +2805,6 @@ public static class AchievementYML
                 unique_name = "spears_1",
                 display_name = "Poke",
                 sprite_name = "SpearBronze",
-                duration = 100,
                 description = "Uncover <color=orange>all</color> spears",
                 lore =
                     "A spear can do no harm, it is useful at range just as it is in the melee.",
@@ -1026,7 +2857,6 @@ public static class AchievementYML
                 unique_name = "polearms_1",
                 display_name = "Dancer",
                 sprite_name = "AtgeirIron",
-                duration = 100,
                 description = "Uncover <color=orange>all</color> pole-arms",
                 lore =
                     "Truly a spectacle for the ages, when a master dances with their pole-arm.",
@@ -1079,7 +2909,6 @@ public static class AchievementYML
                 unique_name = "axes_1",
                 display_name = "Chopper",
                 sprite_name = "AxeIron",
-                duration = 100,
                 description = "Uncover <color=orange>all</color> axes",
                 lore =
                     "Be wary of people with axes, for they do not only fell trees.",
@@ -1132,7 +2961,6 @@ public static class AchievementYML
                 unique_name = "swords_1",
                 display_name = "Slasher",
                 sprite_name = "sword_brown",
-                duration = 100,
                 description = "Uncover <color=orange>all</color> swords",
                 lore =
                     "The art of swordsmanship does not come easily, it is full of cuts and bruises.",
@@ -1185,7 +3013,6 @@ public static class AchievementYML
                 unique_name = "weapon_1",
                 display_name = "Armory",
                 sprite_name = "sword_blue",
-                duration = 100,
                 description = "Uncover <color=orange>all</color> weapons",
                 lore =
                     "Only those who test all the different options available, can accurately decide what is best for any situation.",
@@ -1238,7 +3065,6 @@ public static class AchievementYML
                 unique_name = "consumable_1",
                 display_name = "Glutton",
                 sprite_name = "mushroom",
-                duration = 100,
                 description = "Uncover <color=orange>all</color> materials",
                 lore =
                     "Now that is what we call a viking's appetite.",
@@ -1291,7 +3117,6 @@ public static class AchievementYML
                 unique_name = "material_1",
                 display_name = "Hoarder",
                 sprite_name = "log_stack",
-                duration = 100,
                 description = "Uncover <color=orange>all</color> materials",
                 lore =
                     "To be sure to succeed, one must know all the materials that one can use to defeat one's foes.",
@@ -1344,7 +3169,6 @@ public static class AchievementYML
                 unique_name = "fish_1",
                 display_name = "Fisherman",
                 sprite_name = "fish",
-                duration = 100,
                 description = "Uncover <color=orange>all</color> fishes",
                 lore =
                     "A true conqueror has successfully dominated all ocean dwellers as well as terrestrial beings.",
@@ -1397,7 +3221,6 @@ public static class AchievementYML
                 unique_name = "arrow_1",
                 display_name = "Whittler",
                 sprite_name = "arrow",
-                duration = 100,
                 description = "Uncover <color=orange>all</color> projectiles",
                 lore =
                     "A true survivalist knows well that range is your greatest ally.",

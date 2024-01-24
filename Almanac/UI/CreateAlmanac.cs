@@ -432,18 +432,4 @@ public static class CreateAlmanac
     {
         private static bool Prefix() => !IsPanelActive() || !IsAchievementActive();
     }
-    
-    [HarmonyPatch(typeof(Player), nameof(Player.StartGuardianPower))]
-    private static class StartGuardianPowerPatch
-    {
-        private static void Postfix(Player __instance)
-        {
-            if (!__instance) return;
-            if (__instance.m_guardianSE is AlmanacEffectManager.AchievementEffect)
-            {
-                if (__instance.GetSEMan().HaveStatusEffect(__instance.m_guardianPowerHash)) return;
-                __instance.GetSEMan().AddStatusEffect(__instance.m_guardianSE);
-            }
-        }
-    }
 }

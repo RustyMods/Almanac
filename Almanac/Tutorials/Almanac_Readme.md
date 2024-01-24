@@ -191,10 +191,10 @@ Normal will be ignored from tooltip as it changes nothing.
 ```
 Values below 1 reduces player output
 ex:
-0 = 100% decrease 
+  0 = 100% decrease 
 0.5 = 50% decrease
-1 = 0% no change
-2 = 100% increase
+  1 = 0% no change
+  2 = 100% increase
 
 - Attack
 - HealthRegen
@@ -210,9 +210,10 @@ ex:
 ```
 Values are direct additions or substractions
 ex:
+
 -50 = -50
-0 = no change
-50 = 50
+  0 = no change
+ 50 = 50
 
 - MaxCarryWeight
 ```

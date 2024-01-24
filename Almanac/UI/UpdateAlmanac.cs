@@ -668,7 +668,7 @@ public static class UpdateAlmanac
         SelectedAchievement.m_isCompleted = count >= SelectedAchievement.m_goal;
     }
 
-    private static string FormatProgressText(int value, int goal) => $"<color=orange>{value}</color> / <color=orange>{goal}</color> (<color=orange>{(value / goal) * 100}</color>%)";
+    private static string FormatProgressText(int value, int goal) => $"<color=orange>{value}</color> / <color=orange>{goal}</color> (<color=orange>{((value / goal) * 100):0.0}</color>%)";
     
     private static Achievement FindAchievement() => AchievementList.Find(item => item.m_uniqueName == SelectedAchievement.m_uniqueName);
     
@@ -815,13 +815,13 @@ public static class UpdateAlmanac
             Dictionary<string, string> craftingData = new()
             {
                 {"$almanac_crafting_station_title", "title"},
-                {"$almanac_discover_range", craftingStation.m_discoverRange.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_range_build", craftingStation.m_rangeBuild.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_extra_range_per_level", craftingStation.m_extraRangePerLevel.ToString(CultureInfo.CurrentCulture)},
+                {"$almanac_discover_range", craftingStation.m_discoverRange.ToString("0.0")},
+                {"$almanac_range_build", craftingStation.m_rangeBuild.ToString("0.0")},
+                {"$almanac_extra_range_per_level", craftingStation.m_extraRangePerLevel.ToString("0.0")},
                 {"$almanac_require_roof", craftingStation.m_craftRequireRoof.ToString()},
                 {"$almanac_require_fire", craftingStation.m_craftRequireFire.ToString()},
                 {"$almanac_show_basic_recipes", craftingStation.m_showBasicRecipies.ToString()},
-                {"$almanac_use_distance", craftingStation.m_useDistance.ToString(CultureInfo.CurrentCulture)},
+                {"$almanac_use_distance", craftingStation.m_useDistance.ToString("0.0")},
                 {"$almanac_use_animation", craftingStation.m_useAnimation.ToString()},
             };
             
@@ -834,7 +834,7 @@ public static class UpdateAlmanac
             {
                 {"$almanac_extension_title", "title"},
                 {"$almanac_piece_extends", stationExtension.m_craftingStation ? Localization.instance.Localize(stationExtension.m_craftingStation.m_name) : "0"},
-                {"$almanac_extension_distance", stationExtension.m_maxStationDistance.ToString(CultureInfo.CurrentCulture)},
+                {"$almanac_extension_distance", stationExtension.m_maxStationDistance.ToString("0.0")},
                 {"$almanac_extension_stack", stationExtension.m_stack.ToString()},
                 {"$almanac_continuous_connection", stationExtension.m_continousConnection.ToString()}
             };
@@ -850,7 +850,7 @@ public static class UpdateAlmanac
                 {"$almanac_no_support_wear", wearNTear.m_noSupportWear.ToString()},
                 {"$almanac_material_type", SplitCamelCase(wearNTear.m_materialType.ToString())},
                 {"$almanac_piece_supports", wearNTear.m_supports.ToString()},
-                {"$almanac_support_value", wearNTear.m_support.ToString(CultureInfo.CurrentCulture)},
+                {"$almanac_support_value", wearNTear.m_support.ToString("0.0")},
                 {"$almanac_piece_health", wearNTear.m_health.ToString(CultureInfo.CurrentCulture)},
                 {"$almanac_blunt", SplitCamelCase(wearNTear.m_damages.m_blunt.ToString())},
                 {"$almanac_slash", SplitCamelCase(wearNTear.m_damages.m_slash.ToString())},
@@ -910,17 +910,17 @@ public static class UpdateAlmanac
             {
                 {"$almanac_beehive_title", "title"},
                 {"$almanac_effect_only_day", beehive.m_effectOnlyInDaylight.ToString()},
-                {"$almanac_max_cover", beehive.m_maxCover.ToString(CultureInfo.CurrentCulture)},
+                {"$almanac_max_cover", beehive.m_maxCover.ToString("0.0")},
                 {"$almanac_sec_per_unit", beehive.m_secPerUnit.ToString(CultureInfo.CurrentCulture) + "<color=orange>s</color>"},
                 {"$almanac_max_honey", beehive.m_maxHoney.ToString()},
                 {"$almanac_honey_item", beehive.m_honeyItem ? Localization.instance.Localize(beehive.m_honeyItem.m_itemData.m_shared.m_name) : "0"},
             };
 
-            string[] biomes = SplitCamelCase(beehive.m_biome.ToString()).Split(',');
+            string[] biomes = beehive.m_biome.ToString().Split(',');
             for (int index = 0; index < biomes.Length; index++)
             {
                 string biome = biomes[index].Replace(" ", "");
-                beeHiveData.Add("$almanac_biomes" + index, biome);
+                beeHiveData.Add("$almanac_biomes" + index, SplitCamelCase(biome));
             }
 
             MergeDictionaries(defaultData, beeHiveData);
@@ -940,7 +940,7 @@ public static class UpdateAlmanac
             if (container.m_defaultItems.m_drops.Count > 0)
             {
                 containerData.Add("$almanac_container_drop", container.m_defaultItems.m_dropMin + "<color=orange>-</color>" + container.m_defaultItems.m_dropMax);
-                containerData.Add("$almanac_container_drop_chance", (container.m_defaultItems.m_dropChance * 100).ToString(CultureInfo.CurrentCulture) + "%");
+                containerData.Add("$almanac_container_drop_chance", (container.m_defaultItems.m_dropChance * 100).ToString("0.0") + "%");
                 containerData.Add("$almanac_container_one_of_each", container.m_defaultItems.m_oneOfEach.ToString());
                 
                 float totalWeight = container.m_defaultItems.m_drops.Sum(item => item.m_weight);;
@@ -952,7 +952,7 @@ public static class UpdateAlmanac
                     string name = Localization.instance.Localize(itemDrop.m_itemData.m_shared.m_name);
                     string stack = $"<color=orange>(</color>{drop.m_stackMin}<color=orange> $almanac_to </color>{drop.m_stackMax}<color=orange>)</color> ";
                     float percentage = (drop.m_weight / totalWeight) * 100;
-                    containerData.Add(name + index, stack + percentage + "<color=orange>%</color>");
+                    containerData.Add(name + index, stack + percentage.ToString("0.0") + "<color=orange>%</color>");
                 }
             }
             MergeDictionaries(defaultData, containerData);
@@ -993,8 +993,8 @@ public static class UpdateAlmanac
             Dictionary<string, string> teleportData = new()
             {
                 {"$almanac_portal_title", "title"},
-                {"$almanac_activation_range", teleportWorld.m_activationRange.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_exit_distance", teleportWorld.m_exitDistance.ToString(CultureInfo.CurrentCulture)}
+                {"$almanac_activation_range", teleportWorld.m_activationRange.ToString("0.0")},
+                {"$almanac_exit_distance", teleportWorld.m_exitDistance.ToString("0.0")}
             };
             
             MergeDictionaries(defaultData, teleportData);
@@ -1005,26 +1005,26 @@ public static class UpdateAlmanac
             Dictionary<string, string> shipData = new()
             {
                 {"$almanac_ship_title", "title"},
-                {"$almanac_water_level_offset", ship.m_waterLevelOffset.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_force_distance", ship.m_forceDistance.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_force", ship.m_force.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_damping", ship.m_damping.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_damping_sideway", ship.m_dampingSideway.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_damping_forward", ship.m_dampingForward.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_angular_damping", ship.m_angularDamping.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_disable_level", ship.m_disableLevel.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_sail_force_offset", ship.m_sailForceOffset.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_sail_force_factor", ship.m_sailForceFactor.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_rudder_speed", ship.m_rudderSpeed.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_stear_force_offset", ship.m_stearForceOffset.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_stear_force", ship.m_stearForce.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_stear_velocity_force_factor", ship.m_stearVelForceFactor.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_backward_force", ship.m_backwardForce.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_rudder_rotation_max", ship.m_rudderRotationMax.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_min_water_impact_force", ship.m_minWaterImpactForce.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_min_water_impact_interval", ship.m_minWaterImpactInterval.ToString(CultureInfo.CurrentCulture) + "<color=orange>s</color>"},
-                {"$almanac_upside_down_damage_interval", ship.m_upsideDownDmgInterval.ToString(CultureInfo.CurrentCulture) + "<color=orange>s</color>"},
-                {"$almanac_upside_down_damage", ship.m_upsideDownDmg.ToString(CultureInfo.CurrentCulture)}
+                {"$almanac_water_level_offset", ship.m_waterLevelOffset.ToString("0.0")},
+                {"$almanac_force_distance", ship.m_forceDistance.ToString("0.0")},
+                {"$almanac_force", ship.m_force.ToString("0.0")},
+                {"$almanac_damping", ship.m_damping.ToString("0.0")},
+                {"$almanac_damping_sideway", ship.m_dampingSideway.ToString("0.0")},
+                {"$almanac_damping_forward", ship.m_dampingForward.ToString("0.0")},
+                {"$almanac_angular_damping", ship.m_angularDamping.ToString("0.0")},
+                {"$almanac_disable_level", ship.m_disableLevel.ToString("0.0")},
+                {"$almanac_sail_force_offset", ship.m_sailForceOffset.ToString("0.0")},
+                {"$almanac_sail_force_factor", ship.m_sailForceFactor.ToString("0.0")},
+                {"$almanac_rudder_speed", ship.m_rudderSpeed.ToString("0.0")},
+                {"$almanac_stear_force_offset", ship.m_stearForceOffset.ToString("0.0")},
+                {"$almanac_stear_force", ship.m_stearForce.ToString("0.0")},
+                {"$almanac_stear_velocity_force_factor", ship.m_stearVelForceFactor.ToString("0.0")},
+                {"$almanac_backward_force", ship.m_backwardForce.ToString("0.0")},
+                {"$almanac_rudder_rotation_max", ship.m_rudderRotationMax.ToString("0.0")},
+                {"$almanac_min_water_impact_force", ship.m_minWaterImpactForce.ToString("0.0")},
+                {"$almanac_min_water_impact_interval", ship.m_minWaterImpactInterval.ToString("0.0") + "<color=orange>s</color>"},
+                {"$almanac_upside_down_damage_interval", ship.m_upsideDownDmgInterval.ToString("0.0") + "<color=orange>s</color>"},
+                {"$almanac_upside_down_damage", ship.m_upsideDownDmg.ToString("0.0")}
             };
             
             MergeDictionaries(defaultData, shipData);
@@ -1036,14 +1036,14 @@ public static class UpdateAlmanac
             {
                 {"$almanac_wisp_spawner_title", "title"},
                 {"$almanac_spawn_interval", wispSpawner.m_spawnInterval.ToString(CultureInfo.CurrentCulture) + "<color=orange>s</color>"},
-                {"$almanac_spawn_chance", (wispSpawner.m_spawnChance * 100).ToString(CultureInfo.CurrentCulture) + "%"},
+                {"$almanac_spawn_chance", (wispSpawner.m_spawnChance * 100).ToString(CultureInfo.CurrentCulture) + "<color=orange>%</color>"},
                 {"$almanac_max_spawned", wispSpawner.m_maxSpawned.ToString()},
                 {"$almanac_only_spawn_night", wispSpawner.m_onlySpawnAtNight.ToString()},
                 {"$almanac_no_spawn_cover", wispSpawner.m_dontSpawnInCover.ToString()},
-                {"$almanac_max_cover", (wispSpawner.m_maxCover * 100).ToString(CultureInfo.CurrentCulture) + "%"},
+                {"$almanac_max_cover", (wispSpawner.m_maxCover * 100).ToString("0.0")},
                 {"$almanac_wisp_prefab", wispSpawner.m_wispPrefab ? wispSpawner.m_wispPrefab.name : "0"},
-                {"$almanac_nearby_threshold", wispSpawner.m_nearbyTreshold.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_spawn_distance", wispSpawner.m_spawnDistance.ToString(CultureInfo.CurrentCulture)},
+                {"$almanac_nearby_threshold", wispSpawner.m_nearbyTreshold.ToString("0.0")},
+                {"$almanac_spawn_distance", wispSpawner.m_spawnDistance.ToString("0.0")},
                 {"$almanac_max_spawned_area", wispSpawner.m_maxSpawnedArea.ToString(CultureInfo.CurrentCulture)}
             };
             
@@ -1055,7 +1055,7 @@ public static class UpdateAlmanac
             Dictionary<string, string> trapData = new()
             {
                 {"$almanac_trap_title", "title"},
-                {"$almanac_rearm_cooldown", trap.m_rearmCooldown.ToString()},
+                {"$almanac_rearm_cooldown", trap.m_rearmCooldown + "<color=orange>s</color>"},
                 {"$almanac_triggered_by_enemies", trap.m_triggeredByEnemies.ToString()},
                 {"$almanac_triggered_by_players", trap.m_triggeredByPlayers.ToString()},
                 {"$almanac_force_stagger", trap.m_forceStagger.ToString()},
@@ -1107,20 +1107,20 @@ public static class UpdateAlmanac
             Dictionary<string, string> turretData = new()
             {
                 {"$almanac_turret_title", "title"},
-                {"$almanac_turn_rate", turret.m_turnRate.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_horizontal_angle", turret.m_horizontalAngle.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_vertical_angle", turret.m_verticalAngle.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_view_distance", turret.m_viewDistance.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_no_target_scan_rate", turret.m_noTargetScanRate.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_look_acceleration", turret.m_lookAcceleration.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_look_deacceleration", turret.m_lookDeacceleration.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_look_min_degrees_delta", turret.m_lookMinDegreesDelta.ToString(CultureInfo.CurrentCulture)},
+                {"$almanac_turn_rate", turret.m_turnRate.ToString(CultureInfo.CurrentCulture) + "<color=orange>s</color>"},
+                {"$almanac_horizontal_angle", turret.m_horizontalAngle.ToString(CultureInfo.CurrentCulture) + "<color=orange>°</color>"},
+                {"$almanac_vertical_angle", turret.m_verticalAngle.ToString(CultureInfo.CurrentCulture) + "<color=orange>°</color>"},
+                {"$almanac_view_distance", turret.m_viewDistance.ToString("0.0")},
+                {"$almanac_no_target_scan_rate", turret.m_noTargetScanRate.ToString(CultureInfo.CurrentCulture) + "<color=orange>s</color>"},
+                {"$almanac_look_acceleration", turret.m_lookAcceleration.ToString("0.0") + "<color=orange>s</color>"},
+                {"$almanac_look_deacceleration", turret.m_lookDeacceleration.ToString("0.0") + "<color=orange>s</color>"},
+                {"$almanac_look_min_degrees_delta", turret.m_lookMinDegreesDelta.ToString("0.0") + "<color=orange>°</color>"},
                 {"$almanac_default_ammo", turret.m_defaultAmmo ? Localization.instance.Localize(turret.m_defaultAmmo.m_itemData.m_shared.m_name) : "0"},
-                {"$almanac_attack_cooldown", turret.m_attackCooldown.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_attack_warmup", turret.m_attackWarmup.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_hit_noise1", turret.m_hitNoise.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_shoot_when_aim_diff", turret.m_shootWhenAimDiff.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_prediction_modifier", turret.m_predictionModifier.ToString(CultureInfo.CurrentCulture)},
+                {"$almanac_attack_cooldown", turret.m_attackCooldown.ToString(CultureInfo.CurrentCulture) + "<color=orange>s</color>"},
+                {"$almanac_attack_warmup", turret.m_attackWarmup.ToString(CultureInfo.CurrentCulture) + "<color=orange>s</color>"},
+                {"$almanac_hit_noise1", turret.m_hitNoise.ToString("0.0")},
+                {"$almanac_shoot_when_aim_diff", turret.m_shootWhenAimDiff.ToString("0.0")},
+                {"$almanac_prediction_modifier", turret.m_predictionModifier.ToString("0.0")},
                 {"$almanac_update_target_interval_far", turret.m_updateTargetIntervalFar.ToString(CultureInfo.CurrentCulture) + "<color=orange>s</color>"},
                 {"$almanac_update_target_interval_near", turret.m_updateTargetIntervalNear.ToString(CultureInfo.CurrentCulture) + "<color=orange>s</color>"},
                 {"$almanac_max_ammo", turret.m_maxAmmo.ToString()},
@@ -1159,7 +1159,7 @@ public static class UpdateAlmanac
                     Fermenter.ItemConversion conversion = ferment.m_conversion[index];
                     string from = Localization.instance.Localize(conversion.m_from.m_itemData.m_shared.m_name);
                     string to = Localization.instance.Localize(conversion.m_to.m_itemData.m_shared.m_name);
-                    fermentData.Add($"<color=white>{from}</color>", to + "<color=orange>(</color>" + conversion.m_producedItems + "<color=orange>)</color>");
+                    fermentData.Add($"<color=white>{from}</color>", to + " <color=orange>(x</color>" + conversion.m_producedItems + "<color=orange>)</color>");
                 }
             }
             
@@ -1380,7 +1380,7 @@ public static class UpdateAlmanac
         Dictionary<string, string> data = new()
         {
             {"$almanac_stagger_when_blocked", SelectedCreature.staggerWhenBlocked.ToString()},
-            {"$almanac_stagger_damage_factor", SelectedCreature.staggerDamageFactor.ToString(CultureInfo.CurrentCulture)},
+            {"$almanac_stagger_damage_factor", SelectedCreature.staggerDamageFactor.ToString("0.0")},
             {"$almanac_tolerate_water", SelectedCreature.tolerateWater.ToString()},
             {"$almanac_tolerate_smoke", SelectedCreature.tolerateSmoke.ToString()},
             {"$almanac_tolerate_tar", SelectedCreature.tolerateTar.ToString()},
@@ -1430,7 +1430,7 @@ public static class UpdateAlmanac
             {"$almanac_auto_stack_label", itemData.m_shared.m_autoStack.ToString()},
             {"$almanac_quality_label", itemData.m_shared.m_maxQuality.ToString()},
             {"$almanac_scale_by_quality", (itemData.m_shared.m_scaleByQuality * 100).ToString(CultureInfo.CurrentCulture) + "%"},
-            {"$almanac_weight_label", itemData.m_shared.m_weight.ToString(CultureInfo.CurrentCulture)},
+            {"$almanac_weight_label", itemData.m_shared.m_weight.ToString("0.0")},
             {"$almanac_scale_by_weight", itemData.m_shared.m_scaleWeightByQuality.ToString(CultureInfo.CurrentCulture)},
             {"$almanac_value_label", itemData.m_shared.m_value.ToString()},
             {"$almanac_teleportable", itemData.m_shared.m_teleportable.ToString()},
@@ -1572,9 +1572,9 @@ public static class UpdateAlmanac
             Dictionary<string, string> StatModifiers = new()
             {
                 {"$almanac_stat_modifiers_title", "title"},
-                {"$almanac_movement_modifier_label", (itemData.m_shared.m_movementModifier * 100).ToString(CultureInfo.CurrentCulture) + "%"},
-                {"$almanac_eitr_regen_label", (itemData.m_shared.m_eitrRegenModifier * 100).ToString(CultureInfo.CurrentCulture) + "%"},
-                {"$almanac_base_items_stamina_modifier_label", (itemData.m_shared.m_baseItemsStaminaModifier * 100).ToString(CultureInfo.CurrentCulture) + "%"},
+                {"$almanac_movement_modifier_label", (itemData.m_shared.m_movementModifier * 100).ToString(CultureInfo.CurrentCulture) + "<color=orange>%</color>"},
+                {"$almanac_eitr_regen_label", (itemData.m_shared.m_eitrRegenModifier * 100).ToString(CultureInfo.CurrentCulture) + "<color=orange>%</color>"},
+                {"$almanac_base_items_stamina_modifier_label", (itemData.m_shared.m_baseItemsStaminaModifier * 100).ToString(CultureInfo.CurrentCulture) + "<color=orange>%</color>"},
             };
 
             MergeDictionaries(DefaultData, StatModifiers);
@@ -1728,16 +1728,15 @@ public static class UpdateAlmanac
                 {"$almanac_attack_eitr", itemData.m_shared.m_attack.m_attackEitr.ToString(CultureInfo.CurrentCulture)},
                 {"$almanac_attack_health", itemData.m_shared.m_attack.m_attackHealth.ToString(CultureInfo.CurrentCulture)},
                 {"$almanac_attack_health_percentage", itemData.m_shared.m_attack.m_attackHealthPercentage.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_speed_factor", (itemData.m_shared.m_attack.m_speedFactor * 100).ToString(CultureInfo.CurrentCulture) + "%"},
-                {"$almanac_speed_factor_rotation", (itemData.m_shared.m_attack.m_speedFactorRotation * 100).ToString(CultureInfo.CurrentCulture) + "%"},
-                {"$almanac_attack_start_noise", itemData.m_shared.m_attack.m_attackStartNoise.ToString(CultureInfo.CurrentCulture)}
+                {"$almanac_speed_factor", (itemData.m_shared.m_attack.m_speedFactor * 100).ToString(CultureInfo.CurrentCulture) + "<color=orange>%</color>"},
+                {"$almanac_speed_factor_rotation", (itemData.m_shared.m_attack.m_speedFactorRotation * 100).ToString(CultureInfo.CurrentCulture) + "<color=orange>%</color>"},
+                {"$almanac_attack_start_noise", itemData.m_shared.m_attack.m_attackStartNoise.ToString("0.0")}
             };
 
             MergeDictionaries(DefaultData, Attacks);
         }
         return DefaultData;
     }
-    
     private static void AddItemRecipe(ItemDrop.ItemData itemData)
     {
         Recipe recipe = ObjectDB.instance.GetRecipe(itemData);
@@ -1780,7 +1779,6 @@ public static class UpdateAlmanac
     }
 
     public static bool isMetricsActive = false;
-
     public static void UpdateMetricsPanel()
     {
         if (!Player.m_localPlayer) return;
@@ -1788,7 +1786,7 @@ public static class UpdateAlmanac
         CreateAlmanac.AchievementGUI.SetActive(false);
         DestroyPanelElements();
         isMetricsActive = true;
-        CreateAlmanac.PanelIcon.sprite = SpriteManager.AlmanacIcon;
+        CreateAlmanac.PanelIcon.sprite = SpriteManager.bookClosedRedIcon;
         CreateAlmanac.PanelTitle.text = Player.m_localPlayer.GetHoverName();
         CreateAlmanac.PanelButton.text = Localization.instance.Localize("$almanac_leaderboard_button");
         
@@ -1816,7 +1814,6 @@ public static class UpdateAlmanac
             }
         }
     }
-    
     public static void UpdateLeaderboardPanel()
     {
         if (!Player.m_localPlayer) return;
@@ -1824,7 +1821,7 @@ public static class UpdateAlmanac
         CreateAlmanac.AchievementGUI.SetActive(false);
         DestroyPanelElements();
         isMetricsActive = false;
-        CreateAlmanac.PanelIcon.sprite = SpriteManager.AlmanacIcon;
+        CreateAlmanac.PanelIcon.sprite = SpriteManager.crownGoldIcon;
         CreateAlmanac.PanelTitle.text = Localization.instance.Localize("$almanac_leaderboard_title");
         CreateAlmanac.PanelButton.text = Localization.instance.Localize("$almanac_stats_button");
 
@@ -1850,31 +1847,11 @@ public static class UpdateAlmanac
 
             if (Utils.FindChild(item.transform, "$part_kd").GetChild(1).TryGetComponent(out TextMeshProUGUI kd))
             {
-                // string value = "0.0";
-
                 double ratio = kvp.Value.total_deaths == 0
                     ? double.PositiveInfinity
                     : (double)kvp.Value.total_kills / kvp.Value.total_deaths;
 
                 string formattedRatio = ratio.ToString("0.0");
-                
-                
-                // if (kvp.Value.total_kills != 0 && kvp.Value.total_deaths != 0)
-                // {
-                //     double ratio = 0.0;
-                //     if (kvp.Value.total_kills > kvp.Value.total_deaths)
-                //     {
-                //         // ReSharper disable once PossibleLossOfFraction
-                //         ratio = kvp.Value.total_kills / kvp.Value.total_deaths;
-                //         value = $"<color=orange>{ratio}</color>";
-                //     }
-                //     else
-                //     {
-                //         // ReSharper disable once PossibleLossOfFraction
-                //         ratio = kvp.Value.total_deaths / kvp.Value.total_kills;
-                //         value = $"<color=orange>-{ratio}</color>";
-                //     }
-                // }
 
                 kd.text = Localization.instance.Localize(
                     $"<color=orange>{kvp.Value.total_kills}</color> $almanac_kills / <color=orange>{kvp.Value.total_deaths}</color> $almanac_deaths ({formattedRatio})");
@@ -1883,7 +1860,6 @@ public static class UpdateAlmanac
             PanelElements.Add(item);
         }
     }
-
     private static Dictionary<string, string> GetMetricData()
     {
         Dictionary<string, string> metrics = new()
@@ -1931,8 +1907,8 @@ public static class UpdateAlmanac
             {"$almanac_distance_sailed",GetPlayerStat(PlayerStatType.DistanceSail).ToString(CultureInfo.CurrentCulture)},
             {"$almanac_distance_air",GetPlayerStat(PlayerStatType.DistanceAir).ToString(CultureInfo.CurrentCulture)},
             {"$almanac_base_title", "title"},
-            {"$almanac_time_in_base",GetPlayerStat(PlayerStatType.TimeInBase).ToString(CultureInfo.CurrentCulture)},
-            {"$almanac_time_out_base",GetPlayerStat(PlayerStatType.TimeOutOfBase).ToString(CultureInfo.CurrentCulture)},
+            {"$almanac_time_in_base", (GetPlayerStat(PlayerStatType.TimeInBase) / 60).ToString(CultureInfo.CurrentCulture) + "<color=orange>min</color>"},
+            {"$almanac_time_out_base", (GetPlayerStat(PlayerStatType.TimeOutOfBase) / 60).ToString(CultureInfo.CurrentCulture) + "<color=orange>min</color>"},
             {"$almanac_sleep",GetPlayerStat(PlayerStatType.Sleep).ToString(CultureInfo.CurrentCulture)},
             {"$almanac_stands_title", "title"},
             {"$almanac_item_stand_used",GetPlayerStat(PlayerStatType.ItemStandUses).ToString(CultureInfo.CurrentCulture)},

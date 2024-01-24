@@ -20,9 +20,9 @@ public static class SpriteManager
     private static readonly Sprite? goldCoinsPileIcon = RegisterSprite("gold_coins_many.png");
     private static readonly Sprite? keySilverIcon = RegisterSprite("key_silver.png");
     private static readonly Sprite? boneWhiteIcon = RegisterSprite("bone_white.png");
-    private static readonly Sprite? bookClosedRedIcon = RegisterSprite("book_closed_red.png");
+    public static readonly Sprite? bookClosedRedIcon = RegisterSprite("book_closed_red.png");
     private static readonly Sprite? bottleStandardGreenIcon = RegisterSprite("bottle_standard_green.png");
-    private static readonly Sprite? crownGoldIcon = RegisterSprite("crown_gold.png");
+    public static readonly Sprite? crownGoldIcon = RegisterSprite("crown_gold.png");
     private static readonly Sprite? gemDiamondRedIcon = RegisterSprite("gem_diamond_red.png");
     private static readonly Sprite? goldBarsIcon = RegisterSprite("gold_bars_three.png");
     private static readonly Sprite? scrollMapIcon = RegisterSprite("scroll_map2.png");

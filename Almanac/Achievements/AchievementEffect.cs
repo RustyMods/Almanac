@@ -105,52 +105,34 @@ public static class AlmanacEffectManager
             foreach (KeyValuePair<Modifier, float> mod in Modifiers)
             {
                 if (Math.Abs(mod.Value - defaultModifiers[mod.Key]) < 0.009f) continue;
+
+                string FormattedKey = Utility.SplitCamelCase(mod.Key.ToString());
                 
                 switch (mod.Key)
                 {
                     case Modifier.None:
                         break;
                     case Modifier.DamageReduction:
-                        float reductionValue = Mathf.Clamp01(mod.Value);
-                        string damageString = $"\n{mod.Key} -<color=orange>{reductionValue * 100}</color>%";
-                        appendedTooltip += damageString;
+                        appendedTooltip += $"\n{FormattedKey} -<color=orange>{Mathf.Clamp01(mod.Value) * 100}</color>%";
                         break;
                     case Modifier.MaxCarryWeight:
                         if (mod.Value < 0)
                         {
-                            string maxCarryString = $"\n{Utility.SplitCamelCase(mod.Key.ToString())} -<color=orange>{mod.Value.ToString(CultureInfo.CurrentCulture).Replace("-","")}</color>";
-                            appendedTooltip += maxCarryString;
+                            appendedTooltip += $"\n{FormattedKey} -<color=orange>{mod.Value.ToString(CultureInfo.CurrentCulture).Replace("-","")}</color>";
                         }
                         else
                         {
-                            string maxCarryString = $"\n{Utility.SplitCamelCase(mod.Key.ToString())} +<color=orange>{mod.Value}</color>";
-                            appendedTooltip += maxCarryString;
+                            appendedTooltip += $"\n{FormattedKey} +<color=orange>{mod.Value}</color>";;
                         }
                         break;
                     default:
-                        string normalizedStrings = "";
-                        for (int i = 0; i < mod.Key.ToString().Length; ++i)
-                        {
-                            if (i == 0) normalizedStrings += mod.Key.ToString()[i];
-                            else
-                            {
-                                if (char.IsUpper(mod.Key.ToString()[i]))
-                                {
-                                    normalizedStrings += " ";
-                                }
-                                normalizedStrings += mod.Key.ToString()[i];
-                            }
-                        }
-
                         if (mod.Value > 1)
                         {
-                            string defaultString = $"\n{normalizedStrings} +<color=orange>{Mathf.Round((mod.Value - 1) * 100)}</color>%";
-                            appendedTooltip += defaultString;
+                            appendedTooltip += $"\n{FormattedKey} +<color=orange>{Mathf.Round((mod.Value - 1) * 100)}</color>%";
                         }
                         if (mod.Value < 1)
                         {
-                            string defaultString = $"\n{normalizedStrings} -<color=orange>{Mathf.Round((1 - mod.Value) * 100)}</color>%";
-                            appendedTooltip += defaultString;
+                            appendedTooltip += $"\n{FormattedKey} -<color=orange>{Mathf.Round((1 - mod.Value) * 100)}</color>%";
                         }
                         break;
                 }

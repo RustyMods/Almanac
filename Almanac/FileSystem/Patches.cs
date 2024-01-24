@@ -60,4 +60,27 @@ public static class Patches
             }
         }
     }
+    
+    [HarmonyPatch(typeof(Player), nameof(Player.StartGuardianPower))]
+    private static class StartGuardianPowerPatch
+    {
+        private static void Postfix(Player __instance)
+        {
+            if (!__instance) return;
+            if (__instance.m_guardianSE is AlmanacEffectManager.AchievementEffect)
+            {
+                if (__instance.GetSEMan().HaveStatusEffect(__instance.m_guardianPowerHash)) return;
+                __instance.GetSEMan().AddStatusEffect(__instance.m_guardianSE);
+            }
+        }
+    }
+    
+    [HarmonyPatch(typeof(ZLog), nameof(ZLog.LogWarning))]
+    static class MuteGuardianPowerStats
+    {
+        private static bool Prefix(object o)
+        {
+            return !o.ToString().StartsWith("Missing stat for guardian power");
+        }
+    }
 }

@@ -1,15 +1,13 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
+using Almanac.FileSystem;
 using UnityEngine;
 
-namespace Almanac.Almanac;
+namespace Almanac.Data;
 
 public static class PieceDataCollector
 {
-    // private static readonly List<string> exclusionMap = AlmanacPlugin._IgnoredPrefabs.Value.Split(',').ToList();
-    private static readonly List<string> exclusionMap = IgnoreList.serverIgnoreList;
-
+    private static readonly List<GameObject> allPieces = new ();
     public static readonly List<GameObject> plantPieces = new();
     public static readonly List<GameObject> furniturePieces = new();
     public static readonly List<GameObject> modPieces = new();
@@ -17,16 +15,11 @@ public static class PieceDataCollector
     public static readonly List<GameObject> buildPieces = new();
     public static readonly List<GameObject> craftingPieces = new();
     public static readonly List<GameObject> defaultPieces = new();
-
     public static readonly List<GameObject> comfortPieces = new();
-    
-    public static readonly List<GameObject> allPieces = new ();
-    public static readonly List<GameObject> cookingStations = new ();
-    public static readonly List<GameObject> fermentingStations = new ();
-    public static readonly List<GameObject> smelterStations = new ();
-
+    public static List<GameObject> GetFilteredPieces(List<GameObject> list) => AlmanacPlugin._UseIgnoreList.Value is AlmanacPlugin.Toggle.Off ? list : list.FindAll(piece => !Filters.FilterList.Contains(piece.name));
     public static void GetBuildPieces()
     {
+        AlmanacPlugin.AlmanacLogger.LogDebug("Saving pieces to almanac");
         GetPieces();
         
         plantPieces.Clear();
@@ -118,7 +111,6 @@ public static class PieceDataCollector
             "Krump_Ship_Raft",
             "Krump_Ship_Karve",
             "Krump_Ship_Knarr_Transporter",
-            
         };
         
         foreach (GameObject piece in allPieces)
@@ -128,12 +120,6 @@ public static class PieceDataCollector
             piece.TryGetComponent(out Plant plant);
             
             if (!pieceScript) continue;
-
-            // Piece.PieceCategory category = pieceScript.m_category;
-            // AlmanacPlugin.AlmanacLogger.LogWarning(category.ToString());
-            
-            
-            if (exclusionMap.Contains(piece.name)) continue;
             
             string name = pieceScript.name;
             string hoverName = pieceScript.m_name;
@@ -235,23 +221,11 @@ public static class PieceDataCollector
     private static void GetPieces()
     {
         allPieces.Clear();
-        cookingStations.Clear();
-        fermentingStations.Clear();
-        smelterStations.Clear();
-
         GameObject[] AllObjects = Resources.FindObjectsOfTypeAll<GameObject>();
-
         foreach (GameObject GO in AllObjects)
         {
-            GO.TryGetComponent(out Piece pieceScript);
-            GO.TryGetComponent(out CookingStation cookingStationScript);
-            GO.TryGetComponent(out Fermenter fermentScript);
-            GO.TryGetComponent(out Smelter smelterScript);
-            
-            if (pieceScript != null) allPieces.Add(GO);
-            if (cookingStationScript != null) cookingStations.Add(GO);
-            if (fermentScript != null) fermentingStations.Add(GO);
-            if (smelterScript != null) smelterStations.Add(GO);
+            if (!GO.GetComponent<Piece>()) continue;
+            allPieces.Add(GO);
         }
     }
 }

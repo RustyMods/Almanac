@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
+using Almanac.FileSystem;
 using BepInEx;
 using JetBrains.Annotations;
 using UnityEngine;
-using static Almanac.AlmanacPlugin;
+using UnityEngine.Serialization;
 
-namespace Almanac.Almanac;
+namespace Almanac.Data;
 public static class CreatureDataCollector
 {
     [Serializable] [CanBeNull]
@@ -15,11 +15,11 @@ public static class CreatureDataCollector
     {
         public string name = "no data";
         public string display_name = "unknown";
-        public float? health = 1000f;
-        public string? faction = "unknown";
+        public float health = 1000f;
+        public string faction = "unknown";
         public string blunt = "N/A";
         public string slash = "N/A";
-        public string piece = "N/A";
+        public string pierce = "N/A";
         public string chop = "N/A";
         public string pickaxe = "N/A";
         public string fire = "N/A";
@@ -41,9 +41,8 @@ public static class CreatureDataCollector
         public bool tolerateSmoke = false;
         public bool tolerateTar = false;
         public string trophyName = "unknown";
+        public Sprite? trophyImage = null;
         public string defeatedKey = null!;
-        public int PlayerKills = 0;
-        public int PlayerDeaths = 0;
     }
     [Serializable] [CanBeNull]
     public class AttackData
@@ -52,7 +51,7 @@ public static class CreatureDataCollector
         public float damage = 0f;
         public float blunt = 0f;
         public float slash = 0f;
-        public float piece = 0f;
+        [FormerlySerializedAs("piece")] public float pierce = 0f;
         public float chop = 0f;
         public float pickaxe = 0f;
         public float fire = 0f;
@@ -67,13 +66,12 @@ public static class CreatureDataCollector
         public string statusEffect = "None";
         public string statusEffectTooltip = "";
     }
-
-    // private static readonly List<string> exclusionMap = _IgnoredPrefabs.Value.Split(',').ToList();
-    private static readonly List<string> exclusionMap = IgnoreList.serverIgnoreList;
-
     public static List<CreatureData> tempCreatureData = new();
-    public static List<CreatureData> GetSortedCreatureData()
+    public static readonly List<string> TempDefeatKeys = new();
+    public static List<CreatureData> GetSavedCreatureData() => AlmanacPlugin._UseIgnoreList.Value is AlmanacPlugin.Toggle.Off ? tempCreatureData : tempCreatureData.FindAll(creature => !Filters.FilterList.Contains(creature.name));
+    public static void GetSortedCreatureData()
     {
+        AlmanacPlugin.AlmanacLogger.LogDebug("Caching Creature Data");
         List<CreatureData> creatureData = GetCreatureData();
         creatureData.RemoveAt(0);
         List<CreatureData> filteredCreatures = new();
@@ -81,36 +79,13 @@ public static class CreatureDataCollector
         foreach (CreatureData? data in creatureData)
         {
             RenameCreatureData(data);
-            if (exclusionMap.Contains(data.name)) continue;
             filteredCreatures.Add(data);
         }
 
-        List<CreatureData> sortedList = filteredCreatures.OrderBy(item =>
-            Localization.instance.Localize(item.display_name)).ToList();
+        List<CreatureData> sortedList = filteredCreatures.OrderBy(item => Localization.instance.Localize(item.display_name)).ToList();
         
-        GetSetTrackingData(sortedList);
-
         tempCreatureData = sortedList;
-        return sortedList;
     }
-
-    private static void GetSetTrackingData(List<CreatureData> list)
-    {
-        TrackPlayerKills.SetInitialData(list);
-        TrackPlayerDeaths.SetInitialData(list);
-        
-        Dictionary<string, int> currentKilledMonsters = TrackPlayerKills.GetCurrentKilledMonsters();
-        Dictionary<string, int> currentPlayerDeaths = TrackPlayerDeaths.GetCurrentPlayerDeaths();
-        
-        foreach (CreatureData? creature in list)
-        {
-            currentKilledMonsters.TryGetValue(creature.defeatedKey, out int killCount);
-            currentPlayerDeaths.TryGetValue(creature.defeatedKey, out int deathCount);
-            creature.PlayerKills = killCount;
-            creature.PlayerDeaths = deathCount;
-        }
-    }
-
     private static void RenameCreatureData(CreatureData creatureData)
     {
         Dictionary<string, string> conversion = new Dictionary<string, string>()
@@ -180,19 +155,12 @@ public static class CreatureDataCollector
         };
         if (conversion.ContainsKey(creatureData.name)) creatureData.display_name = conversion[creatureData.name];
     }
-
-    private static bool inArray(CreatureData data, IEnumerable<CreatureData> array)
-    {
-        return array.Any(arrayData => data.name == arrayData.name);
-    }
-    private static bool inArray(AttackData data, IEnumerable<AttackData> array)
-    {
-        return array.Any(arrayData => data.name == arrayData.name);
-    }
-
+    private static bool inArray(CreatureData data, IEnumerable<CreatureData> array) => array.Any(arrayData => data.name == arrayData.name);
+    private static bool inArray(AttackData data, IEnumerable<AttackData> array) => array.Any(arrayData => data.name == arrayData.name);
     private static List<CreatureData> GetCreatureData()
     {
         List<CreatureData> data = new List<CreatureData>();
+        TempDefeatKeys.Clear();
         GameObject[] array = Resources.FindObjectsOfTypeAll<GameObject>();
         foreach (GameObject obj in array)
         {
@@ -242,6 +210,8 @@ public static class CreatureDataCollector
                 SaveAnimalAIData(animalAI, creatureData);
             }
             if (inArray(creatureData, data) == false) data.Add(creatureData);
+            
+            if (!creatureData.defeatedKey.IsNullOrWhiteSpace() && !TempDefeatKeys.Contains(creatureData.defeatedKey)) TempDefeatKeys.Add(creatureData.defeatedKey);
         }
 
         return data;
@@ -259,7 +229,7 @@ public static class CreatureDataCollector
         }
         catch (Exception)
         {
-            // AlmanacPlugin.AlmanacLogger.Log(LogLevel.Info, $"failed to get monster data of {data.name}, continuing...");
+            AlmanacPlugin.AlmanacLogger.LogDebug($"Failed to get MonsterAI data: {data.name}");
         }
     }
     private static void SaveAnimalAIData(AnimalAI script, CreatureData data)
@@ -272,7 +242,7 @@ public static class CreatureDataCollector
         }
         catch (Exception)
         {
-            // AlmanacPlugin.AlmanacLogger.Log(LogLevel.Info, $"failed to get animal data of {data.name}, continuing...");
+            AlmanacPlugin.AlmanacLogger.LogDebug($"Failed to get Animal data: {data.name}");
         }
         
     }
@@ -280,8 +250,8 @@ public static class CreatureDataCollector
     {
         try
         {
-            prefab.TryGetComponent(out CharacterDrop characterDrop);
-            if (!characterDrop) return;
+            if (!prefab.TryGetComponent(out CharacterDrop characterDrop)) return;
+            
             List<string> dropList = new List<string>();
             Dictionary<string, float> dropChance = new Dictionary<string, float>();
             List<CharacterDrop.Drop> drops = characterDrop.m_drops;
@@ -292,6 +262,7 @@ public static class CreatureDataCollector
                 if (drop.m_prefab.name.Contains("Trophy") && drop.m_prefab.name != "TrophyAmber_coe")
                 {
                     data.trophyName = drop.m_prefab.GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
+                    data.trophyImage = drop.m_prefab.GetComponent<ItemDrop>().m_itemData.GetIcon();
                 }
             }
             data.drops = dropList;
@@ -299,7 +270,7 @@ public static class CreatureDataCollector
         }
         catch (Exception)
         {
-            // AlmanacPlugin.AlmanacLogger.Log(LogLevel.Info, $"failed to get creature drop data of {data.name}, continuing...");
+            AlmanacPlugin.AlmanacLogger.LogDebug($"Failed to get Creature drop data: {data.name}");
         }
     }
     private static void SaveCreatureData(GameObject prefab, CreatureData data, Humanoid script)
@@ -315,7 +286,7 @@ public static class CreatureDataCollector
             
             data.blunt = damageModifiers.m_blunt.ToString();
             data.slash = damageModifiers.m_slash.ToString();
-            data.piece = damageModifiers.m_pierce.ToString();
+            data.pierce = damageModifiers.m_pierce.ToString();
             data.chop = damageModifiers.m_chop.ToString();
             data.pickaxe = damageModifiers.m_pickaxe.ToString();
             data.fire = damageModifiers.m_fire.ToString();
@@ -337,7 +308,7 @@ public static class CreatureDataCollector
         }
         catch (Exception)
         {
-            // AlmanacPlugin.AlmanacLogger.Log(LogLevel.Info, $"failed to get humanoid data of {data.name}, continuing...");
+            AlmanacPlugin.AlmanacLogger.LogDebug($"Failed to get Humanoid data: {data.name}");
         }
     }
     private static void SaveCreatureData(GameObject prefab, CreatureData data, Character script)
@@ -353,7 +324,7 @@ public static class CreatureDataCollector
                         
             data.blunt = damageModifiers.m_blunt.ToString();
             data.slash = damageModifiers.m_slash.ToString();
-            data.piece = damageModifiers.m_pierce.ToString();
+            data.pierce = damageModifiers.m_pierce.ToString();
             data.chop = damageModifiers.m_chop.ToString();
             data.pickaxe = damageModifiers.m_pickaxe.ToString();
             data.fire = damageModifiers.m_fire.ToString();
@@ -379,7 +350,7 @@ public static class CreatureDataCollector
         }
         catch (Exception)
         {
-            // AlmanacPlugin.AlmanacLogger.Log(LogLevel.Info, $"failed to get character data of {data.name}, continuing...");
+            AlmanacPlugin.AlmanacLogger.LogDebug($"Failed to get Character data: {data.name}");
         }
     }
 
@@ -396,31 +367,34 @@ public static class CreatureDataCollector
             if (defaultItems != null) foreach (GameObject item in defaultItems) SaveAttackData(item, creatureAttackData);
             if (randomWeapons != null) foreach (GameObject weapon in randomWeapons) SaveAttackData(weapon, creatureAttackData);
             if (randomSets != null)
+            {
                 foreach (Humanoid.ItemSet set in randomSets)
                 {
                     foreach (GameObject? attackItem in set.m_items) SaveAttackData(attackItem, creatureAttackData);
                 }
+            }
             data.defaultItems = creatureAttackData;
         }
         catch (Exception)
         {
-            // AlmanacPlugin.AlmanacLogger.Log(LogLevel.Info, $"failed to get humanoid data of {data.name}, continuing...");
+            AlmanacPlugin.AlmanacLogger.LogDebug($"Failed to get Humanoid data: {data.name}");
         }
     }
     private static void SaveAttackData(GameObject prefab, List<AttackData> array)
     {
-        AttackData attackData = new AttackData();
-        ItemDrop itemDrop = prefab.GetComponent<ItemDrop>();
-        if (!itemDrop) return;
         try
         {
+            AttackData attackData = new AttackData();
+
+            if (prefab.TryGetComponent(out ItemDrop itemDrop)) return;
+
             ItemDrop.ItemData.SharedData? sharedData = itemDrop.m_itemData.m_shared;
             HitData.DamageTypes damages = sharedData.m_damages;
             attackData.name = prefab.name;
             attackData.damage = damages.m_damage;
             attackData.blunt = damages.m_blunt;
             attackData.slash = damages.m_slash;
-            attackData.piece = damages.m_pierce;
+            attackData.pierce = damages.m_pierce;
             attackData.chop = damages.m_chop;
             attackData.pickaxe = damages.m_pickaxe;
             attackData.fire = damages.m_fire;
@@ -441,8 +415,7 @@ public static class CreatureDataCollector
         }
         catch (Exception)
         {
-            // AlmanacPlugin.AlmanacLogger.Log(LogLevel.Info, $"failed to get attack data of {prefab.name}, continuing...");
+            AlmanacPlugin.AlmanacLogger.LogDebug($"Failed to get Attack data: {prefab.name}");
         }
     }
-
 }

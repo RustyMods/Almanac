@@ -124,33 +124,30 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="Almanac\AchievementManager.cs" />
-        <Compile Include="Almanac\AchievementsUI.cs" />
-        <Compile Include="Almanac\AlmanacBaseEffect.cs" />
-        <Compile Include="Almanac\Commands.cs" />
-        <Compile Include="Almanac\CustomStatusEffects.cs" />
-        <Compile Include="Almanac\FileSystem.cs" />
-        <Compile Include="Almanac\FixTrophiesPositions.cs" />
-        <Compile Include="Almanac\GamePadUI.cs" />
-        <Compile Include="Almanac\IgnoreList.cs" />
-        <Compile Include="Almanac\ItemDataCollector.cs" />
-        <Compile Include="Almanac\Leaderboard.cs" />
-        <Compile Include="Almanac\OnCloseAlmanac.cs" />
-        <Compile Include="Almanac\PieceDataCollector.cs" />
-        <Compile Include="Almanac\SaveCustomData.cs" />
-        <Compile Include="Almanac\TrackPlayerDeaths.cs" />
-        <Compile Include="Almanac\TrackPlayerKills.cs" />
-        <Compile Include="Almanac\TrackPlayerStats.cs" />
-        <Compile Include="Managers\LocalizationManager.cs" />
-        <Compile Include="Managers\SpriteManager.cs" />
-        <Compile Include="MonoBehaviors\CreateSprite.cs" />
-        <Compile Include="MonoBehaviors\ElementHover.cs" />
+        <Compile Include="Achievements\AchievementEffect.cs" />
+        <Compile Include="Achievements\AchievementManager.cs" />
+        <Compile Include="Achievements\AchievementTypes.cs" />
+        <Compile Include="Achievements\AchievementYML.cs" />
+        <Compile Include="Achievements\CreatureLists.cs" />
+        <Compile Include="Data\CreatureDataCollector.cs" />
+        <Compile Include="Data\ItemDataCollector.cs" />
+        <Compile Include="Data\PieceDataCollector.cs" />
+        <Compile Include="Data\PlayerStats.cs" />
+        <Compile Include="FileSystem\AlmanacPaths.cs" />
+        <Compile Include="FileSystem\FileWatcher.cs" />
+        <Compile Include="FileSystem\Filters.cs" />
+        <Compile Include="FileSystem\ServerSyncedData.cs" />
+        <Compile Include="FileSystem\Patches.cs" />
         <Compile Include="Plugin.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
-        <Compile Include="Almanac\Almanac.cs" />
-        <Compile Include="Almanac\BlackList.cs" />
-        <Compile Include="Almanac\CreatureDataCollector.cs" />
-        <Compile Include="Almanac\OnOpenAlmanac.cs" />
+        <Compile Include="UI\CacheAssets.cs" />
+        <Compile Include="UI\Categories.cs" />
+        <Compile Include="UI\CreateAlmanac.cs" />
+        <Compile Include="UI\UpdateAlmanac.cs" />
+        <Compile Include="Utilities\LocalizationManager.cs" />
+        <Compile Include="Utilities\SpriteManager.cs" />
+        <Compile Include="Utilities\TerminalCommands.cs" />
+        <Compile Include="Utilities\Utility.cs" />
         <Compile Include="VersionHandshake.cs" />
     </ItemGroup>
     <ItemGroup>
@@ -160,8 +157,10 @@
         <EmbeddedResource Include="..\..\..\..\..\Downloads\AlmanacLogo.png">
           <Link>icons\AlmanacLogo.png</Link>
         </EmbeddedResource>
+        <EmbeddedResource Include="..\..\..\evennewerbundles\almanacbundle">
+          <Link>assets\almanacbundle</Link>
+        </EmbeddedResource>
         <Content Include=".gitignore" />
-        <Content Include="assets\DropAssetBundleInThisFolder.txt" />
         <Content Include="environment.props" />
         <EmbeddedResource Include="icons\arrowIcon.png" />
         <EmbeddedResource Include="icons\axeIcon.png" />
@@ -174,7 +173,6 @@
         <EmbeddedResource Include="icons\poisonIcon.png" />
         <EmbeddedResource Include="icons\spiritIcon.png" />
         <EmbeddedResource Include="icons\AlmanacIconButton.png" />
-        <EmbeddedResource Include="icons\AlmanacUnknownIcon.png" />
         <EmbeddedResource Include="icons\arrow_basic.png" />
         <EmbeddedResource Include="icons\bone_skull.png" />
         <EmbeddedResource Include="icons\bone_white.png" />
@@ -206,9 +204,8 @@
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
         <Content Include="Libs\ServerSync.dll" />
-        <Content Include="LICENSE.md" />
         <EmbeddedResource Include="translations\English.yml" />
-        <Content Include="translations\French.yml" />
+        <Content Include="Tutorials\Almanac_Readme.md" />
         <Content Include="UpdateManifest.ps1" />
     </ItemGroup>
     <ItemGroup>

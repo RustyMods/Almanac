@@ -69,6 +69,7 @@ public static class AchievementYML
     public static void InitDefaultAchievements()
     {
         ISerializer serializer = new SerializerBuilder().Build();
+        AlmanacPaths.CreateFolderDirectories();
         foreach (AchievementData achievement in GetDefaultAchievements())
         {
             string path = AlmanacPaths.AchievementFolderPath + Path.DirectorySeparatorChar + achievement.unique_name + ".yml";
@@ -1573,7 +1574,7 @@ public static class AchievementYML
                 description = "Kill over <color=orange>100</color> Fuling Brutes",
                 lore =
                     "With great determination and skill, it is possible to overcome the beasts of the plains.",
-                defeat_key = "defated_goblinbrute",
+                defeat_key = "defeated_goblinbrute",
                 goal = 100,
                 achievement_type = AchievementTypes.AchievementType.CustomKills,
                 start_effects = new List<string>() { "sfx_coins_placed" },

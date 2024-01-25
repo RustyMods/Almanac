@@ -6,6 +6,7 @@ using Almanac.Utilities;
 using BepInEx;
 using HarmonyLib;
 using YamlDotNet.Serialization;
+using Patches = Almanac.FileSystem.Patches;
 
 namespace Almanac.Data;
 
@@ -83,6 +84,7 @@ public static class PlayerStats
     private static void WriteCurrentCustomData()
     {
         if (!Player.m_localPlayer) return;
+        AlmanacPaths.CreateFolderDirectories();
         ISerializer serializer = new SerializerBuilder().Build();
         string data = serializer.Serialize(TempCustomData);
         File.WriteAllText(GetCustomDataFilePath(), data);
@@ -142,6 +144,7 @@ public static class PlayerStats
     
     public static ServerPlayerData GetServerPlayerData()
     {
+        if (!Player.m_localPlayer) return new ServerPlayerData();
         return new ServerPlayerData()
         {
             player_name = Player.m_localPlayer.GetHoverName(),
@@ -200,7 +203,13 @@ public static class PlayerStats
         private static void Postfix(Player __instance)
         {
             if (!__instance) return;
+            if (!Player.m_localPlayer) return;
             LoadPlayerData();
+            Patches.CheckIfServer();
+            if (AlmanacPlugin.WorkingAsType is AlmanacPlugin.WorkingAs.Client)
+            {
+                Leaderboard.ClientLeaderboardCoroutine();
+            }
         }
     }
 

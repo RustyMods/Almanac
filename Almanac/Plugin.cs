@@ -26,7 +26,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.0.0";
+        internal const string ModVersion = "3.0.2";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         private static string ConfigFileName = ModGUID + ".cfg";
@@ -54,8 +54,8 @@ namespace Almanac
             WorkingAsType = SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null ? WorkingAs.Server : WorkingAs.Client;
             _assets = GetAssetBundle("almanacbundle");
             
-            CheckChainLoader();
             InitConfigs();
+            CheckChainLoader();
             AlmanacPaths.CreateFolderDirectories();
             CacheAssets.LoadAssets();
             AchievementYML.InitDefaultAchievements();
@@ -137,6 +137,9 @@ namespace Almanac
         public static ConfigEntry<Toggle> _AchievementPowers = null!;
         public static ConfigEntry<int> _AchievementThreshold = null!;
         public static ConfigEntry<Toggle> _ShowAllData = null!;
+        public static ConfigEntry<DataPath> _RootPath = null!;
+        public static ConfigEntry<Toggle> _PanelImage = null!;
+        public enum DataPath { LocalLow, ConfigPath }
         private void InitConfigs()
         {
             _serverConfigLocked = config("1 - General", "0 - Lock Configuration", Toggle.On,
@@ -165,6 +168,12 @@ namespace Almanac
             _AchievementThreshold = config("Achievements", "Threshold", 3,
                 new ConfigDescription("Total amount of achievement effects allowed at the same time",
                     new AcceptableValueRange<int>(1, 5)));
+            
+            _PanelImage = config("1 - General", "4 - Transparent", Toggle.Off,
+                "Compatibility with minimalUI, set transparency of almanac panel");
+            
+            _RootPath = config("1 - General", "5 - Player Data", DataPath.ConfigPath,
+                "Set the root path where to save player data");
         }
         private ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description,
             bool synchronizedSetting = true)

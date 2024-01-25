@@ -1,6 +1,9 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using Almanac.Achievements;
+using Almanac.Data;
 using BepInEx;
+using YamlDotNet.Serialization;
 
 namespace Almanac.FileSystem;
 
@@ -44,10 +47,8 @@ public static class FileWatcher
         CreatureWatcher.Changed += OnCreatureChange;
         CreatureWatcher.Deleted += OnCreatureChange;
         CreatureWatcher.Created += OnCreatureChange;
-
-        if (AlmanacPlugin.WorkingAsType is not AlmanacPlugin.WorkingAs.Client)
-        {
-            FileSystemWatcher ServerPlayerDataListWatcher =
+        
+        FileSystemWatcher ServerPlayerDataListWatcher =
             new FileSystemWatcher(AlmanacPaths.ServerPlayerDataFolderPath)
             {
                 Filter = "*.yml",
@@ -57,14 +58,19 @@ public static class FileWatcher
                 NotifyFilter = NotifyFilters.LastWrite
             };
 
-            ServerPlayerDataListWatcher.Changed += OnServerPlayerDataListChange;
-            ServerPlayerDataListWatcher.Created += OnServerPlayerDataListChange;
-        }
+        ServerPlayerDataListWatcher.Changed += OnServerPlayerDataListChange;
+        ServerPlayerDataListWatcher.Created += OnServerPlayerDataListChange;
     }
 
     private static void OnServerPlayerDataListChange(object sender, FileSystemEventArgs e)
     {
-        ServerSyncedData.SendListedPlayerDataToClients();
+        AlmanacPlugin.AlmanacLogger.LogDebug("Server: Leaderboard file changed, updating");
+        string data = File.ReadAllText(AlmanacPaths.ServerPlayerDataFilePath);
+        IDeserializer deserializer = new DeserializerBuilder().Build();
+        Dictionary<string, PlayerData> LeaderboardData = deserializer.Deserialize<Dictionary<string, PlayerData>>(data);
+        Leaderboard.LeaderboardData = LeaderboardData;
+        AlmanacPlugin.AlmanacLogger.LogDebug("Server: sending updated leaderboard to clients");
+        Leaderboard.ServerPlayerDataListed.Value = data;
     }
 
     private static void OnAchievementChange(object sender, FileSystemEventArgs e)

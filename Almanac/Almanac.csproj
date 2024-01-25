@@ -136,6 +136,7 @@
         <Compile Include="FileSystem\AlmanacPaths.cs" />
         <Compile Include="FileSystem\FileWatcher.cs" />
         <Compile Include="FileSystem\Filters.cs" />
+        <Compile Include="FileSystem\Leaderboard.cs" />
         <Compile Include="FileSystem\ServerSyncedData.cs" />
         <Compile Include="FileSystem\Patches.cs" />
         <Compile Include="Plugin.cs" />
@@ -205,6 +206,31 @@
         </Content>
         <Content Include="Libs\ServerSync.dll" />
         <EmbeddedResource Include="translations\English.yml" />
+        <EmbeddedResource Include="translations\Bulgarian.json" />
+        <EmbeddedResource Include="translations\Chinese.json" />
+        <EmbeddedResource Include="translations\Croatian.json" />
+        <EmbeddedResource Include="translations\Czech.json" />
+        <EmbeddedResource Include="translations\Danish.json" />
+        <EmbeddedResource Include="translations\Dutch.json" />
+        <EmbeddedResource Include="translations\Finnish.json" />
+        <EmbeddedResource Include="translations\French.json" />
+        <EmbeddedResource Include="translations\German.json" />
+        <EmbeddedResource Include="translations\Hungarian.json" />
+        <EmbeddedResource Include="translations\Icelandic.json" />
+        <EmbeddedResource Include="translations\Italian.json" />
+        <EmbeddedResource Include="translations\Japanese.json" />
+        <EmbeddedResource Include="translations\Korean.json" />
+        <EmbeddedResource Include="translations\Latvian.json" />
+        <EmbeddedResource Include="translations\Lithuanian.json" />
+        <EmbeddedResource Include="translations\Norwegian.json" />
+        <EmbeddedResource Include="translations\Polish.json" />
+        <EmbeddedResource Include="translations\Portuguese.json" />
+        <EmbeddedResource Include="translations\Romanian.json" />
+        <EmbeddedResource Include="translations\Russian.json" />
+        <EmbeddedResource Include="translations\Serbian.json" />
+        <EmbeddedResource Include="translations\Slovak.json" />
+        <EmbeddedResource Include="translations\Spanish.json" />
+        <EmbeddedResource Include="translations\Swedish.json" />
         <Content Include="Tutorials\Almanac_Readme.md" />
         <Content Include="UpdateManifest.ps1" />
     </ItemGroup>

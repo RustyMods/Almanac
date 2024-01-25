@@ -37,6 +37,7 @@ public static class CreatureLists
     public static void InitCreatureLists()
     {
         AlmanacPlugin.AlmanacLogger.LogDebug("Initializing creature list");
+        AlmanacPaths.CreateFolderDirectories();
         foreach (Heightmap.Biome land in Enum.GetValues(typeof(Heightmap.Biome)))
         {
             if (land is Heightmap.Biome.None) continue;

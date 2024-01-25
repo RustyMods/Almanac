@@ -331,7 +331,7 @@ public static class UpdateAlmanac
             
             transform.anchoredPosition = new Vector2(x, y);
             
-            a1 = Mathf.Min(a1, transform.anchoredPosition.y - instance.m_trophieListSpace);
+            a1 = Mathf.Min(a1, transform.anchoredPosition.y - 34f);
             
             if (!transform.Find("text").TryGetComponent(out TextMeshProUGUI text)) continue;
             text.text = isKnown ? LocalizedName : UnknownText;
@@ -415,10 +415,9 @@ public static class UpdateAlmanac
     private static void UpdateAchievementPanel()
     {
         DestroyPanelElements();
-
-        bool isCompleted = SelectedAchievement.m_isCompleted || Player.m_localPlayer.NoCostCheat();
-        
         SetAchievementDesc();
+        
+        bool isCompleted = SelectedAchievement.m_isCompleted || Player.m_localPlayer.NoCostCheat();
         
         CreateAlmanac.AchievementPanelIcon.sprite = SelectedAchievement.m_sprite;
         CreateAlmanac.AchievementPanelIcon.color = isCompleted ? Color.white : Color.black;
@@ -427,7 +426,6 @@ public static class UpdateAlmanac
         
         if (SelectedAchievement.m_statusEffect != null) CreateAlmanac.AchievementPanelTooltip.text = SelectedAchievement.m_statusEffect.m_tooltip;
         CreateAlmanac.AchievementPanelLore.text = isCompleted ? SelectedAchievement.m_lore : UnknownText;
-        
     }
 
     private static void SetAchievementDesc()
@@ -668,7 +666,7 @@ public static class UpdateAlmanac
         SelectedAchievement.m_isCompleted = count >= SelectedAchievement.m_goal;
     }
 
-    private static string FormatProgressText(int value, int goal) => $"<color=orange>{value}</color> / <color=orange>{goal}</color> (<color=orange>{((value / goal) * 100):0.0}</color>%)";
+    private static string FormatProgressText(int value, int goal) => $"<color=orange>{value}</color> / <color=orange>{goal}</color> (<color=orange>{Mathf.Max(((value / goal) * 100), 100):0.0}</color>%)";
     
     private static Achievement FindAchievement() => AchievementList.Find(item => item.m_uniqueName == SelectedAchievement.m_uniqueName);
     
@@ -1824,8 +1822,8 @@ public static class UpdateAlmanac
         CreateAlmanac.PanelIcon.sprite = SpriteManager.crownGoldIcon;
         CreateAlmanac.PanelTitle.text = Localization.instance.Localize("$almanac_leaderboard_title");
         CreateAlmanac.PanelButton.text = Localization.instance.Localize("$almanac_stats_button");
-
-        Dictionary<string, PlayerData> ranked = ServerSyncedData.ServerPlayerDataList.OrderByDescending(kv => kv.Value.completed_achievements).ToDictionary(kv => kv.Key, kv => kv.Value);
+        if (Leaderboard.LeaderboardData.Count == 0) return;
+        Dictionary<string, PlayerData> ranked = Leaderboard.LeaderboardData.OrderByDescending(kv => kv.Value.completed_achievements).ToDictionary(kv => kv.Key, kv => kv.Value);
         foreach (KeyValuePair<string, PlayerData> kvp in ranked)
         {
             GameObject item = Object.Instantiate(CacheAssets.LeaderboardItem, CreateAlmanac.PanelContent);

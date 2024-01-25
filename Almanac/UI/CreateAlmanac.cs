@@ -28,6 +28,9 @@ public static class CreateAlmanac
     public static Button AchievementButton = null!;
     public static TextMeshProUGUI PanelButton = null!;
 
+    public static Image PanelImage = null!;
+    public static Image AchievementPanelImage = null!;
+
     private static void RepositionTrophyPanel(float x, float y)
     {
         RectTransform? rect = CacheAssets.TrophiesFrame as RectTransform;
@@ -50,9 +53,10 @@ public static class CreateAlmanac
 
         rect.anchoredPosition = new Vector2(680f, 0f);
 
-        Image PanelImage = Utils.FindChild(AlmanacGUI.transform, "Panel").GetComponent<Image>();
+        PanelImage = Utils.FindChild(AlmanacGUI.transform, "Panel").GetComponent<Image>();
         PanelImage.material = CacheAssets.WoodPanel.material;
         PanelImage.sprite = CacheAssets.WoodPanel.sprite;
+        PanelImage.color = AlmanacPlugin._PanelImage.Value is  AlmanacPlugin.Toggle.Off ? Color.white : Color.clear;
 
         if (!Utils.FindChild(AlmanacGUI.transform, "$part_left_braid").TryGetComponent(out Image leftImage)) return;
         if (!Utils.FindChild(AlmanacGUI.transform, "$part_right_braid").TryGetComponent(out Image rightImage)) return;
@@ -114,9 +118,10 @@ public static class CreateAlmanac
 
         rect.anchoredPosition = new Vector2(680f, 0f);
 
-        Image PanelImage = Utils.FindChild(AchievementGUI.transform, "Panel").GetComponent<Image>();
-        PanelImage.material = CacheAssets.WoodPanel.material;
-        PanelImage.sprite = CacheAssets.WoodPanel.sprite;
+        AchievementPanelImage = Utils.FindChild(AchievementGUI.transform, "Panel").GetComponent<Image>();
+        AchievementPanelImage.material = CacheAssets.WoodPanel.material;
+        AchievementPanelImage.sprite = CacheAssets.WoodPanel.sprite;
+        AchievementPanelImage.color = AlmanacPlugin._PanelImage.Value is  AlmanacPlugin.Toggle.Off ? Color.white : Color.clear;
 
         Transform iconBkg = Utils.FindChild(AchievementGUI.transform, "icon_bkg");
         if (!iconBkg.TryGetComponent(out Image bkgImage)) return;
@@ -124,8 +129,12 @@ public static class CreateAlmanac
         bkgImage.material = CacheAssets.TrophyImage.material;
         
         Transform icon = Utils.FindChild(AchievementGUI.transform, "$part_icon");
-        ButtonSfx iconSfx = icon.gameObject.AddComponent<ButtonSfx>();
-        iconSfx.m_sfxPrefab = CacheAssets.ButtonSFX.m_sfxPrefab;
+
+        if (!icon.GetComponent<ButtonSfx>())
+        {
+            ButtonSfx iconSfx = icon.gameObject.AddComponent<ButtonSfx>();
+            iconSfx.m_sfxPrefab = CacheAssets.ButtonSFX.m_sfxPrefab;
+        }
 
         if (!icon.TryGetComponent(out Button iconButton)) return;
         AchievementButton = iconButton;
@@ -161,21 +170,26 @@ public static class CreateAlmanac
         AchievementPanelLore.color = Color.white;
 
         Transform CloseButton = Utils.FindChild(AchievementGUI.transform, "$part_CloseButton");
-        if (!CloseButton.TryGetComponent(out Image ButtonImage)) return;
-        ButtonImage.sprite = CacheAssets.ButtonImage.sprite;
-        ButtonImage.material = CacheAssets.ButtonImage.material;
-        if (!CloseButton.TryGetComponent(out Button button)) return;
-        button.transition = Selectable.Transition.SpriteSwap;
-        button.spriteState = CacheAssets.ButtonComponent.spriteState;
-        button.onClick.AddListener(() =>
+        if (CloseButton.TryGetComponent(out Image ButtonImage))
         {
-            AchievementPanelIcon.sprite = SpriteManager.AlmanacIcon;
-            AchievementPanelTitle.text = Localization.instance.Localize("$almanac_name");
-            AchievementPanelDesc.text = "";
-            AchievementPanelLore.text = "";
-            AchievementPanelTooltip.text = "";
-            ToggleButtonOptions();
-        });
+            ButtonImage.sprite = CacheAssets.ButtonImage.sprite;
+            ButtonImage.material = CacheAssets.ButtonImage.material;
+        }
+
+        if (CloseButton.TryGetComponent(out Button button))
+        {
+            button.transition = Selectable.Transition.SpriteSwap;
+            button.spriteState = CacheAssets.ButtonComponent.spriteState;
+            button.onClick.AddListener(() =>
+            {
+                AchievementPanelIcon.sprite = SpriteManager.AlmanacIcon;
+                AchievementPanelTitle.text = Localization.instance.Localize("$almanac_name");
+                AchievementPanelDesc.text = "";
+                AchievementPanelLore.text = "";
+                AchievementPanelTooltip.text = "";
+                ToggleButtonOptions();
+            });
+        };
 
         ButtonSfx sfx = CloseButton.gameObject.AddComponent<ButtonSfx>();
         sfx.m_sfxPrefab = CacheAssets.ButtonSFX.m_sfxPrefab;

@@ -1,6 +1,7 @@
 ﻿using Almanac.Achievements;
 using Almanac.Data;
 using HarmonyLib;
+using static Almanac.FileSystem.Leaderboard;
 
 namespace Almanac.FileSystem;
 
@@ -19,17 +20,22 @@ public static class Patches
             ServerSyncedData.InitServerAchievements();
             ServerSyncedData.InitServerIgnoreList();
             ServerSyncedData.InitServerCreatureList();
+
         }
     }
     
-    private static void CheckIfServer()
+    public static void CheckIfServer()
     {
-        if (AlmanacPlugin.WorkingAsType is not AlmanacPlugin.WorkingAs.Client) return;
+        if (AlmanacPlugin.WorkingAsType is AlmanacPlugin.WorkingAs.Server) return;
         if (!ZNet.instance) return;
         if (ZNet.instance.IsServer())
         {
             AlmanacPlugin.AlmanacLogger.LogDebug("Client is server");
             AlmanacPlugin.WorkingAsType = AlmanacPlugin.WorkingAs.Both;
+        }
+        else
+        {
+            AlmanacPlugin.WorkingAsType = AlmanacPlugin.WorkingAs.Client;
         }
     }
 
@@ -40,10 +46,6 @@ public static class Patches
         {
             if (!__instance) return;
             PieceDataCollector.GetBuildPieces();
-            if (AlmanacPlugin.WorkingAsType is not AlmanacPlugin.WorkingAs.Client)
-            {
-                ServerSyncedData.InitServerPlayerData();
-            }
         }
     }
 
@@ -56,7 +58,6 @@ public static class Patches
             if (AlmanacPlugin.WorkingAsType is AlmanacPlugin.WorkingAs.Client)
             {
                 PlayerStats.UpdatePlayerStats();
-                ServerSyncedData.InitServerPlayerData();
             }
         }
     }

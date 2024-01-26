@@ -17,11 +17,8 @@ public static class PieceDataCollector
     public static readonly List<GameObject> defaultPieces = new();
     public static readonly List<GameObject> comfortPieces = new();
     public static List<GameObject> GetFilteredPieces(List<GameObject> list) => AlmanacPlugin._UseIgnoreList.Value is AlmanacPlugin.Toggle.Off ? list : list.FindAll(piece => !Filters.FilterList.Contains(piece.name));
-    public static void GetBuildPieces()
+    private static void ClearCachedPieces()
     {
-        AlmanacPlugin.AlmanacLogger.LogDebug("Saving pieces to almanac");
-        GetPieces();
-        
         plantPieces.Clear();
         furniturePieces.Clear();
         modPieces.Clear();
@@ -29,7 +26,12 @@ public static class PieceDataCollector
         buildPieces.Clear();
         craftingPieces.Clear();
         defaultPieces.Clear();
-        
+    }
+    public static void GetBuildPieces()
+    {
+        AlmanacPlugin.AlmanacLogger.LogDebug("Saving pieces to almanac");
+        GetPieces();
+        ClearCachedPieces();
         HashSet<string> plantNames = new HashSet<string>();
         HashSet<string> furnitureNames = new HashSet<string>();
         HashSet<string> modNames = new HashSet<string>();
@@ -120,6 +122,7 @@ public static class PieceDataCollector
             piece.TryGetComponent(out Plant plant);
             
             if (!pieceScript) continue;
+            if (!pieceScript.enabled) continue;
             
             string name = pieceScript.name;
             string hoverName = pieceScript.m_name;

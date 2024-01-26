@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Almanac.Achievements;
 using Almanac.Data;
 using Almanac.FileSystem;
@@ -8,6 +9,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using static Almanac.Utilities.Utility;
+using Object = UnityEngine.Object;
 
 namespace Almanac.UI;
 
@@ -28,8 +30,14 @@ public static class CreateAlmanac
     public static Button AchievementButton = null!;
     public static TextMeshProUGUI PanelButton = null!;
 
-    public static Image PanelImage = null!;
-    public static Image AchievementPanelImage = null!;
+    private static Image PanelImage = null!;
+    private static Image AchievementPanelImage = null!;
+
+    public static void OnPanelTransparencyConfigChange(object sender, EventArgs e)
+    {
+        PanelImage.color = AlmanacPlugin._PanelImage.Value is AlmanacPlugin.Toggle.On ? Color.clear : Color.white;
+        AchievementPanelImage.color = AlmanacPlugin._PanelImage.Value is AlmanacPlugin.Toggle.On ? Color.clear : Color.white;
+    }
 
     private static void RepositionTrophyPanel(float x, float y)
     {

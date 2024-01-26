@@ -22,7 +22,6 @@ namespace Almanac
     [BepInDependency("Krumpac.Krumpac_Reforge_Core", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("org.bepinex.plugins.jewelcrafting", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("kg.ValheimEnchantmentSystem", BepInDependency.DependencyFlags.SoftDependency)]
-
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
@@ -35,17 +34,8 @@ namespace Almanac
         private readonly Harmony _harmony = new(ModGUID);
         public static readonly ManualLogSource AlmanacLogger = BepInEx.Logging.Logger.CreateLogSource(ModName);
         public static readonly ConfigSync ConfigSync = new(ModGUID) { DisplayName = ModName, CurrentVersion = ModVersion, MinimumRequiredVersion = ModVersion };
-        
-        public enum Toggle { On = 1, Off = 0 }
-        public enum WorkingAs { Client, Server, Both }
-        
-        public static WorkingAs WorkingAsType;
         public static AlmanacPlugin _plugin = null!;
         public static AssetBundle _assets = null!;
-        
-        public static bool KrumpacLoaded = false;
-        public static bool JewelCraftLoaded = false;
-        public static bool KGEnchantmentLoaded = false;
         public void Awake()
         {
             Localizer.Load();
@@ -66,6 +56,18 @@ namespace Almanac
             _harmony.PatchAll(assembly);
             SetupWatcher();
         }
+        public void Update()
+        {
+            UpdateAlmanac.UpdateGUI();
+        }
+        private void OnDestroy()
+        {
+            Config.Save();
+        }
+        #region Chainloader
+        public static bool KrumpacLoaded = false;
+        public static bool JewelCraftLoaded = false;
+        public static bool KGEnchantmentLoaded = false;
 
         private static void CheckChainLoader()
         {
@@ -87,15 +89,13 @@ namespace Almanac
                 JewelCraftLoaded = true;
             }
         }
-
-        public void Update()
-        {
-            UpdateAlmanac.UpdateGUI();
-        }
-        private void OnDestroy()
-        {
-            Config.Save();
-        }
+        #endregion
+        
+        #region Utililies
+        public enum Toggle { On = 1, Off = 0 }
+        public enum WorkingAs { Client, Server, Both }
+        
+        public static WorkingAs WorkingAsType;
         private static AssetBundle GetAssetBundle(string fileName)
         {
             Assembly execAssembly = Assembly.GetExecutingAssembly();
@@ -127,8 +127,9 @@ namespace Almanac
                 AlmanacLogger.LogError("Please check your config entries for spelling and format!");
             }
         }
-
-        #region ConfigOptions
+        #endregion
+        
+        # region Configurations
         private static ConfigEntry<Toggle> _serverConfigLocked = null!;
 
         public static ConfigEntry<Toggle> _KnowledgeWall = null!;
@@ -139,6 +140,8 @@ namespace Almanac
         public static ConfigEntry<Toggle> _ShowAllData = null!;
         public static ConfigEntry<DataPath> _RootPath = null!;
         public static ConfigEntry<Toggle> _PanelImage = null!;
+
+        public static ConfigEntry<int> _CreaturePanelInt = null!;
         public enum DataPath { LocalLow, ConfigPath }
         private void InitConfigs()
         {
@@ -170,11 +173,18 @@ namespace Almanac
                     new AcceptableValueRange<int>(1, 5)));
             
             _PanelImage = config("1 - General", "4 - Transparent", Toggle.Off,
-                "Compatibility with minimalUI, set transparency of almanac panel");
+                "Compatibility with minimalUI, set transparency of almanac panel", false);
+
+            _PanelImage.SettingChanged += CreateAlmanac.OnPanelTransparencyConfigChange;
             
             _RootPath = config("1 - General", "5 - Player Data", DataPath.ConfigPath,
                 "Set the root path where to save player data");
+
+            _CreaturePanelInt = config("1 - General", "6 - Creature Panel Tweak", 5, "Change this value to fix any spacing issues with the creature panel");
         }
+        #endregion
+
+        #region ConfigOptions
         private ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description,
             bool synchronizedSetting = true)
         {

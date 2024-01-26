@@ -59,7 +59,6 @@ public static class UpdateAlmanac
             return false;
         }
     }
-
     public static void UpdateList(InventoryGui GUI, string filter = "")
     {
         DestroyTrophies(GUI);
@@ -168,7 +167,6 @@ public static class UpdateAlmanac
                     break;
             }
     }
-    
     private static void UpdateTopic()
     {
          Transform topic = CacheAssets.TrophiesFrame.Find("topic");
@@ -177,14 +175,12 @@ public static class UpdateAlmanac
 
          textMesh.text = Localization.instance.Localize(SelectedTab);
     }
-
     private static void DestroyTrophies(InventoryGui instance)
     {
         foreach (GameObject trophy in instance.m_trophyList) Object.Destroy(trophy);
         
         instance.m_trophyList.Clear();
     }
-    
     private static void UpdateItemList(InventoryGui instance, List<ItemDrop> items, bool isTrophies = false)
     {
         float a1 = 0.0f;
@@ -248,7 +244,6 @@ public static class UpdateAlmanac
         instance.m_trophieListRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(instance.m_trophieListBaseSize, -a1));
         instance.m_trophyListScroll.value = 1f;
     }
-    
     private static void UpdatePieceList(InventoryGui instance, List<GameObject> prefabs)
     {
         float a1 = 0.0f;
@@ -312,10 +307,14 @@ public static class UpdateAlmanac
         instance.m_trophieListRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(instance.m_trophieListBaseSize, -a1));
         instance.m_trophyListScroll.value = 1f;
     }
-
     private static void UpdateCreatureList(InventoryGui instance, List<CreatureData> creatures)
     {
-        float a1 = 0.0f;
+        float totalHeight = (Mathf.CeilToInt(creatures.Count / 5f) * 34f);
+        float half = (totalHeight / 2f) - 17f;
+        if (totalHeight <= instance.m_trophieListBaseSize)
+        {
+            half = 306f;
+        }
         for (int index = 0; index < creatures.Count; ++index)
         {
             CreatureData data = creatures[index];
@@ -326,12 +325,10 @@ public static class UpdateAlmanac
             RectTransform? transform = gameObject.transform as RectTransform;
             if (transform == null) continue;
 
-            float x = -501f + ((index % 5) * 251f);
-            float y = 306f + (Mathf.FloorToInt(index / 5f) * -34f);
-            
+            float x = -501f + ((index % 5) * 251f); 
+            float y = half - (Mathf.FloorToInt(index / 5f) * 34f);
+
             transform.anchoredPosition = new Vector2(x, y);
-            
-            a1 = Mathf.Min(a1, transform.anchoredPosition.y - 34f);
             
             if (!transform.Find("text").TryGetComponent(out TextMeshProUGUI text)) continue;
             text.text = isKnown ? LocalizedName : UnknownText;
@@ -348,10 +345,11 @@ public static class UpdateAlmanac
             
             instance.m_trophyList.Add(gameObject);
         }
-        instance.m_trophieListRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(instance.m_trophieListBaseSize, -a1));
+        instance.m_trophieListRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(instance.m_trophieListBaseSize, totalHeight));
         instance.m_trophyListScroll.value = 1f;
     }
 
+    private static bool CheckedCompletion;
     private static void UpdateAchievementList(InventoryGui instance, List<Achievement> achievements)
     {
         float a1 = 0.0f;
@@ -375,7 +373,7 @@ public static class UpdateAlmanac
             Transform icon = transform.Find("icon_bkg/icon");
             if (!icon.TryGetComponent(out Image iconImage)) continue;
             iconImage.sprite = achievement.m_sprite ? achievement.m_sprite : SpriteManager.AlmanacIcon;
-            
+
             bool isCompleted = achievement.m_isCompleted || Player.m_localPlayer.NoCostCheat();
             
             transform.Find("name").GetComponent<TMP_Text>().text = isCompleted ? achievement.m_displayName : UnknownText;
@@ -392,7 +390,7 @@ public static class UpdateAlmanac
                 disabledColor = new Color(0f, 0f, 0f, 1f),
                 colorMultiplier = 1f,
                 fadeDuration = 0.1f,
-                normalColor = new Color(0.5f, 0.5f, 0.5f, 1f),
+                normalColor = achievement.m_isCompleted ? new Color(0.5f, 0.5f, 0.5f, 1f) : Color.black,
                 selectedColor = Color.white
             };
             button.onClick = new Button.ButtonClickedEvent();
@@ -411,7 +409,6 @@ public static class UpdateAlmanac
         instance.m_trophieListRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(instance.m_trophieListBaseSize, -a1));
         instance.m_trophyListScroll.value = 1f;
     }
-
     private static void UpdateAchievementPanel()
     {
         DestroyPanelElements();
@@ -427,7 +424,6 @@ public static class UpdateAlmanac
         if (SelectedAchievement.m_statusEffect != null) CreateAlmanac.AchievementPanelTooltip.text = SelectedAchievement.m_statusEffect.m_tooltip;
         CreateAlmanac.AchievementPanelLore.text = isCompleted ? SelectedAchievement.m_lore : UnknownText;
     }
-
     private static void SetAchievementDesc()
     {
         switch (SelectedAchievement.m_type)
@@ -595,7 +591,7 @@ public static class UpdateAlmanac
                 SelectedAchievement.m_isCompleted = recipeCount >= SelectedAchievement.m_goal;
                 break;
             case AchievementTypes.AchievementType.CustomKills:
-                if (!TempCustomData.Player_Kill_Deaths.TryGetValue(SelectedAchievement.m_defeatKey, out KillDeaths value))
+                if (!LocalPlayerData.Player_Kill_Deaths.TryGetValue(SelectedAchievement.m_defeatKey, out KillDeaths value))
                 {
                     CreateAlmanac.AchievementPanelDesc.text = "<color=red>Failed to find defeat key</color>";
                     break;
@@ -637,7 +633,6 @@ public static class UpdateAlmanac
                 break;
         }
     }
-
     private static void SetAchievementPanel(List<CreatureData> list)
     {
         ZoneSystem? Zone = ZoneSystem.instance;
@@ -648,7 +643,6 @@ public static class UpdateAlmanac
         FindAchievement().m_isCompleted = count >= list.Count;
         SelectedAchievement.m_isCompleted = count >= list.Count;
     }
-
     private static void SetAchievementPanel(List<ItemDrop> list)
     {
         int count = list.FindAll(food => Player.m_localPlayer.IsKnownMaterial(food.m_itemData.m_shared.m_name)).Count;
@@ -657,7 +651,6 @@ public static class UpdateAlmanac
         FindAchievement().m_isCompleted = count >= total;
         SelectedAchievement.m_isCompleted = count >= total;
     }
-
     private static void SetAchievementPanel(PlayerStatType type)
     {
         int count = (int)GetPlayerStat(type);
@@ -665,11 +658,8 @@ public static class UpdateAlmanac
         FindAchievement().m_isCompleted = count >= SelectedAchievement.m_goal;
         SelectedAchievement.m_isCompleted = count >= SelectedAchievement.m_goal;
     }
-
     private static string FormatProgressText(int value, int goal) => $"<color=orange>{value}</color> / <color=orange>{goal}</color> (<color=orange>{Mathf.Max(((value / goal) * 100), 100):0.0}</color>%)";
-    
     private static Achievement FindAchievement() => AchievementList.Find(item => item.m_uniqueName == SelectedAchievement.m_uniqueName);
-    
     private static void UpdateItemPanel()
     {
         DestroyPanelElements();
@@ -707,7 +697,6 @@ public static class UpdateAlmanac
             }
         }
     }
-
     private static void UpdatePiecePanel()
     {
         DestroyPanelElements();
@@ -744,7 +733,6 @@ public static class UpdateAlmanac
             }
         }
     }
-
     private static Dictionary<string, string> GetPieceData()
     {
         Dictionary<string, string> defaultData = new();
@@ -755,31 +743,31 @@ public static class UpdateAlmanac
             {
                 {"$almanac_enabled", piece.enabled.ToString()},
                 {"$almanac_piece_category", SplitCamelCase(piece.m_category.ToString())},
-                {"$almanac_is_upgrade", piece.m_isUpgrade.ToString()},
+                {"$almanac_is_upgrade", ConvertBoolean(piece.m_isUpgrade)},
                 {"$almanac_comfort", piece.m_comfort.ToString()},
                 {"$almanac_comfort_group", SplitCamelCase(piece.m_comfortGroup.ToString())},
                 {"$almanac_comfort_object", piece.m_comfortObject ? piece.m_comfortObject.name : "0"},
-                {"$almanac_ground_piece", piece.m_groundPiece.ToString()},
-                {"$almanac_allow_alt_ground", piece.m_allowAltGroundPlacement.ToString()},
-                {"$almanac_ground_only", piece.m_groundOnly.ToString()},
-                {"$almanac_cultivated_only", piece.m_cultivatedGroundOnly.ToString()},
-                {"$almanac_water_piece", piece.m_waterPiece.ToString()},
-                {"$almanac_clip_ground", piece.m_clipGround.ToString()},
-                {"$almanac_clip_everything", piece.m_clipEverything.ToString()},
-                {"$almanac_no_in_water", piece.m_noInWater.ToString()},
-                {"$almanac_no_on_wood", piece.m_notOnWood.ToString()},
-                {"$almanac_no_on_tilt", piece.m_notOnTiltingSurface.ToString()},
-                {"$almanac_ceiling_only", piece.m_inCeilingOnly.ToString()},
-                {"$almanac_no_on_floor", piece.m_notOnFloor.ToString()},
-                {"$almanac_no_clipping", piece.m_noClipping.ToString()},
-                {"$almanac_only_in_teleport_area", piece.m_onlyInTeleportArea.ToString()},
-                {"$almanac_allow_dungeon", piece.m_allowedInDungeons.ToString()},
+                {"$almanac_ground_piece", ConvertBoolean(piece.m_groundPiece)},
+                {"$almanac_allow_alt_ground", ConvertBoolean(piece.m_allowAltGroundPlacement)},
+                {"$almanac_ground_only", ConvertBoolean(piece.m_groundOnly)},
+                {"$almanac_cultivated_only", ConvertBoolean(piece.m_cultivatedGroundOnly)},
+                {"$almanac_water_piece", ConvertBoolean(piece.m_waterPiece)},
+                {"$almanac_clip_ground", ConvertBoolean(piece.m_clipGround)},
+                {"$almanac_clip_everything", ConvertBoolean(piece.m_clipEverything)},
+                {"$almanac_no_in_water", ConvertBoolean(piece.m_noInWater)},
+                {"$almanac_no_on_wood", ConvertBoolean(piece.m_notOnWood)},
+                {"$almanac_no_on_tilt", ConvertBoolean(piece.m_notOnTiltingSurface)},
+                {"$almanac_ceiling_only", ConvertBoolean(piece.m_inCeilingOnly)},
+                {"$almanac_no_on_floor", ConvertBoolean(piece.m_notOnFloor)},
+                {"$almanac_no_clipping", ConvertBoolean(piece.m_notOnFloor)},
+                {"$almanac_only_in_teleport_area", ConvertBoolean(piece.m_onlyInTeleportArea)},
+                {"$almanac_allow_dungeon", ConvertBoolean(piece.m_allowedInDungeons)},
                 {"$almanac_space_req", piece.m_spaceRequirement.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_repair_piece", piece.m_repairPiece.ToString()},
-                {"$almanac_can_rotate", piece.m_canRotate.ToString()},
-                {"$almanac_random_rotate", piece.m_randomInitBuildRotation.ToString()},
-                {"$almanac_allow_rotate_overlap", piece.m_allowRotatedOverlap.ToString()},
-                {"$almanac_vegetation_ground_only", piece.m_vegetationGroundOnly.ToString()},
+                {"$almanac_repair_piece", ConvertBoolean(piece.m_repairPiece)},
+                {"$almanac_can_rotate", ConvertBoolean(piece.m_canRotate)},
+                {"$almanac_random_rotate", ConvertBoolean(piece.m_randomInitBuildRotation)},
+                {"$almanac_allow_rotate_overlap", ConvertBoolean(piece.m_allowRotatedOverlap)},
+                {"$almanac_vegetation_ground_only", ConvertBoolean(piece.m_vegetationGroundOnly)},
             };
             
             if (_ShowAllData.Value is AlmanacPlugin.Toggle.On) pieceData.Add("$almanac_prefab_name", piece.name);
@@ -798,7 +786,7 @@ public static class UpdateAlmanac
                 {"$almanac_block_radius", piece.m_blockRadius.ToString(CultureInfo.CurrentCulture)},
                 {"$almanac_must_connect_to", piece.m_mustConnectTo ? piece.m_mustConnectTo.ToString() : "0"},
                 {"$almanac_connect_radius", piece.m_connectRadius.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_must_be_above", piece.m_mustBeAboveConnected.ToString()},
+                {"$almanac_must_be_above", ConvertBoolean(piece.m_mustBeAboveConnected)},
                 {"$almanac_piece_biome", SplitCamelCase(piece.m_onlyInBiome.ToString())},
                 {"$almanac_dlc", piece.m_dlc},
                 {"$almanac_craft_station", piece.m_craftingStation ? Localization.instance.Localize(piece.m_craftingStation.m_name) : "0"}
@@ -816,9 +804,9 @@ public static class UpdateAlmanac
                 {"$almanac_discover_range", craftingStation.m_discoverRange.ToString("0.0")},
                 {"$almanac_range_build", craftingStation.m_rangeBuild.ToString("0.0")},
                 {"$almanac_extra_range_per_level", craftingStation.m_extraRangePerLevel.ToString("0.0")},
-                {"$almanac_require_roof", craftingStation.m_craftRequireRoof.ToString()},
-                {"$almanac_require_fire", craftingStation.m_craftRequireFire.ToString()},
-                {"$almanac_show_basic_recipes", craftingStation.m_showBasicRecipies.ToString()},
+                {"$almanac_require_roof", ConvertBoolean(craftingStation.m_craftRequireRoof)},
+                {"$almanac_require_fire", ConvertBoolean(craftingStation.m_craftRequireFire)},
+                {"$almanac_show_basic_recipes", ConvertBoolean(craftingStation.m_showBasicRecipies)},
                 {"$almanac_use_distance", craftingStation.m_useDistance.ToString("0.0")},
                 {"$almanac_use_animation", craftingStation.m_useAnimation.ToString()},
             };
@@ -834,7 +822,7 @@ public static class UpdateAlmanac
                 {"$almanac_piece_extends", stationExtension.m_craftingStation ? Localization.instance.Localize(stationExtension.m_craftingStation.m_name) : "0"},
                 {"$almanac_extension_distance", stationExtension.m_maxStationDistance.ToString("0.0")},
                 {"$almanac_extension_stack", stationExtension.m_stack.ToString()},
-                {"$almanac_continuous_connection", stationExtension.m_continousConnection.ToString()}
+                {"$almanac_continuous_connection", ConvertBoolean(stationExtension.m_continousConnection)}
             };
             MergeDictionaries(defaultData, extensionData);
         }
@@ -844,25 +832,25 @@ public static class UpdateAlmanac
             Dictionary<string, string> wearData = new()
             {
                 {"$almanac_wear_tear_title", "title"},
-                {"$almanac_no_roof_wear", wearNTear.m_noRoofWear.ToString()},
-                {"$almanac_no_support_wear", wearNTear.m_noSupportWear.ToString()},
+                {"$almanac_no_roof_wear", ConvertBoolean(wearNTear.m_noRoofWear).ToString()},
+                {"$almanac_no_support_wear", ConvertBoolean(wearNTear.m_noSupportWear).ToString()},
                 {"$almanac_material_type", SplitCamelCase(wearNTear.m_materialType.ToString())},
-                {"$almanac_piece_supports", wearNTear.m_supports.ToString()},
+                {"$almanac_piece_supports", ConvertBoolean(wearNTear.m_supports).ToString()},
                 {"$almanac_support_value", wearNTear.m_support.ToString("0.0")},
                 {"$almanac_piece_health", wearNTear.m_health.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_blunt", SplitCamelCase(wearNTear.m_damages.m_blunt.ToString())},
-                {"$almanac_slash", SplitCamelCase(wearNTear.m_damages.m_slash.ToString())},
-                {"$almanac_pierce", SplitCamelCase(wearNTear.m_damages.m_pierce.ToString())},
-                {"$almanac_chop", SplitCamelCase(wearNTear.m_damages.m_chop.ToString())},
-                {"$almanac_pickaxe", SplitCamelCase(wearNTear.m_damages.m_pickaxe.ToString())},
-                {"$almanac_fire",SplitCamelCase(wearNTear.m_damages.m_fire.ToString())},
-                {"$almanac_frost",SplitCamelCase(wearNTear.m_damages.m_frost.ToString())},
-                {"$almanac_lightning", SplitCamelCase(wearNTear.m_damages.m_lightning.ToString())},
-                {"$almanac_poison", SplitCamelCase(wearNTear.m_damages.m_poison.ToString())},
-                {"$almanac_spirit", SplitCamelCase(wearNTear.m_damages.m_spirit.ToString())},
+                {"$almanac_blunt", ConvertDamageModifiers(wearNTear.m_damages.m_blunt)},
+                {"$almanac_slash", ConvertDamageModifiers(wearNTear.m_damages.m_slash)},
+                {"$almanac_pierce", ConvertDamageModifiers(wearNTear.m_damages.m_pierce)},
+                {"$almanac_chop", ConvertDamageModifiers(wearNTear.m_damages.m_chop)},
+                {"$almanac_pickaxe", ConvertDamageModifiers(wearNTear.m_damages.m_pickaxe)},
+                {"$almanac_fire",ConvertDamageModifiers(wearNTear.m_damages.m_fire)},
+                {"$almanac_frost",ConvertDamageModifiers(wearNTear.m_damages.m_frost)},
+                {"$almanac_lightning", ConvertDamageModifiers(wearNTear.m_damages.m_lightning)},
+                {"$almanac_poison", ConvertDamageModifiers(wearNTear.m_damages.m_poison)},
+                {"$almanac_spirit", ConvertDamageModifiers(wearNTear.m_damages.m_spirit)},
                 {"$almanac_hit_noise", wearNTear.m_hitNoise.ToString(CultureInfo.CurrentCulture)},
                 {"$almanac_destroy_noise", wearNTear.m_destroyNoise.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_trigger_private_area", wearNTear.m_triggerPrivateArea.ToString()},
+                {"$almanac_trigger_private_area", ConvertBoolean(wearNTear.m_triggerPrivateArea)},
             };
             
             MergeDictionaries(defaultData, wearData);
@@ -879,7 +867,7 @@ public static class UpdateAlmanac
                 {"$almanac_fuel_per_product", smelter.m_fuelPerProduct.ToString()},
                 {"$almanac_sec_per_product", smelter.m_secPerProduct.ToString(CultureInfo.CurrentCulture) + "<color=orange>s</color>"},
                 {"$almanac_spawn_stack", smelter.m_spawnStack.ToString()},
-                {"$almanac_require_roof", smelter.m_requiresRoof.ToString()},
+                {"$almanac_require_roof", ConvertBoolean(smelter.m_requiresRoof)},
                 {"$almanac_add_ore_duration", smelter.m_addOreAnimationDuration.ToString(CultureInfo.CurrentCulture)},
             };
 
@@ -931,8 +919,8 @@ public static class UpdateAlmanac
                 {"$almanac_container_title", "title"},
                 {"$almanac_container_size", container.m_width + "<color=orange>x</color>" + container.m_height},
                 {"$almanac_container_privacy", container.m_privacy.ToString()},
-                {"$almanac_check_guard", container.m_checkGuardStone.ToString()},
-                {"$almanac_auto_destroy_empty", container.m_autoDestroyEmpty.ToString()},
+                {"$almanac_check_guard", ConvertBoolean(container.m_checkGuardStone)},
+                {"$almanac_auto_destroy_empty", ConvertBoolean(container.m_autoDestroyEmpty)},
             };
 
             if (container.m_defaultItems.m_drops.Count > 0)
@@ -962,9 +950,9 @@ public static class UpdateAlmanac
             {
                 {"$almanac_spawn_force", cookingStation.m_spawnForce.ToString(CultureInfo.CurrentCulture)},
                 {"$almanac_overcooked_item", cookingStation.m_overCookedItem ? Localization.instance.Localize(cookingStation.m_overCookedItem.m_itemData.m_shared.m_name) : "0"},
-                {"$almanac_require_fire", cookingStation.m_requireFire.ToString()},
+                {"$almanac_require_fire", ConvertBoolean(cookingStation.m_requireFire)},
                 {"$almanac_check_radius", cookingStation.m_fireCheckRadius.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_use_fuel", cookingStation.m_useFuel.ToString()},
+                {"$almanac_use_fuel", ConvertBoolean(cookingStation.m_useFuel)},
                 {"$almanac_fuel_item", cookingStation.m_fuelItem ? Localization.instance.Localize(cookingStation.m_fuelItem.m_itemData.m_shared.m_name) : "0"},
                 {"$almanac_max_fuel", cookingStation.m_maxFuel.ToString()},
                 {"$almanac_sec_per_fuel", cookingStation.m_secPerFuel.ToString()},
@@ -1036,8 +1024,8 @@ public static class UpdateAlmanac
                 {"$almanac_spawn_interval", wispSpawner.m_spawnInterval.ToString(CultureInfo.CurrentCulture) + "<color=orange>s</color>"},
                 {"$almanac_spawn_chance", (wispSpawner.m_spawnChance * 100).ToString(CultureInfo.CurrentCulture) + "<color=orange>%</color>"},
                 {"$almanac_max_spawned", wispSpawner.m_maxSpawned.ToString()},
-                {"$almanac_only_spawn_night", wispSpawner.m_onlySpawnAtNight.ToString()},
-                {"$almanac_no_spawn_cover", wispSpawner.m_dontSpawnInCover.ToString()},
+                {"$almanac_only_spawn_night", ConvertBoolean(wispSpawner.m_onlySpawnAtNight)},
+                {"$almanac_no_spawn_cover", ConvertBoolean(wispSpawner.m_dontSpawnInCover)},
                 {"$almanac_max_cover", (wispSpawner.m_maxCover * 100).ToString("0.0")},
                 {"$almanac_wisp_prefab", wispSpawner.m_wispPrefab ? wispSpawner.m_wispPrefab.name : "0"},
                 {"$almanac_nearby_threshold", wispSpawner.m_nearbyTreshold.ToString("0.0")},
@@ -1054,10 +1042,10 @@ public static class UpdateAlmanac
             {
                 {"$almanac_trap_title", "title"},
                 {"$almanac_rearm_cooldown", trap.m_rearmCooldown + "<color=orange>s</color>"},
-                {"$almanac_triggered_by_enemies", trap.m_triggeredByEnemies.ToString()},
-                {"$almanac_triggered_by_players", trap.m_triggeredByPlayers.ToString()},
-                {"$almanac_force_stagger", trap.m_forceStagger.ToString()},
-                {"$almanac_starts_armed", trap.m_startsArmed.ToString()}
+                {"$almanac_triggered_by_enemies", ConvertBoolean(trap.m_triggeredByEnemies)},
+                {"$almanac_triggered_by_players", ConvertBoolean(trap.m_triggeredByPlayers)},
+                {"$almanac_force_stagger", ConvertBoolean(trap.m_forceStagger)},
+                {"$almanac_starts_armed", ConvertBoolean(trap.m_startsArmed)}
             };
             
             MergeDictionaries(defaultData,trapData);
@@ -1071,7 +1059,7 @@ public static class UpdateAlmanac
                 {"$almanac_start_fuel", fireplace.m_startFuel.ToString(CultureInfo.CurrentCulture)},
                 {"$almanac_max_fuel", fireplace.m_maxFuel.ToString(CultureInfo.CurrentCulture)},
                 {"$almanac_sec_per_fuel", fireplace.m_secPerFuel.ToString(CultureInfo.CurrentCulture) + "<color=orange>s</color>"},
-                {"$almanac_infinite_fuel", fireplace.m_infiniteFuel.ToString()},
+                {"$almanac_infinite_fuel", ConvertBoolean(fireplace.m_infiniteFuel)},
                 {"$almanac_fuel_item", fireplace.m_fuelItem ? Localization.instance.Localize(fireplace.m_fuelItem.m_itemData.m_shared.m_name) : "0"},
             };
 
@@ -1093,8 +1081,8 @@ public static class UpdateAlmanac
             {
                 {"$almanac_door_title", "title"},
                 {"$almanac_key_item", door.m_keyItem ? Localization.instance.Localize(door.m_keyItem.m_itemData.m_shared.m_name) : "0"},
-                {"$almanac_can_not_be_closed", door.m_canNotBeClosed.ToString()},
-                {"$almanac_check_guard", door.m_checkGuardStone.ToString()}
+                {"$almanac_can_not_be_closed", ConvertBoolean(door.m_canNotBeClosed)},
+                {"$almanac_check_guard", ConvertBoolean(door.m_checkGuardStone)}
             };
             
             MergeDictionaries(defaultData, doorData);
@@ -1123,10 +1111,10 @@ public static class UpdateAlmanac
                 {"$almanac_update_target_interval_near", turret.m_updateTargetIntervalNear.ToString(CultureInfo.CurrentCulture) + "<color=orange>s</color>"},
                 {"$almanac_max_ammo", turret.m_maxAmmo.ToString()},
                 {"$almanac_ammo_type", Localization.instance.Localize(turret.m_ammoType)},
-                {"$almanac_return_ammo_on_destroy", turret.m_returnAmmoOnDestroy.ToString()},
+                {"$almanac_return_ammo_on_destroy", ConvertBoolean(turret.m_returnAmmoOnDestroy)},
                 {"$almanac_hold_repeat_interval", turret.m_holdRepeatInterval.ToString(CultureInfo.CurrentCulture) + "<color=orange>s</color>"},
-                {"$almanac_target_players", turret.m_targetPlayers.ToString()},
-                {"$almanac_target_tamed", turret.m_targetTamed.ToString()}
+                {"$almanac_target_players", ConvertBoolean(turret.m_targetPlayers)},
+                {"$almanac_target_tamed", ConvertBoolean(turret.m_targetTamed)}
             };
 
             if (turret.m_allowedAmmo.Count > 0)
@@ -1166,13 +1154,11 @@ public static class UpdateAlmanac
 
         return defaultData;
     }
-
     private static void DestroyPanelElements()
     {
         foreach (GameObject element in PanelElements) Object.Destroy(element);
         PanelElements.Clear();
     }
-    
     private static void UpdateCreaturePanel()
     {
         DestroyPanelElements();
@@ -1199,7 +1185,7 @@ public static class UpdateAlmanac
             {
                 GameObject item = Object.Instantiate(CacheAssets.Item, CreateAlmanac.PanelContent);
                 Utils.FindChild(item.transform, "$part_infoType").GetComponent<TextMeshProUGUI>().text = Localization.instance.Localize(RemoveNumbers(kvp.Key));
-                Utils.FindChild(item.transform, "$part_data").GetComponent<TextMeshProUGUI>().text = kvp.Value;
+                Utils.FindChild(item.transform, "$part_data").GetComponent<TextMeshProUGUI>().text = Localization.instance.Localize(kvp.Value);
                 
                 PanelElements.Add(item);
             }
@@ -1224,7 +1210,7 @@ public static class UpdateAlmanac
             {
                 GameObject item = Object.Instantiate(CacheAssets.Item, CreateAlmanac.PanelContent);
                 Utils.FindChild(item.transform, "$part_infoType").GetComponent<TextMeshProUGUI>().text = Localization.instance.Localize(RemoveNumbers(kvp.Key));
-                Utils.FindChild(item.transform, "$part_data").GetComponent<TextMeshProUGUI>().text = kvp.Value;
+                Utils.FindChild(item.transform, "$part_data").GetComponent<TextMeshProUGUI>().text = Localization.instance.Localize(kvp.Value);
                 
                 PanelElements.Add(item);
             }
@@ -1232,7 +1218,7 @@ public static class UpdateAlmanac
         
         AddCreatureConsumeItems();
     }
-
+    
     private static Dictionary<string, string> GetCreatureData()
     {
         Dictionary<string, string> defaultData = new()
@@ -1250,18 +1236,17 @@ public static class UpdateAlmanac
             {"$almanac_lightning", SplitCamelCase(SelectedCreature.lightning)},
             {"$almanac_poison", SplitCamelCase(SelectedCreature.poison)},
             {"$almanac_spirit", SplitCamelCase(SelectedCreature.spirit)},
-
         };
 
         Dictionary<string, string> TrackedData = new()
         {
             {"$almanac_kill_death_title", "title"},
-            {"$almanac_kill_count", TempCustomData.Player_Kill_Deaths[SelectedCreature.defeatedKey].kills.ToString()},
-            {"$almanac_death_count", TempCustomData.Player_Kill_Deaths[SelectedCreature.defeatedKey].deaths.ToString()},
+            {"$almanac_kill_count", LocalPlayerData.Player_Kill_Deaths[SelectedCreature.defeatedKey].kills.ToString()},
+            {"$almanac_death_count", LocalPlayerData.Player_Kill_Deaths[SelectedCreature.defeatedKey].deaths.ToString()},
         };
         
-        int kills = TempCustomData.Player_Kill_Deaths[SelectedCreature.defeatedKey].kills;
-        int deaths = TempCustomData.Player_Kill_Deaths[SelectedCreature.defeatedKey].deaths;
+        int kills = LocalPlayerData.Player_Kill_Deaths[SelectedCreature.defeatedKey].kills;
+        int deaths = LocalPlayerData.Player_Kill_Deaths[SelectedCreature.defeatedKey].deaths;
 
         if (kills != 0 && deaths != 0)
         {
@@ -1278,7 +1263,6 @@ public static class UpdateAlmanac
 
         return defaultData;
     }
-
     private static void AddCreatureDrops()
     {
         int dropContainerCount =  Mathf.FloorToInt(SelectedCreature.drops.Count / 8f) + 1;
@@ -1318,7 +1302,6 @@ public static class UpdateAlmanac
             }
         }
     }
-
     private static void AddCreatureConsumeItems()
     {
         int consumeItemCount =  Mathf.FloorToInt(SelectedCreature.consumeItems.Count / 8f) + 1;
@@ -1359,14 +1342,13 @@ public static class UpdateAlmanac
             }
         }
     }
-    
     private static Dictionary<string, string> GetCreatureData1()
     {
         Dictionary<string, string> defaultData = new()
         {
-            {"$almanac_avoid_fire", SelectedCreature.avoidFire.ToString()},
-            {"$almanac_afraid_of_fire", SelectedCreature.afraidOfFire.ToString()},
-            {"$almanac_avoid_water", SelectedCreature.avoidWater.ToString()},
+            {"$almanac_avoid_fire", ConvertBoolean(SelectedCreature.avoidFire)},
+            {"$almanac_afraid_of_fire", ConvertBoolean(SelectedCreature.afraidOfFire)},
+            {"$almanac_avoid_water", ConvertBoolean(SelectedCreature.avoidWater)},
         };
 
         for (int index = 0; index < SelectedCreature.weakSpot.Count; index++)
@@ -1377,11 +1359,11 @@ public static class UpdateAlmanac
 
         Dictionary<string, string> data = new()
         {
-            {"$almanac_stagger_when_blocked", SelectedCreature.staggerWhenBlocked.ToString()},
+            {"$almanac_stagger_when_blocked", ConvertBoolean(SelectedCreature.staggerWhenBlocked)},
             {"$almanac_stagger_damage_factor", SelectedCreature.staggerDamageFactor.ToString("0.0")},
-            {"$almanac_tolerate_water", SelectedCreature.tolerateWater.ToString()},
-            {"$almanac_tolerate_smoke", SelectedCreature.tolerateSmoke.ToString()},
-            {"$almanac_tolerate_tar", SelectedCreature.tolerateTar.ToString()},
+            {"$almanac_tolerate_water", ConvertBoolean(SelectedCreature.tolerateWater)},
+            {"$almanac_tolerate_smoke", ConvertBoolean(SelectedCreature.tolerateSmoke)},
+            {"$almanac_tolerate_tar", ConvertBoolean(SelectedCreature.tolerateTar)},
             {"$almanac_defeat_key", SelectedCreature.defeatedKey},
         };
 
@@ -1406,15 +1388,14 @@ public static class UpdateAlmanac
             defaultData.Add("$almanac_spirit" + index, AttackData.spirit.ToString(CultureInfo.CurrentCulture));
             defaultData.Add("$almanac_force" + index, AttackData.attackForce.ToString(CultureInfo.CurrentCulture));
             defaultData.Add("$almanac_back_stab_bonus" + index, AttackData.backStabBonus.ToString(CultureInfo.CurrentCulture));
-            defaultData.Add("$almanac_dodgeable" + index, AttackData.dodgeable.ToString());
-            defaultData.Add("$almanac_blockable" + index, AttackData.blockable.ToString());
+            defaultData.Add("$almanac_dodgeable" + index, ConvertBoolean(AttackData.dodgeable));
+            defaultData.Add("$almanac_blockable" + index, ConvertBoolean(AttackData.blockable));
             defaultData.Add("$almanac_status_effect" + index, AttackData.statusEffect);
             defaultData.Add("$almanac_status_effect_tooltip" + index, AttackData.statusEffectTooltip);
         }
 
         return defaultData;
     }
-
     private static Dictionary<string, string> GetItemData(ItemDrop.ItemData itemData)
     {
         Dictionary<string, string> DefaultData = new()
@@ -1423,16 +1404,16 @@ public static class UpdateAlmanac
             {"$almanac_durability_label", itemData.m_durability.ToString(CultureInfo.CurrentCulture)},
             {"$almanac_variant_label", itemData.m_variant.ToString()},
             {"$almanac_world_level_label", itemData.m_worldLevel.ToString()},
-            {"$almanac_item_type_label", SplitCamelCase(itemData.m_shared.m_itemType.ToString())},
+            {"$almanac_item_type_label", ConvertItemType(itemData.m_shared.m_itemType)},
             {"$almanac_max_stack_size_label", itemData.m_shared.m_maxStackSize.ToString()},
-            {"$almanac_auto_stack_label", itemData.m_shared.m_autoStack.ToString()},
+            {"$almanac_auto_stack_label", ConvertBoolean(itemData.m_shared.m_autoStack)},
             {"$almanac_quality_label", itemData.m_shared.m_maxQuality.ToString()},
             {"$almanac_scale_by_quality", (itemData.m_shared.m_scaleByQuality * 100).ToString(CultureInfo.CurrentCulture) + "%"},
             {"$almanac_weight_label", itemData.m_shared.m_weight.ToString("0.0")},
             {"$almanac_scale_by_weight", itemData.m_shared.m_scaleWeightByQuality.ToString(CultureInfo.CurrentCulture)},
             {"$almanac_value_label", itemData.m_shared.m_value.ToString()},
-            {"$almanac_teleportable", itemData.m_shared.m_teleportable.ToString()},
-            {"$almanac_quest_item_label", itemData.m_shared.m_questItem.ToString()},
+            {"$almanac_teleportable", ConvertBoolean(itemData.m_shared.m_teleportable)},
+            {"$almanac_quest_item_label", ConvertBoolean(itemData.m_shared.m_questItem)},
             {"$almanac_equip_duration", itemData.m_shared.m_equipDuration.ToString(CultureInfo.CurrentCulture) + "<color=orange>s</color>"},
             {"$almanac_variant_label1", itemData.m_shared.m_variants.ToString()},
         };
@@ -1489,7 +1470,7 @@ public static class UpdateAlmanac
 
             foreach (HitData.DamageModPair mod in itemData.m_shared.m_damageModifiers)
             {
-                SetDamageMods.Add(mod.m_type.ToString(),mod.m_modifier.ToString());
+                SetDamageMods.Add(ConvertDamageTypes(mod.m_type),ConvertDamageModifiers(mod.m_modifier));
             }
 
             MergeDictionaries(DefaultData, SetDamageMods);
@@ -1505,7 +1486,7 @@ public static class UpdateAlmanac
                 float amount = new float();
                 itemData.m_shared.m_setStatusEffect.ModifySkillLevel(skill, ref amount);
                 if (!(amount > 0)) continue;
-                SetSkillMods.Add(skill.ToString(), "<color=orange>+</color>" + amount.ToString(CultureInfo.CurrentCulture));
+                SetSkillMods.Add(ConvertSkills(skill), "<color=orange>+</color>" + amount.ToString(CultureInfo.CurrentCulture));
             }
             
             MergeDictionaries(DefaultData, SetSkillMods);
@@ -1525,11 +1506,11 @@ public static class UpdateAlmanac
             {
                 float skillLevel = new float();
                 equipEffect.ModifySkillLevel(skill, ref skillLevel);
-                if (skillLevel > 0) EquipData.Add("Modify " + skill, "<color=orange>+</color>" + skillLevel.ToString(CultureInfo.CurrentCulture));
+                if (skillLevel > 0) EquipData.Add(ConvertSkills(skill), "<color=orange>+</color>" + skillLevel.ToString(CultureInfo.CurrentCulture));
 
                 float raiseLevel = new();
                 equipEffect.ModifyRaiseSkill(skill, ref raiseLevel);
-                if (raiseLevel > 0) EquipData.Add("Raise " + skill, "<color=orange>+</color>" + raiseLevel.ToString(CultureInfo.CurrentCulture));
+                if (raiseLevel > 0) EquipData.Add(ConvertSkills(skill), "<color=orange>+</color>" + raiseLevel.ToString(CultureInfo.CurrentCulture));
             }
 
             float fallDamage = new();
@@ -1550,16 +1531,16 @@ public static class UpdateAlmanac
 
             HitData.DamageModifiers modifiers = new();
             equipEffect.ModifyDamageMods(ref modifiers);
-            EquipData.Add("$almanac_blunt1", SplitCamelCase(modifiers.m_blunt.ToString()));
-            EquipData.Add("$almanac_slash1", SplitCamelCase(modifiers.m_slash.ToString()));
-            EquipData.Add("$almanac_pierce1", SplitCamelCase(modifiers.m_pierce.ToString()));
-            EquipData.Add("$almanac_chop1", SplitCamelCase(modifiers.m_chop.ToString()));
-            EquipData.Add("$almanac_pickaxe1", SplitCamelCase(modifiers.m_pickaxe.ToString()));
-            EquipData.Add("$almanac_fire1", SplitCamelCase(modifiers.m_fire.ToString()));
-            EquipData.Add("$almanac_frost1", SplitCamelCase(modifiers.m_frost.ToString()));
-            EquipData.Add("$almanac_lightning1", SplitCamelCase(modifiers.m_lightning.ToString()));
-            EquipData.Add("$almanac_poison1", SplitCamelCase(modifiers.m_poison.ToString()));
-            EquipData.Add("$almanac_spirit1", SplitCamelCase(modifiers.m_spirit.ToString()));
+            EquipData.Add("$almanac_blunt1", ConvertDamageModifiers(modifiers.m_blunt));
+            EquipData.Add("$almanac_slash1", ConvertDamageModifiers(modifiers.m_slash));
+            EquipData.Add("$almanac_pierce1", ConvertDamageModifiers(modifiers.m_pierce));
+            EquipData.Add("$almanac_chop1", ConvertDamageModifiers(modifiers.m_chop));
+            EquipData.Add("$almanac_pickaxe1", ConvertDamageModifiers(modifiers.m_pickaxe));
+            EquipData.Add("$almanac_fire1", ConvertDamageModifiers(modifiers.m_fire));
+            EquipData.Add("$almanac_frost1", ConvertDamageModifiers(modifiers.m_frost));
+            EquipData.Add("$almanac_lightning1", ConvertDamageModifiers(modifiers.m_lightning));
+            EquipData.Add("$almanac_poison1", ConvertDamageModifiers(modifiers.m_poison));
+            EquipData.Add("$almanac_spirit1", ConvertDamageModifiers(modifiers.m_spirit));
 
             MergeDictionaries(DefaultData, EquipData);
         }
@@ -1616,11 +1597,11 @@ public static class UpdateAlmanac
                 {
                     float skillLevel = new float();
                     ConsumeEffect.ModifySkillLevel(skill, ref skillLevel);
-                    if (skillLevel > 0) ConsumeData.Add("Modify " + skill, "<color=orange>+</color>" + skillLevel.ToString(CultureInfo.CurrentCulture));
+                    if (skillLevel > 0) ConsumeData.Add(ConvertSkills(skill), "<color=orange>+</color>" + skillLevel.ToString(CultureInfo.CurrentCulture));
 
                     float raiseLevel = new();
                     ConsumeEffect.ModifyRaiseSkill(skill, ref raiseLevel);
-                    if (raiseLevel > 0) ConsumeData.Add("Raise " + skill, "<color=orange>+</color>" + raiseLevel.ToString(CultureInfo.CurrentCulture));
+                    if (raiseLevel > 0) ConsumeData.Add(ConvertSkills(skill), "<color=orange>+</color>" + raiseLevel.ToString(CultureInfo.CurrentCulture));
                 }
 
                 float healthRegen = new float();
@@ -1637,16 +1618,16 @@ public static class UpdateAlmanac
 
                 HitData.DamageModifiers modifiers = new();
                 ConsumeEffect.ModifyDamageMods(ref modifiers);
-                ConsumeData.Add("$almanac_blunt2", SplitCamelCase(modifiers.m_blunt.ToString()));
-                ConsumeData.Add("$almanac_slash2", SplitCamelCase(modifiers.m_slash.ToString()));
-                ConsumeData.Add("$almanac_pierce2", SplitCamelCase(modifiers.m_pierce.ToString()));
-                ConsumeData.Add("$almanac_chop2", SplitCamelCase(modifiers.m_chop.ToString()));
-                ConsumeData.Add("$almanac_pickaxe2", SplitCamelCase(modifiers.m_pickaxe.ToString()));
-                ConsumeData.Add("$almanac_fire2", SplitCamelCase(modifiers.m_fire.ToString()));
-                ConsumeData.Add("$almanac_frost2", SplitCamelCase(modifiers.m_frost.ToString()));
-                ConsumeData.Add("$almanac_lightning2", SplitCamelCase(modifiers.m_lightning.ToString()));
-                ConsumeData.Add("$almanac_poison2", SplitCamelCase(modifiers.m_poison.ToString()));
-                ConsumeData.Add("$almanac_spirit2", SplitCamelCase(modifiers.m_spirit.ToString()));
+                ConsumeData.Add("$almanac_blunt2", ConvertDamageModifiers(modifiers.m_blunt));
+                ConsumeData.Add("$almanac_slash2", ConvertDamageModifiers(modifiers.m_slash));
+                ConsumeData.Add("$almanac_pierce2", ConvertDamageModifiers(modifiers.m_pierce));
+                ConsumeData.Add("$almanac_chop2", ConvertDamageModifiers(modifiers.m_chop));
+                ConsumeData.Add("$almanac_pickaxe2", ConvertDamageModifiers(modifiers.m_pickaxe));
+                ConsumeData.Add("$almanac_fire2", ConvertDamageModifiers(modifiers.m_fire));
+                ConsumeData.Add("$almanac_frost2", ConvertDamageModifiers(modifiers.m_frost));
+                ConsumeData.Add("$almanac_lightning2", ConvertDamageModifiers(modifiers.m_lightning));
+                ConsumeData.Add("$almanac_poison2", ConvertDamageModifiers(modifiers.m_poison));
+                ConsumeData.Add("$almanac_spirit2", ConvertDamageModifiers(modifiers.m_spirit));
 
                 MergeDictionaries(DefaultData, ConsumeData);
             }
@@ -1684,7 +1665,7 @@ public static class UpdateAlmanac
             {
                 {"$almanac_weapon_title", "title"},
                 {"$almanac_weapon_animation_state", SplitCamelCase(itemData.m_shared.m_animationState.ToString())},
-                {"$almanac_weapon_skill_type", SplitCamelCase(itemData.m_shared.m_skillType.ToString())},
+                {"$almanac_weapon_skill_type", ConvertSkills(itemData.m_shared.m_skillType)},
                 {"$almanac_tool_tier", itemData.m_shared.m_toolTier.ToString()},
                 {"$almanac_damage3", itemData.m_shared.m_damages.m_damage.ToString(CultureInfo.CurrentCulture) + "<color=orange> +</color>" + itemData.m_shared.m_damagesPerLevel.m_damage.ToString(CultureInfo.CurrentCulture) + "<color=orange>/lvl</color>"},
                 {"$almanac_blunt3", itemData.m_shared.m_damages.m_blunt.ToString(CultureInfo.CurrentCulture) + "<color=orange> +</color>" + itemData.m_shared.m_damagesPerLevel.m_blunt.ToString(CultureInfo.CurrentCulture) + "<color=orange>/lvl</color>"},
@@ -1699,14 +1680,14 @@ public static class UpdateAlmanac
                 {"$almanac_spirit3", itemData.m_shared.m_damages.m_spirit.ToString(CultureInfo.CurrentCulture) + "<color=orange> +</color>" + itemData.m_shared.m_damagesPerLevel.m_spirit.ToString(CultureInfo.CurrentCulture) + "<color=orange>/lvl</color>"},
                 {"$almanac_attack_force3", itemData.m_shared.m_attackForce.ToString(CultureInfo.CurrentCulture)},
                 {"$almanac_back_stab_bonus3", itemData.m_shared.m_backstabBonus.ToString(CultureInfo.CurrentCulture)},
-                {"$almanac_dodgeable3", itemData.m_shared.m_dodgeable.ToString()},
-                {"$almanac_blockable3", itemData.m_shared.m_blockable.ToString()},
-                {"$almanac_tame_only", itemData.m_shared.m_tamedOnly.ToString()},
-                {"$almanac_always_rotate", itemData.m_shared.m_alwaysRotate.ToString()},
+                {"$almanac_dodgeable3", ConvertBoolean(itemData.m_shared.m_dodgeable)},
+                {"$almanac_blockable3", ConvertBoolean(itemData.m_shared.m_blockable)},
+                {"$almanac_tame_only", ConvertBoolean(itemData.m_shared.m_tamedOnly)},
+                {"$almanac_always_rotate", ConvertBoolean(itemData.m_shared.m_alwaysRotate)},
                 {"$almanac_attack_effect", itemData.m_shared.m_attackStatusEffect ? RemoveParentheses(itemData.m_shared.m_attackStatusEffect.ToString()) : "0"},
                 {"$almanac_spawn_on_hit", itemData.m_shared.m_spawnOnHit ? RemoveParentheses(itemData.m_shared.m_spawnOnHit.ToString()) : "0"},
                 {"$almanac_spawn_on_hit_terrain", itemData.m_shared.m_spawnOnHitTerrain ? RemoveParentheses(itemData.m_shared.m_spawnOnHitTerrain.ToString()) : "0"},
-                {"$almanac_projectile_tooltip", itemData.m_shared.m_projectileToolTip.ToString()},
+                {"$almanac_projectile_tooltip", ConvertBoolean(itemData.m_shared.m_projectileToolTip)},
                 {"$almanac_ammo_type", Localization.instance.Localize(itemData.m_shared.m_ammoType)},
             };
 
@@ -1714,7 +1695,7 @@ public static class UpdateAlmanac
 
             Dictionary<string, string> Attacks = new()
             {
-                {"$almanac_attack_type", SplitCamelCase(itemData.m_shared.m_attack.m_attackType.ToString())},
+                {"$almanac_attack_type", ConvertAttackTypes(itemData.m_shared.m_attack.m_attackType)},
                 {"$almanac_attack_animation", itemData.m_shared.m_attack.m_attackAnimation},
                 {"$almanac_attack_random_animations", itemData.m_shared.m_attack.m_attackRandomAnimations.ToString()},
                 {"$almanac_attack_chain_levels", itemData.m_shared.m_attack.m_attackChainLevels.ToString()},
@@ -1995,6 +1976,11 @@ public static class UpdateAlmanac
             CreateAlmanac.AlmanacGUI.SetActive(true);
             UpdatePlayerStats();
             UpdateMetricsPanel();
+
+            if (CheckedCompletion) return;
+            
+            CheckCompletedAchievements();
+            CheckedCompletion = true;
         }
     }
 

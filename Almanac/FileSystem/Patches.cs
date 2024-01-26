@@ -20,7 +20,6 @@ public static class Patches
             ServerSyncedData.InitServerAchievements();
             ServerSyncedData.InitServerIgnoreList();
             ServerSyncedData.InitServerCreatureList();
-
         }
     }
     

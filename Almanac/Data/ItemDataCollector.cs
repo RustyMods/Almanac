@@ -17,7 +17,6 @@ public static class ItemDataCollector
     private static List<ItemDrop> CachedConsumables = new();
     private static List<ItemDrop> CachedFishes = new();
     private static List<ItemDrop> CachedTrophies = new();
-
     public static void ClearCachedItemDrops()
     {
         CachedScrolls.Clear();
@@ -42,7 +41,7 @@ public static class ItemDataCollector
     {
         if (CachedFishes.Count > 0) return CachedFishes;
         List<ItemDrop> fishes = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Fish, "");
-
+        
         if (AlmanacPlugin.KrumpacLoaded)
         {
             List<ItemDrop> KrumpFishes = GetConsumables().FindAll(x =>
@@ -53,7 +52,7 @@ public static class ItemDataCollector
             fishes.AddRange(KrumpFishes);
         }
         
-        CachedFishes = fishes.FindAll(fish => !Filters.FilterList.Contains(fish.name));
+        CachedFishes = fishes.FindAll(fish => !Filters.FilterList.Contains(fish.name) && fish.enabled);
 
         return CachedFishes;
     }
@@ -78,7 +77,6 @@ public static class ItemDataCollector
         CachedJewels = GetValidItemDropList(jewels);
         return CachedJewels;
     }
-
     private static void FilterJewels(List<ItemDrop> source, List<ItemDrop> destination)
     {
         foreach (ItemDrop item in source)
@@ -272,7 +270,7 @@ public static class ItemDataCollector
                 if (!sprite) continue;
 
                 if (Filters.FilterList.Contains(itemDrop.name) && AlmanacPlugin._UseIgnoreList.Value is AlmanacPlugin.Toggle.On) continue;
-                
+                if (!itemDrop.enabled) continue;
                 output.Add(data);
             }
             catch (IndexOutOfRangeException)

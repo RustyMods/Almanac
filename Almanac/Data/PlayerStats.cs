@@ -13,7 +13,6 @@ namespace Almanac.Data;
 public static class PlayerStats
 {
     private static Dictionary<PlayerStatType, float> PlayerProfileStats = new();
-
     public static float GetPlayerStat(PlayerStatType type)
     {
         if (!PlayerProfileStats.TryGetValue(type, out float value)) return 0;
@@ -21,8 +20,7 @@ public static class PlayerStats
         return value;
     }
     
-    public static CustomData TempCustomData = new();
-
+    public static CustomData LocalPlayerData = new();
     private static string GetCustomDataFilePath()
     {
         string PrefixPath = AlmanacPaths.PlayerDataFolderPath + Path.DirectorySeparatorChar;
@@ -47,7 +45,7 @@ public static class PlayerStats
             }
             foreach (string key in CreatureDataCollector.TempDefeatKeys)
             {
-                TempCustomData.Player_Kill_Deaths[key] = new KillDeaths();
+                LocalPlayerData.Player_Kill_Deaths[key] = new KillDeaths();
             }
             
             WriteCurrentCustomData();
@@ -70,9 +68,9 @@ public static class PlayerStats
                 }
             }
             
-            TempCustomData = data;
+            LocalPlayerData = data;
             
-            if (TempCustomData.Player_Kill_Deaths.Count == 0 && !overwrite)
+            if (LocalPlayerData.Player_Kill_Deaths.Count == 0 && !overwrite)
             {
                 InitPlayerTracker(true);
                 return;
@@ -86,7 +84,7 @@ public static class PlayerStats
         if (!Player.m_localPlayer) return;
         AlmanacPaths.CreateFolderDirectories();
         ISerializer serializer = new SerializerBuilder().Build();
-        string data = serializer.Serialize(TempCustomData);
+        string data = serializer.Serialize(LocalPlayerData);
         File.WriteAllText(GetCustomDataFilePath(), data);
     }
 
@@ -102,7 +100,7 @@ public static class PlayerStats
 
         string key = killer.m_defeatSetGlobalKey;
 
-        ++TempCustomData.Player_Kill_Deaths[key].deaths;
+        ++LocalPlayerData.Player_Kill_Deaths[key].deaths;
     }
 
     private static void UpdatePlayerKills(Character instance)
@@ -118,7 +116,7 @@ public static class PlayerStats
             
         string key = instance.m_defeatSetGlobalKey;
 
-        ++TempCustomData.Player_Kill_Deaths[key].kills;
+        ++LocalPlayerData.Player_Kill_Deaths[key].kills;
     }
     
     public static void UpdatePlayerStats()

@@ -4035,7 +4035,6 @@ public static class AchievementYML
         };
         output.AddRange(biomes);
         #endregion
-        
         return output;
     }
 }

@@ -13,7 +13,7 @@ public static class TerminalCommands
         {
             if (args.Length < 2) return false;
 
-            if (!PlayerStats.TempCustomData.Player_Kill_Deaths.TryGetValue(args[1], out KillDeaths value)) return false;
+            if (!PlayerStats.LocalPlayerData.Player_Kill_Deaths.TryGetValue(args[1], out KillDeaths value)) return false;
                 
             AlmanacLogger.LogInfo($"Key: {args[1]} , kills: {value.kills} , deaths: {value.deaths}");
                 

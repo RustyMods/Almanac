@@ -6,6 +6,7 @@ using BepInEx;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Serialization;
+using Utility = Almanac.Utilities.Utility;
 
 namespace Almanac.Data;
 public static class CreatureDataCollector
@@ -213,10 +214,8 @@ public static class CreatureDataCollector
             
             if (!creatureData.defeatedKey.IsNullOrWhiteSpace() && !TempDefeatKeys.Contains(creatureData.defeatedKey)) TempDefeatKeys.Add(creatureData.defeatedKey);
         }
-
         return data;
     }
-
     private static void SaveMonsterAIData(MonsterAI script, CreatureData data)
     {
         try
@@ -244,7 +243,6 @@ public static class CreatureDataCollector
         {
             AlmanacPlugin.AlmanacLogger.LogDebug($"Failed to get Animal data: {data.name}");
         }
-        
     }
     private static void SaveCharacterDropData(GameObject prefab, CreatureData data)
     {
@@ -280,20 +278,20 @@ public static class CreatureDataCollector
             data.name = prefab.name;
             data.display_name = script.m_name;
             data.health = script.m_health;
-            data.faction = script.m_faction.ToString();
+            data.faction = Utility.ConvertFactions(script.m_faction);
 
             HitData.DamageModifiers damageModifiers = script.m_damageModifiers;
             
-            data.blunt = damageModifiers.m_blunt.ToString();
-            data.slash = damageModifiers.m_slash.ToString();
-            data.pierce = damageModifiers.m_pierce.ToString();
-            data.chop = damageModifiers.m_chop.ToString();
-            data.pickaxe = damageModifiers.m_pickaxe.ToString();
-            data.fire = damageModifiers.m_fire.ToString();
-            data.frost = damageModifiers.m_frost.ToString();
-            data.lightning = damageModifiers.m_lightning.ToString();
-            data.poison = damageModifiers.m_poison.ToString();
-            data.spirit = damageModifiers.m_spirit.ToString();
+            data.blunt = Utility.ConvertDamageModifiers(damageModifiers.m_blunt);
+            data.slash = Utility.ConvertDamageModifiers(damageModifiers.m_slash);
+            data.pierce = Utility.ConvertDamageModifiers(damageModifiers.m_pierce);
+            data.chop = Utility.ConvertDamageModifiers(damageModifiers.m_chop);
+            data.pickaxe = Utility.ConvertDamageModifiers(damageModifiers.m_pickaxe);
+            data.fire = Utility.ConvertDamageModifiers(damageModifiers.m_fire);
+            data.frost = Utility.ConvertDamageModifiers(damageModifiers.m_frost);
+            data.lightning = Utility.ConvertDamageModifiers(damageModifiers.m_lightning);
+            data.poison = Utility.ConvertDamageModifiers(damageModifiers.m_poison);
+            data.spirit = Utility.ConvertDamageModifiers(damageModifiers.m_spirit);
 
             data.tolerateWater = script.m_tolerateWater;
             data.tolerateSmoke = script.m_tolerateSmoke;
@@ -318,20 +316,20 @@ public static class CreatureDataCollector
             data.name = prefab.name;
             data.display_name = script.m_name;
             data.health = script.m_health;
-            data.faction = script.m_faction.ToString();
+            data.faction = Utility.ConvertFactions(script.m_faction);
 
             HitData.DamageModifiers damageModifiers = script.m_damageModifiers;
                         
-            data.blunt = damageModifiers.m_blunt.ToString();
-            data.slash = damageModifiers.m_slash.ToString();
-            data.pierce = damageModifiers.m_pierce.ToString();
-            data.chop = damageModifiers.m_chop.ToString();
-            data.pickaxe = damageModifiers.m_pickaxe.ToString();
-            data.fire = damageModifiers.m_fire.ToString();
-            data.frost = damageModifiers.m_frost.ToString();
-            data.lightning = damageModifiers.m_lightning.ToString();
-            data.poison = damageModifiers.m_poison.ToString();
-            data.spirit = damageModifiers.m_spirit.ToString();
+            data.blunt = Utility.ConvertDamageModifiers(damageModifiers.m_blunt);
+            data.slash = Utility.ConvertDamageModifiers(damageModifiers.m_slash);
+            data.pierce = Utility.ConvertDamageModifiers(damageModifiers.m_pierce);
+            data.chop = Utility.ConvertDamageModifiers(damageModifiers.m_chop);
+            data.pickaxe = Utility.ConvertDamageModifiers(damageModifiers.m_pickaxe);
+            data.fire = Utility.ConvertDamageModifiers(damageModifiers.m_fire);
+            data.frost = Utility.ConvertDamageModifiers(damageModifiers.m_frost);
+            data.lightning = Utility.ConvertDamageModifiers(damageModifiers.m_lightning);
+            data.poison = Utility.ConvertDamageModifiers(damageModifiers.m_poison);
+            data.spirit = Utility.ConvertDamageModifiers(damageModifiers.m_spirit);
 
             data.tolerateWater = script.m_tolerateWater;
             data.tolerateSmoke = script.m_tolerateSmoke;
@@ -353,7 +351,6 @@ public static class CreatureDataCollector
             AlmanacPlugin.AlmanacLogger.LogDebug($"Failed to get Character data: {data.name}");
         }
     }
-
     private static void SaveDefaultItemsAttackData(CreatureData data, Humanoid script)
     {
         try

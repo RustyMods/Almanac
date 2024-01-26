@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using Almanac.UI;
 using Almanac.Utilities;
 using HarmonyLib;
 using UnityEngine;
@@ -98,7 +97,11 @@ public static class AlmanacEffectManager
             foreach (HitData.DamageModPair mod in damageMods)
             {
                 if (mod.m_modifier == HitData.DamageModifier.Normal) continue;
-                string tooltip = $"\n<color=orange>{Utility.SplitCamelCase(mod.m_modifier.ToString())}</color> VS <color=orange>{Utility.SplitCamelCase(mod.m_type.ToString())}</color>";
+
+                string formattedModifier = Localization.instance.Localize(Utility.ConvertDamageModifiers(mod.m_modifier));
+                string formattedModType = Localization.instance.Localize(Utility.ConvertDamageTypes(mod.m_type));
+                
+                string tooltip = $"\n<color=orange>{formattedModifier}</color> VS <color=orange>{formattedModType}</color>";
                 appendedTooltip += tooltip;
             }
 
@@ -106,7 +109,7 @@ public static class AlmanacEffectManager
             {
                 if (Math.Abs(mod.Value - defaultModifiers[mod.Key]) < 0.009f) continue;
 
-                string FormattedKey = Utility.SplitCamelCase(mod.Key.ToString());
+                string FormattedKey = Localization.instance.Localize(Utility.ConvertEffectModifiers(mod.Key));
                 
                 switch (mod.Key)
                 {
@@ -228,7 +231,6 @@ public static class AlmanacEffectManager
     public class AchievementEffect : StatusEffect
     {
         public EffectData data = null!;
-        
         public override void ModifyAttack(Skills.SkillType skill, ref HitData hitData) => hitData.ApplyModifier(data.Modifiers[Modifier.Attack]);
         public override void ModifyHealthRegen(ref float regenMultiplier) => regenMultiplier *= data.Modifiers[Modifier.HealthRegen];
         public override void ModifyStaminaRegen(ref float staminaRegen) => staminaRegen *= data.Modifiers[Modifier.StaminaRegen];
@@ -244,12 +246,10 @@ public static class AlmanacEffectManager
         public override void ModifyFallDamage(float baseDamage, ref float damage)
         {
             if (m_character.GetSEMan().HaveStatusEffect("SlowFall".GetStableHashCode())) return;
-            // if (m_character.m_seman.m_statusEffects.Exists(x => x.m_name == "$se_slowfall_name")) return;
             damage = baseDamage * data.Modifiers[Modifier.FallDamage];
             if (damage >= 0.0) return;
             damage = 0.0f;
         }
-        
         public override void ModifyEitrRegen(ref float eitrRegen) => eitrRegen *= data.Modifiers[Modifier.EitrRegen];
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using Almanac.Data;
@@ -11,15 +12,12 @@ namespace Almanac.FileSystem;
 
 public static class Leaderboard
 {
-    public static readonly CustomSyncedValue<string> ServerPlayerDataListed =
-        new(AlmanacPlugin.ConfigSync, "ListedServerPlayerData", "");
-
     public static Dictionary<string, PlayerData> LeaderboardData = new();
     
     private static void SaveLeaderboardToFile()
     {
         AlmanacPaths.CreateFolderDirectories();
-        AlmanacPlugin.AlmanacLogger.LogDebug("Server: saving latest leaderboard to file");
+        AlmanacPlugin.AlmanacLogger.LogDebug("Server: Saving latest leaderboard to file");
         ISerializer serializer = new SerializerBuilder().Build();
         string data = serializer.Serialize(LeaderboardData);
         File.WriteAllText(AlmanacPaths.ServerPlayerDataFilePath, data);
@@ -29,7 +27,7 @@ public static class Leaderboard
         AlmanacPlugin.AlmanacLogger.LogDebug("Server: Sending updated leaderboard to clients");
         ISerializer serializer = new SerializerBuilder().Build();
         string data = serializer.Serialize(LeaderboardData);
-        ServerPlayerDataListed.Value = data;
+        SendToClients(data);
     }
     private static void SendToServer(string data)
     {
@@ -38,12 +36,22 @@ public static class Leaderboard
         ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.instance.GetServerPeerID(), nameof(RPC_Leaderboard_Receive), zPackage);
     }
 
+    public static void SendToClients(string data)
+    {
+        ZPackage zPackage = new ZPackage();
+        zPackage.Write(data);
+        foreach (ZNetPeer peer in ZNet.instance.m_peers)
+        {
+            peer.m_rpc.Invoke(nameof(RPC_Leaderboard_Client), zPackage);
+        }
+    }
+
     public static void RPC_Leaderboard_Receive(long sender, ZPackage pkg)
     {
         string data = pkg.ReadString();
         IDeserializer deserializer = new DeserializerBuilder().Build();
         ServerPlayerData receivedData = deserializer.Deserialize<ServerPlayerData>(data);
-        AlmanacPlugin.AlmanacLogger.LogDebug($"Server: Received new leaderboard data from {receivedData.player_name}, saving to disk");
+        AlmanacPlugin.AlmanacLogger.LogDebug($"Server: Received new leaderboard data from {receivedData.player_name}");
         if (LeaderboardData.TryGetValue(receivedData.player_name, out PlayerData localData))
         {
             if (localData.completed_achievements >= receivedData.data.completed_achievements)
@@ -65,6 +73,15 @@ public static class Leaderboard
         }
         SaveLeaderboardToFile();
     }
+
+    public static void RPC_Leaderboard_Client(ZRpc rpc, ZPackage pkg)
+    {
+        AlmanacPlugin.AlmanacLogger.LogDebug("Client: received leaderboard data, updating");
+        string data = pkg.ReadString();
+        IDeserializer deserializer = new DeserializerBuilder().Build();
+        Dictionary<string, PlayerData> list = deserializer.Deserialize<Dictionary<string, PlayerData>>(data);
+        LeaderboardData = list;
+    }
     
     private static void ServerLeaderboardCoroutine()
     {
@@ -77,16 +94,6 @@ public static class Leaderboard
     {
         AlmanacPlugin.AlmanacLogger.LogDebug("Client: Starting coroutine to send leaderboard data to server");
         AlmanacPlugin._plugin.StartCoroutine(UpdateSendPlayerDataToServer());
-        ServerPlayerDataListed.ValueChanged += OnListedPlayerDataChange;
-    }
-    
-    
-    private static void OnListedPlayerDataChange()
-    {
-        AlmanacPlugin.AlmanacLogger.LogDebug("Client: received leaderboard data, updating");
-        IDeserializer deserializer = new DeserializerBuilder().Build();
-        Dictionary<string, PlayerData> data = deserializer.Deserialize<Dictionary<string, PlayerData>>(ServerPlayerDataListed.Value);
-        LeaderboardData = data;
     }
     
     private static IEnumerator UpdateSendPlayerDataToServer()
@@ -121,7 +128,7 @@ public static class Leaderboard
         
         IDeserializer deserializer = new DeserializerBuilder().Build();
         string data = File.ReadAllText(AlmanacPaths.ServerPlayerDataFilePath);
-        ServerPlayerDataListed.Value = data;
+        SendToClients(data);
         Dictionary<string, PlayerData> ServerData = deserializer.Deserialize<Dictionary<string, PlayerData>>(data);
         if (ServerData.Count == 0) return;
         LeaderboardData = ServerData;
@@ -150,6 +157,23 @@ public static class Leaderboard
             ISerializer serializer = new SerializerBuilder().Build();
             string data = serializer.Serialize(PlayerStats.GetServerPlayerData());
             SendToServer(data);
+        }
+    }
+
+    [HarmonyPatch(typeof(ZNet), nameof(ZNet.OnNewConnection))]
+    private static class OnNewConnectionPatch
+    {
+        private static void Postfix(ZNetPeer peer)
+        {
+            AlmanacPlugin.AlmanacLogger.LogDebug("Client Connected : Registering Almanac RPC");
+            peer.m_rpc.Register<ZPackage>(nameof(RPC_Leaderboard_Client),RPC_Leaderboard_Client);
+            if (AlmanacPlugin.WorkingAsType is not AlmanacPlugin.WorkingAs.Client)
+            {
+                AlmanacPlugin.AlmanacLogger.LogDebug("Server: New connection, sending updated leaderboard");
+                ISerializer serializer = new SerializerBuilder().Build();
+                string data = serializer.Serialize(LeaderboardData);
+                SendToClients(data);
+            }
         }
     }
 }

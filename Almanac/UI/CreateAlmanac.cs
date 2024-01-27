@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Almanac.Achievements;
 using Almanac.Data;
-using Almanac.FileSystem;
 using Almanac.Utilities;
 using HarmonyLib;
 using TMPro;
@@ -29,6 +28,7 @@ public static class CreateAlmanac
     public static TextMeshProUGUI AchievementPanelLore = null!;
     public static Button AchievementButton = null!;
     public static TextMeshProUGUI PanelButton = null!;
+    public static TextMeshProUGUI AchievementPanelButton = null!;
 
     private static Image PanelImage = null!;
     private static Image AchievementPanelImage = null!;
@@ -202,11 +202,11 @@ public static class CreateAlmanac
         ButtonSfx sfx = CloseButton.gameObject.AddComponent<ButtonSfx>();
         sfx.m_sfxPrefab = CacheAssets.ButtonSFX.m_sfxPrefab;
 
-        TextMeshProUGUI ButtonText = AddTextMeshProGUI(CloseButton.Find("Text").gameObject,true);
-        ButtonText.fontSize = 16;
-        ButtonText.fontSizeMin = 5;
-        ButtonText.fontSizeMax = 20;
-        ButtonText.text = Localization.instance.Localize("$almanac_stats_button");
+        AchievementPanelButton = AddTextMeshProGUI(CloseButton.Find("Text").gameObject,true);
+        AchievementPanelButton.fontSize = 16;
+        AchievementPanelButton.fontSizeMin = 5;
+        AchievementPanelButton.fontSizeMax = 20;
+        AchievementPanelButton.text = Localization.instance.Localize("$almanac_stats_button");
         
         AchievementButton.onClick.AddListener(OnClickAchievement);
     }

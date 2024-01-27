@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Almanac.Achievements;
 using Almanac.Data;
 using Almanac.FileSystem;
@@ -32,14 +33,15 @@ public static class UpdateAlmanac
     private static readonly List<string> ValuesToIgnore = new()
     {
         "0",
-        "0<color=orange>+</color>0<color=orange>/lvl</color>",
+        "0+0/lvl",
         "none",
         "normal",
         "0%",
-        "0<color=orange>s</color>",
-        "0<color=orange>/tick</color>"
+        "0s",
+        "0/tick"
     };
-    private static bool IsValueToBeIgnored(string input) => ValuesToIgnore.Contains(input.ToLower().Replace(" ", "")) || input.IsNullOrWhiteSpace();
+    private static bool IsValueToBeIgnored(string input) => ValuesToIgnore.Contains(RemoveArrows(input).ToLower().Replace(" ", "")) || input.IsNullOrWhiteSpace();
+    private static string RemoveArrows(string input) => Regex.Replace(input, "<.*?>", "");
     private static ItemDrop SelectedItemDrop = null!;
     private static CreatureData SelectedCreature = null!;
     private static GameObject SelectedPiece = null!;
@@ -396,6 +398,7 @@ public static class UpdateAlmanac
             button.onClick = new Button.ButtonClickedEvent();
             button.onClick.AddListener(() =>
             {
+                CreateAlmanac.AchievementPanelButton.text = Localization.instance.Localize(isMetricsActive ? "$almanac_leaderboard_button" : "$almanac_stats_button");
                 CreateAlmanac.AchievementGUI.SetActive(true);
                 CreateAlmanac.AlmanacGUI.SetActive(false);
                 SelectedAchievement = achievement;
@@ -658,7 +661,7 @@ public static class UpdateAlmanac
         FindAchievement().m_isCompleted = count >= SelectedAchievement.m_goal;
         SelectedAchievement.m_isCompleted = count >= SelectedAchievement.m_goal;
     }
-    private static string FormatProgressText(int value, int goal) => $"<color=orange>{value}</color> / <color=orange>{goal}</color> (<color=orange>{Mathf.Max(((value / goal) * 100), 100):0.0}</color>%)";
+    private static string FormatProgressText(int value, int goal) => $"<color=orange>{value}</color> / <color=orange>{goal}</color> (<color=orange>{Mathf.Min(((value / goal) * 100), 100):0.0}</color>%)";
     private static Achievement FindAchievement() => AchievementList.Find(item => item.m_uniqueName == SelectedAchievement.m_uniqueName);
     private static void UpdateItemPanel()
     {
@@ -704,6 +707,8 @@ public static class UpdateAlmanac
         if (!SelectedPiece.TryGetComponent(out Piece piece)) return;
         CreateAlmanac.PanelIcon.sprite = piece.m_icon;
         CreateAlmanac.PanelTitle.text = Localization.instance.Localize(piece.m_name);
+        
+        AddPiecesResources();
 
         Dictionary<string, string> PanelData = GetPieceData();
 
@@ -741,7 +746,7 @@ public static class UpdateAlmanac
         {
             Dictionary<string, string> pieceData = new()
             {
-                {"$almanac_enabled", piece.enabled.ToString()},
+                {"$almanac_enabled", ConvertBoolean(piece.enabled)},
                 {"$almanac_piece_category", SplitCamelCase(piece.m_category.ToString())},
                 {"$almanac_is_upgrade", ConvertBoolean(piece.m_isUpgrade)},
                 {"$almanac_comfort", piece.m_comfort.ToString()},
@@ -804,7 +809,7 @@ public static class UpdateAlmanac
                 {"$almanac_discover_range", craftingStation.m_discoverRange.ToString("0.0")},
                 {"$almanac_range_build", craftingStation.m_rangeBuild.ToString("0.0")},
                 {"$almanac_extra_range_per_level", craftingStation.m_extraRangePerLevel.ToString("0.0")},
-                {"$almanac_require_roof", ConvertBoolean(craftingStation.m_craftRequireRoof)},
+                {"$almanac_require_roof1", ConvertBoolean(craftingStation.m_craftRequireRoof)},
                 {"$almanac_require_fire", ConvertBoolean(craftingStation.m_craftRequireFire)},
                 {"$almanac_show_basic_recipes", ConvertBoolean(craftingStation.m_showBasicRecipies)},
                 {"$almanac_use_distance", craftingStation.m_useDistance.ToString("0.0")},
@@ -867,7 +872,7 @@ public static class UpdateAlmanac
                 {"$almanac_fuel_per_product", smelter.m_fuelPerProduct.ToString()},
                 {"$almanac_sec_per_product", smelter.m_secPerProduct.ToString(CultureInfo.CurrentCulture) + "<color=orange>s</color>"},
                 {"$almanac_spawn_stack", smelter.m_spawnStack.ToString()},
-                {"$almanac_require_roof", ConvertBoolean(smelter.m_requiresRoof)},
+                {"$almanac_require_roof2", ConvertBoolean(smelter.m_requiresRoof)},
                 {"$almanac_add_ore_duration", smelter.m_addOreAnimationDuration.ToString(CultureInfo.CurrentCulture)},
             };
 
@@ -1263,6 +1268,45 @@ public static class UpdateAlmanac
 
         return defaultData;
     }
+    
+    private static void AddPiecesResources()
+    {
+        if (!SelectedPiece.TryGetComponent(out Piece piece)) return;
+        int resourcesRow =  Mathf.FloorToInt(piece.m_resources.Length / 8f) + 1;
+        if (piece.m_resources.Length != 0)
+        {
+            for (int index = 0; index < resourcesRow; ++index)
+            {
+                GameObject container = Object.Instantiate(CacheAssets.Drops, CreateAlmanac.PanelContent);
+                Transform title = container.transform.Find("$part_title");
+                if (!title.TryGetComponent(out TextMeshProUGUI component)) continue;
+                component.text = Localization.instance.Localize("$almanac_resources");
+                PanelElements.Add(container);
+                int j = 0;
+                for (int i = index * 7; i < (index + 1) * 7; ++i)
+                {
+                    if (i >= piece.m_resources.Length) break;
+                    Transform part = Utils.FindChild(container.transform, $"$part_drop_{j}");
+                    Transform name = part.GetChild(0);
+                
+                    if (!part.TryGetComponent(out Image image)) continue;
+                    if (!name.TryGetComponent(out TextMeshProUGUI text)) continue;
+                    
+                    Piece.Requirement resource = piece.m_resources[i];
+
+                    bool isKnown = Player.m_localPlayer.IsKnownMaterial(resource.m_resItem.m_itemData.m_shared.m_name) || _KnowledgeWall.Value is AlmanacPlugin.Toggle.Off || Player.m_localPlayer.NoCostCheat();
+
+                    image.sprite = resource.m_resItem.m_itemData.GetIcon();
+                    image.color = isKnown ? Color.white : Color.black;
+                    text.text = isKnown ? ReplaceSpaceWithNewLine(Localization.instance.Localize(resource.m_resItem.m_itemData.m_shared.m_name))
+                                + $"\n<color=orange>{resource.m_amount}</color>" : UnknownText;
+                
+                    part.gameObject.SetActive(true);
+                    ++j;
+                }
+            }
+        }
+    }
     private static void AddCreatureDrops()
     {
         int dropContainerCount =  Mathf.FloorToInt(SelectedCreature.drops.Count / 8f) + 1;
@@ -1312,7 +1356,7 @@ public static class UpdateAlmanac
                 GameObject dropContainer = Object.Instantiate(CacheAssets.Drops, CreateAlmanac.PanelContent);
                 Transform title = dropContainer.transform.Find("$part_title");
                 if (!title.TryGetComponent(out TextMeshProUGUI component)) continue;
-                component.text = "Taming Items";
+                component.text = Localization.instance.Localize("$almanac_taming_items");
                 if (index > 0) title.gameObject.SetActive(false);
                 PanelElements.Add(dropContainer);
             
@@ -1428,8 +1472,48 @@ public static class UpdateAlmanac
             {
                 DefaultData.Add("$almanac_prefab_name", prefab.name);
             }
-        }
+            
+            if (itemData.m_shared.m_itemType is ItemDrop.ItemData.ItemType.Fish)
+            {
+                if (prefab.TryGetComponent(out Fish fish))
+                {
+                    Dictionary<string, string> fishData = new()
+                    {
+                        {"$almanac_fish_title", "title"},
+                        {"$almanac_fish_swim_range", fish.m_swimRange.ToString(CultureInfo.CurrentCulture)},
+                        {"$almanac_fish_min_depth", fish.m_minDepth.ToString(CultureInfo.CurrentCulture)},
+                        {"$almanac_fish_speed", fish.m_speed.ToString(CultureInfo.CurrentCulture)},
+                        {"$almanac_fish_acceleration", fish.m_acceleration.ToString(CultureInfo.CurrentCulture)},
+                        {"$almanac_fish_turn_rate", fish.m_turnRate.ToString(CultureInfo.CurrentCulture)},
+                        {"$almanac_fish_avoid_range", fish.m_avoidRange.ToString(CultureInfo.CurrentCulture)},
+                        {"$almanac_fish_height", fish.m_height.ToString(CultureInfo.CurrentCulture)},
+                        {"$almanac_fish_hook_force", fish.m_hookForce.ToString(CultureInfo.CurrentCulture)},
+                        {"$almanac_fish_stamina_use", fish.m_staminaUse.ToString(CultureInfo.CurrentCulture)},
+                        {"$almanac_escape_stamina_use", fish.m_escapeStaminaUse.ToString(CultureInfo.CurrentCulture)},
+                        {"$almanac_escape_min", fish.m_escapeMin.ToString(CultureInfo.CurrentCulture)},
+                        {"$almanac_escape_max", fish.m_escapeMax.ToString(CultureInfo.CurrentCulture)},
+                        {"$almanac_base_hook_chance", fish.m_baseHookChance.ToString(CultureInfo.CurrentCulture)},
+                        {"$almanac_fish_escape_time", fish.m_escapeTime.ToString(CultureInfo.CurrentCulture)},
+                        {"$almanac_fish_jump_speed", fish.m_jumpSpeed.ToString(CultureInfo.CurrentCulture)},
+                        {"$almanac_fish_jump_height", fish.m_jumpHeight.ToString(CultureInfo.CurrentCulture)},
+                        {"$almanac_fish_jump_on_land_chance", fish.m_jumpOnLandChance.ToString(CultureInfo.CurrentCulture)},
+                        {"$almanac_fish_jump_on_land_decay", fish.m_jumpOnLandDecay.ToString(CultureInfo.CurrentCulture)},
+                        {"$almanac_fish_jump_frequency", fish.m_jumpFrequencySeconds.ToString("0.0") + "<color=orange>s</color>"},
+                        {"$almanac_fish_fast", ConvertBoolean(fish.m_fast)},
+                    };
 
+                    for (int index = 0; index < fish.m_baits.Count; index++)
+                    {
+                        Fish.BaitSetting bait = fish.m_baits[index];
+                        fishData.Add("$almanac_fish_bait_name" + index, Localization.instance.Localize(bait.m_bait.m_itemData.m_shared.m_name));
+                        fishData.Add("$almanac_fish_bait_chance" + index, bait.m_chance.ToString(CultureInfo.CurrentCulture));
+                    }
+                    
+                    MergeDictionaries(DefaultData, fishData);
+                };
+            }
+        }
+        
         if (itemData.m_shared.m_itemType
             is ItemDrop.ItemData.ItemType.Helmet
             or ItemDrop.ItemData.ItemType.Legs

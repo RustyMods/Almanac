@@ -1,7 +1,6 @@
 ﻿using Almanac.Achievements;
 using Almanac.Data;
 using HarmonyLib;
-using static Almanac.FileSystem.Leaderboard;
 
 namespace Almanac.FileSystem;
 
@@ -78,9 +77,6 @@ public static class Patches
     [HarmonyPatch(typeof(ZLog), nameof(ZLog.LogWarning))]
     static class MuteGuardianPowerStats
     {
-        private static bool Prefix(object o)
-        {
-            return !o.ToString().StartsWith("Missing stat for guardian power");
-        }
+        private static bool Prefix(object o) => !o.ToString().StartsWith("Missing stat for guardian power");
     }
 }

@@ -586,5 +586,32 @@
   "almanac_damage_reduction": "Skadereduktion",
   "almanac_fall_damage": "Faldskade",
   "almanac_eitr_regen": "Eitr Regenerering",
-  "almanac_attack": "Angreb"
+  "almanac_attack": "Angreb",
+  "almanac_resources": "Ressourcer",
+  "almanac_taming_items": "Tamning Genstande",
+  "almanac_fish_title": "Fisk",
+  "almanac_fish_swim_range": "Svømmeområde",
+  "almanac_fish_min_depth": "Minimum dybde",
+  "almanac_fish_speed": "Hastighed",
+  "almanac_fish_acceleration": "Acceleration",
+  "almanac_fish_turn_rate": "Drejehastighed",
+  "almanac_fish_avoid_range": "Undgå område",
+  "almanac_fish_height": "Højde",
+  "almanac_fish_hook_force": "Krogkraft",
+  "almanac_fish_stamina_use": "Energiforbrug",
+  "almanac_escape_stamina_use": "Energiforbrug under flugt",
+  "almanac_escape_min": "Minimum flugtværdi",
+  "almanac_escape_max": "Maksimum flugtværdi",
+  "almanac_base_hook_chance": "Grundlæggende krogchance",
+  "almanac_fish_escape_time": "Flugttid for fisk",
+  "almanac_fish_jump_speed": "Hoppehastighed",
+  "almanac_fish_jump_height": "Hoppehøjde",
+  "almanac_fish_jump_on_land_chance": "Chancer for at hoppe på land",
+  "almanac_fish_jump_on_land_decay": "Forringelse ved hop på land",
+  "almanac_fish_jump_frequency": "Hopfrekvens",
+  "almanac_fish_fast": "Hurtig fisk",
+  "almanac_fish_bait_name": "Agensnavn",
+  "almanac_fish_bait_chance": "Chancer for at fange med agn"
+
+
 }

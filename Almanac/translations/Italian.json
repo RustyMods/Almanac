@@ -586,6 +586,32 @@
   "almanac_damage_reduction": "Riduzione del Danno",
   "almanac_fall_damage": "Danno da Caduta",
   "almanac_eitr_regen": "Rigenerazione di Eitr",
-  "almanac_attack": "Attacco"
+  "almanac_attack": "Attacco",
+  "almanac_resources": "Risorse",
+  "almanac_taming_items": "Oggetti per l'addomesticamento",
+  "almanac_fish_title": "Pesci",
+  "almanac_fish_swim_range": "Raggio di nuoto",
+  "almanac_fish_min_depth": "Profondità minima",
+  "almanac_fish_speed": "Velocità",
+  "almanac_fish_acceleration": "Accelerazione",
+  "almanac_fish_turn_rate": "Velocità di rotazione",
+  "almanac_fish_avoid_range": "Raggio di evitamento",
+  "almanac_fish_height": "Altezza",
+  "almanac_fish_hook_force": "Forza dell'amo",
+  "almanac_fish_stamina_use": "Uso di stamina",
+  "almanac_escape_stamina_use": "Uso di stamina per fuga",
+  "almanac_escape_min": "Fuga minima",
+  "almanac_escape_max": "Fuga massima",
+  "almanac_base_hook_chance": "Probabilità di amo di base",
+  "almanac_fish_escape_time": "Tempo di fuga del pesce",
+  "almanac_fish_jump_speed": "Velocità di salto",
+  "almanac_fish_jump_height": "Altezza di salto",
+  "almanac_fish_jump_on_land_chance": "Probabilità di salto a terra",
+  "almanac_fish_jump_on_land_decay": "Decadimento del salto a terra",
+  "almanac_fish_jump_frequency": "Frequenza di salto",
+  "almanac_fish_fast": "Pesce veloce",
+  "almanac_fish_bait_name": "Nome dell'esca",
+  "almanac_fish_bait_chance": "Probabilità di amo dell'esca"
+
 }
   

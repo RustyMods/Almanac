@@ -64,13 +64,13 @@ public static class FileWatcher
 
     private static void OnServerPlayerDataListChange(object sender, FileSystemEventArgs e)
     {
-        AlmanacPlugin.AlmanacLogger.LogDebug("Server: Leaderboard file changed, updating");
+        AlmanacPlugin.AlmanacLogger.LogDebug("Server: Leaderboard file changed");
         string data = File.ReadAllText(AlmanacPaths.ServerPlayerDataFilePath);
         IDeserializer deserializer = new DeserializerBuilder().Build();
         Dictionary<string, PlayerData> LeaderboardData = deserializer.Deserialize<Dictionary<string, PlayerData>>(data);
         Leaderboard.LeaderboardData = LeaderboardData;
-        AlmanacPlugin.AlmanacLogger.LogDebug("Server: sending updated leaderboard to clients");
-        Leaderboard.ServerPlayerDataListed.Value = data;
+        AlmanacPlugin.AlmanacLogger.LogDebug("Server: Sending updated leaderboard to clients");
+        Leaderboard.SendToClients(data);
     }
 
     private static void OnAchievementChange(object sender, FileSystemEventArgs e)

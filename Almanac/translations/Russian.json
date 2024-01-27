@@ -587,5 +587,32 @@
   "almanac_damage_reduction": "Снижение урона",
   "almanac_fall_damage": "Урон при падении",
   "almanac_eitr_regen": "Восстановление Эйтра",
-  "almanac_attack": "Атака"
+  "almanac_attack": "Атака",
+  "almanac_resources": "Ресурсы",
+  "almanac_taming_items": "Предметы приручения",
+  "almanac_fish_title": "Рыбы",
+  "almanac_fish_swim_range": "Диапазон плавания",
+  "almanac_fish_min_depth": "Минимальная глубина",
+  "almanac_fish_speed": "Скорость",
+  "almanac_fish_acceleration": "Ускорение",
+  "almanac_fish_turn_rate": "Скорость поворота",
+  "almanac_fish_avoid_range": "Диапазон избегания",
+  "almanac_fish_height": "Высота",
+  "almanac_fish_hook_force": "Сила крючка",
+  "almanac_fish_stamina_use": "Использование выносливости",
+  "almanac_escape_stamina_use": "Использование выносливости при побеге",
+  "almanac_escape_min": "Минимальное время побега",
+  "almanac_escape_max": "Максимальное время побега",
+  "almanac_base_hook_chance": "Базовый шанс крючка",
+  "almanac_fish_escape_time": "Время побега рыбы",
+  "almanac_fish_jump_speed": "Скорость прыжка",
+  "almanac_fish_jump_height": "Высота прыжка",
+  "almanac_fish_jump_on_land_chance": "Шанс прыжка на суше",
+  "almanac_fish_jump_on_land_decay": "Затухание прыжка на суше",
+  "almanac_fish_jump_frequency": "Частота прыжков",
+  "almanac_fish_fast": "Быстрая рыба",
+  "almanac_fish_bait_name": "Название наживки",
+  "almanac_fish_bait_chance": "Шанс крючка с наживкой"
+
+
 }

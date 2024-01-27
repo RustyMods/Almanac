@@ -586,5 +586,32 @@
   "almanac_damage_reduction": "Redukcja Obrażeń",
   "almanac_fall_damage": "Obrażenia z Upadku",
   "almanac_eitr_regen": "Regeneracja Eitr",
-  "almanac_attack": "Atak"
+  "almanac_attack": "Atak",
+  "almanac_resources": "Zasoby",
+  "almanac_taming_items": "Przedmioty do oswojenia",
+  "almanac_fish_title": "Ryby",
+  "almanac_fish_swim_range": "Zasięg pływania",
+  "almanac_fish_min_depth": "Minimalna głębokość",
+  "almanac_fish_speed": "Prędkość",
+  "almanac_fish_acceleration": "Przyspieszenie",
+  "almanac_fish_turn_rate": "Szybkość skrętu",
+  "almanac_fish_avoid_range": "Zakres unikania",
+  "almanac_fish_height": "Wysokość",
+  "almanac_fish_hook_force": "Siła haka",
+  "almanac_fish_stamina_use": "Użycie wytrzymałości",
+  "almanac_escape_stamina_use": "Użycie wytrzymałości ucieczki",
+  "almanac_escape_min": "Minimalny czas ucieczki",
+  "almanac_escape_max": "Maksymalny czas ucieczki",
+  "almanac_base_hook_chance": "Podstawowe szanse na złowienie",
+  "almanac_fish_escape_time": "Czas ucieczki ryby",
+  "almanac_fish_jump_speed": "Prędkość skoku",
+  "almanac_fish_jump_height": "Wysokość skoku",
+  "almanac_fish_jump_on_land_chance": "Szanse na skok na ląd",
+  "almanac_fish_jump_on_land_decay": "Spadek skoku na ląd",
+  "almanac_fish_jump_frequency": "Częstotliwość skoku",
+  "almanac_fish_fast": "Szybka ryba",
+  "almanac_fish_bait_name": "Nazwa przynęty",
+  "almanac_fish_bait_chance": "Szanse na złowienie na przynętę"
+
+
 }

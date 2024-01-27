@@ -586,5 +586,32 @@
   "almanac_damage_reduction": "Schadevermindering",
   "almanac_fall_damage": "Valschade",
   "almanac_eitr_regen": "Eitr Regeneratie",
-  "almanac_attack": "Aanval"
+  "almanac_attack": "Aanval",
+  "almanac_resources": "Bronnen",
+  "almanac_taming_items": "Temmingsvoorwerpen",
+  "almanac_fish_title": "Vissen",
+  "almanac_fish_swim_range": "Zwemgebied",
+  "almanac_fish_min_depth": "Minimale diepte",
+  "almanac_fish_speed": "Snelheid",
+  "almanac_fish_acceleration": "Versnelling",
+  "almanac_fish_turn_rate": "Draaisnelheid",
+  "almanac_fish_avoid_range": "Vermijdingsgebied",
+  "almanac_fish_height": "Hoogte",
+  "almanac_fish_hook_force": "Haakkracht",
+  "almanac_fish_stamina_use": "Stamina-verbruik",
+  "almanac_escape_stamina_use": "Stamina-verbruik bij ontsnapping",
+  "almanac_escape_min": "Minimale ontsnappingswaarde",
+  "almanac_escape_max": "Maximale ontsnappingswaarde",
+  "almanac_base_hook_chance": "Basiskans op haak",
+  "almanac_fish_escape_time": "Ontsnappingstijd voor vis",
+  "almanac_fish_jump_speed": "Springsnelheid",
+  "almanac_fish_jump_height": "Springhoogte",
+  "almanac_fish_jump_on_land_chance": "Kans op springen op het land",
+  "almanac_fish_jump_on_land_decay": "Afname bij springen op het land",
+  "almanac_fish_jump_frequency": "Sprongfrequentie",
+  "almanac_fish_fast": "Snelle vis",
+  "almanac_fish_bait_name": "Aasnaam",
+  "almanac_fish_bait_chance": "Kans om te haken met aas"
+
+
 }

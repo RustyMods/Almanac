@@ -122,7 +122,7 @@ public static class PieceDataCollector
             piece.TryGetComponent(out Plant plant);
             
             if (!pieceScript) continue;
-            if (!pieceScript.enabled) continue;
+            if (!pieceScript.enabled && AlmanacPlugin._ShowAllData.Value is AlmanacPlugin.Toggle.Off) continue;
             
             string name = pieceScript.name;
             string hoverName = pieceScript.m_name;

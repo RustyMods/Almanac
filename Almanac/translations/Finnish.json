@@ -586,5 +586,32 @@
   "almanac_damage_reduction": "Vahingon Vähentäminen",
   "almanac_fall_damage": "Putoamisvahinko",
   "almanac_eitr_regen": "Eitrin Regenerointi",
-  "almanac_attack": "Hyökkäys"
+  "almanac_attack": "Hyökkäys",
+  "almanac_resources": "Resurssit",
+  "almanac_taming_items": "Kesyttämisvälineet",
+  "almanac_fish_title": "Kalat",
+  "almanac_fish_swim_range": "Uintialue",
+  "almanac_fish_min_depth": "Vähimmäissyvyys",
+  "almanac_fish_speed": "Nopeus",
+  "almanac_fish_acceleration": "Kiihtyvyys",
+  "almanac_fish_turn_rate": "Kääntönopeus",
+  "almanac_fish_avoid_range": "Vältä alue",
+  "almanac_fish_height": "Korkeus",
+  "almanac_fish_hook_force": "Koukkujen voima",
+  "almanac_fish_stamina_use": "Staminan käyttö",
+  "almanac_escape_stamina_use": "Staminan käyttö pakoon",
+  "almanac_escape_min": "Pakon vähimmäisarvo",
+  "almanac_escape_max": "Pakon suurin arvo",
+  "almanac_base_hook_chance": "Peruskoukkumahdollisuus",
+  "almanac_fish_escape_time": "Kalan pakoaika",
+  "almanac_fish_jump_speed": "Hyppynopeus",
+  "almanac_fish_jump_height": "Hyppykorkeus",
+  "almanac_fish_jump_on_land_chance": "Mahdollisuus hypätä maalle",
+  "almanac_fish_jump_on_land_decay": "Häviö hyppyyn maalla",
+  "almanac_fish_jump_frequency": "Hyppysuhteen taajuus",
+  "almanac_fish_fast": "Nopea kala",
+  "almanac_fish_bait_name": "Syötin nimi",
+  "almanac_fish_bait_chance": "Mahdollisuus koukuttaa syödillä"
+
+
 }

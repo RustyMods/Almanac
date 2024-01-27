@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Almanac.Data;
 using Almanac.FileSystem;
 using static Almanac.AlmanacPlugin;
@@ -9,7 +10,7 @@ public static class TerminalCommands
 {
     public static void AddAlmanacCommands()
     {
-        Terminal.ConsoleCommand GetCustomData = new("almanac_data", "", (Terminal.ConsoleEventFailable)(args =>
+        Terminal.ConsoleCommand GetCustomData = new("almanac_data", "Local player tracker data, searchable using currently registered defeat keys", (Terminal.ConsoleEventFailable)(args =>
         {
             if (args.Length < 2) return false;
 
@@ -39,5 +40,6 @@ public static class TerminalCommands
                     };
                 }
             });
+        
     }
 }

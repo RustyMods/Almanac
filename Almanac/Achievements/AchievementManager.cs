@@ -74,6 +74,9 @@ public static class AchievementManager
 
         AchievementList = list;
         
+        if (Player.m_localPlayer) CheckCompletedAchievements();
+
+        
         if (checkBool) AchievementsRan = true;
     }
 

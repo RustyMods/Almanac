@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Reflection;
 using Almanac.Achievements;
-using Almanac.Data;
 using Almanac.FileSystem;
 using Almanac.UI;
 using Almanac.Utilities;
@@ -25,7 +24,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.0.5";
+        internal const string ModVersion = "3.0.6";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         private static string ConfigFileName = ModGUID + ".cfg";

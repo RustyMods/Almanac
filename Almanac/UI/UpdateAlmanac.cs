@@ -40,7 +40,7 @@ public static class UpdateAlmanac
         "0s",
         "0/tick"
     };
-    private static bool IsValueToBeIgnored(string input) => ValuesToIgnore.Contains(RemoveArrows(input).ToLower().Replace(" ", "")) || input.IsNullOrWhiteSpace();
+    private static bool IsValueToBeIgnored(string input) => ValuesToIgnore.Contains(RemoveArrows(Localization.instance.Localize(input)).ToLower().Replace(" ", "")) || input.IsNullOrWhiteSpace();
     private static string RemoveArrows(string input) => Regex.Replace(input, "<.*?>", "");
     private static ItemDrop SelectedItemDrop = null!;
     private static CreatureData SelectedCreature = null!;
@@ -661,7 +661,7 @@ public static class UpdateAlmanac
         FindAchievement().m_isCompleted = count >= SelectedAchievement.m_goal;
         SelectedAchievement.m_isCompleted = count >= SelectedAchievement.m_goal;
     }
-    private static string FormatProgressText(int value, int goal) => $"<color=orange>{value}</color> / <color=orange>{goal}</color> (<color=orange>{Mathf.Min(((value / goal) * 100), 100):0.0}</color>%)";
+    private static string FormatProgressText(int value, int goal) => $"<color=orange>{value}</color> / <color=orange>{goal}</color> (<color=orange>{((value / goal) * 100):0.0)}</color>%)";
     private static Achievement FindAchievement() => AchievementList.Find(item => item.m_uniqueName == SelectedAchievement.m_uniqueName);
     private static void UpdateItemPanel()
     {

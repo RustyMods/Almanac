@@ -76,7 +76,7 @@ public static class Leaderboard
 
     public static void RPC_Leaderboard_Client(ZRpc rpc, ZPackage pkg)
     {
-        AlmanacPlugin.AlmanacLogger.LogDebug("Client: received leaderboard data, updating");
+        AlmanacPlugin.AlmanacLogger.LogDebug("Client: Received leaderboard data, updating");
         string data = pkg.ReadString();
         IDeserializer deserializer = new DeserializerBuilder().Build();
         Dictionary<string, PlayerData> list = deserializer.Deserialize<Dictionary<string, PlayerData>>(data);

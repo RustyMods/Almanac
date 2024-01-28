@@ -410,7 +410,7 @@ public static class CreateAlmanac
 
         return CreatureElement;
     }
-
+    
     private static void AddSearchBar()
     {
         GameObject searchBar = Object.Instantiate(CacheAssets.SearchBar, CacheAssets.TrophiesFrame);

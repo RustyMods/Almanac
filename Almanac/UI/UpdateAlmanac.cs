@@ -2100,6 +2100,13 @@ public static class UpdateAlmanac
     [HarmonyPatch(typeof(ZInput), nameof(ZInput.GetButtonDown))]
     private static class ZInputPatch
     {
-        private static bool Prefix() => !AreTabsVisible();
+        private static bool Prefix() => !IsTrophyPanelActive();
+
+        private static bool IsTrophyPanelActive()
+        {
+            if (!InventoryGui.instance) return true;
+            
+            return InventoryGui.instance.m_trophiesPanel && InventoryGui.instance.m_trophiesPanel.activeInHierarchy;
+        }
     }
 }

@@ -27,6 +27,7 @@ public static class CacheAssets
     public static GameObject SearchBar = null!;
     public static GameObject LeaderboardItem = null!;
 
+
     [HarmonyWrapSafe]
     public static void GetAssets(InventoryGui GUI)
     {

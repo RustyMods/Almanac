@@ -351,7 +351,7 @@ public static class UpdateAlmanac
         instance.m_trophyListScroll.value = 1f;
     }
 
-    private static bool CheckedCompletion;
+    public static bool CheckedCompletion;
     private static void UpdateAchievementList(InventoryGui instance, List<Achievement> achievements)
     {
         float a1 = 0.0f;
@@ -1223,7 +1223,6 @@ public static class UpdateAlmanac
         
         AddCreatureConsumeItems();
     }
-    
     private static Dictionary<string, string> GetCreatureData()
     {
         Dictionary<string, string> defaultData = new()
@@ -1268,7 +1267,6 @@ public static class UpdateAlmanac
 
         return defaultData;
     }
-    
     private static void AddPiecesResources()
     {
         if (!SelectedPiece.TryGetComponent(out Piece piece)) return;
@@ -2060,6 +2058,8 @@ public static class UpdateAlmanac
             CreateAlmanac.AlmanacGUI.SetActive(true);
             UpdatePlayerStats();
             UpdateMetricsPanel();
+            
+            UpdateTopic();
 
             if (CheckedCompletion) return;
             

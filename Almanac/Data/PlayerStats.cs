@@ -62,7 +62,7 @@ public static class PlayerStats
                 {
                     if (!data.Player_Kill_Deaths.TryGetValue(key, out KillDeaths value))
                     {
-                        AlmanacPlugin.AlmanacLogger.LogDebug("player data missing: " + key + " , adding value");
+                        AlmanacPlugin.AlmanacLogger.LogDebug("Player data missing: " + key + " , adding value");
                         data.Player_Kill_Deaths[key] = new KillDeaths();
                     }
                 }
@@ -122,7 +122,7 @@ public static class PlayerStats
     public static void UpdatePlayerStats()
     {
         if (!Game.instance) return;
-        AlmanacPlugin.AlmanacLogger.LogDebug("Loading initial player profile");
+        AlmanacPlugin.AlmanacLogger.LogDebug("Loading latest player stats");
         PlayerProfileStats = Game.instance.GetPlayerProfile().m_playerStats.m_stats;
     }
 

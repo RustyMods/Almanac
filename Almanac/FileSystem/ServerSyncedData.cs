@@ -42,7 +42,7 @@ public static class ServerSyncedData
     public static void OnServerAchievementChanged()
     {
         if (ServerAchievements.Value.IsNullOrWhiteSpace()) return;
-        AlmanacPlugin.AlmanacLogger.LogDebug("Client: Received new server data, reloading achievements");
+        AlmanacPlugin.AlmanacLogger.LogDebug("Client: Received new achievements");
         IDeserializer deserializer = new DeserializerBuilder().Build();
         List<AchievementYML.AchievementData> data = deserializer.Deserialize<List<AchievementYML.AchievementData>>(ServerAchievements.Value);
         
@@ -84,7 +84,7 @@ public static class ServerSyncedData
     private static void OnServerIgnoreListChanged()
     {
         if (ServerIgnoreList.Value.IsNullOrWhiteSpace()) return;
-        AlmanacPlugin.AlmanacLogger.LogDebug("Client: Received new server ignore list, updating");
+        AlmanacPlugin.AlmanacLogger.LogDebug("Client: Received server ignore list");
         IDeserializer deserializer = new DeserializerBuilder().Build();
         List<string> data = deserializer.Deserialize<List<string>>(ServerIgnoreList.Value);
 

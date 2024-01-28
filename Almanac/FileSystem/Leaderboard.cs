@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using Almanac.Data;
 using HarmonyLib;
-using ServerSync;
 using UnityEngine;
 using YamlDotNet.Serialization;
 
@@ -24,7 +22,6 @@ public static class Leaderboard
     }
     private static void SendLeaderboardToClients()
     {
-        AlmanacPlugin.AlmanacLogger.LogDebug("Server: Sending updated leaderboard to clients");
         ISerializer serializer = new SerializerBuilder().Build();
         string data = serializer.Serialize(LeaderboardData);
         SendToClients(data);
@@ -38,6 +35,7 @@ public static class Leaderboard
 
     public static void SendToClients(string data)
     {
+        AlmanacPlugin.AlmanacLogger.LogDebug("Server: Sending updated leaderboard to clients");
         ZPackage zPackage = new ZPackage();
         zPackage.Write(data);
         foreach (ZNetPeer peer in ZNet.instance.m_peers)
@@ -76,7 +74,7 @@ public static class Leaderboard
 
     public static void RPC_Leaderboard_Client(ZRpc rpc, ZPackage pkg)
     {
-        AlmanacPlugin.AlmanacLogger.LogDebug("Client: Received leaderboard data, updating");
+        AlmanacPlugin.AlmanacLogger.LogDebug("Client: Received leaderboard data");
         string data = pkg.ReadString();
         IDeserializer deserializer = new DeserializerBuilder().Build();
         Dictionary<string, PlayerData> list = deserializer.Deserialize<Dictionary<string, PlayerData>>(data);
@@ -85,7 +83,8 @@ public static class Leaderboard
     
     private static void ServerLeaderboardCoroutine()
     {
-        AlmanacPlugin.AlmanacLogger.LogDebug("Server: Initialize receive leaderboard data");
+        AlmanacPlugin.AlmanacLogger.LogDebug("Server: Starting coroutine to send leaderboard data to clients");
+
         InitServerPlayerListData();
         AlmanacPlugin._plugin.StartCoroutine(UpdateSendLeaderboardToClients());
     }
@@ -119,10 +118,11 @@ public static class Leaderboard
     
     private static void InitServerPlayerListData()
     {
+        AlmanacPlugin.AlmanacLogger.LogDebug("Server: Initialize leaderboard");
         AlmanacPaths.CreateFolderDirectories();
         if (!File.Exists(AlmanacPaths.ServerPlayerDataFilePath))
         {
-            AlmanacPlugin.AlmanacLogger.LogDebug("Server: No server player file found, generating");
+            AlmanacPlugin.AlmanacLogger.LogDebug("Server: No leaderboard file found, generating");
             SaveLeaderboardToFile();
         }
         

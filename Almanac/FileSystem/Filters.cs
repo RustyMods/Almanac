@@ -31,7 +31,10 @@ public static class Filters
         "NPC_ArmorIronChest_Worn",
         "NPC_ArmorIronLegs_Worn",
         "TrainingDummy",
-        "VegvisirShard_Bonemass"
+        "VegvisirShard_Bonemass",
+        "CapeOdin",
+        "HelmetOdin",
+        "TankardOdin"
     };
     public static void InitFilters()
     {

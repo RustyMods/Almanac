@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Almanac.Data;
 using Almanac.FileSystem;
+using Almanac.UI;
 using Almanac.Utilities;
 using BepInEx;
 using UnityEngine;
@@ -73,9 +74,10 @@ public static class AchievementManager
         AchievementList.Clear();
 
         AchievementList = list;
-        
-        if (Player.m_localPlayer) CheckCompletedAchievements();
 
+        UpdateAlmanac.CheckedCompletion = false;
+        
+        // if (Player.m_localPlayer) CheckCompletedAchievements();
         
         if (checkBool) AchievementsRan = true;
     }

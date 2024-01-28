@@ -1418,11 +1418,11 @@ public static class AchievementYML
                 unique_name = "dragon_1",
                 display_name = "Dragon",
                 sprite_name = "TrophyDragonQueen",
-                description = "Kill Moder over <color=orange>100</color> times",
+                description = "Kill Moder over <color=orange>10</color> times",
                 lore =
                     "The cries of the dragon queen brings relief to all who lived under her reign.",
                 defeat_key = "defeated_dragon",
-                goal = 100,
+                goal = 10,
                 achievement_type = AchievementTypes.AchievementType.CustomKills,
                 start_effects = new List<string>() { "sfx_coins_placed" },
                 damage_modifiers = new List<HitData.DamageModPair>()

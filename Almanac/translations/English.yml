@@ -694,3 +694,7 @@ almanac_fish_jump_frequency: "Jump Frequency"
 almanac_fish_fast: "Fast Fish"
 almanac_fish_bait_name: "Bait Name"
 almanac_fish_bait_chance: "Bait Hook Chance"
+
+almanac_block_radius: "Block Radius"
+almanac_connect_radius: "Connection Radius"
+almanac_ammo_non_equip: "Non-Equip Ammo"

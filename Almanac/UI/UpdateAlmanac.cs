@@ -380,6 +380,10 @@ public static class UpdateAlmanac
             
             transform.Find("name").GetComponent<TMP_Text>().text = isCompleted ? achievement.m_displayName : UnknownText;
             transform.Find("description").GetComponent<TMP_Text>().text = achievement.m_desc;
+            if (achievement.m_statusEffect != null)
+            {
+                transform.Find("$part_outline").gameObject.SetActive(Player.m_localPlayer.GetSEMan().HaveStatusEffect(achievement.m_statusEffect.name));
+            }
 
             Button button = icon.gameObject.AddComponent<Button>();
             button.interactable = true;
@@ -648,7 +652,7 @@ public static class UpdateAlmanac
     }
     private static void SetAchievementPanel(List<ItemDrop> list)
     {
-        int count = list.FindAll(food => Player.m_localPlayer.IsKnownMaterial(food.m_itemData.m_shared.m_name)).Count;
+        int count = list.FindAll(x => Player.m_localPlayer.IsKnownMaterial(x.m_itemData.m_shared.m_name)).Count;
         int total = list.Count;
         CreateAlmanac.AchievementPanelDesc.text = FormatProgressText(count, total);
         FindAchievement().m_isCompleted = count >= total;
@@ -661,7 +665,7 @@ public static class UpdateAlmanac
         FindAchievement().m_isCompleted = count >= SelectedAchievement.m_goal;
         SelectedAchievement.m_isCompleted = count >= SelectedAchievement.m_goal;
     }
-    private static string FormatProgressText(int value, int goal) => $"<color=orange>{value}</color> / <color=orange>{goal}</color> (<color=orange>{((value / goal) * 100):0.0)}</color>%)";
+    private static string FormatProgressText(float value, float goal) => $"<color=orange>{value}</color> / <color=orange>{goal}</color> (<color=orange>{((value / goal) * 100):0.0}</color>%)";
     private static Achievement FindAchievement() => AchievementList.Find(item => item.m_uniqueName == SelectedAchievement.m_uniqueName);
     private static void UpdateItemPanel()
     {
@@ -837,10 +841,10 @@ public static class UpdateAlmanac
             Dictionary<string, string> wearData = new()
             {
                 {"$almanac_wear_tear_title", "title"},
-                {"$almanac_no_roof_wear", ConvertBoolean(wearNTear.m_noRoofWear).ToString()},
-                {"$almanac_no_support_wear", ConvertBoolean(wearNTear.m_noSupportWear).ToString()},
+                {"$almanac_no_roof_wear", ConvertBoolean(wearNTear.m_noRoofWear)},
+                {"$almanac_no_support_wear", ConvertBoolean(wearNTear.m_noSupportWear)},
                 {"$almanac_material_type", SplitCamelCase(wearNTear.m_materialType.ToString())},
-                {"$almanac_piece_supports", ConvertBoolean(wearNTear.m_supports).ToString()},
+                {"$almanac_piece_supports", ConvertBoolean(wearNTear.m_supports)},
                 {"$almanac_support_value", wearNTear.m_support.ToString("0.0")},
                 {"$almanac_piece_health", wearNTear.m_health.ToString(CultureInfo.CurrentCulture)},
                 {"$almanac_blunt", ConvertDamageModifiers(wearNTear.m_damages.m_blunt)},
@@ -966,13 +970,21 @@ public static class UpdateAlmanac
             if (cookingStation.m_conversion.Count > 0)
             {
                 cookingData.Add("$almanac_conversion_title", "title");
-                foreach (var item in cookingStation.m_conversion)
+                for (int index = 0; index < cookingStation.m_conversion.Count; index++)
                 {
+                    CookingStation.ItemConversion item = cookingStation.m_conversion[index];
                     string from = Localization.instance.Localize(item.m_from.m_itemData.m_shared.m_name);
                     string to = Localization.instance.Localize(item.m_to.m_itemData.m_shared.m_name);
                     string cookTime = " <color=orange>(</color>" + item.m_cookTime + "<color=orange>s)</color>";
-                    
-                    cookingData.Add(from, to + cookTime);
+
+                    if (cookingData.ContainsKey(from))
+                    {
+                        cookingData.Add(from + index, to + cookTime);
+                    }
+                    else
+                    {
+                        cookingData.Add(from, to + cookTime);
+                    }
                 }
             }
             
@@ -1688,15 +1700,15 @@ public static class UpdateAlmanac
 
                 float healthRegen = new float();
                 ConsumeEffect.ModifyHealthRegen(ref healthRegen);
-                if (healthRegen > 0) ConsumeData.Add("$almanac_consume_health_regen", healthRegen.ToString(CultureInfo.CurrentCulture));
+                if (healthRegen > 0) ConsumeData.Add("$almanac_consume_health_regen", (healthRegen * 100).ToString("0.0") + "<color=orange>%</color>");
 
                 float staminaRegen = new float();
                 ConsumeEffect.ModifyStaminaRegen(ref staminaRegen);
-                if (staminaRegen > 0) ConsumeData.Add("$almanac_consume_stamina_regen", (staminaRegen * 100).ToString(CultureInfo.CurrentCulture) + "%");
+                if (staminaRegen > 0) ConsumeData.Add("$almanac_consume_stamina_regen", (staminaRegen * 100).ToString("0.0") + "<color=orange>%</color>");
 
                 float eitrRegen = new();
                 ConsumeEffect.ModifyEitrRegen(ref eitrRegen);
-                if (eitrRegen > 0) ConsumeData.Add("$almanac_consume_eitr_regen", eitrRegen.ToString(CultureInfo.CurrentCulture));
+                if (eitrRegen > 0) ConsumeData.Add("$almanac_consume_eitr_regen", (eitrRegen * 100).ToString("0.0") + "<color=orange>%</color>");
 
                 HitData.DamageModifiers modifiers = new();
                 ConsumeEffect.ModifyDamageMods(ref modifiers);

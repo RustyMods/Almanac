@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Almanac.Achievements;
 using Almanac.Data;
 using HarmonyLib;
 using UnityEngine;
@@ -157,6 +158,8 @@ public static class Leaderboard
             ISerializer serializer = new SerializerBuilder().Build();
             string data = serializer.Serialize(PlayerStats.GetServerPlayerData());
             SendToServer(data);
+
+            Player.m_localPlayer.m_customData[AlmanacEffectManager.AchievementKey] = serializer.Serialize(AlmanacEffectManager.SavedAchievementEffectNames);
         }
     }
 

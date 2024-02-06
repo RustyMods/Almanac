@@ -40,6 +40,5 @@ public static class TerminalCommands
                     };
                 }
             });
-        
     }
 }

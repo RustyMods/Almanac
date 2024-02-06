@@ -12,6 +12,8 @@ namespace Almanac.Achievements;
 public static class AlmanacEffectManager
 {
     public static readonly List<StatusEffect> ActiveAchievementEffects = new();
+    public static List<string> SavedAchievementEffectNames = new();
+    public static readonly string AchievementKey = "AlmanacAchievements";
 
     [HarmonyPatch(typeof(TextsDialog), nameof(TextsDialog.AddActiveEffects))]
     static class CompendiumAddActiveEffectsPatch
@@ -94,6 +96,8 @@ public static class AlmanacEffectManager
 
             string appendedTooltip = effectTooltip ?? "";
 
+            List<HitData.DamageModPair> ValidatedDamageMods = new();
+
             foreach (HitData.DamageModPair mod in damageMods)
             {
                 if (mod.m_modifier == HitData.DamageModifier.Normal) continue;
@@ -103,7 +107,11 @@ public static class AlmanacEffectManager
                 
                 string tooltip = $"\n<color=orange>{formattedModifier}</color> VS <color=orange>{formattedModType}</color>";
                 appendedTooltip += tooltip;
+                
+                ValidatedDamageMods.Add(mod);
             }
+
+            damageMods = ValidatedDamageMods;
 
             foreach (KeyValuePair<Modifier, float> mod in Modifiers)
             {

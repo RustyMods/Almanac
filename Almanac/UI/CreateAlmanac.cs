@@ -6,7 +6,9 @@ using Almanac.Utilities;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
+using UnityEngine.PlayerLoop;
 using UnityEngine.UI;
+using YamlDotNet.Serialization;
 using static Almanac.Utilities.Utility;
 using Object = UnityEngine.Object;
 
@@ -32,7 +34,6 @@ public static class CreateAlmanac
 
     private static Image PanelImage = null!;
     private static Image AchievementPanelImage = null!;
-
     public static void OnPanelTransparencyConfigChange(object sender, EventArgs e)
     {
         PanelImage.color = AlmanacPlugin._PanelImage.Value is AlmanacPlugin.Toggle.On ? Color.clear : Color.white;
@@ -48,7 +49,6 @@ public static class CreateAlmanac
     }
     public static bool IsPanelActive() => AlmanacGUI && AlmanacGUI.activeSelf;
     public static bool IsAchievementActive() => AchievementGUI && AchievementGUI.activeSelf;
-
     private static void CreateAlmanacPanel(InventoryGui GUI)
     {
         if (AlmanacGUI != null) return; 
@@ -101,7 +101,6 @@ public static class CreateAlmanac
         PanelButton.fontSizeMax = 20;
         PanelButton.text = Localization.instance.Localize("$almanac_stats_button");
     }
-
     private static void ToggleButtonOptions()
     {
         if (UpdateAlmanac.isMetricsActive)
@@ -225,11 +224,18 @@ public static class CreateAlmanac
         }
         
         SEMan StatusEffectMan = Player.m_localPlayer.GetSEMan();
+        ISerializer serializer = new SerializerBuilder().Build();
         if (StatusEffectMan.HaveStatusEffect(UpdateAlmanac.SelectedAchievement.m_statusEffect.name))
         {
-            StatusEffectMan.RemoveStatusEffect(UpdateAlmanac.SelectedAchievement.m_statusEffect, true);
+            if (!StatusEffectMan.RemoveStatusEffect(UpdateAlmanac.SelectedAchievement.m_statusEffect, true)) return;    
             AlmanacEffectManager.ActiveAchievementEffects.Remove(UpdateAlmanac.SelectedAchievement.m_statusEffect);
+            AlmanacEffectManager.SavedAchievementEffectNames.Remove(UpdateAlmanac.SelectedAchievement.m_statusEffect.name);
+            Player.m_localPlayer.m_customData[AlmanacEffectManager.AchievementKey] = serializer.Serialize(AlmanacEffectManager.SavedAchievementEffectNames);
             Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"$almanac_removed_effect {UpdateAlmanac.SelectedAchievement.m_statusEffect.m_name}");
+            if (InventoryGui.instance)
+            {
+                UpdateAlmanac.UpdateList(InventoryGui.instance);
+            }
             return;
         };
         int count = StatusEffectMan.GetStatusEffects().FindAll(effect => effect is AlmanacEffectManager.AchievementEffect).Count;
@@ -240,6 +246,13 @@ public static class CreateAlmanac
         }
         StatusEffectMan.AddStatusEffect(UpdateAlmanac.SelectedAchievement.m_statusEffect);
         AlmanacEffectManager.ActiveAchievementEffects.Add(UpdateAlmanac.SelectedAchievement.m_statusEffect);
+        if (AlmanacEffectManager.SavedAchievementEffectNames.Count > 3) return;
+        AlmanacEffectManager.SavedAchievementEffectNames.Add(UpdateAlmanac.SelectedAchievement.m_statusEffect.name);
+        Player.m_localPlayer.m_customData[AlmanacEffectManager.AchievementKey] = serializer.Serialize(AlmanacEffectManager.SavedAchievementEffectNames);
+        if (InventoryGui.instance)
+        {
+            UpdateAlmanac.UpdateList(InventoryGui.instance);
+        }
     }
 
     private static void EditPanelItem()
@@ -423,6 +436,22 @@ public static class CreateAlmanac
         SearchField.onValueChanged.AddListener(FilterList);
     }
 
+    private static void EditTrophyElement(InventoryGui instance)
+    {
+        GameObject ElementOutline = new GameObject("$part_outline");
+        RectTransform rect = ElementOutline.AddComponent<RectTransform>();
+        rect.SetParent(instance.m_trophieElementPrefab.transform);
+        rect.anchoredPosition = new Vector2(0f, 50f);
+        rect.sizeDelta = new Vector2(72f, 72f);
+        
+        rect.SetAsFirstSibling();
+
+        Image image = ElementOutline.AddComponent<Image>();
+        image.color = AlmanacPlugin._OutlineColor.Value;
+        
+        ElementOutline.SetActive(false);
+    }
+
     private static void FilterList(string value) => UpdateAlmanac.UpdateList(InventoryGui.m_instance, value);
 
     [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.Awake))]
@@ -442,6 +471,7 @@ public static class CreateAlmanac
             EditInventoryGUI(__instance);
             AddSearchBar();
             EditLeaderboardItem();
+            EditTrophyElement(__instance);
             if (CreaturePanelElement == null) CreaturePanelElement = CreateCreaturePanelElement();
             CreatureDataCollector.GetSortedCreatureData();
             CreatureLists.InitCreatureLists();

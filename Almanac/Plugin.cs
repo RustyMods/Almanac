@@ -24,7 +24,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.0.6";
+        internal const string ModVersion = "3.1.1";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         private static string ConfigFileName = ModGUID + ".cfg";
@@ -139,6 +139,8 @@ namespace Almanac
         public static ConfigEntry<Toggle> _ShowAllData = null!;
         public static ConfigEntry<DataPath> _RootPath = null!;
         public static ConfigEntry<Toggle> _PanelImage = null!;
+
+        public static ConfigEntry<Color> _OutlineColor = null!;
         public enum DataPath { LocalLow, ConfigPath }
         private void InitConfigs()
         {
@@ -176,6 +178,8 @@ namespace Almanac
             
             _RootPath = config("1 - General", "5 - Player Data", DataPath.ConfigPath,
                 "Set the root path where to save player data");
+            
+            _OutlineColor = config("1 - General", "6 - Outline Color", Color.yellow, "Set the color of the outline for selected items");
         }
         #endregion
 

@@ -2336,11 +2336,11 @@ public static class AchievementYML
                 unique_name = "seeker_queen_1",
                 display_name = "Queen",
                 sprite_name = "TrophySeekerQueen",
-                description = "Kill the Seeker Queen over <color=orange>100</color> times",
+                description = "Kill the Seeker Queen over <color=orange>10</color> times",
                 lore =
                     "In the depths of the chambers of the mistland realms, the seeker queen lies and waits for her next prey.",
                 defeat_key = "defeated_queen",
-                goal = 100,
+                goal = 10,
                 achievement_type = AchievementTypes.AchievementType.CustomKills,
                 start_effects = new List<string>() { "sfx_coins_placed" },
                 damage_modifiers = new List<HitData.DamageModPair>()

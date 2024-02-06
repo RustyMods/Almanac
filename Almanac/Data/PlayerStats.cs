@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Almanac.Achievements;
 using Almanac.FileSystem;
 using Almanac.Utilities;
 using BepInEx;
@@ -82,10 +83,18 @@ public static class PlayerStats
     private static void WriteCurrentCustomData()
     {
         if (!Player.m_localPlayer) return;
-        AlmanacPaths.CreateFolderDirectories();
-        ISerializer serializer = new SerializerBuilder().Build();
-        string data = serializer.Serialize(LocalPlayerData);
-        File.WriteAllText(GetCustomDataFilePath(), data);
+        try
+        {
+            AlmanacPaths.CreateFolderDirectories();
+            ISerializer serializer = new SerializerBuilder().Build();
+            Player.m_localPlayer.m_customData[AlmanacEffectManager.AchievementKey] = serializer.Serialize(AlmanacEffectManager.SavedAchievementEffectNames);
+            string data = serializer.Serialize(LocalPlayerData);
+            File.WriteAllText(GetCustomDataFilePath(), data);
+        }
+        catch
+        {
+            AlmanacPlugin.AlmanacLogger.LogDebug("Failed to save player data");
+        }
     }
 
     private static void UpdatePlayerDeaths(Player instance)
@@ -99,7 +108,8 @@ public static class PlayerStats
         if (!killer) return;
 
         string key = killer.m_defeatSetGlobalKey;
-
+        if (!LocalPlayerData.Player_Kill_Deaths.ContainsKey(key)) return;
+        
         ++LocalPlayerData.Player_Kill_Deaths[key].deaths;
     }
 
@@ -115,7 +125,8 @@ public static class PlayerStats
         if (killer.GetOwner() != Player.m_localPlayer.GetOwner()) return;
             
         string key = instance.m_defeatSetGlobalKey;
-
+        if (!LocalPlayerData.Player_Kill_Deaths.ContainsKey(key)) return;
+        
         ++LocalPlayerData.Player_Kill_Deaths[key].kills;
     }
     
@@ -172,6 +183,8 @@ public static class PlayerStats
         {
             if (!__instance) return;
             UpdatePlayerDeaths(__instance);
+            ISerializer serializer = new SerializerBuilder().Build();
+            Player.m_localPlayer.m_customData[AlmanacEffectManager.AchievementKey] = serializer.Serialize(AlmanacEffectManager.SavedAchievementEffectNames);
         }
     }
 

@@ -18,6 +18,8 @@ public static class AchievementManager
 {
     public static List<Achievement> AchievementList = new();
     public static readonly List<AchievementYML.AchievementData> AchievementData = new();
+    public static bool AchievementsRan = false;
+
     public class Achievement
     {
         public EffectData m_effectData = null!;
@@ -46,8 +48,6 @@ public static class AchievementManager
             InitAchievements(LoadAchievementData(AchievementData), false);
         }
     }
-
-    public static bool AchievementsRan = false;
     public static void InitAchievements(List<Achievement> list, bool checkBool = true)
     {
         if (checkBool && AchievementsRan) return;
@@ -81,7 +81,6 @@ public static class AchievementManager
         
         if (checkBool) AchievementsRan = true;
     }
-
     public static void CheckCompletedAchievements()
     {
         AlmanacPlugin.AlmanacLogger.LogDebug("Client: Setting achievement completions");
@@ -90,7 +89,6 @@ public static class AchievementManager
             SetCompletedAchievement(achievement);
         }
     }
-
     private static void SetCompletedAchievement(Achievement data)
     {
         switch (data.m_type)
@@ -292,7 +290,6 @@ public static class AchievementManager
                 break;
         }
     }
-
     private static void SetCompleted(Achievement achievement, List<CreatureDataCollector.CreatureData> list)
     {
         ZoneSystem? Zone = ZoneSystem.instance;
@@ -305,14 +302,12 @@ public static class AchievementManager
     {
         achievement.m_isCompleted = PlayerStats.GetPlayerStat(type) > achievement.m_goal;
     }
-
     private static void SetCompleted(Achievement achievement, List<ItemDrop> list)
     {
         achievement.m_isCompleted =
             list.FindAll(item => Player.m_localPlayer.IsKnownMaterial(item.m_itemData.m_shared.m_name)).Count >=
             list.Count;
     }
-
     public static void ReadAchievements()
     {
         AchievementData.Clear();
@@ -334,7 +329,6 @@ public static class AchievementManager
             }
         }
     }
-
     public static List<Achievement> LoadAchievementData(List<AchievementYML.AchievementData> data)
     {
         List<Achievement> output = new();
@@ -365,7 +359,6 @@ public static class AchievementManager
 
         return output;
     }
-
     private static Achievement CreateAchievement(
         string UniqueName, 
         string DisplayName,
@@ -437,5 +430,4 @@ public static class AchievementManager
         achievement.m_statusEffect = achievement.m_effectData.Init();
         return achievement;
     }
-    
 }

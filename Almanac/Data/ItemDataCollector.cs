@@ -44,7 +44,7 @@ public static class ItemDataCollector
         
         if (AlmanacPlugin.KrumpacLoaded)
         {
-            List<ItemDrop> KrumpFishes = GetConsumables().FindAll(x =>
+            List<ItemDrop> KrumpFishes = GetConsumables(true).FindAll(x =>
                 x.name.StartsWith("Krump_Mat_") 
                 && !x.name.EndsWith("Dried") 
                 && !x.name.Contains("Krump_Mat_Oil") 
@@ -105,8 +105,9 @@ public static class ItemDataCollector
             }
         }
     }
-    public static List<ItemDrop> GetConsumables()
+    public static List<ItemDrop> GetConsumables(bool forFishes = false)
     {
+        if (forFishes) return ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Consumable, "");
         if (CachedConsumables.Count > 0) return CachedConsumables;
         List<ItemDrop> consumables = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Consumable, "");
         if (AlmanacPlugin.KrumpacLoaded) consumables.RemoveAll(x => x.name.EndsWith("_Raw"));

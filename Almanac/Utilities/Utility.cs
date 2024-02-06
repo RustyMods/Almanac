@@ -14,7 +14,18 @@ public static class Utility
     public static string ReplaceSpaceWithNewLine(string input) => input.Replace(' ', '\n');
     public static void MergeDictionaries(Dictionary<string, string> destination, Dictionary<string, string> source)
     {
-        foreach (KeyValuePair<string, string> kvp in source) destination.Add(kvp.Key, kvp.Value);
+        foreach (KeyValuePair<string, string> kvp in source)
+        {
+            if (destination.ContainsKey(kvp.Key))
+            {
+                if (destination.ContainsKey(kvp.Key + 1)) continue;
+                destination.Add(kvp.Key + 1, kvp.Value);
+            }
+            else
+            {
+                destination.Add(kvp.Key, kvp.Value);
+            }
+        }
     }
     public static string RemoveNumbers(string input) => Regex.Replace(input, @"\d", "");
     public static string SplitCamelCase(string input)

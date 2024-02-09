@@ -13,16 +13,15 @@ namespace Almanac.Data;
 
 public static class PlayerStats
 {
-    private static readonly string AlmanacStatsKey = "AlmanacStats";
+    public static readonly string AlmanacStatsKey = "AlmanacStats";
     private static Dictionary<PlayerStatType, float> PlayerProfileStats = new();
+    public static CustomData LocalPlayerData = new();
+
     public static float GetPlayerStat(PlayerStatType type)
     {
         if (!PlayerProfileStats.TryGetValue(type, out float value)) return 0;
-
         return value;
     }
-    
-    public static CustomData LocalPlayerData = new();
     private static string GetCustomDataFilePath()
     {
         string PrefixPath = AlmanacPaths.PlayerDataFolderPath + Path.DirectorySeparatorChar;

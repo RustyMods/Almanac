@@ -1,14 +1,11 @@
 ﻿using System.IO;
-using Almanac.Data;
 using BepInEx;
-using UnityEngine;
 
 namespace Almanac.FileSystem;
 
 public static class AlmanacPaths
 {
     private static readonly string LocalPath = Utils.GetSaveDataPath(FileHelpers.FileSource.Local) + Path.DirectorySeparatorChar + "AlmanacData";
-    private static readonly string ValheimFolder = Paths.GameRootPath + Path.DirectorySeparatorChar + "AlmanacData";
     private static readonly string FolderPath = Paths.ConfigPath + Path.DirectorySeparatorChar + "Almanac";
     public static readonly string CustomDataFileName = "_Data.yml";
     public static readonly string AchievementFolderPath = FolderPath + Path.DirectorySeparatorChar + "AchievementData";
@@ -21,6 +18,8 @@ public static class AlmanacPaths
     public static readonly string ServerPlayerDataFolderPath = (AlmanacPlugin._RootPath.Value is AlmanacPlugin.DataPath.LocalLow ? LocalPath : FolderPath) + Path.DirectorySeparatorChar + "Players";
     public static readonly string ServerPlayerDataFilePath = ServerPlayerDataFolderPath + Path.DirectorySeparatorChar + "PlayerListData.yml";
 
+    public static readonly string CustomCreatureGroupFolder =
+        CreatureFolderPath + Path.DirectorySeparatorChar + "Custom";
     public static void CreateFolderDirectories()
     {
         if (!Directory.Exists(FolderPath)) Directory.CreateDirectory(FolderPath);
@@ -29,5 +28,6 @@ public static class AlmanacPaths
         if (!Directory.Exists(CreatureFolderPath)) Directory.CreateDirectory(CreatureFolderPath);
         if (!Directory.Exists(PlayerDataFolderPath)) Directory.CreateDirectory(PlayerDataFolderPath);
         if (!Directory.Exists(ServerPlayerDataFolderPath)) Directory.CreateDirectory(ServerPlayerDataFolderPath);
+        if (!Directory.Exists(CustomCreatureGroupFolder)) Directory.CreateDirectory(CustomCreatureGroupFolder);
     }
 }

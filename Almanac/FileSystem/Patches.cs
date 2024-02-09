@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using Almanac.Achievements;
 using Almanac.Data;
-using Almanac.UI;
 using HarmonyLib;
 using YamlDotNet.Serialization;
 

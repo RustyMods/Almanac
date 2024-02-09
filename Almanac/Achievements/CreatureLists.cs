@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Almanac.Data;
 using Almanac.FileSystem;
+using UnityEngine;
 
 namespace Almanac.Achievements;
 
@@ -30,9 +31,21 @@ public static class CreatureLists
     private static readonly List<string> ocean = new()
         { "Serpent" };
 
+    private static readonly List<string> CustomBrutes = new()
+        { "Greydwarf_Elite", "GoblinBrute", "SeekerBrute" };
+
+    public static Dictionary<string, List<CreatureDataCollector.CreatureData>> CustomCreatureGroups = new();
+
     public static Dictionary<Heightmap.Biome, List<CreatureDataCollector.CreatureData>> BiomeCreatureMap = new();
 
     public static List<CreatureDataCollector.CreatureData> GetBiomeCreatures(Heightmap.Biome land) => BiomeCreatureMap[land];
+
+    public static List<CreatureDataCollector.CreatureData> GetCustomCreatureGroup(string key)
+    {
+        if (!CustomCreatureGroups.TryGetValue(key, out List<CreatureDataCollector.CreatureData> data))
+            return new List<CreatureDataCollector.CreatureData>();
+        return data;
+    }
 
     public static void InitCreatureLists()
     {
@@ -79,10 +92,24 @@ public static class CreatureLists
                 List<string> data = File.ReadAllLines(filePath).ToList();
                 BiomeCreatureMap[land] = ValidatedPrefabs(data);
             }
-            catch (Exception)
+            catch
             {
                 AlmanacPlugin.AlmanacLogger.LogDebug("Failed to read creature list file: " + filePath);
             }
+        }
+
+        string CustomBruteFilePath = AlmanacPaths.CustomCreatureGroupFolder + Path.DirectorySeparatorChar + "Custom_Brutes.yml";
+        if (!File.Exists(CustomBruteFilePath))
+        {
+            File.WriteAllLines(CustomBruteFilePath, CustomBrutes);
+        }
+        string[] CustomCreaturePaths = Directory.GetFiles(AlmanacPaths.CustomCreatureGroupFolder, "*.yml");
+        foreach (string path in CustomCreaturePaths)
+        {
+            string fileName = path.Replace(AlmanacPaths.CustomCreatureGroupFolder, "").Replace("\\", "").Replace(".yml", "");
+            List<string> data = File.ReadAllLines(path).ToList();
+            List<CreatureDataCollector.CreatureData> CreatureData = ValidatedPrefabs(data);
+            CustomCreatureGroups[fileName] = CreatureData;
         }
     }
 

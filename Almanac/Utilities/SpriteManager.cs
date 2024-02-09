@@ -34,7 +34,7 @@ public static class SpriteManager
 
     public static bool GetSprite(string name, out Sprite? sprite)
     {
-        sprite = (name) switch
+        sprite = name switch
         {
             "skull" => boneSkullIcon,
             "sword_blue" => swordBasicBlueIcon,

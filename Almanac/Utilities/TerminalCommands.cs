@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text;
 using Almanac.Data;
 using static Almanac.AlmanacPlugin;
 
@@ -26,18 +27,35 @@ public static class TerminalCommands
             {
                 List<string> globalKeys = ZoneSystem.instance.GetGlobalKeys();
                 AlmanacLogger.LogInfo("Global keys: ");
-                foreach (var key in globalKeys)
+                foreach (string key in globalKeys)
                 {
                     AlmanacLogger.LogInfo(key);
                 }
                 AlmanacLogger.LogInfo("Private Keys: ");
-                foreach (var key in CreatureDataCollector.TempDefeatKeys)
+                foreach (string key in CreatureDataCollector.TempDefeatKeys)
                 {
                     if (ZoneSystem.instance.GetGlobalKey(key))
                     {
                         AlmanacLogger.LogInfo(key);
                     };
                 }
+            });
+
+        Terminal.ConsoleCommand AlmanacDataSize = new Terminal.ConsoleCommand("almanac_size",
+            "Prints out the data size of player custom data",
+            args =>
+            {
+                if (!Player.m_localPlayer) return;
+                if (!Player.m_localPlayer.m_customData.TryGetValue(PlayerStats.AlmanacStatsKey, out string data))
+                {
+                    AlmanacLogger.LogInfo("No Almanac custom player data found");
+                    return;
+                }
+
+                int size = Encoding.UTF8.GetByteCount(data);
+                double kilobytes = size / 1024.0;
+                
+                AlmanacLogger.LogInfo("Almanac Custom Data size: " + kilobytes + " kilobytes");
             });
     }
 }

@@ -6,7 +6,6 @@ namespace Almanac.FileSystem;
 
 public static class Filters
 {
-
     public static List<string> FilterList = new();
     private static readonly List<string> defaultList = new()
     {

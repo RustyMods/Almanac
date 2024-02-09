@@ -635,6 +635,9 @@ public static class UpdateAlmanac
             case AchievementTypes.AchievementType.OceanCreatures:
                 SetAchievementPanel(CreatureLists.GetBiomeCreatures(Heightmap.Biome.Ocean));
                 break;
+            case AchievementTypes.AchievementType.CustomCreatureGroups:
+                SetAchievementPanel(CreatureLists.GetCustomCreatureGroup(SelectedAchievement.m_CustomGroupKey));
+                break;
             default:
                 CreateAlmanac.AchievementPanelDesc.text = SelectedAchievement.m_desc;
                 break;

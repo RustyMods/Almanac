@@ -27,6 +27,7 @@ public static class AchievementManager
         public string m_displayName = null!;
         public int m_goal;
         public AchievementTypes.AchievementType m_type;
+        public string m_CustomGroupKey = "";
         public string? m_desc;
         public Sprite? m_sprite;
         public string? m_spriteName;
@@ -285,6 +286,9 @@ public static class AchievementManager
             case AchievementTypes.AchievementType.OceanCreatures:
                 SetCompleted(data, CreatureLists.GetBiomeCreatures(Heightmap.Biome.Ocean));
                 break;
+            case AchievementTypes.AchievementType.CustomCreatureGroups:
+                SetCompleted(data, CreatureLists.GetCustomCreatureGroup(data.m_CustomGroupKey));
+                break;
             default:
                 data.m_isCompleted = false;
                 break;
@@ -348,6 +352,7 @@ public static class AchievementManager
                 DefeatKey: YmlData.defeat_key,
                 Goal: YmlData.goal,
                 Type: YmlData.achievement_type,
+                CustomGroupKey: YmlData.CustomGroupKey,
                 Duration: YmlData.duration,
                 StartEffects: YmlData.start_effects.ToArray(),
                 StopEffects: YmlData.stop_effects.ToArray(),
@@ -372,6 +377,7 @@ public static class AchievementManager
         int Goal = 0,
         Sprite? Sprite = null,
         AchievementTypes.AchievementType Type = AchievementTypes.AchievementType.None,
+        string CustomGroupKey = "",
         int Duration = 0,
         string[]? StartEffects = null,
         string[]? StopEffects = null,
@@ -389,6 +395,7 @@ public static class AchievementManager
             m_goal = Goal,
             m_sprite = Sprite,
             m_type = Type,
+            m_CustomGroupKey = CustomGroupKey
         };
         achievement.m_effectData = new()
         {

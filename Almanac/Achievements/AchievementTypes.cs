@@ -66,6 +66,7 @@ public static class AchievementTypes
         TrapsArmed,
         CustomKills,
         RuneStones,
-        Recipes
+        Recipes,
+        CustomCreatureGroups
     }
 }

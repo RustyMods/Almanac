@@ -97,7 +97,8 @@ public static class ServerSyncedData
     #region Creature List
 
     private static readonly CustomSyncedValue<string> ServerCreatureList = new(AlmanacPlugin.ConfigSync, "CreatureList", "");
-    
+
+    private static readonly CustomSyncedValue<string> ServerCustomCreatureList = new(AlmanacPlugin.ConfigSync, "CustomCreatureList", "");
     public static void InitServerCreatureList()
     {
         if (AlmanacPlugin.WorkingAsType is AlmanacPlugin.WorkingAs.Client)
@@ -105,6 +106,7 @@ public static class ServerSyncedData
             AlmanacPlugin.AlmanacLogger.LogDebug("Client: Awaiting server creature list");
 
             ServerCreatureList.ValueChanged += OnServerCreatureListChanged;
+            ServerCustomCreatureList.ValueChanged += OnServerCustomCreatureListChanged;
         }
         else
         {
@@ -122,12 +124,22 @@ public static class ServerSyncedData
         );
     }
 
+    private static Dictionary<string, List<string>> FormatCustomCreatureListData()
+    {
+        return CreatureLists.CustomCreatureGroups.ToDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value.Select(creature => creature.name).ToList()
+            );
+    }
+
     public static void UpdateServerCreatureList()
     {
         ISerializer serializer = new SerializerBuilder().Build();
         string data = serializer.Serialize(FormatCreatureListData());
-        if (data.IsNullOrWhiteSpace()) return;
-        ServerCreatureList.Value = data;
+        if (!data.IsNullOrWhiteSpace()) ServerCreatureList.Value = data;
+
+        string customData = serializer.Serialize(FormatCustomCreatureListData());
+        if (!customData.IsNullOrWhiteSpace()) ServerCustomCreatureList.Value = customData;
     }
 
     private static void OnServerCreatureListChanged()
@@ -139,6 +151,18 @@ public static class ServerSyncedData
             Dictionary<Heightmap.Biome, List<string>>>(ServerCreatureList.Value);
 
         CreatureLists.BiomeCreatureMap = data.ToDictionary(
+            kvp => kvp.Key,
+            kvp => CreatureLists.ValidatedPrefabs(kvp.Value));
+    }
+
+    private static void OnServerCustomCreatureListChanged()
+    {
+        if (ServerCustomCreatureList.Value.IsNullOrWhiteSpace()) return;
+        AlmanacPlugin.AlmanacLogger.LogDebug("Client: Server Custom Creature List changed, reloading");
+        IDeserializer deserializer = new DeserializerBuilder().Build();
+        Dictionary<string, List<string>> data =
+            deserializer.Deserialize<Dictionary<string, List<string>>>(ServerCustomCreatureList.Value);
+        CreatureLists.CustomCreatureGroups = data.ToDictionary(
             kvp => kvp.Key,
             kvp => CreatureLists.ValidatedPrefabs(kvp.Value));
     }

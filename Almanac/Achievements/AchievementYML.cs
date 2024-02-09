@@ -22,6 +22,7 @@ public static class AchievementYML
         public string tooltip = "";
         public string defeat_key = "";
         public AchievementTypes.AchievementType achievement_type;
+        public string CustomGroupKey = "";
         public int goal = 0;
         public int duration = 0;
         public List<string> start_effects = new();
@@ -4034,6 +4035,64 @@ public static class AchievementYML
             },
         };
         output.AddRange(biomes);
+        #endregion
+        #region Custom Creature Groups
+
+        List<AchievementData> CustomCreatureGroups = new()
+        {
+            new AchievementData()
+            {
+                unique_name = "a_custom_brutes_1",
+                display_name = "Brutish",
+                sprite_name = "Obsidian",
+                description = "Kill <color=orange>all</color> brute creatures",
+                lore = "A true viking never shies away from brutes",
+                defeat_key = "",
+                goal = 0,
+                achievement_type = AchievementTypes.AchievementType.CustomCreatureGroups,
+                CustomGroupKey = "Custom_Brutes",
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1.05f },
+                    { Modifier.HealthRegen, 1f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1.05f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            }
+        };
+        output.AddRange(CustomCreatureGroups);
         #endregion
         return output;
     }

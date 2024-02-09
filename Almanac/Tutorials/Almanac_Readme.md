@@ -119,7 +119,7 @@ Goal is ignored, these compare to the total  values of the loaded lists:
 - DeepNorthCreatures
 - OceanCreatures
 - CustomCreatureGroups
-    To use custom creature groups, you will need to fill the entry: "CustomGroupKey"
+    To use custom creature groups, you will need to fill the entry: "custom_group_key"
     With the YML file name (ex: Custom_Brute.yml key is Custom_Brute)
 ```
 ```

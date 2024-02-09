@@ -14,7 +14,7 @@ public static class CreatureLists
         { "Neck", "Greyling", "Boar", "Deer", "Eikthyr" };
 
     private static readonly List<string> blackForest = new() 
-        { "Skeleton", "Greydwarf", "Greydwarf_Shaman", "Greydwarf_Elite", "Ghost", "Troll", "gdking" };
+        { "Skeleton", "Greydwarf", "Greydwarf_Shaman", "Greydwarf_Elite", "Ghost", "Troll", "gd_king" };
 
     private static readonly List<string> swamps = new()
         { "Skeleton_Poison", "Draugr", "Draugr_Ranged", "Draugr_Elite", "Blob", "BlobElite", "Wraith", "Abomination", "Surtling", "Bonemass" };

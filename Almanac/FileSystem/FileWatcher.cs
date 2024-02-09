@@ -60,19 +60,6 @@ public static class FileWatcher
 
         ServerPlayerDataListWatcher.Changed += OnServerPlayerDataListChange;
         ServerPlayerDataListWatcher.Created += OnServerPlayerDataListChange;
-
-        FileSystemWatcher CustomCreatureWatcher = new FileSystemWatcher(AlmanacPaths.CustomCreatureGroupFolder)
-        {
-            Filter = "*.yml",
-            EnableRaisingEvents = true,
-            IncludeSubdirectories = true,
-            SynchronizingObject = ThreadingHelper.SynchronizingObject,
-            NotifyFilter = NotifyFilters.LastWrite
-        };
-        
-        CustomCreatureWatcher.Changed += OnCreatureChange;
-        CustomCreatureWatcher.Deleted += OnCreatureChange;
-        CustomCreatureWatcher.Created += OnCreatureChange;
     }
 
     private static void OnServerPlayerDataListChange(object sender, FileSystemEventArgs e)

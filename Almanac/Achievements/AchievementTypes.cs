@@ -69,4 +69,9 @@ public static class AchievementTypes
         Recipes,
         CustomCreatureGroups
     }
+
+    public enum AchievementRewardType
+    {
+        StatusEffect, Item, Skill
+    }
 }

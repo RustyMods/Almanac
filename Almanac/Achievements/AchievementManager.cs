@@ -18,7 +18,8 @@ public static class AchievementManager
 {
     public static List<Achievement> AchievementList = new();
     public static readonly List<AchievementYML.AchievementData> AchievementData = new();
-    public static bool AchievementsRan = false;
+    public static bool AchievementsRan;
+    public static readonly string CollectedRewardKey = "AlmanacCollectedRewards";
 
     public class Achievement
     {
@@ -35,6 +36,12 @@ public static class AchievementManager
         public string m_defeatKey = "";
         public bool m_isCompleted;
         public StatusEffect? m_statusEffect;
+        public AchievementTypes.AchievementRewardType m_rewardType;
+        public ItemDrop.ItemData? m_item;
+        public int m_item_amount;
+        public Skills.SkillType m_skill;
+        public int m_skillAmount;
+        public bool m_collectedReward;
     }
     public static void OnAchievementConfigChanged(object sender, EventArgs e)
     {
@@ -77,10 +84,20 @@ public static class AchievementManager
         AchievementList = list;
 
         UpdateAlmanac.CheckedCompletion = false;
-        
-        // if (Player.m_localPlayer) CheckCompletedAchievements();
-        
         if (checkBool) AchievementsRan = true;
+    }
+
+    public static void CheckCollectedRewards(Player player)
+    {
+        if (!player.m_customData.TryGetValue(CollectedRewardKey, out string data)) return;
+        IDeserializer deserializer = new DeserializerBuilder().Build();
+        List<string> SavedCollectedData = deserializer.Deserialize<List<string>>(data);
+        foreach (string name in SavedCollectedData)
+        {
+            Achievement achievement = AchievementList.Find(x => x.m_uniqueName == name);
+            if (achievement == null) continue;
+            achievement.m_collectedReward = true;
+        }
     }
     public static void CheckCompletedAchievements()
     {
@@ -352,12 +369,17 @@ public static class AchievementManager
                 DefeatKey: YmlData.defeat_key,
                 Goal: YmlData.goal,
                 Type: YmlData.achievement_type,
-                CustomGroupKey: YmlData.CustomGroupKey,
+                CustomGroupKey: YmlData.custom_group_key,
                 Duration: YmlData.duration,
                 StartEffects: YmlData.start_effects.ToArray(),
                 StopEffects: YmlData.stop_effects.ToArray(),
                 DamageMods: YmlData.damage_modifiers.ToArray(),
-                Modifiers: YmlData.modifiers
+                Modifiers: YmlData.modifiers,
+                RewardType: YmlData.reward_type,
+                Item: YmlData.item,
+                ItemAmount: YmlData.item_amount,
+                Skill: YmlData.skill,
+                SkillAmount: YmlData.skill_amount
             );
             output.Add(achievement);
         }
@@ -378,6 +400,11 @@ public static class AchievementManager
         Sprite? Sprite = null,
         AchievementTypes.AchievementType Type = AchievementTypes.AchievementType.None,
         string CustomGroupKey = "",
+        AchievementTypes.AchievementRewardType RewardType = AchievementTypes.AchievementRewardType.StatusEffect,
+        string Item = "",
+        int ItemAmount = 0,
+        string Skill = "",
+        int SkillAmount = 0,
         int Duration = 0,
         string[]? StartEffects = null,
         string[]? StopEffects = null,
@@ -395,7 +422,10 @@ public static class AchievementManager
             m_goal = Goal,
             m_sprite = Sprite,
             m_type = Type,
-            m_CustomGroupKey = CustomGroupKey
+            m_CustomGroupKey = CustomGroupKey,
+            m_rewardType = RewardType,
+            m_skillAmount = SkillAmount,
+            m_item_amount = ItemAmount
         };
         achievement.m_effectData = new()
         {
@@ -410,7 +440,7 @@ public static class AchievementManager
             effectName = achievement.m_uniqueName,
             displayName = achievement.m_displayName,
             sprite = achievement.m_sprite
-        };;
+        };
 
         if (!achievement.m_spriteName.IsNullOrWhiteSpace())
         {
@@ -432,9 +462,60 @@ public static class AchievementManager
                     };
                 }
             }
-        };
+        }
+
+        if (!Item.IsNullOrWhiteSpace())
+        {
+            GameObject prefab = ObjectDB.instance.GetItemPrefab(Item);
+            if (prefab)
+            {
+                if (prefab.TryGetComponent(out ItemDrop component))
+                {
+                    achievement.m_item = component.m_itemData;
+                }
+            }
+        }
+
+        if (!Skill.IsNullOrWhiteSpace())
+        {
+            Skills.SkillType skill = GetSkill(Skill);
+            if (skill is Skills.SkillType.None)
+            {
+                skill = (Skills.SkillType)Math.Abs(Skill.GetStableHashCode());
+            }
+            achievement.m_skill = Enum.IsDefined(typeof(Skills.SkillType), skill) ? skill : Skills.SkillType.None;
+        }
         
         achievement.m_statusEffect = achievement.m_effectData.Init();
         return achievement;
+    }
+
+    private static Skills.SkillType GetSkill(string input)
+    {
+        return input.ToLower() switch
+        {
+            "swords" => Skills.SkillType.Swords,
+            "knives" => Skills.SkillType.Knives,
+            "clubs" => Skills.SkillType.Clubs,
+            "polearms" => Skills.SkillType.Polearms,
+            "spears" => Skills.SkillType.Spears,
+            "blocking" => Skills.SkillType.Blocking,
+            "axes" => Skills.SkillType.Axes,
+            "bows" => Skills.SkillType.Bows,
+            "elementalmagic" => Skills.SkillType.ElementalMagic,
+            "bloodmagic" => Skills.SkillType.BloodMagic,
+            "unarmed" => Skills.SkillType.Unarmed,
+            "pickaxes" => Skills.SkillType.Pickaxes,
+            "woodcutting" => Skills.SkillType.WoodCutting,
+            "crossbows" => Skills.SkillType.Crossbows,
+            "jump" => Skills.SkillType.Jump,
+            "sneak" => Skills.SkillType.Sneak,
+            "run" => Skills.SkillType.Run,
+            "swim" => Skills.SkillType.Swim,
+            "fishing" => Skills.SkillType.Fishing,
+            "ride" => Skills.SkillType.Ride,
+            "all" => Skills.SkillType.All,
+            _ => Skills.SkillType.None,
+        };
     }
 }

@@ -22,9 +22,14 @@ public static class AchievementYML
         public string tooltip = "";
         public string defeat_key = "";
         public AchievementTypes.AchievementType achievement_type;
-        public string CustomGroupKey = "";
+        public string custom_group_key = "";
         public int goal = 0;
         public int duration = 0;
+        public AchievementTypes.AchievementRewardType reward_type = AchievementTypes.AchievementRewardType.StatusEffect;
+        public string item = "";
+        public int item_amount = 0;
+        public string skill = "";
+        public int skill_amount = 0;
         public List<string> start_effects = new();
         public List<string> stop_effects = new();
         public List<HitData.DamageModPair> damage_modifiers = new()
@@ -74,11 +79,9 @@ public static class AchievementYML
         foreach (AchievementData achievement in GetDefaultAchievements())
         {
             string path = AlmanacPaths.AchievementFolderPath + Path.DirectorySeparatorChar + achievement.unique_name + ".yml";
-            if (!File.Exists(path))
-            {
-                string data = serializer.Serialize(achievement);
-                File.WriteAllText(path, data);
-            }
+            if (File.Exists(path)) continue;
+            string data = serializer.Serialize(achievement);
+            File.WriteAllText(path, data);
         }
     }
 
@@ -3680,7 +3683,6 @@ public static class AchievementYML
         output.AddRange(playerStats);
         #endregion
         #region Per Biome
-
         List<AchievementData> biomes = new()
         {
             new AchievementData()
@@ -4037,7 +4039,6 @@ public static class AchievementYML
         output.AddRange(biomes);
         #endregion
         #region Custom Creature Groups
-
         List<AchievementData> CustomCreatureGroups = new()
         {
             new AchievementData()
@@ -4050,7 +4051,7 @@ public static class AchievementYML
                 defeat_key = "",
                 goal = 0,
                 achievement_type = AchievementTypes.AchievementType.CustomCreatureGroups,
-                CustomGroupKey = "Custom_Brutes",
+                custom_group_key = "Custom_Brutes",
                 start_effects = new List<string>() { "sfx_coins_placed" },
                 damage_modifiers = new List<HitData.DamageModPair>()
                 {
@@ -4093,6 +4094,128 @@ public static class AchievementYML
             }
         };
         output.AddRange(CustomCreatureGroups);
+        #endregion
+        #region Item Rewards
+        
+        List<AchievementData> ItemRewards = new()
+        {
+            new AchievementData()
+            {
+                unique_name = "b_item_reward_1",
+                display_name = "Riches",
+                sprite_name = "Coins",
+                description = "Kill over <color=orange>200</color> creatures",
+                lore = "The gods shall reward you for pruning midgard of the overpopulating creatures",
+                defeat_key = "",
+                goal = 200,
+                achievement_type = AchievementTypes.AchievementType.EnemyKills,
+                custom_group_key = "",
+                reward_type = AchievementTypes.AchievementRewardType.Item,
+                item = "Coins",
+                item_amount = 999,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1f },
+                    { Modifier.HealthRegen, 1f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            }
+        };
+        output.AddRange(ItemRewards);
+        #endregion
+        #region Skill Rewards
+        
+        List<AchievementData> SkillRewards = new()
+        {
+            new AchievementData()
+            {
+                unique_name = "c_skill_reward_1",
+                display_name = "Lumberman",
+                sprite_name = "log_stack",
+                description = "Chop down over <color=orange>100</color> trees",
+                lore = "Cutting trees is only natural for a viking",
+                defeat_key = "",
+                goal = 100,
+                achievement_type = AchievementTypes.AchievementType.TreesChopped,
+                reward_type = AchievementTypes.AchievementRewardType.Skill,
+                custom_group_key = "",
+                skill = "WoodCutting",
+                skill_amount = 100,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                damage_modifiers = new List<HitData.DamageModPair>()
+                {
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Blunt, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Slash, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pierce, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Chop, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Pickaxe, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Fire, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Lightning, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Poison, m_modifier = HitData.DamageModifier.Normal, },
+                    new HitData.DamageModPair()
+                        { m_type = HitData.DamageType.Spirit, m_modifier = HitData.DamageModifier.Normal, },
+                },
+                modifiers = new Dictionary<Modifier, float>()
+                {
+                    { Modifier.Attack, 1f },
+                    { Modifier.HealthRegen, 1f },
+                    { Modifier.StaminaRegen, 1f },
+                    { Modifier.RaiseSkills, 1f },
+                    { Modifier.Speed, 1f },
+                    { Modifier.Noise, 1f },
+                    { Modifier.MaxCarryWeight, 0f },
+                    { Modifier.Stealth, 1f },
+                    { Modifier.RunStaminaDrain, 1f },
+                    { Modifier.DamageReduction, 0f },
+                    { Modifier.FallDamage, 1f },
+                    { Modifier.EitrRegen, 1f }
+                }
+            }
+        };
+        output.AddRange(SkillRewards);
         #endregion
         return output;
     }

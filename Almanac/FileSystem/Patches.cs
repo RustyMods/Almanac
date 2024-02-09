@@ -60,6 +60,7 @@ public static class Patches
                 PlayerStats.UpdatePlayerStats();
             }
             ApplySavedAchievementEffects(__instance);
+            AchievementManager.CheckCollectedRewards(__instance);
         }
     }
     private static void ApplySavedAchievementEffects(Player player)

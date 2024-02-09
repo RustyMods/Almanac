@@ -169,7 +169,7 @@ public static class UpdateAlmanac
                     break;
             }
     }
-    public static void UpdateTopic()
+    private static void UpdateTopic()
     {
          Transform topic = CacheAssets.TrophiesFrame.Find("topic");
 
@@ -427,8 +427,35 @@ public static class UpdateAlmanac
         CreateAlmanac.AchievementPanelIcon.color = isCompleted ? Color.white : Color.black;
         CreateAlmanac.AchievementButton.interactable = isCompleted && _AchievementPowers.Value is AlmanacPlugin.Toggle.On;
         CreateAlmanac.AchievementPanelTitle.text = isCompleted ? SelectedAchievement.m_displayName : UnknownText;
-        
-        if (SelectedAchievement.m_statusEffect != null) CreateAlmanac.AchievementPanelTooltip.text = SelectedAchievement.m_statusEffect.m_tooltip;
+        switch (SelectedAchievement.m_rewardType)
+        {
+            case AchievementTypes.AchievementRewardType.Item:
+                if (SelectedAchievement.m_collectedReward)
+                {
+                    CreateAlmanac.AchievementPanelTooltip.text = Localization.instance.Localize("$almanac_collected_reward_already");
+                    break;
+                }
+                CreateAlmanac.AchievementPanelTooltip.text = SelectedAchievement.m_item != null 
+                    ? $"{Localization.instance.Localize(SelectedAchievement.m_item.m_shared.m_name)} x<color=orange>{SelectedAchievement.m_item_amount}</color>" 
+                    : "<color=red>Failed to find item</color>";
+                break;
+            case AchievementTypes.AchievementRewardType.Skill:
+                if (SelectedAchievement.m_collectedReward)
+                {
+                    CreateAlmanac.AchievementPanelTooltip.text = Localization.instance.Localize("$almanac_collected_reward_already");
+                    break;
+                }
+                if (SelectedAchievement.m_skill is not Skills.SkillType.None)
+                {
+                    CreateAlmanac.AchievementPanelTooltip.text =
+                        $"+<color=orange>{SelectedAchievement.m_skillAmount}</color>XP {SplitCamelCase(SelectedAchievement.m_skill.ToString())}";
+                }
+                break;
+            case AchievementTypes.AchievementRewardType.StatusEffect:
+                if (SelectedAchievement.m_statusEffect != null) CreateAlmanac.AchievementPanelTooltip.text = SelectedAchievement.m_statusEffect.m_tooltip;
+                break;
+        }
+
         CreateAlmanac.AchievementPanelLore.text = isCompleted ? SelectedAchievement.m_lore : UnknownText;
     }
     private static void SetAchievementDesc()

@@ -38,7 +38,6 @@ public static class CreateAlmanac
         PanelImage.color = AlmanacPlugin._PanelImage.Value is AlmanacPlugin.Toggle.On ? Color.clear : Color.white;
         AchievementPanelImage.color = AlmanacPlugin._PanelImage.Value is AlmanacPlugin.Toggle.On ? Color.clear : Color.white;
     }
-
     private static void RepositionTrophyPanel(float x, float y)
     {
         RectTransform? rect = CacheAssets.TrophiesFrame as RectTransform;
@@ -211,46 +210,115 @@ public static class CreateAlmanac
 
     private static void OnClickAchievement()
     {
-        if (UpdateAlmanac.SelectedAchievement.m_statusEffect == null) return;
         if (!Player.m_localPlayer) return;
-
-        if (UpdateAlmanac.SelectedAchievement.m_statusEffect.m_ttl > 0)
+        ISerializer serializer = new SerializerBuilder().Build();
+        IDeserializer deserializer = new DeserializerBuilder().Build();
+        if (UpdateAlmanac.SelectedAchievement.m_rewardType is AchievementTypes.AchievementRewardType.Item)
         {
-            Player.m_localPlayer.m_guardianSE = UpdateAlmanac.SelectedAchievement.m_statusEffect;
-            Player.m_localPlayer.m_guardianPower = UpdateAlmanac.SelectedAchievement.m_statusEffect.name;
-            Player.m_localPlayer.m_guardianPowerHash = UpdateAlmanac.SelectedAchievement.m_statusEffect.name.GetStableHashCode();
-            return;
+            if (UpdateAlmanac.SelectedAchievement.m_collectedReward)
+            {
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$almanac_collected_reward_already");
+                return;
+            }
+            if (UpdateAlmanac.SelectedAchievement.m_item == null || UpdateAlmanac.SelectedAchievement.m_item_amount <= 0) return;
+            Inventory inventory = Player.m_localPlayer.GetInventory();
+            if (!inventory.CanAddItem(UpdateAlmanac.SelectedAchievement.m_item, UpdateAlmanac.SelectedAchievement.m_item_amount))
+            {
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$almanac_inventory_full");
+                return;
+            }
+            ItemDrop.ItemData clone = UpdateAlmanac.SelectedAchievement.m_item.Clone();
+            clone.m_stack = UpdateAlmanac.SelectedAchievement.m_item_amount;
+            inventory.AddItem(clone);
+            UpdateAlmanac.SelectedAchievement.m_collectedReward = true;
+            Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"$almanac_collected_item {clone.m_shared.m_name} x{UpdateAlmanac.SelectedAchievement.m_item_amount}");
+            if (Player.m_localPlayer.m_customData.TryGetValue(AchievementManager.CollectedRewardKey, out string data))
+            {
+                List<string> SavedCollectedData = deserializer.Deserialize<List<string>>(data);
+                SavedCollectedData.Add(UpdateAlmanac.SelectedAchievement.m_uniqueName);
+                string newCollectedData = serializer.Serialize(SavedCollectedData);
+                Player.m_localPlayer.m_customData[AchievementManager.CollectedRewardKey] = newCollectedData;
+            }
+            else
+            {
+                List<string> collectedData = new(){UpdateAlmanac.SelectedAchievement.m_uniqueName};
+                var collectedRewardData = serializer.Serialize(collectedData);
+                Player.m_localPlayer.m_customData[AchievementManager.CollectedRewardKey] = collectedRewardData;
+            }
         }
         
-        SEMan StatusEffectMan = Player.m_localPlayer.GetSEMan();
-        ISerializer serializer = new SerializerBuilder().Build();
-        if (StatusEffectMan.HaveStatusEffect(UpdateAlmanac.SelectedAchievement.m_statusEffect.name))
+        if (UpdateAlmanac.SelectedAchievement.m_rewardType is AchievementTypes.AchievementRewardType.Skill)
         {
-            if (!StatusEffectMan.RemoveStatusEffect(UpdateAlmanac.SelectedAchievement.m_statusEffect, true)) return;    
-            AlmanacEffectManager.ActiveAchievementEffects.Remove(UpdateAlmanac.SelectedAchievement.m_statusEffect);
-            AlmanacEffectManager.SavedAchievementEffectNames.Remove(UpdateAlmanac.SelectedAchievement.m_statusEffect.name);
+            if (UpdateAlmanac.SelectedAchievement.m_collectedReward)
+            {
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$almanac_collected_reward_already");
+                return;
+            }
+
+            if (UpdateAlmanac.SelectedAchievement.m_skill is Skills.SkillType.None ||
+                UpdateAlmanac.SelectedAchievement.m_skillAmount <= 0)
+            {
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$almanac_failed_to_find_skill");
+                return;
+            }
+            Player.m_localPlayer.RaiseSkill(UpdateAlmanac.SelectedAchievement.m_skill, UpdateAlmanac.SelectedAchievement.m_skillAmount);
+            UpdateAlmanac.SelectedAchievement.m_collectedReward = true;
+            if (Player.m_localPlayer.m_customData.TryGetValue(AchievementManager.CollectedRewardKey, out string data))
+            {
+                List<string> SavedCollectedData = deserializer.Deserialize<List<string>>(data);
+                SavedCollectedData.Add(UpdateAlmanac.SelectedAchievement.m_uniqueName);
+                string newCollectedData = serializer.Serialize(SavedCollectedData);
+                Player.m_localPlayer.m_customData[AchievementManager.CollectedRewardKey] = newCollectedData;
+            }
+            else
+            {
+                List<string> collectedData = new(){UpdateAlmanac.SelectedAchievement.m_uniqueName};
+                string collectedRewardData = serializer.Serialize(collectedData);
+                Player.m_localPlayer.m_customData[AchievementManager.CollectedRewardKey] = collectedRewardData;
+            }
+            Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"$almanac_raised_skill {SplitCamelCase(UpdateAlmanac.SelectedAchievement.m_skill.ToString())} $almanac_by {UpdateAlmanac.SelectedAchievement.m_skillAmount}");
+        }
+        if (UpdateAlmanac.SelectedAchievement.m_rewardType is AchievementTypes.AchievementRewardType.StatusEffect)
+        {
+            if (UpdateAlmanac.SelectedAchievement.m_statusEffect == null) return;
+
+            if (UpdateAlmanac.SelectedAchievement.m_statusEffect.m_ttl > 0)
+            {
+                Player.m_localPlayer.m_guardianSE = UpdateAlmanac.SelectedAchievement.m_statusEffect;
+                Player.m_localPlayer.m_guardianPower = UpdateAlmanac.SelectedAchievement.m_statusEffect.name;
+                Player.m_localPlayer.m_guardianPowerHash = UpdateAlmanac.SelectedAchievement.m_statusEffect.name.GetStableHashCode();
+                return;
+            }
+            
+            SEMan StatusEffectMan = Player.m_localPlayer.GetSEMan();
+            if (StatusEffectMan.HaveStatusEffect(UpdateAlmanac.SelectedAchievement.m_statusEffect.name))
+            {
+                if (!StatusEffectMan.RemoveStatusEffect(UpdateAlmanac.SelectedAchievement.m_statusEffect, true)) return;    
+                AlmanacEffectManager.ActiveAchievementEffects.Remove(UpdateAlmanac.SelectedAchievement.m_statusEffect);
+                AlmanacEffectManager.SavedAchievementEffectNames.Remove(UpdateAlmanac.SelectedAchievement.m_statusEffect.name);
+                Player.m_localPlayer.m_customData[AlmanacEffectManager.AchievementKey] = serializer.Serialize(AlmanacEffectManager.SavedAchievementEffectNames);
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"$almanac_removed_effect {UpdateAlmanac.SelectedAchievement.m_statusEffect.m_name}");
+                if (InventoryGui.instance)
+                {
+                    UpdateAlmanac.UpdateList(InventoryGui.instance);
+                }
+                return;
+            };
+            int count = StatusEffectMan.GetStatusEffects().FindAll(effect => effect is AlmanacEffectManager.AchievementEffect).Count;
+            if (count >= AlmanacPlugin._AchievementThreshold.Value)
+            {
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$almanac_too_many_achievements");
+                return;
+            }
+            StatusEffectMan.AddStatusEffect(UpdateAlmanac.SelectedAchievement.m_statusEffect);
+            AlmanacEffectManager.ActiveAchievementEffects.Add(UpdateAlmanac.SelectedAchievement.m_statusEffect);
+            if (AlmanacEffectManager.SavedAchievementEffectNames.Count > 3) return;
+            AlmanacEffectManager.SavedAchievementEffectNames.Add(UpdateAlmanac.SelectedAchievement.m_statusEffect.name);
             Player.m_localPlayer.m_customData[AlmanacEffectManager.AchievementKey] = serializer.Serialize(AlmanacEffectManager.SavedAchievementEffectNames);
-            Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"$almanac_removed_effect {UpdateAlmanac.SelectedAchievement.m_statusEffect.m_name}");
             if (InventoryGui.instance)
             {
                 UpdateAlmanac.UpdateList(InventoryGui.instance);
             }
-            return;
-        };
-        int count = StatusEffectMan.GetStatusEffects().FindAll(effect => effect is AlmanacEffectManager.AchievementEffect).Count;
-        if (count >= AlmanacPlugin._AchievementThreshold.Value)
-        {
-            Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$almanac_too_many_achievements");
-            return;
-        }
-        StatusEffectMan.AddStatusEffect(UpdateAlmanac.SelectedAchievement.m_statusEffect);
-        AlmanacEffectManager.ActiveAchievementEffects.Add(UpdateAlmanac.SelectedAchievement.m_statusEffect);
-        if (AlmanacEffectManager.SavedAchievementEffectNames.Count > 3) return;
-        AlmanacEffectManager.SavedAchievementEffectNames.Add(UpdateAlmanac.SelectedAchievement.m_statusEffect.name);
-        Player.m_localPlayer.m_customData[AlmanacEffectManager.AchievementKey] = serializer.Serialize(AlmanacEffectManager.SavedAchievementEffectNames);
-        if (InventoryGui.instance)
-        {
-            UpdateAlmanac.UpdateList(InventoryGui.instance);
         }
     }
 

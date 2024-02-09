@@ -6,7 +6,6 @@ using Almanac.Utilities;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
-using UnityEngine.PlayerLoop;
 using UnityEngine.UI;
 using YamlDotNet.Serialization;
 using static Almanac.Utilities.Utility;

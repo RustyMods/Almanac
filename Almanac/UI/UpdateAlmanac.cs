@@ -169,7 +169,7 @@ public static class UpdateAlmanac
                     break;
             }
     }
-    private static void UpdateTopic()
+    public static void UpdateTopic()
     {
          Transform topic = CacheAssets.TrophiesFrame.Find("topic");
 
@@ -2092,10 +2092,10 @@ public static class UpdateAlmanac
         }
     }
     
-    // Check if certain keys are hit to close Almanac GUI
     public static void UpdateGUI()
     {
         if (!Player.m_localPlayer) return;
+        // Check if certain keys are hit to close Almanac GUI
         if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Tab) || Player.m_localPlayer.IsDead())
         {
             if (AreTabsVisible() || CreateAlmanac.IsPanelActive() || CreateAlmanac.IsAchievementActive())
@@ -2104,7 +2104,36 @@ public static class UpdateAlmanac
                 CreateAlmanac.AlmanacGUI.SetActive(false);
                 CreateAlmanac.AchievementGUI.SetActive(false);
             }
-        };
+        }
+        // Hotkey to open almanac
+        if (Input.GetKeyDown(_AlmanacHotKey.Value))
+        {
+            if (!InventoryGui.instance) return;
+            if (CreateAlmanac.IsPanelActive())
+            {
+                CreateAlmanac.AlmanacGUI.SetActive(false);
+                CreateAlmanac.AchievementGUI.SetActive(false);
+                InventoryGui.instance.Hide();
+                Categories.DestroyTabs();
+            }
+            else
+            {
+                InventoryGui.instance.Show(null);
+                CreateAlmanac.AlmanacGUI.SetActive(true);
+                InventoryGui.instance.m_trophiesPanel.SetActive(true);
+                Categories.CreateTabs();
+                PlayerStats.UpdatePlayerStats();
+                UpdateAlmanac.UpdateMetricsPanel();
+                
+                UpdateAlmanac.UpdateTopic();
+                UpdateAlmanac.UpdateList(InventoryGui.instance);
+            
+                if (UpdateAlmanac.CheckedCompletion) return;
+                
+                AchievementManager.CheckCompletedAchievements();
+                UpdateAlmanac.CheckedCompletion = true;
+            }
+        }
     }
 
     // Pressing interact key would close trophy panel

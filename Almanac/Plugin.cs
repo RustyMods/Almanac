@@ -24,11 +24,11 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.1.1";
+        internal const string ModVersion = "3.1.2";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
-        private static string ConfigFileName = ModGUID + ".cfg";
-        private static string ConfigFileFullPath = Paths.ConfigPath + Path.DirectorySeparatorChar + ConfigFileName;
+        private static readonly string ConfigFileName = ModGUID + ".cfg";
+        private static readonly string ConfigFileFullPath = Paths.ConfigPath + Path.DirectorySeparatorChar + ConfigFileName;
         internal static string ConnectionError = "";
         private readonly Harmony _harmony = new(ModGUID);
         public static readonly ManualLogSource AlmanacLogger = BepInEx.Logging.Logger.CreateLogSource(ModName);
@@ -141,6 +141,9 @@ namespace Almanac
         public static ConfigEntry<Toggle> _PanelImage = null!;
 
         public static ConfigEntry<Color> _OutlineColor = null!;
+
+        public static ConfigEntry<KeyCode> _AlmanacHotKey = null!;
+
         public enum DataPath { LocalLow, ConfigPath }
         private void InitConfigs()
         {
@@ -148,22 +151,17 @@ namespace Almanac
                 "If on, the configuration is locked and can be changed by server admins only.");
             _ = ConfigSync.AddLockingConfigEntry(_serverConfigLocked);
 
-            _KnowledgeWall = config("1 - General", "1 - Knowledge Wall", Toggle.On,
-                "If on, the plugin blacks out unknown items from the almanac");
+            _KnowledgeWall = config("1 - General", "1 - Knowledge Wall", Toggle.On, "If on, the plugin blacks out unknown items from the almanac");
 
-            _UseIgnoreList = config("1 - General", "2 - Use Ignore List", Toggle.On,
-                "If on, the plugin uses the IgnoreList.yml to filter almanac");
+            _UseIgnoreList = config("1 - General", "2 - Use Ignore List", Toggle.On, "If on, the plugin uses the IgnoreList.yml to filter almanac");
 
-            _ShowAllData = config("1 - General", "3 - Show All Data", Toggle.Off,
-                "If on, Almanac does not filter extra data, like prefab name and material name");
+            _ShowAllData = config("1 - General", "3 - Show All Data", Toggle.Off, "If on, Almanac does not filter extra data, like prefab name and material name");
             
-            _AchievementIcons = config("Achievements", "HUD Icons", Toggle.Off,
-                "If on, achievements icons appear alongside status effects on HUD");
+            _AchievementIcons = config("Achievements", "HUD Icons", Toggle.Off, "If on, achievements icons appear alongside status effects on HUD");
 
             _AchievementIcons.SettingChanged += AchievementManager.OnAchievementConfigChanged;
             
-            _AchievementPowers = config("Achievements", "Bonuses Enabled", Toggle.On,
-                "If on, achievements are interactable and reward players with bonuses");
+            _AchievementPowers = config("Achievements", "Bonuses Enabled", Toggle.On, "If on, achievements are interactable and reward players with bonuses");
 
             _AchievementPowers.SettingChanged += AchievementManager.OnAchievementConfigChanged;
 
@@ -171,15 +169,15 @@ namespace Almanac
                 new ConfigDescription("Total amount of achievement effects allowed at the same time",
                     new AcceptableValueRange<int>(1, 5)));
             
-            _PanelImage = config("1 - General", "4 - Transparent", Toggle.Off,
-                "Compatibility with minimalUI, set transparency of almanac panel", false);
+            _PanelImage = config("1 - General", "4 - Transparent", Toggle.Off, "Compatibility with minimalUI, set transparency of almanac panel", false);
 
             _PanelImage.SettingChanged += CreateAlmanac.OnPanelTransparencyConfigChange;
             
-            _RootPath = config("1 - General", "5 - Player Data", DataPath.ConfigPath,
-                "Set the root path where to save player data");
+            _RootPath = config("1 - General", "5 - Player Data", DataPath.ConfigPath, "Set the root path where to save player data");
             
             _OutlineColor = config("1 - General", "6 - Outline Color", Color.yellow, "Set the color of the outline for selected items");
+
+            _AlmanacHotKey = config("1 - General", "7 - Almanac HotKey", KeyCode.F6, "Set the hotkey to open almanac", false);
         }
         #endregion
 

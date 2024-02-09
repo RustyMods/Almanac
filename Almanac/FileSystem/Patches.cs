@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Almanac.Achievements;
 using Almanac.Data;
+using Almanac.UI;
 using HarmonyLib;
 using YamlDotNet.Serialization;
 
@@ -68,16 +69,16 @@ public static class Patches
         IDeserializer deserializer = new DeserializerBuilder().Build();
         AlmanacEffectManager.SavedAchievementEffectNames = deserializer.Deserialize<List<string>>(data);
         if (AlmanacEffectManager.SavedAchievementEffectNames.Count <= 0) return;
+        AlmanacPlugin.AlmanacLogger.LogDebug("Client: Applying saved achievement effects");
         SEMan PlayerSEMan = player.GetSEMan();
         foreach (string name in AlmanacEffectManager.SavedAchievementEffectNames)
         {
             if (PlayerSEMan.HaveStatusEffect(name)) continue;
-            AchievementManager.Achievement achievement = AchievementManager.AchievementList.Find(x => x.m_statusEffect.name == name);
+            AchievementManager.Achievement achievement = AchievementManager.AchievementList.Find(x => x.m_statusEffect?.name == name);
             if (achievement != null && achievement.m_statusEffect != null)
             {
                 PlayerSEMan.AddStatusEffect(achievement.m_statusEffect);
             }
-            
         }
     }
     

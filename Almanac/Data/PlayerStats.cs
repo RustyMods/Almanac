@@ -13,6 +13,7 @@ namespace Almanac.Data;
 
 public static class PlayerStats
 {
+    private static readonly string AlmanacStatsKey = "AlmanacStats";
     private static Dictionary<PlayerStatType, float> PlayerProfileStats = new();
     public static float GetPlayerStat(PlayerStatType type)
     {
@@ -29,71 +30,78 @@ public static class PlayerStats
         return PrefixPath + FormattedPlayerName + AlmanacPaths.CustomDataFileName;
     }
 
-    private static void InitPlayerTracker(bool overwrite = false)
+    private static void InitPlayerTracker()
     {
         if (!Player.m_localPlayer) return;
-        
-        if (!File.Exists(GetCustomDataFilePath()) || overwrite)
+        AlmanacPlugin.AlmanacLogger.LogDebug("Client: Initializing Player Kill Death Tracker");
+
+        if (!File.Exists(GetCustomDataFilePath()))
         {
-            switch (overwrite)
+            AlmanacPlugin.AlmanacLogger.LogDebug("Client: Player Kill Death File not found");
+            if (Player.m_localPlayer.m_customData.TryGetValue(AlmanacStatsKey, out string CurrentData))
             {
-                case true:
-                    AlmanacPlugin.AlmanacLogger.LogDebug("Overwriting player data, generating new file");
-                    break;
-                case false:
-                    AlmanacPlugin.AlmanacLogger.LogDebug("Did not find player data, generating file");
-                    break;
+                ReadCustomTrackerData(CurrentData, false);
             }
-            foreach (string key in CreatureDataCollector.TempDefeatKeys)
+            else
             {
-                LocalPlayerData.Player_Kill_Deaths[key] = new KillDeaths();
+                AlmanacPlugin.AlmanacLogger.LogDebug("Client: Generating kill death custom data");
+                foreach (string key in CreatureDataCollector.TempDefeatKeys)
+                {
+                    LocalPlayerData.Player_Kill_Deaths[key] = new KillDeaths();
+                }
             }
-            
             WriteCurrentCustomData();
         }
         else
         {
-            IDeserializer deserializer = new DeserializerBuilder().Build();
-            CustomData data = deserializer.Deserialize<CustomData>(File.ReadAllText(GetCustomDataFilePath()));
-
-            if (data.Player_Kill_Deaths.Count != CreatureDataCollector.TempDefeatKeys.Count)
+            AlmanacPlugin.AlmanacLogger.LogDebug("Client: Player Kill Death File found");
+            if (Player.m_localPlayer.m_customData.TryGetValue(AlmanacStatsKey, out string CurrentData))
             {
-                AlmanacPlugin.AlmanacLogger.LogDebug("Creature count changed, adding missing values");
-                foreach (string key in CreatureDataCollector.TempDefeatKeys)
-                {
-                    if (!data.Player_Kill_Deaths.TryGetValue(key, out KillDeaths value))
-                    {
-                        AlmanacPlugin.AlmanacLogger.LogDebug("Player data missing: " + key + " , adding value");
-                        data.Player_Kill_Deaths[key] = new KillDeaths();
-                    }
-                }
+                ReadCustomTrackerData(CurrentData, true);
             }
-            
-            LocalPlayerData = data;
-            
-            if (LocalPlayerData.Player_Kill_Deaths.Count == 0 && !overwrite)
+            else
             {
-                InitPlayerTracker(true);
-                return;
+                AlmanacPlugin.AlmanacLogger.LogDebug("Client: Loaded player data file: " + GetCustomDataFilePath());
+                AlmanacPlugin.AlmanacLogger.LogDebug("Client: Saving loaded player data to player custom data");
+                string FileData = File.ReadAllText(GetCustomDataFilePath());
+                Player.m_localPlayer.m_customData[AlmanacStatsKey] = FileData;
+                ReadCustomTrackerData(FileData, true, false);
             }
         }
-        AlmanacPlugin.AlmanacLogger.LogDebug("Loaded player data file: " + GetCustomDataFilePath());
         TerminalCommands.AddAlmanacCommands();
+    }
+
+    private static void ReadCustomTrackerData(string CurrentData, bool hasFile, bool hasCustomData = true)
+    {
+        IDeserializer deserializer = new DeserializerBuilder().Build();
+        if (hasCustomData) AlmanacPlugin.AlmanacLogger.LogDebug("Client: Player has custom data kill death values" 
+                                             + (hasFile ? ", ignoring file" : ""));
+        CustomData data = deserializer.Deserialize<CustomData>(CurrentData);
+        LocalPlayerData = data;
+        
+        if (data.Player_Kill_Deaths.Count == CreatureDataCollector.TempDefeatKeys.Count) return;
+        AlmanacPlugin.AlmanacLogger.LogDebug("Client: Creature count changed, adding missing values");
+        foreach (string key in CreatureDataCollector.TempDefeatKeys)
+        {
+            if (data.Player_Kill_Deaths.ContainsKey(key)) continue;
+            AlmanacPlugin.AlmanacLogger.LogDebug("Client: Player data missing: " + key + " , adding value");
+            data.Player_Kill_Deaths[key] = new KillDeaths();
+        }
     }
     private static void WriteCurrentCustomData()
     {
         if (!Player.m_localPlayer) return;
         try
         {
-            AlmanacPaths.CreateFolderDirectories();
             ISerializer serializer = new SerializerBuilder().Build();
-            Player.m_localPlayer.m_customData[AlmanacEffectManager.AchievementKey] = serializer.Serialize(AlmanacEffectManager.SavedAchievementEffectNames);
             string data = serializer.Serialize(LocalPlayerData);
-            File.WriteAllText(GetCustomDataFilePath(), data);
+            Player.m_localPlayer.m_customData[AlmanacEffectManager.AchievementKey] = serializer.Serialize(AlmanacEffectManager.SavedAchievementEffectNames);
+            Player.m_localPlayer.m_customData[AlmanacStatsKey] = data;
+            AlmanacPlugin.AlmanacLogger.LogDebug("Client: Saving almanac custom data");
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogDebug("Failed to save player data");
+            AlmanacPlugin.AlmanacLogger.LogDebug("Client: Failed to save player data");
         }
     }
 
@@ -133,7 +141,7 @@ public static class PlayerStats
     public static void UpdatePlayerStats()
     {
         if (!Game.instance) return;
-        AlmanacPlugin.AlmanacLogger.LogDebug("Loading latest player stats");
+        AlmanacPlugin.AlmanacLogger.LogDebug("Client: Loading latest player stats");
         PlayerProfileStats = Game.instance.GetPlayerProfile().m_playerStats.m_stats;
     }
 
@@ -159,7 +167,7 @@ public static class PlayerStats
             player_name = Player.m_localPlayer.GetHoverName(),
             data = new PlayerData()
             {
-                completed_achievements = Achievements.AchievementManager.AchievementList.FindAll(item => item.m_isCompleted).Count,
+                completed_achievements = AchievementManager.AchievementList.FindAll(item => item.m_isCompleted).Count,
                 total_kills = (int)GetPlayerStat(PlayerStatType.EnemyKills),
                 total_deaths = (int)GetPlayerStat(PlayerStatType.Deaths)
             }
@@ -201,7 +209,7 @@ public static class PlayerStats
     [HarmonyPatch(typeof(Player), nameof(Player.Save))]
     private static class PlayerSavePatch
     {
-        private static void Postfix(Player __instance)
+        private static void Prefix(Player __instance)
         {
             if (!__instance) return;
             WriteCurrentCustomData();

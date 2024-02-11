@@ -224,9 +224,15 @@ public static class PlayerStats
             if (!Player.m_localPlayer) return;
             LoadPlayerData();
             Patches.CheckIfServer();
-            if (AlmanacPlugin.WorkingAsType is AlmanacPlugin.WorkingAs.Client)
+            switch (AlmanacPlugin.WorkingAsType)
             {
-                Leaderboard.ClientLeaderboardCoroutine();
+                case AlmanacPlugin.WorkingAs.Client:
+                    Leaderboard.ClientLeaderboardCoroutine();
+                    break;
+                case AlmanacPlugin.WorkingAs.Both:
+                    UpdatePlayerStats();
+                    Leaderboard.BothLeaderboardCoroutine();
+                    break;
             }
         }
     }

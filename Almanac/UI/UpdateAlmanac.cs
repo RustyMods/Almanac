@@ -2105,7 +2105,6 @@ public static class UpdateAlmanac
             CreateAlmanac.AlmanacGUI.SetActive(true);
             UpdatePlayerStats();
             UpdateMetricsPanel();
-            
             UpdateTopic();
 
             if (CheckedCompletion) return;

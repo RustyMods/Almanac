@@ -58,7 +58,7 @@ If you are a Almanac user pre-3.0.0 release. Please make sure to delete your old
 | 3.1.1     | - Tweaked visuals of achievement panel to showcase active effects - effects persist upon death and log out / log in |
 | 3.1.2     | - Moved player tracked data to player custom data and added configurable hotkey to open almanac                     |
 | 3.1.3     | - Added new achievement reward types (Items,Skills,StatusEffect) and a redundancy if almanac fails to get item icon |
-
+| 3.1.4     | - Added function that updates leaderboard if player is server                                                       |
 ![](https://i.imgur.com/wgmkQTD.png)
 ![](https://i.imgur.com/f8II690.png)
 

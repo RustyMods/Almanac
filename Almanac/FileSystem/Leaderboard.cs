@@ -73,6 +73,47 @@ public static class Leaderboard
         SaveLeaderboardToFile();
     }
 
+    public static void BothLeaderboardCoroutine()
+    {
+        AlmanacPlugin.AlmanacLogger.LogDebug("Server: Starting coroutine to update local leaderboard");
+        AlmanacPlugin._plugin.StartCoroutine(UpdateLocalPlayerLeaderboard());
+    }
+    
+    private static IEnumerator UpdateLocalPlayerLeaderboard()
+    {
+        while (Player.m_localPlayer)
+        {
+            Leaderboard_Save_Local();
+            yield return new WaitForSeconds(30f * 60f);
+        }
+    }
+
+    private static void Leaderboard_Save_Local()
+    {
+        if (AlmanacPlugin.WorkingAsType is not AlmanacPlugin.WorkingAs.Both) return;
+        AlmanacPlugin.AlmanacLogger.LogDebug("Server: Server is player, adding local data to leaderboard");
+        ServerPlayerData LatestPlayerData = PlayerStats.GetServerPlayerData();
+        if (LeaderboardData.TryGetValue(LatestPlayerData.player_name, out PlayerData data))
+        {
+            if (data.completed_achievements >= LatestPlayerData.data.completed_achievements)
+            {
+                LeaderboardData[LatestPlayerData.player_name].total_deaths = LatestPlayerData.data.total_deaths;
+                LeaderboardData[LatestPlayerData.player_name].total_kills = LatestPlayerData.data.total_kills;
+            }
+            else
+            {
+                LeaderboardData[LatestPlayerData.player_name].total_deaths = LatestPlayerData.data.total_deaths;
+                LeaderboardData[LatestPlayerData.player_name].total_kills = LatestPlayerData.data.total_kills;
+                LeaderboardData[LatestPlayerData.player_name].completed_achievements = LatestPlayerData.data.completed_achievements;
+            }
+        }
+        else
+        {
+            LeaderboardData[LatestPlayerData.player_name] = LatestPlayerData.data;
+        }
+        SaveLeaderboardToFile();
+    }
+
     public static void RPC_Leaderboard_Client(ZRpc rpc, ZPackage pkg)
     {
         AlmanacPlugin.AlmanacLogger.LogDebug("Client: Received leaderboard data");

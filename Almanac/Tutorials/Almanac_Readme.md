@@ -35,6 +35,18 @@ use underscore
 #### Active vs Passive Effects
 If duration is set to anything higher than 0, power is set as guardian power. 
 Effects only applied while active, and countdown is running.
+
+#### Reward Types
+
+- StatusEffect
+- Item
+- Skill
+
+Make sure you follow the syntax for reward types.
+- Skill rewards experience rather than direct level increment.
+- Skills are validated by plugin. If it fails, it defaults to None.
+- Items are validated by plugin. If it fails to find, it will display a red message on the achievement panel.
+
 #### Icons
 You can use any loaded prefabs (ex:HardAntler) to use as sprite_name  
 or you can choose from almanac's custom icons:
@@ -224,7 +236,8 @@ ex:
 You will find in your Almanac configuration folder and folder aptly named PlayerData
 This is a local folder that saves custom Almanac data. 
 
-Do not touch!
+Since version 3.1.2, I've moved the player data into the player save file, once you've loaded your game, it will automatically take the file data and place it inside the player save file.
+It will then ignore the almanac player tracker data file.
 #### Leaderboard
 If the system is recognized as a server, a folder named "Players" will be generated where it will save
 the players information to populate the leaderboard. This file will be updated upon new client log in and logout,
@@ -244,5 +257,10 @@ the set of creatures per biome. This is to be used in conjunction with Achieveme
 
 - The list will be validated by the Almanac against its cached creature data.
 - Any values added prefixed with a # will be ignored
+
+version 3.1.3 - Adds custom creature groups
+
+- To use these groups with your achievements, the name of your file becomes the key to the group.
+- As an example, your file name is: "Custom_Brutes.yml", then you use "Custom_Brutes" as the key.
 
 

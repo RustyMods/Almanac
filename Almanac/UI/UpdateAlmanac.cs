@@ -210,8 +210,10 @@ public static class UpdateAlmanac
 
             Transform icon = transform.Find("icon_bkg/icon");
             if (!icon.TryGetComponent(out Image iconImage)) continue;
-            iconImage.sprite = component.m_itemData.GetIcon();
-            
+            Sprite? ItemIcon;
+            try { ItemIcon = component.m_itemData.GetIcon(); }
+            catch { ItemIcon = SpriteManager.AlmanacIcon;}
+            iconImage.sprite = ItemIcon;
             transform.Find("name").GetComponent<TMP_Text>().text = isKnown ? LocalizedName : UnknownText;
             transform.Find("description").GetComponent<TMP_Text>().text = isKnown ? isTrophies ? LocalizedLore : LocalizedDesc : "";
             iconImage.color = isKnown ? Color.white : Color.black;
@@ -703,7 +705,10 @@ public static class UpdateAlmanac
         if (!SelectedItemDrop) return;
         
         ItemDrop.ItemData itemData = SelectedItemDrop.m_itemData;
-        CreateAlmanac.PanelIcon.sprite = itemData.GetIcon();
+        Sprite? icon;
+        try { icon = itemData.GetIcon(); }
+        catch {icon = SpriteManager.AlmanacIcon;}
+        CreateAlmanac.PanelIcon.sprite = icon;
         CreateAlmanac.PanelTitle.text = Localization.instance.Localize(itemData.m_shared.m_name);
 
         Dictionary<string, string> PanelData = GetItemData(itemData);

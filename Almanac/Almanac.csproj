@@ -232,6 +232,7 @@
         <EmbeddedResource Include="translations\Spanish.json" />
         <EmbeddedResource Include="translations\Swedish.json" />
         <Content Include="Tutorials\Almanac_Readme.md" />
+        <Content Include="Tutorials\README.md" />
         <Content Include="UpdateManifest.ps1" />
     </ItemGroup>
     <ItemGroup>

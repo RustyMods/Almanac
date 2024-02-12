@@ -14,9 +14,11 @@ users can shape their own unique experiences.
 
 - Indexed items, pieces and creatures
 - ServerSynced Filters
-- Achievements
-- Achievement Rewards
+- Player Metrics
 - Leaderboard
+- Achievements
+  - Achievement Rewards
+  - Achievement Groups
 - ServerSynced Achievements
 
 ## Achievements
@@ -75,6 +77,8 @@ or you can choose from almanac's custom icons:
 - coins_silver
 - log
 - log_stack
+- ring
+- checkmark
 
 If the sprite_name is invalid, the Almanac will default to use almanac icon
 
@@ -176,6 +180,26 @@ There, you can find a list of all the creature's defeat keys and your characters
 Requires a goal and a defeat key to be set:
 - CustomKills
 ```
+#### Terminal Command
+version 3.1.5
+
+To generate default achievements you can now use the console command:
+
+- almanac_write_default_achievements
+
+This will write to your configuration folder all the default achievements I've personally created as examples.
+
+#### Achievement Groups
+version 3.1.5 introduces achievement groups
+
+You can now set the name of a group of achievements and their index order.
+
+This only works for reward types: Item or Skill
+
+The achievement will only show up if
+
+- previous achievement is completed
+- previous achievement has been collected
 #### Achievement Descriptors
 - lore is displayed on the UI
 - start_message is shown when activating achievement effect

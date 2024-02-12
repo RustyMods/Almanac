@@ -24,7 +24,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.1.4";
+        internal const string ModVersion = "3.1.5";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         private static readonly string ConfigFileName = ModGUID + ".cfg";
@@ -55,14 +55,9 @@ namespace Almanac
             _harmony.PatchAll(assembly);
             SetupWatcher();
         }
-        public void Update()
-        {
-            UpdateAlmanac.UpdateGUI();
-        }
-        private void OnDestroy()
-        {
-            Config.Save();
-        }
+        public void Update() => UpdateAlmanac.UpdateGUI();
+        private void OnDestroy() => Config.Save();
+        
         #region Chainloader
         public static bool KrumpacLoaded = false;
         public static bool JewelCraftLoaded = false;
@@ -139,11 +134,8 @@ namespace Almanac
         public static ConfigEntry<Toggle> _ShowAllData = null!;
         public static ConfigEntry<DataPath> _RootPath = null!;
         public static ConfigEntry<Toggle> _PanelImage = null!;
-
         public static ConfigEntry<Color> _OutlineColor = null!;
-
         public static ConfigEntry<KeyCode> _AlmanacHotKey = null!;
-
         public enum DataPath { LocalLow, ConfigPath }
         private void InitConfigs()
         {
@@ -178,6 +170,7 @@ namespace Almanac
             _OutlineColor = config("1 - General", "6 - Outline Color", Color.yellow, "Set the color of the outline for selected items");
 
             _AlmanacHotKey = config("1 - General", "7 - Almanac HotKey", KeyCode.F6, "Set the hotkey to open almanac", false);
+            
         }
         #endregion
 

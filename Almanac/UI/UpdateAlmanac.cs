@@ -25,11 +25,6 @@ namespace Almanac.UI;
 
 public static class UpdateAlmanac
 {
-    private static readonly List<GameObject> PanelElements = new();
-    
-    private static readonly float TrophySpacing = 180f;
-    private static readonly string UnknownText = Localization.instance.Localize("$almanac_locked");
-    
     private static readonly List<string> ValuesToIgnore = new()
     {
         "0",
@@ -40,12 +35,18 @@ public static class UpdateAlmanac
         "0s",
         "0/tick"
     };
-    private static bool IsValueToBeIgnored(string input) => ValuesToIgnore.Contains(RemoveArrows(Localization.instance.Localize(input)).ToLower().Replace(" ", "")) || input.IsNullOrWhiteSpace();
-    private static string RemoveArrows(string input) => Regex.Replace(input, "<.*?>", "");
+    
+    private static readonly List<GameObject> PanelElements = new();
+    private static readonly float TrophySpacing = 180f;
+    private static readonly string UnknownText = Localization.instance.Localize("$almanac_locked");
+    
     private static ItemDrop SelectedItemDrop = null!;
     private static CreatureData SelectedCreature = null!;
     private static GameObject SelectedPiece = null!;
     public static Achievement SelectedAchievement = null!;
+    
+    public static bool isMetricsActive;
+    public static bool CheckedCompletion;
 
     [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.UpdateTrophyList))]
     private static class UpdateTrophyListPatch
@@ -64,6 +65,7 @@ public static class UpdateAlmanac
     public static void UpdateList(InventoryGui GUI, string filter = "")
     {
         DestroyTrophies(GUI);
+        CreateAlmanac.SetCheckmarkVisible();
         switch (SelectedTab)
             {
                 case "$almanac_scroll_button":
@@ -153,8 +155,8 @@ public static class UpdateAlmanac
                     break;
                 case "$almanac_achievements_button":
                     UpdateAchievementList(GUI, filter.IsNullOrWhiteSpace() 
-                        ? AchievementList 
-                        : AchievementList.FindAll(item => item.m_displayName.ToLower().Contains(filter)));
+                        ? GetAchievements() 
+                        : GetAchievements().FindAll(item => item.m_displayName.ToLower().Contains(filter)));
                     break;
                 case "$almanac_stats_button":
                     UpdateMetricsPanel();
@@ -177,7 +179,7 @@ public static class UpdateAlmanac
 
          textMesh.text = Localization.instance.Localize(SelectedTab);
     }
-    private static void DestroyTrophies(InventoryGui instance)
+    public static void DestroyTrophies(InventoryGui instance)
     {
         foreach (GameObject trophy in instance.m_trophyList) Object.Destroy(trophy);
         
@@ -352,15 +354,14 @@ public static class UpdateAlmanac
         instance.m_trophieListRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(instance.m_trophieListBaseSize, totalHeight));
         instance.m_trophyListScroll.value = 1f;
     }
-
-    public static bool CheckedCompletion;
-    private static void UpdateAchievementList(InventoryGui instance, List<Achievement> achievements)
+    public static void UpdateAchievementList(InventoryGui instance, List<Achievement> achievements, bool completed = false)
     {
         float a1 = 0.0f;
+        if (completed) achievements = achievements.OrderBy(x => !x.m_isCompleted).ToList();
         for (int index = 0; index < achievements.Count; ++index)
         {
             Achievement achievement = achievements[index];
-            
+
             GameObject gameObject = Object.Instantiate(instance.m_trophieElementPrefab, instance.m_trophieListRoot);
             
             gameObject.SetActive(true);
@@ -398,7 +399,7 @@ public static class UpdateAlmanac
                 disabledColor = new Color(0f, 0f, 0f, 1f),
                 colorMultiplier = 1f,
                 fadeDuration = 0.1f,
-                normalColor = achievement.m_isCompleted ? new Color(0.5f, 0.5f, 0.5f, 1f) : Color.black,
+                normalColor = isCompleted ? new Color(0.5f, 0.5f, 0.5f, 1f) : Color.black,
                 selectedColor = Color.white
             };
             button.onClick = new Button.ButtonClickedEvent();
@@ -617,14 +618,14 @@ public static class UpdateAlmanac
             case AchievementTypes.AchievementType.RuneStones:
                 int loreCount = GetKnownTextCount();
                 CreateAlmanac.AchievementPanelDesc.text = FormatProgressText(loreCount, SelectedAchievement.m_goal);
-                FindAchievement().m_isCompleted = loreCount >= SelectedAchievement.m_goal;
                 SelectedAchievement.m_isCompleted = loreCount >= SelectedAchievement.m_goal;
+                UpdateAchievementList(loreCount, SelectedAchievement.m_goal);
                 break;
             case AchievementTypes.AchievementType.Recipes:
                 int recipeCount = GetKnownRecipeCount();
                 CreateAlmanac.AchievementPanelDesc.text = FormatProgressText(recipeCount, SelectedAchievement.m_goal);
-                FindAchievement().m_isCompleted = recipeCount >= SelectedAchievement.m_goal;
                 SelectedAchievement.m_isCompleted = recipeCount >= SelectedAchievement.m_goal;
+                UpdateAchievementList(recipeCount, SelectedAchievement.m_goal);
                 break;
             case AchievementTypes.AchievementType.CustomKills:
                 if (!LocalPlayerData.Player_Kill_Deaths.TryGetValue(SelectedAchievement.m_defeatKey, out KillDeaths value))
@@ -634,8 +635,8 @@ public static class UpdateAlmanac
                 }
                 int kills = value.kills;
                 CreateAlmanac.AchievementPanelDesc.text = FormatProgressText(kills, SelectedAchievement.m_goal);
-                FindAchievement().m_isCompleted = kills >= SelectedAchievement.m_goal;
                 SelectedAchievement.m_isCompleted = kills >= SelectedAchievement.m_goal;
+                UpdateAchievementList(kills, SelectedAchievement.m_goal);
                 break;
             case AchievementTypes.AchievementType.MeadowCreatures:
                 SetAchievementPanel(CreatureLists.GetBiomeCreatures(Heightmap.Biome.Meadows));
@@ -679,26 +680,42 @@ public static class UpdateAlmanac
         List<string> globalKeys = Zone.GetGlobalKeys();
         int count = list.Count(critter => globalKeys.Contains(critter.defeatedKey) || Zone.GetGlobalKey(critter.defeatedKey));
         CreateAlmanac.AchievementPanelDesc.text = FormatProgressText(count, list.Count);
-        FindAchievement().m_isCompleted = count >= list.Count;
         SelectedAchievement.m_isCompleted = count >= list.Count;
+        UpdateAchievementList(count, list.Count);
     }
     private static void SetAchievementPanel(List<ItemDrop> list)
     {
         int count = list.FindAll(x => Player.m_localPlayer.IsKnownMaterial(x.m_itemData.m_shared.m_name)).Count;
         int total = list.Count;
         CreateAlmanac.AchievementPanelDesc.text = FormatProgressText(count, total);
-        FindAchievement().m_isCompleted = count >= total;
         SelectedAchievement.m_isCompleted = count >= total;
+        UpdateAchievementList(count, total);
     }
     private static void SetAchievementPanel(PlayerStatType type)
     {
         int count = (int)GetPlayerStat(type);
         CreateAlmanac.AchievementPanelDesc.text = FormatProgressText(count, SelectedAchievement.m_goal);
-        FindAchievement().m_isCompleted = count >= SelectedAchievement.m_goal;
         SelectedAchievement.m_isCompleted = count >= SelectedAchievement.m_goal;
+        UpdateAchievementList(count, SelectedAchievement.m_goal);
     }
     private static string FormatProgressText(float value, float goal) => $"<color=orange>{value}</color> / <color=orange>{goal}</color> (<color=orange>{((value / goal) * 100):0.0}</color>%)";
-    private static Achievement FindAchievement() => AchievementList.Find(item => item.m_uniqueName == SelectedAchievement.m_uniqueName);
+    private static Achievement? FindAchievement()
+    {
+        Achievement achievement = AchievementList.Find(item => item.m_uniqueName == SelectedAchievement.m_uniqueName);
+        if (achievement == null)
+        {
+            Achievement groupAchievement = GroupedAchievements.Find(item => item.m_uniqueName == SelectedAchievement.m_uniqueName);
+            if (groupAchievement != null) return groupAchievement;
+        }
+
+        return achievement;
+    }
+    private static void UpdateAchievementList(int count, int total)
+    {
+        Achievement? achievement = FindAchievement();
+        if (achievement == null) return;
+        achievement.m_isCompleted = count >= total;
+    }
     private static void UpdateItemPanel()
     {
         DestroyPanelElements();
@@ -1885,8 +1902,6 @@ public static class UpdateAlmanac
             }
         }
     }
-
-    public static bool isMetricsActive = false;
     public static void UpdateMetricsPanel()
     {
         if (!Player.m_localPlayer) return;
@@ -2094,6 +2109,8 @@ public static class UpdateAlmanac
 
         return metrics;
     }
+    private static bool IsValueToBeIgnored(string input) => ValuesToIgnore.Contains(RemoveArrows(Localization.instance.Localize(input)).ToLower().Replace(" ", "")) || input.IsNullOrWhiteSpace();
+    private static string RemoveArrows(string input) => Regex.Replace(input, "<.*?>", "");
 
     [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.OnOpenTrophies))]
     private static class UpdateAlmanacAssets
@@ -2125,7 +2142,6 @@ public static class UpdateAlmanac
             CreateAlmanac.AchievementGUI.SetActive(false);
         }
     }
-    
     public static void UpdateGUI()
     {
         if (!Player.m_localPlayer) return;
@@ -2169,7 +2185,6 @@ public static class UpdateAlmanac
             }
         }
     }
-
     // Pressing interact key would close trophy panel
     // This patch prevents that
     [HarmonyPatch(typeof(ZInput), nameof(ZInput.GetButtonDown))]

@@ -18,6 +18,7 @@ public static class AchievementManager
 {
     public static List<Achievement> AchievementList = new();
     public static readonly List<AchievementYML.AchievementData> AchievementData = new();
+    public static readonly List<Achievement> GroupedAchievements = new();
     public static bool AchievementsRan;
     public static readonly string CollectedRewardKey = "AlmanacCollectedRewards";
 
@@ -42,6 +43,8 @@ public static class AchievementManager
         public Skills.SkillType m_skill;
         public int m_skillAmount;
         public bool m_collectedReward;
+        public string m_achievement_group = "";
+        public int m_achievement_index = 0;
     }
     public static void OnAchievementConfigChanged(object sender, EventArgs e)
     {
@@ -84,9 +87,9 @@ public static class AchievementManager
         AchievementList = list;
 
         UpdateAlmanac.CheckedCompletion = false;
+        if (Player.m_localPlayer) CheckCollectedRewards(Player.m_localPlayer);
         if (checkBool) AchievementsRan = true;
     }
-
     public static void CheckCollectedRewards(Player player)
     {
         if (!player.m_customData.TryGetValue(CollectedRewardKey, out string data)) return;
@@ -95,7 +98,13 @@ public static class AchievementManager
         foreach (string name in SavedCollectedData)
         {
             Achievement achievement = AchievementList.Find(x => x.m_uniqueName == name);
-            if (achievement == null) continue;
+            if (achievement == null)
+            {
+                Achievement groupedAchievement = GroupedAchievements.Find(x => x.m_uniqueName == name);
+                if (groupedAchievement == null) continue;
+                groupedAchievement.m_collectedReward = true;
+                continue;
+            }
             achievement.m_collectedReward = true;
         }
     }
@@ -103,6 +112,11 @@ public static class AchievementManager
     {
         AlmanacPlugin.AlmanacLogger.LogDebug("Client: Setting achievement completions");
         foreach (Achievement achievement in AchievementList)
+        {
+            SetCompletedAchievement(achievement);
+        }
+
+        foreach (Achievement achievement in GroupedAchievements)
         {
             SetCompletedAchievement(achievement);
         }
@@ -354,7 +368,7 @@ public static class AchievementManager
     {
         List<Achievement> output = new();
         if (!ZNet.instance) return output;
-
+        GroupedAchievements.Clear();
         foreach (AchievementYML.AchievementData YmlData in data)
         {
             Achievement achievement = CreateAchievement(
@@ -379,8 +393,16 @@ public static class AchievementManager
                 Item: YmlData.item,
                 ItemAmount: YmlData.item_amount,
                 Skill: YmlData.skill,
-                SkillAmount: YmlData.skill_amount
+                SkillAmount: YmlData.skill_amount,
+                AchievementGroup: YmlData.achievement_group,
+                AchievementIndex: YmlData.achievement_index
             );
+            if (!achievement.m_achievement_group.IsNullOrWhiteSpace())
+            {
+                if (achievement.m_rewardType is AchievementTypes.AchievementRewardType.StatusEffect) continue;
+                GroupedAchievements.Add(achievement);
+                continue;
+            };
             output.Add(achievement);
         }
 
@@ -401,6 +423,8 @@ public static class AchievementManager
         AchievementTypes.AchievementType Type = AchievementTypes.AchievementType.None,
         string CustomGroupKey = "",
         AchievementTypes.AchievementRewardType RewardType = AchievementTypes.AchievementRewardType.StatusEffect,
+        string AchievementGroup = "",
+        int AchievementIndex = 0,
         string Item = "",
         int ItemAmount = 0,
         string Skill = "",
@@ -425,7 +449,9 @@ public static class AchievementManager
             m_CustomGroupKey = CustomGroupKey,
             m_rewardType = RewardType,
             m_skillAmount = SkillAmount,
-            m_item_amount = ItemAmount
+            m_item_amount = ItemAmount,
+            m_achievement_group = AchievementGroup,
+            m_achievement_index = AchievementIndex
         };
         achievement.m_effectData = new()
         {
@@ -517,5 +543,40 @@ public static class AchievementManager
             "all" => Skills.SkillType.All,
             _ => Skills.SkillType.None,
         };
+    }
+
+    private static Achievement GetCurrentAchievementIndex(string key)
+    {
+        List<Achievement> achievements = GroupedAchievements.FindAll(x => x.m_achievement_group == key);
+        int last = achievements.Count() - 1;
+        List<Achievement> group = achievements.OrderBy(x => x.m_achievement_index).ToList();
+        for (int i = 0; i < achievements.Count(); ++i)
+        {
+            Achievement ach = group[i];
+            if (ach.m_isCompleted && ach.m_collectedReward) continue;
+            return ach;
+        }
+
+        return group[last];
+    }
+
+    private static List<Achievement> GetGroupedAchievement()
+    {
+        Dictionary<string, Achievement> output = new();
+        foreach (Achievement achievement in GroupedAchievements)
+        {
+            if (output.ContainsKey(achievement.m_achievement_group)) continue;
+            output[achievement.m_achievement_group] = GetCurrentAchievementIndex(achievement.m_achievement_group);
+        }
+
+        return output.Values.ToList();
+    }
+
+    public static List<Achievement> GetAchievements()
+    {
+        List<Achievement> output = new(AchievementList);
+        List<Achievement> groups = GetGroupedAchievement();
+        if (groups.Any()) output.AddRange(groups);
+        return output;
     }
 }

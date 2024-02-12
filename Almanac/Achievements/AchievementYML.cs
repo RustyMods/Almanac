@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Almanac.FileSystem;
 using YamlDotNet.Serialization;
 using static Almanac.Achievements.AlmanacEffectManager;
@@ -26,6 +27,8 @@ public static class AchievementYML
         public int goal = 0;
         public int duration = 0;
         public AchievementTypes.AchievementRewardType reward_type = AchievementTypes.AchievementRewardType.StatusEffect;
+        public string achievement_group = "";
+        public int achievement_index = 0;
         public string item = "";
         public int item_amount = 0;
         public string skill = "";
@@ -60,7 +63,7 @@ public static class AchievementYML
             { Modifier.Attack, 1f },
             { Modifier.HealthRegen, 1f },
             { Modifier.StaminaRegen, 1f },
-            { Modifier.RaiseSkills, 1.1f },
+            { Modifier.RaiseSkills, 1f },
             { Modifier.Speed, 1f },
             { Modifier.Noise, 1f },
             { Modifier.MaxCarryWeight, 0f },
@@ -72,14 +75,16 @@ public static class AchievementYML
         };
     }
 
-    public static void InitDefaultAchievements()
+    public static void InitDefaultAchievements(bool overwrite = false)
     {
         ISerializer serializer = new SerializerBuilder().Build();
         AlmanacPaths.CreateFolderDirectories();
+        List<string> paths = Directory.GetFiles(AlmanacPaths.AchievementFolderPath, "*yml").ToList();
+        if (paths.Count > 0 && !overwrite) return;
         foreach (AchievementData achievement in GetDefaultAchievements())
         {
             string path = AlmanacPaths.AchievementFolderPath + Path.DirectorySeparatorChar + achievement.unique_name + ".yml";
-            if (File.Exists(path)) continue;
+            if (File.Exists(path) && !overwrite) continue;
             string data = serializer.Serialize(achievement);
             File.WriteAllText(path, data);
         }
@@ -4216,6 +4221,65 @@ public static class AchievementYML
             }
         };
         output.AddRange(SkillRewards);
+        #endregion
+        #region grouped achievements
+
+        List<AchievementData> GroupedAchievements = new()
+        {
+            new AchievementData()
+            {
+                unique_name = "neck_group_1",
+                display_name = "Neck Hunter",
+                sprite_name = "TrophyNeck",
+                description = "Kill over <color=orange>30</color> necks\n<color=orange>(1/3)</color>",
+                lore = "A viking's journey begins by the waters, facing the necks",
+                defeat_key = "defeated_neck",
+                achievement_group = "neck_group",
+                achievement_index = 1,
+                goal = 30,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                reward_type = AchievementTypes.AchievementRewardType.Item,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                item = "Flint",
+                item_amount = 50,
+            },
+            new AchievementData()
+            {
+                unique_name = "neck_group_2",
+                display_name = "Neck Murderer",
+                sprite_name = "TrophyNeck",
+                description = "Kill over <color=orange>60</color> necks\n<color=orange>(2/3)</color>",
+                lore = "A viking's journey begins by the waters, facing the necks",
+                defeat_key = "defeated_neck",
+                achievement_group = "neck_group",
+                achievement_index = 2,
+                goal = 60,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                reward_type = AchievementTypes.AchievementRewardType.Item,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                item = "Flint",
+                item_amount = 50,
+            },
+            new AchievementData()
+            {
+                unique_name = "neck_group_3",
+                display_name = "Neck Craze",
+                sprite_name = "TrophyNeck",
+                description = "Kill over <color=orange>90</color> necks\n<color=orange>(3/3)</color>",
+                lore = "A viking's journey begins by the waters, facing the necks",
+                defeat_key = "defeated_neck",
+                achievement_group = "neck_group",
+                achievement_index = 3,
+                goal = 90,
+                achievement_type = AchievementTypes.AchievementType.CustomKills,
+                reward_type = AchievementTypes.AchievementRewardType.Item,
+                start_effects = new List<string>() { "sfx_coins_placed" },
+                item = "Flint",
+                item_amount = 50,
+            },
+        };
+        
+        output.AddRange(GroupedAchievements);
         #endregion
         return output;
     }

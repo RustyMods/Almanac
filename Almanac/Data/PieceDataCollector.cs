@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Almanac.FileSystem;
+using BepInEx;
 using UnityEngine;
 
 namespace Almanac.Data;
@@ -228,6 +229,7 @@ public static class PieceDataCollector
         foreach (GameObject GO in AllObjects)
         {
             if (!GO.GetComponent<Piece>()) continue;
+            if (GO.name.IsNullOrWhiteSpace()) continue;
             allPieces.Add(GO);
         }
     }

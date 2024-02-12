@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Text;
+using Almanac.Achievements;
 using Almanac.Data;
+using Almanac.FileSystem;
 using static Almanac.AlmanacPlugin;
 
 namespace Almanac.Utilities;
@@ -56,6 +58,14 @@ public static class TerminalCommands
                 double kilobytes = size / 1024.0;
                 
                 AlmanacLogger.LogInfo("Almanac Custom Data size: " + kilobytes + " kilobytes");
+            });
+
+        Terminal.ConsoleCommand AlmanacWriteDefaultAchievements = new("almanac_write_Default_achievements",
+            "Write default achievements to file", args =>
+            {
+                AlmanacLogger.LogInfo("Almanac writing default achievements to file");
+                AlmanacLogger.LogInfo(AlmanacPaths.AchievementFolderPath);
+                AchievementYML.InitDefaultAchievements(true);
             });
     }
 }

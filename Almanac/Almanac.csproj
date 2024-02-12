@@ -155,24 +155,11 @@
         <None Include="App.config" />
     </ItemGroup>
     <ItemGroup>
-        <EmbeddedResource Include="..\..\..\..\..\Downloads\AlmanacLogo.png">
-          <Link>icons\AlmanacLogo.png</Link>
-        </EmbeddedResource>
         <EmbeddedResource Include="..\..\..\evennewerbundles\almanacbundle">
           <Link>assets\almanacbundle</Link>
         </EmbeddedResource>
         <Content Include=".gitignore" />
         <Content Include="environment.props" />
-        <EmbeddedResource Include="icons\arrowIcon.png" />
-        <EmbeddedResource Include="icons\axeIcon.png" />
-        <EmbeddedResource Include="icons\pickaxeIcon.png" />
-        <EmbeddedResource Include="icons\sledgeIcon.png" />
-        <EmbeddedResource Include="icons\swordIcon.png" />
-        <EmbeddedResource Include="icons\fireIcon.png" />
-        <EmbeddedResource Include="icons\frostIcon.png" />
-        <EmbeddedResource Include="icons\lightningIcon.png" />
-        <EmbeddedResource Include="icons\poisonIcon.png" />
-        <EmbeddedResource Include="icons\spiritIcon.png" />
         <EmbeddedResource Include="icons\AlmanacIconButton.png" />
         <EmbeddedResource Include="icons\arrow_basic.png" />
         <EmbeddedResource Include="icons\bone_skull.png" />
@@ -200,6 +187,7 @@
         <EmbeddedResource Include="icons\sword_basic_blue.png" />
         <EmbeddedResource Include="icons\wood_log.png" />
         <EmbeddedResource Include="icons\wood_logs_three.png" />
+        <EmbeddedResource Include="icons\Checkmark.png" />
         <Content Include="ILRepack.targets" />
         <Content Include="Libs\LocalizationManager.dll">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

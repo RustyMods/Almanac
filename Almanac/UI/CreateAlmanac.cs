@@ -6,6 +6,7 @@ using Almanac.Utilities;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
+using UnityEngine.PlayerLoop;
 using UnityEngine.UI;
 using YamlDotNet.Serialization;
 using static Almanac.Utilities.Utility;
@@ -33,6 +34,8 @@ public static class CreateAlmanac
 
     private static Image PanelImage = null!;
     private static Image AchievementPanelImage = null!;
+
+    private static GameObject AchievementCheckmark = null!;
     public static void OnPanelTransparencyConfigChange(object sender, EventArgs e)
     {
         PanelImage.color = AlmanacPlugin._PanelImage.Value is AlmanacPlugin.Toggle.On ? Color.clear : Color.white;
@@ -99,6 +102,51 @@ public static class CreateAlmanac
         PanelButton.fontSizeMax = 20;
         PanelButton.text = Localization.instance.Localize("$almanac_stats_button");
     }
+    public static void SetCheckmarkVisible()
+    {
+        AchievementCheckmark.SetActive(Categories.SelectedTab == "$almanac_achievements_button");
+    }
+    private static void CreateFilterCompletedAchievementsButton(GameObject parent)
+    {
+        GameObject button = new GameObject("completed_achievements");
+        RectTransform rect = button.AddComponent<RectTransform>();
+        rect.anchoredPosition = new Vector2(150f, 905f);
+        rect.sizeDelta = new Vector2(50f, 50f);
+        rect.SetParent(parent.transform);
+        
+        button.SetActive(true);
+
+        Image icon = button.AddComponent<Image>();
+        icon.sprite = SpriteManager.Checkmark;
+        icon.type = Image.Type.Simple;
+        icon.pixelsPerUnitMultiplier = 1f;
+        icon.preserveAspect = true;
+
+        Button component = button.AddComponent<Button>();
+        component.interactable = true;
+        component.enabled = true;
+        component.targetGraphic = icon;
+        component.transition = Selectable.Transition.ColorTint;
+        component.colors = new ColorBlock()
+        {
+            highlightedColor = new Color(1f, 1f, 1f, 1f),
+            pressedColor = new Color(0.5f, 0.5f, 0.5f, 1f),
+            disabledColor = new Color(0f, 0f, 0f, 1f),
+            colorMultiplier = 1f,
+            fadeDuration = 0.1f,
+            normalColor = new Color(0.5f, 0.5f, 0.5f, 1f),
+            selectedColor = Color.white
+        };
+        component.onClick.AddListener(() =>
+        {
+            if (!InventoryGui.instance) return;
+            UpdateAlmanac.DestroyTrophies(InventoryGui.instance);
+            UpdateAlmanac.UpdateAchievementList(InventoryGui.instance, AchievementManager.GetAchievements(), true);
+        });
+        button.AddComponent<ButtonSfx>().m_sfxPrefab = CacheAssets.ButtonSFX.m_sfxPrefab;
+        
+        AchievementCheckmark = button;
+    }
     private static void ToggleButtonOptions()
     {
         if (UpdateAlmanac.isMetricsActive)
@@ -110,7 +158,6 @@ public static class CreateAlmanac
             UpdateAlmanac.UpdateMetricsPanel();
         }
     }
-
     private static void CreateAchievementPanel(InventoryGui GUI)
     {
         if (AchievementGUI != null) return;
@@ -207,7 +254,6 @@ public static class CreateAlmanac
         
         AchievementButton.onClick.AddListener(OnClickAchievement);
     }
-
     private static void OnClickAchievement()
     {
         if (!Player.m_localPlayer) return;
@@ -321,7 +367,6 @@ public static class CreateAlmanac
             }
         }
     }
-
     private static void EditPanelItem()
     {
         Transform type = Utils.FindChild(CacheAssets.Item.transform, "$part_infoType");
@@ -343,7 +388,6 @@ public static class CreateAlmanac
         }
         
     }
-
     private static void EditDropItem()
     {
         Transform title = Utils.FindChild(CacheAssets.Drops.transform, "$part_title");
@@ -369,7 +413,6 @@ public static class CreateAlmanac
             nameText.color = Color.white;
         }
     }
-
     private static void EditTitleItem()
     {
         Transform text = CacheAssets.ItemTitle.transform.Find("$part_text");
@@ -379,7 +422,6 @@ public static class CreateAlmanac
         TextMeshProUGUI component = AddTextMeshProGUI(text.gameObject, true, TextWrappingModes.NoWrap);
         component.fontSize = 16;
     }
-
     private static void EditLeaderboardItem()
     {
         if (CacheAssets.LeaderboardItem.TryGetComponent(out Image leaderboardBkg))
@@ -433,7 +475,6 @@ public static class CreateAlmanac
             }
         }
     }
-
     private static void EditInventoryGUI(InventoryGui GUI)
     {
         Transform info = Utils.FindChild(GUI.m_inventoryRoot.transform, "Info");
@@ -446,7 +487,6 @@ public static class CreateAlmanac
         if (openTrophiesToolTip) openTrophiesToolTip.m_text = "$almanac_name";
         if (trophiesOpenImage) trophiesOpenImage.sprite = SpriteManager.AlmanacIcon;
     }
-
     private static GameObject CreateCreaturePanelElement()
     {
         GameObject CreatureElement = new GameObject("element");
@@ -490,7 +530,6 @@ public static class CreateAlmanac
 
         return CreatureElement;
     }
-    
     private static void AddSearchBar()
     {
         GameObject searchBar = Object.Instantiate(CacheAssets.SearchBar, CacheAssets.TrophiesFrame);
@@ -502,7 +541,6 @@ public static class CreateAlmanac
         InputField SearchField = Utils.FindChild(searchBar.transform, "$part_searchbar").GetComponent<InputField>();
         SearchField.onValueChanged.AddListener(FilterList);
     }
-
     private static void EditTrophyElement(InventoryGui instance)
     {
         GameObject ElementOutline = new GameObject("$part_outline");
@@ -518,7 +556,6 @@ public static class CreateAlmanac
         
         ElementOutline.SetActive(false);
     }
-
     private static void FilterList(string value) => UpdateAlmanac.UpdateList(InventoryGui.m_instance, value);
 
     [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.Awake))]
@@ -539,6 +576,7 @@ public static class CreateAlmanac
             AddSearchBar();
             EditLeaderboardItem();
             EditTrophyElement(__instance);
+            CreateFilterCompletedAchievementsButton(__instance.m_trophiesPanel);
             if (CreaturePanelElement == null) CreaturePanelElement = CreateCreaturePanelElement();
             CreatureDataCollector.GetSortedCreatureData();
             CreatureLists.InitCreatureLists();

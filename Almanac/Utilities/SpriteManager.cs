@@ -31,7 +31,8 @@ public static class SpriteManager
     private static readonly Sprite? silverCoinsIcon = RegisterSprite("silver_coins_many.png");
     private static readonly Sprite? woodLogIcon = RegisterSprite("wood_log.png");
     private static readonly Sprite? woodLogsIcon = RegisterSprite("wood_logs_three.png");
-
+    private static readonly Sprite? ringGoldMagic = RegisterSprite("ring_gold_magic.png");
+    public static readonly Sprite? Checkmark = RegisterSprite("Checkmark.png");
     public static bool GetSprite(string name, out Sprite? sprite)
     {
         sprite = name switch
@@ -61,6 +62,8 @@ public static class SpriteManager
             "coins_silver" => silverCoinsIcon,
             "log" => woodLogIcon,
             "log_stack" => woodLogsIcon,
+            "ring" => ringGoldMagic,
+            "checkmark" => Checkmark,
             _ => null
         };
 

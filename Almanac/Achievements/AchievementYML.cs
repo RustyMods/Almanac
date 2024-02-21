@@ -80,7 +80,7 @@ public static class AchievementYML
         ISerializer serializer = new SerializerBuilder().Build();
         AlmanacPaths.CreateFolderDirectories();
         List<string> paths = Directory.GetFiles(AlmanacPaths.AchievementFolderPath, "*yml").ToList();
-        if (paths.Count > 0 && !overwrite) return;
+        if (paths.Count > 0 && !overwrite && AlmanacPlugin._LoadDefaultAchievements.Value is AlmanacPlugin.Toggle.Off) return;
         foreach (AchievementData achievement in GetDefaultAchievements())
         {
             string path = AlmanacPaths.AchievementFolderPath + Path.DirectorySeparatorChar + achievement.unique_name + ".yml";

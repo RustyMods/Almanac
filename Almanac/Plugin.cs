@@ -24,7 +24,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.1.5";
+        internal const string ModVersion = "3.1.6";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         private static readonly string ConfigFileName = ModGUID + ".cfg";
@@ -136,6 +136,7 @@ namespace Almanac
         public static ConfigEntry<Toggle> _PanelImage = null!;
         public static ConfigEntry<Color> _OutlineColor = null!;
         public static ConfigEntry<KeyCode> _AlmanacHotKey = null!;
+        public static ConfigEntry<Toggle> _LoadDefaultAchievements = null!;
         public enum DataPath { LocalLow, ConfigPath }
         private void InitConfigs()
         {
@@ -170,7 +171,10 @@ namespace Almanac
             _OutlineColor = config("1 - General", "6 - Outline Color", Color.yellow, "Set the color of the outline for selected items");
 
             _AlmanacHotKey = config("1 - General", "7 - Almanac HotKey", KeyCode.F6, "Set the hotkey to open almanac", false);
-            
+
+            _LoadDefaultAchievements = config("1 - General", "8 - Load Default Achievements", Toggle.Off,
+                "If on, Almanac will write any missing default achievements to file", false);
+
         }
         #endregion
 

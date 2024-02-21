@@ -287,4 +287,65 @@ version 3.1.3 - Adds custom creature groups
 - To use these groups with your achievements, the name of your file becomes the key to the group.
 - As an example, your file name is: "Custom_Brutes.yml", then you use "Custom_Brutes" as the key.
 
+#### Example Achievement File
+
+```yaml
+unique_name: make sure this is a unique name
+display_name: ''
+sprite_name: prefab ID or almanac icon name
+description: ''
+lore: ''
+start_message: ''
+stop_message: ''
+tooltip: ''
+defeat_key: ''
+achievement_type: PlainsCreatures
+custom_group_key: ''
+goal: 0
+duration: 0
+reward_type: StatusEffect
+achievement_group: ''
+achievement_index: 0
+item: ''
+item_amount: 0
+skill: ''
+skill_amount: 0
+start_effects:
+- sfx_coins_placed
+stop_effects: []
+damage_modifiers:
+- m_type: Blunt
+  m_modifier: Normal
+- m_type: Slash
+  m_modifier: Normal
+- m_type: Pierce
+  m_modifier: Normal
+- m_type: Chop
+  m_modifier: Normal
+- m_type: Pickaxe
+  m_modifier: Normal
+- m_type: Fire
+  m_modifier: Normal
+- m_type: Frost
+  m_modifier: Normal
+- m_type: Lightning
+  m_modifier: Normal
+- m_type: Poison
+  m_modifier: Normal
+- m_type: Spirit
+  m_modifier: Normal
+modifiers:
+  Attack: 1
+  HealthRegen: 1
+  StaminaRegen: 1
+  RaiseSkills: 1
+  Speed: 1
+  Noise: 1
+  MaxCarryWeight: 0
+  Stealth: 1
+  RunStaminaDrain: 1
+  DamageReduction: 0
+  FallDamage: 1
+  EitrRegen: 1
+```
 

@@ -23,49 +23,60 @@ public static class TerminalCommands
             return true;
         }), isSecret: true, optionsFetcher: (Terminal.ConsoleOptionsFetcher)(() => CreatureDataCollector.TempDefeatKeys));
         
-        Terminal.ConsoleCommand AlmanacListKeys = new Terminal.ConsoleCommand("almanac_list_keys",
-            "List of defeat keys",
-            args =>
+        Terminal.ConsoleCommand AlmanacCommands = new("almanac", "Utility commands for the almanac",
+            (Terminal.ConsoleEventFailable)(args =>
             {
-                List<string> globalKeys = ZoneSystem.instance.GetGlobalKeys();
-                AlmanacLogger.LogInfo("Global keys: ");
-                foreach (string key in globalKeys)
+                if (args.Length < 2) return false;
+                switch (args[1])
                 {
-                    AlmanacLogger.LogInfo(key);
-                }
-                AlmanacLogger.LogInfo("Private Keys: ");
-                foreach (string key in CreatureDataCollector.TempDefeatKeys)
-                {
-                    if (ZoneSystem.instance.GetGlobalKey(key))
-                    {
-                        AlmanacLogger.LogInfo(key);
-                    };
-                }
-            });
+                    case "help":
+                        Dictionary<string, string> commandsInfo = new()
+                        {
+                            { "keys", "Similar to listkeys, almanac keys prints all the current global keys and private keys the player current holds" },
+                            { "size", "Prints the kilobyte size of almanac custom data saved in player save file" },
+                            { "write_achievements", "Writes to file all the default achievements for the almanac" }
+                        };
+                        foreach (KeyValuePair<string, string> kvp in commandsInfo)
+                        {
+                            AlmanacLogger.LogInfo($"almanac {kvp.Key}: {kvp.Value}");
+                        }
+                        break;
+                    case "keys":
+                        List<string> globalKeys = ZoneSystem.instance.GetGlobalKeys();
+                        AlmanacLogger.LogInfo("Global keys: ");
+                        foreach (string key in globalKeys)
+                        {
+                            AlmanacLogger.LogInfo(key);
+                        }
+                        AlmanacLogger.LogInfo("Private Keys: ");
+                        foreach (string key in CreatureDataCollector.TempDefeatKeys)
+                        {
+                            if (ZoneSystem.instance.GetGlobalKey(key))
+                            {
+                                AlmanacLogger.LogInfo(key);
+                            };
+                        }
+                        break;
+                    case "size":
+                        if (!Player.m_localPlayer) return false;
+                        if (!Player.m_localPlayer.m_customData.TryGetValue(PlayerStats.AlmanacStatsKey, out string data))
+                        {
+                            AlmanacLogger.LogInfo("No Almanac custom player data found");
+                            return false;
+                        }
 
-        Terminal.ConsoleCommand AlmanacDataSize = new Terminal.ConsoleCommand("almanac_size",
-            "Prints out the data size of player custom data",
-            args =>
-            {
-                if (!Player.m_localPlayer) return;
-                if (!Player.m_localPlayer.m_customData.TryGetValue(PlayerStats.AlmanacStatsKey, out string data))
-                {
-                    AlmanacLogger.LogInfo("No Almanac custom player data found");
-                    return;
-                }
-
-                int size = Encoding.UTF8.GetByteCount(data);
-                double kilobytes = size / 1024.0;
+                        int size = Encoding.UTF8.GetByteCount(data);
+                        double kilobytes = size / 1024.0;
                 
-                AlmanacLogger.LogInfo("Almanac Custom Data size: " + kilobytes + " kilobytes");
-            });
-
-        Terminal.ConsoleCommand AlmanacWriteDefaultAchievements = new("almanac_write_Default_achievements",
-            "Write default achievements to file", args =>
-            {
-                AlmanacLogger.LogInfo("Almanac writing default achievements to file");
-                AlmanacLogger.LogInfo(AlmanacPaths.AchievementFolderPath);
-                AchievementYML.InitDefaultAchievements(true);
-            });
+                        AlmanacLogger.LogInfo("Almanac Custom Data size: " + kilobytes + " kilobytes");
+                        break;
+                    case "write_achievements":
+                        AlmanacLogger.LogInfo("Almanac writing default achievements to file");
+                        AlmanacLogger.LogInfo(AlmanacPaths.AchievementFolderPath);
+                        AchievementYML.InitDefaultAchievements(true);
+                        break;
+                }
+                return true;
+            }),optionsFetcher: ()=> new () { "help", "keys", "size", "write_achievements" });
     }
 }

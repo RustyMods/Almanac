@@ -6,7 +6,6 @@ using Almanac.Utilities;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
-using UnityEngine.PlayerLoop;
 using UnityEngine.UI;
 using YamlDotNet.Serialization;
 using static Almanac.Utilities.Utility;
@@ -48,8 +47,8 @@ public static class CreateAlmanac
         
         rect.anchoredPosition = new Vector2(x, y);
     }
-    public static bool IsPanelActive() => AlmanacGUI && AlmanacGUI.activeSelf;
-    public static bool IsAchievementActive() => AchievementGUI && AchievementGUI.activeSelf;
+    public static bool IsPanelActive() => AlmanacGUI && AlmanacGUI.activeInHierarchy;
+    public static bool IsAchievementActive() => AchievementGUI && AchievementGUI.activeInHierarchy;
     private static void CreateAlmanacPanel(InventoryGui GUI)
     {
         if (AlmanacGUI != null) return; 
@@ -587,6 +586,7 @@ public static class CreateAlmanac
     [HarmonyPatch(typeof(PlayerController), nameof(PlayerController.FixedUpdate))]
     private static class PlayerControllerOverride
     {
-        private static bool Prefix() => !IsPanelActive() || !IsAchievementActive();
+        private static bool Prefix() =>
+            !(InventoryGui.instance && InventoryGui.instance.m_trophiesPanel.activeInHierarchy);
     }
 }

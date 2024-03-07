@@ -44,6 +44,7 @@ public static class AchievementManager
         public int m_skillAmount;
         public bool m_collectedReward;
         public string m_achievement_group = "";
+        public string m_customPickable = "";
         public int m_achievement_index = 0;
     }
     public static void OnAchievementConfigChanged(object sender, EventArgs e)
@@ -384,6 +385,7 @@ public static class AchievementManager
                 Goal: YmlData.goal,
                 Type: YmlData.achievement_type,
                 CustomGroupKey: YmlData.custom_group_key,
+                CustomPickableName: YmlData.custom_pickable_name,
                 Duration: YmlData.duration,
                 StartEffects: YmlData.start_effects.ToArray(),
                 StopEffects: YmlData.stop_effects.ToArray(),
@@ -422,6 +424,7 @@ public static class AchievementManager
         Sprite? Sprite = null,
         AchievementTypes.AchievementType Type = AchievementTypes.AchievementType.None,
         string CustomGroupKey = "",
+        string CustomPickableName = "",
         AchievementTypes.AchievementRewardType RewardType = AchievementTypes.AchievementRewardType.StatusEffect,
         string AchievementGroup = "",
         int AchievementIndex = 0,
@@ -447,6 +450,7 @@ public static class AchievementManager
             m_sprite = Sprite,
             m_type = Type,
             m_CustomGroupKey = CustomGroupKey,
+            m_customPickable = CustomPickableName,
             m_rewardType = RewardType,
             m_skillAmount = SkillAmount,
             m_item_amount = ItemAmount,

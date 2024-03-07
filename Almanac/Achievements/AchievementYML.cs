@@ -24,6 +24,7 @@ public static class AchievementYML
         public string defeat_key = "";
         public AchievementTypes.AchievementType achievement_type;
         public string custom_group_key = "";
+        public string custom_pickable_name = "";
         public int goal = 0;
         public int duration = 0;
         public AchievementTypes.AchievementRewardType reward_type = AchievementTypes.AchievementRewardType.StatusEffect;

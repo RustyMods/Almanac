@@ -67,7 +67,8 @@ public static class AchievementTypes
         CustomKills,
         RuneStones,
         Recipes,
-        CustomCreatureGroups
+        CustomCreatureGroups,
+        CustomPickable
     }
 
     public enum AchievementRewardType

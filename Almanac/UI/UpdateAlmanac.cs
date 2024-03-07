@@ -638,6 +638,16 @@ public static class UpdateAlmanac
                 SelectedAchievement.m_isCompleted = kills >= SelectedAchievement.m_goal;
                 UpdateAchievementList(kills, SelectedAchievement.m_goal);
                 break;
+            case AchievementTypes.AchievementType.CustomPickable:
+                if (!LocalPlayerData.Player_Pickable_Data.TryGetValue(SelectedAchievement.m_customPickable, out int pickableValue))
+                {
+                    CreateAlmanac.AchievementPanelDesc.text = "<color=red>Failed to find pickable value</color>";
+                    break;
+                }
+                CreateAlmanac.AchievementPanelDesc.text = FormatProgressText(pickableValue, SelectedAchievement.m_goal);
+                SelectedAchievement.m_isCompleted = pickableValue >= SelectedAchievement.m_goal;
+                UpdateAchievementList(pickableValue, SelectedAchievement.m_goal);
+                break;
             case AchievementTypes.AchievementType.MeadowCreatures:
                 SetAchievementPanel(CreatureLists.GetBiomeCreatures(Heightmap.Biome.Meadows));
                 break;
@@ -1821,7 +1831,7 @@ public static class UpdateAlmanac
                 {"$almanac_pickaxe3", itemData.m_shared.m_damages.m_pickaxe.ToString(CultureInfo.CurrentCulture) + "<color=orange> +</color>" + itemData.m_shared.m_damagesPerLevel.m_pickaxe.ToString(CultureInfo.CurrentCulture) + "<color=orange>/lvl</color>"},
                 {"$almanac_fire3", itemData.m_shared.m_damages.m_fire.ToString(CultureInfo.CurrentCulture) + "<color=orange> +</color>" + itemData.m_shared.m_damagesPerLevel.m_fire.ToString(CultureInfo.CurrentCulture) + "<color=orange>/lvl</color>"},
                 {"$almanac_frost3", itemData.m_shared.m_damages.m_frost.ToString(CultureInfo.CurrentCulture) + "<color=orange> +</color>" + itemData.m_shared.m_damagesPerLevel.m_frost.ToString(CultureInfo.CurrentCulture) + "<color=orange>/lvl</color>"},
-                {"$almanac_lighting3", itemData.m_shared.m_damages.m_lightning.ToString(CultureInfo.CurrentCulture) + "<color=orange> +</color>" + itemData.m_shared.m_damagesPerLevel.m_lightning.ToString(CultureInfo.CurrentCulture) + "<color=orange>/lvl</color>"},
+                {"$almanac_lightning3", itemData.m_shared.m_damages.m_lightning.ToString(CultureInfo.CurrentCulture) + "<color=orange> +</color>" + itemData.m_shared.m_damagesPerLevel.m_lightning.ToString(CultureInfo.CurrentCulture) + "<color=orange>/lvl</color>"},
                 {"$almanac_poison3", itemData.m_shared.m_damages.m_poison.ToString(CultureInfo.CurrentCulture) + "<color=orange> +</color>" + itemData.m_shared.m_damagesPerLevel.m_poison.ToString(CultureInfo.CurrentCulture) + "<color=orange>/lvl</color>"},
                 {"$almanac_spirit3", itemData.m_shared.m_damages.m_spirit.ToString(CultureInfo.CurrentCulture) + "<color=orange> +</color>" + itemData.m_shared.m_damagesPerLevel.m_spirit.ToString(CultureInfo.CurrentCulture) + "<color=orange>/lvl</color>"},
                 {"$almanac_attack_force3", itemData.m_shared.m_attackForce.ToString(CultureInfo.CurrentCulture)},

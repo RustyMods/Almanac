@@ -3,6 +3,7 @@ using System.Text;
 using Almanac.Achievements;
 using Almanac.Data;
 using Almanac.FileSystem;
+using YamlDotNet.Serialization;
 using static Almanac.AlmanacPlugin;
 
 namespace Almanac.Utilities;
@@ -34,7 +35,9 @@ public static class TerminalCommands
                         {
                             { "keys", "Similar to listkeys, almanac keys prints all the current global keys and private keys the player current holds" },
                             { "size", "Prints the kilobyte size of almanac custom data saved in player save file" },
-                            { "write_achievements", "Writes to file all the default achievements for the almanac" }
+                            { "write_achievements", "Writes to file all the default achievements for the almanac" },
+                            { "pickable [PrefabName]", "Prints total amount of picked item, you can use 'all' to print a list of entire pickable data"},
+                            { "almanac_data [defeat key]", "Prints total kills and deaths for defeat key"}
                         };
                         foreach (KeyValuePair<string, string> kvp in commandsInfo)
                         {
@@ -75,8 +78,31 @@ public static class TerminalCommands
                         AlmanacLogger.LogInfo(AlmanacPaths.AchievementFolderPath);
                         AchievementYML.InitDefaultAchievements(true);
                         break;
+                    case "pickable":
+                        if (args.Length < 3)
+                        {
+                            AlmanacLogger.LogInfo("Invalid information: ex: almanac pickable [pickable prefab name]");
+                            return false;
+                        }
+
+                        if (args[2] == "all")
+                        {
+                            foreach (KeyValuePair<string, int> kvp in PlayerStats.LocalPlayerData.Player_Pickable_Data)
+                            {
+                                AlmanacLogger.LogInfo(kvp.Key + " : " + kvp.Value);
+                            }
+                            return true;
+                        }
+
+                        if (!PlayerStats.GetPlayerPickableValue(args[2], out int pickableValue))
+                        {
+                            AlmanacLogger.LogInfo("Failed to get pickable value");
+                            return false;
+                        };
+                        AlmanacLogger.LogInfo(Player.m_localPlayer.GetHoverName() + " has picked " + pickableValue + " " + args[2]);
+                        break;
                 }
                 return true;
-            }),optionsFetcher: ()=> new () { "help", "keys", "size", "write_achievements" });
+            }),optionsFetcher: ()=> new () { "help", "keys", "size", "write_achievements", "pickable" });
     }
 }

@@ -6,6 +6,7 @@ using Almanac.FileSystem;
 using Almanac.Utilities;
 using BepInEx;
 using HarmonyLib;
+using UnityEngine;
 using YamlDotNet.Serialization;
 using Patches = Almanac.FileSystem.Patches;
 
@@ -237,6 +238,46 @@ public static class PlayerStats
         }
     }
 
+    // [HarmonyPatch(typeof(Player), nameof(Player.EatFood))]
+    // private static class PlayerEatFoodFix
+    // {
+    //     private static void Postfix(Player __instance)
+    //     {
+    //         
+    //     }
+    // }
+
+    [HarmonyPatch(typeof(Pickable), nameof(Pickable.Interact))]
+    private static class PickableInteractPatch
+    {
+        private static void Postfix(Pickable __instance, Humanoid character, ref bool __result)
+        {
+            if (!__instance || !character || !__result) return;
+            
+            Player? player = character as Player;
+            if (player == null) return;
+
+            string itemName = __instance.name.Replace("(Clone)", string.Empty).Replace("Pickable_",string.Empty);
+            
+            if (LocalPlayerData.Player_Pickable_Data.ContainsKey(itemName))
+            {
+                ++LocalPlayerData.Player_Pickable_Data[itemName];
+            }
+            else
+            {
+                LocalPlayerData.Player_Pickable_Data[itemName] = 1;
+            }
+        }
+    }
+
+    public static bool GetPlayerPickableValue(string key, out int value)
+    {
+        value = 0;
+        if (!LocalPlayerData.Player_Pickable_Data.TryGetValue(key, out int pickableValue)) return false;
+        value = pickableValue;
+        return true;
+    }
+
     private static void LoadPlayerData()
     {
         if (!Player.m_localPlayer) return;
@@ -250,6 +291,7 @@ public static class PlayerStats
 public class CustomData
 {
     public Dictionary<string, KillDeaths> Player_Kill_Deaths = new();
+    public Dictionary<string, int> Player_Pickable_Data = new();
 }
 
 [Serializable]

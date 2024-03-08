@@ -611,6 +611,26 @@
   "almanac_fish_jump_frequency": "Frecvența Săriturii",
   "almanac_fish_fast": "Pește Rapid",
   "almanac_fish_bait_name": "Numele Momelii",
-  "almanac_fish_bait_chance": "Șansa de Cârlig cu Momelă"
-
+  "almanac_fish_bait_chance": "Șansa de Cârlig cu Momelă",
+  "almanac_block_radius": "Rază de Bloc",
+  "almanac_connect_radius": "Rază de Conexiune",
+  "almanac_ammo_non_equip": "Muniție neechipată",
+  "almanac_collected_reward_already": "Recompensă deja colectată",
+  "almanac_inventory_full": "Inventar plin",
+  "almanac_collected_item": "Colectat",
+  "almanac_failed_to_find_skill": "Nu s-a putut găsi abilitatea",
+  "almanac_raised_skill": "Abilitate ridicată",
+  "almanac_by": "de",
+  "almanac_quests_button": "Recompense",
+  "almanac_failed_to_spawn_bounty": "Generarea recompensei a eșuat",
+  "almanac_bounty_how_to": "Apăsați pe iconița de mai jos pentru a accepta recompensa",
+  "almanac_reward": "Recompensă",
+  "almanac_xp": "EXP",
+  "almanac_bounty": "Recompensă",
+  "almanac_biome": "Biome",
+  "almanac_level": "Nivel",
+  "almanac_hunt": "Vânătoare",
+  "almanac_already_have_active_bounty": "Deja aveți o recompensă activă",
+  "almanac_bounty_escaped": "Recompensa a evadat",
+  "almanac_raised": "Ridicată"
 }

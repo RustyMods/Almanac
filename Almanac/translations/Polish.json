@@ -611,7 +611,27 @@
   "almanac_fish_jump_frequency": "Częstotliwość skoku",
   "almanac_fish_fast": "Szybka ryba",
   "almanac_fish_bait_name": "Nazwa przynęty",
-  "almanac_fish_bait_chance": "Szanse na złowienie na przynętę"
-
+  "almanac_fish_bait_chance": "Szanse na złowienie na przynętę",
+  "almanac_block_radius": "Promień bloku",
+  "almanac_connect_radius": "Promień połączenia",
+  "almanac_ammo_non_equip": "Amunicja nie wyposażona",
+  "almanac_collected_reward_already": "Już zebrana nagroda",
+  "almanac_inventory_full": "Inwentarz jest pełny",
+  "almanac_collected_item": "Zebrane",
+  "almanac_failed_to_find_skill": "Nie udało się znaleźć umiejętności",
+  "almanac_raised_skill": "Podniesiona umiejętność",
+  "almanac_by": "przez",
+  "almanac_quests_button": "Nagrody",
+  "almanac_failed_to_spawn_bounty": "Nie udało się wygenerować nagrody",
+  "almanac_bounty_how_to": "Naciśnij ikonę poniżej, aby zaakceptować nagrodę",
+  "almanac_reward": "Nagroda",
+  "almanac_xp": "PD",
+  "almanac_bounty": "Nagroda",
+  "almanac_biome": "Biomy",
+  "almanac_level": "Poziom",
+  "almanac_hunt": "Polowanie",
+  "almanac_already_have_active_bounty": "Masz już aktywną nagrodę",
+  "almanac_bounty_escaped": "Nagroda uciekła",
+  "almanac_raised": "Podniesiono"
 
 }

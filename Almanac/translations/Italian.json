@@ -611,7 +611,27 @@
   "almanac_fish_jump_frequency": "Frequenza di salto",
   "almanac_fish_fast": "Pesce veloce",
   "almanac_fish_bait_name": "Nome dell'esca",
-  "almanac_fish_bait_chance": "Probabilità di amo dell'esca"
-
+  "almanac_fish_bait_chance": "Probabilità di amo dell'esca",
+  "almanac_block_radius": "Raggio del blocco",
+  "almanac_connect_radius": "Raggio di connessione",
+  "almanac_ammo_non_equip": "Munizioni non equipaggiate",
+  "almanac_collected_reward_already": "Ricompensa già raccolta",
+  "almanac_inventory_full": "Inventario pieno",
+  "almanac_collected_item": "Raccolto",
+  "almanac_failed_to_find_skill": "Impossibile trovare l'abilità",
+  "almanac_raised_skill": "Abilità aumentata",
+  "almanac_by": "da",
+  "almanac_quests_button": "Ricompense",
+  "almanac_failed_to_spawn_bounty": "Impossibile generare la ricompensa",
+  "almanac_bounty_how_to": "Premi l'icona qui sotto per accettare la ricompensa",
+  "almanac_reward": "Ricompensa",
+  "almanac_xp": "PE",
+  "almanac_bounty": "Ricompensa",
+  "almanac_biome": "Bioma",
+  "almanac_level": "Livello",
+  "almanac_hunt": "Caccia",
+  "almanac_already_have_active_bounty": "Hai già una ricompensa attiva",
+  "almanac_bounty_escaped": "Ricompensa fuggita",
+  "almanac_raised": "Aumentato"
 }
   

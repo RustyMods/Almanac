@@ -611,6 +611,26 @@
   "almanac_fish_jump_frequency": "점프 빈도",
   "almanac_fish_fast": "빠른 물고기",
   "almanac_fish_bait_name": "미끼 이름",
-  "almanac_fish_bait_chance": "미끼 낚시 확률"
-
+  "almanac_fish_bait_chance": "미끼 낚시 확률",
+  "almanac_block_radius": "블록 반경",
+  "almanac_connect_radius": "연결 반경",
+  "almanac_ammo_non_equip": "비장착 탄약",
+  "almanac_collected_reward_already": "이미 수집한 보상",
+  "almanac_inventory_full": "인벤토리가 가득 찼습니다",
+  "almanac_collected_item": "수집됨",
+  "almanac_failed_to_find_skill": "기술을 찾지 못했습니다",
+  "almanac_raised_skill": "기술 상승",
+  "almanac_by": "으로",
+  "almanac_quests_button": "보상",
+  "almanac_failed_to_spawn_bounty": "보상 생성 실패",
+  "almanac_bounty_how_to": "아래 아이콘을 눌러서 보상을 수락하세요",
+  "almanac_reward": "보상",
+  "almanac_xp": "경험치",
+  "almanac_bounty": "보상",
+  "almanac_biome": "생물 군계",
+  "almanac_level": "레벨",
+  "almanac_hunt": "사냥",
+  "almanac_already_have_active_bounty": "이미 활성화된 보상이 있습니다",
+  "almanac_bounty_escaped": "보상이 탈출했습니다",
+  "almanac_raised": "상승했습니다"
 }

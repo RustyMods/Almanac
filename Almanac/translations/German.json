@@ -611,6 +611,26 @@
   "almanac_fish_jump_frequency": "Sprunghäufigkeit",
   "almanac_fish_fast": "Schneller Fisch",
   "almanac_fish_bait_name": "Ködernamen",
-  "almanac_fish_bait_chance": "Köderhakenchance"
-
+  "almanac_fish_bait_chance": "Köderhakenchance",
+  "almanac_block_radius": "Blockradius",
+  "almanac_connect_radius": "Verbindungsradius",
+  "almanac_ammo_non_equip": "Nicht ausgerüstete Munition",
+  "almanac_collected_reward_already": "Bereits gesammelte Belohnung",
+  "almanac_inventory_full": "Inventar ist voll",
+  "almanac_collected_item": "Gesammelt",
+  "almanac_failed_to_find_skill": "Fertigkeit konnte nicht gefunden werden",
+  "almanac_raised_skill": "Fertigkeit verbessert",
+  "almanac_by": "von",
+  "almanac_quests_button": "Belohnungen",
+  "almanac_failed_to_spawn_bounty": "Belohnung konnte nicht generiert werden",
+  "almanac_bounty_how_to": "Drücken Sie auf das Symbol unten, um die Belohnung anzunehmen",
+  "almanac_reward": "Belohnung",
+  "almanac_xp": "EXP",
+  "almanac_bounty": "Belohnung",
+  "almanac_biome": "Biome",
+  "almanac_level": "Stufe",
+  "almanac_hunt": "Jagd",
+  "almanac_already_have_active_bounty": "Bereits aktive Belohnung vorhanden",
+  "almanac_bounty_escaped": "Belohnung entkommen",
+  "almanac_raised": "Erhöht"
 }

@@ -611,6 +611,26 @@
   "almanac_fish_jump_frequency": "Šuolio dažnumas",
   "almanac_fish_fast": "Greita žuvis",
   "almanac_fish_bait_name": "Prisukamo pavadinimas",
-  "almanac_fish_bait_chance": "Prisukamo šiurkščiavimo galimybė"
-
+  "almanac_fish_bait_chance": "Prisukamo šiurkščiavimo galimybė",
+  "almanac_block_radius": "Blokų spindulys",
+  "almanac_connect_radius": "Ryšio spindulys",
+  "almanac_ammo_non_equip": "Neįrengtas šaudmenų",
+  "almanac_collected_reward_already": "Jau surinkta apdovanojimas",
+  "almanac_inventory_full": "Inventorius pilnas",
+  "almanac_collected_item": "Surinkta",
+  "almanac_failed_to_find_skill": "Nepavyko rasti įgūdžio",
+  "almanac_raised_skill": "Įgūdis pakeltas",
+  "almanac_by": "pagal",
+  "almanac_quests_button": "Apdovanojimai",
+  "almanac_failed_to_spawn_bounty": "Nepavyko sukurti apdovanojimo",
+  "almanac_bounty_how_to": "Spauskite žemiau esantį piktogramą, kad priimtumėte apdovanojimą",
+  "almanac_reward": "Apdovanojimas",
+  "almanac_xp": "EXP",
+  "almanac_bounty": "Apdovanojimas",
+  "almanac_biome": "Biomas",
+  "almanac_level": "Lygis",
+  "almanac_hunt": "Medžioklė",
+  "almanac_already_have_active_bounty": "Jau yra aktyvus apdovanojimas",
+  "almanac_bounty_escaped": "Apdovanojimas pabėgo",
+  "almanac_raised": "Pakeltas"
 }

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Almanac.Achievements;
+using Almanac.Bounties;
 using Almanac.Data;
 using BepInEx;
 using ServerSync;
@@ -165,6 +166,45 @@ public static class ServerSyncedData
         CreatureLists.CustomCreatureGroups = data.ToDictionary(
             kvp => kvp.Key,
             kvp => CreatureLists.ValidatedPrefabs(kvp.Value));
+    }
+
+    #endregion
+    
+    #region Bounties
+
+    public static readonly CustomSyncedValue<string>
+        ServerBountyList = new(AlmanacPlugin.ConfigSync, "BountyList", "");
+
+    public static void InitServerBountyList()
+    {
+        if (AlmanacPlugin.WorkingAsType is AlmanacPlugin.WorkingAs.Client)
+        {
+            AlmanacPlugin.AlmanacLogger.LogDebug("Client: Awaiting server bounties");
+            ServerBountyList.ValueChanged += OnServerBountyListChange;
+        }
+        else
+        {
+            if (BountyManager.ValidatedBounties.Count <= 0) return;
+            AlmanacPlugin.AlmanacLogger.LogDebug("Server: Initializing server bounties");
+            ISerializer serializer = new SerializerBuilder().Build();
+            string data = serializer.Serialize(BountyManager.ValidatedBounties);
+            ServerBountyList.Value = data;
+        }
+    }
+
+    public static void UpdateServerBountyList()
+    {
+        AlmanacPlugin.AlmanacLogger.LogDebug("Server: Initializing server bounties");
+        var serializer = new SerializerBuilder().Build();
+        var data = serializer.Serialize(BountyManager.ValidatedBounties);
+        ServerBountyList.Value = data;
+    }
+
+    private static void OnServerBountyListChange()
+    {
+        AlmanacPlugin.AlmanacLogger.LogDebug("Client: Received server bounties");
+        BountyManager.InitBounties();
+        
     }
 
     #endregion

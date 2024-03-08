@@ -611,7 +611,27 @@
   "almanac_fish_jump_frequency": "Hyppysuhteen taajuus",
   "almanac_fish_fast": "Nopea kala",
   "almanac_fish_bait_name": "Syötin nimi",
-  "almanac_fish_bait_chance": "Mahdollisuus koukuttaa syödillä"
-
+  "almanac_fish_bait_chance": "Mahdollisuus koukuttaa syödillä",
+  "almanac_block_radius": "Lohkon säde",
+  "almanac_connect_radius": "Yhdistys säde",
+  "almanac_ammo_non_equip": "Ei-varustettu ammus",
+  "almanac_collected_reward_already": "Jo kerätty palkinto",
+  "almanac_inventory_full": "Inventaario on täynnä",
+  "almanac_collected_item": "Kerätty",
+  "almanac_failed_to_find_skill": "Taitoa ei löytynyt",
+  "almanac_raised_skill": "Taito nostettu",
+  "almanac_by": "tekijä",
+  "almanac_quests_button": "Palkinnot",
+  "almanac_failed_to_spawn_bounty": "Palkintoa ei voitu luoda",
+  "almanac_bounty_how_to": "Paina alla olevaa kuvaketta hyväksyäksesi palkinnon",
+  "almanac_reward": "Palkinto",
+  "almanac_xp": "XP",
+  "almanac_bounty": "Palkinto",
+  "almanac_biome": "Elinympäristö",
+  "almanac_level": "Taso",
+  "almanac_hunt": "Metsästys",
+  "almanac_already_have_active_bounty": "Sinulla on jo aktiivinen palkinto",
+  "almanac_bounty_escaped": "Palkinto päässyt pakoon",
+  "almanac_raised": "Nostettu"
 
 }

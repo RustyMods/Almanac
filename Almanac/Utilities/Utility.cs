@@ -10,6 +10,44 @@ namespace Almanac.Utilities;
 public static class Utility
 {
     private static readonly Color32 OrangeColor = new (255, 164, 0, 255);
+
+    public static string FormatBountyRewardText(Bounties.Data.ValidatedBounty data)
+    {
+        switch (data.m_rewardType)
+        {
+            case Bounties.Data.QuestRewardType.Item:
+                if (data.m_itemReward == null) return "";
+                return $"$almanac_reward:\n <color=orange>{data.m_itemAmount}</color>x {data.m_itemReward.m_itemData.m_shared.m_name}";
+            case Bounties.Data.QuestRewardType.Skill:
+                return $"$almanac_reward:\n <color=orange>{data.m_skillAmount}</color>$almanac_xp <color=orange>{ConvertSkills(data.m_skill)}</color>";
+            default:
+                return "";
+        }
+    }
+
+    public static string FormatBountyDetails(Bounties.Data.ValidatedBounty data)
+    {
+        return $"$almanac_bounty: <color=yellow>{data.m_critter.name}</color>" 
+               + $"\n$almanac_biome: <color=orange>{data.m_biome}</color>"
+               + $"\n$almanac_health: <color=orange>{data.m_health}</color>"
+               + $"\n$almanac_damage Multiplier: <color=orange>{data.m_damageMultiplier}</color>"
+               + $"\n$almanac_level: <color=orange>{data.level}</color>"
+               + "\n" + FormatBountyDamages(data);
+    }
+
+    private static string FormatBountyDamages(Bounties.Data.ValidatedBounty data)
+    {
+        string result = "";
+        if (data.m_damages.blunt > 0) result += $"$almanac_blunt: <color=orange>{data.m_damages.blunt}</color> ";
+        if (data.m_damages.slash > 0) result += $"$almanac_slash: <color=orange>{data.m_damages.slash}</color> ";
+        if (data.m_damages.pierce > 0) result += $"$almanac_pierce: <color=orange>{data.m_damages.pierce}</color> ";
+        if (data.m_damages.fire > 0) result += $"$almanac_fire: <color=orange>{data.m_damages.fire}</color> ";
+        if (data.m_damages.frost > 0) result += $"$almanac_frost: <color=orange>{data.m_damages.frost}</color> ";
+        if (data.m_damages.lightning > 0) result += $"$almanac_lightning: <color=orange>{data.m_damages.lightning}</color> ";
+        if (data.m_damages.poison > 0) result += $"$almanac_poison: <color=orange>{data.m_damages.poison}</color> ";
+        if (data.m_damages.spirit > 0) result += $"$almanac_spirit: <color=orange>{data.m_damages.spirit}</color> ";
+        return result;
+    }
     public static string ReplaceSpaceWithNewLine(string input) => input.Replace(' ', '\n');
     public static void MergeDictionaries(Dictionary<string, string> destination, Dictionary<string, string> source)
     {

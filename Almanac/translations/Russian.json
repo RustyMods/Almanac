@@ -612,7 +612,27 @@
   "almanac_fish_jump_frequency": "Частота прыжков",
   "almanac_fish_fast": "Быстрая рыба",
   "almanac_fish_bait_name": "Название наживки",
-  "almanac_fish_bait_chance": "Шанс крючка с наживкой"
-
+  "almanac_fish_bait_chance": "Шанс крючка с наживкой",
+  "almanac_block_radius": "Радиус блока",
+  "almanac_connect_radius": "Радиус подключения",
+  "almanac_ammo_non_equip": "Неэкипированный боеприпас",
+  "almanac_collected_reward_already": "Уже собранная награда",
+  "almanac_inventory_full": "Инвентарь полон",
+  "almanac_collected_item": "Собрано",
+  "almanac_failed_to_find_skill": "Не удалось найти навык",
+  "almanac_raised_skill": "Повышенный навык",
+  "almanac_by": "от",
+  "almanac_quests_button": "Награды",
+  "almanac_failed_to_spawn_bounty": "Не удалось создать награду",
+  "almanac_bounty_how_to": "Нажмите на иконку ниже, чтобы принять награду",
+  "almanac_reward": "Награда",
+  "almanac_xp": "Опыт",
+  "almanac_bounty": "Награда",
+  "almanac_biome": "Биом",
+  "almanac_level": "Уровень",
+  "almanac_hunt": "Охота",
+  "almanac_already_have_active_bounty": "Уже есть активная награда",
+  "almanac_bounty_escaped": "Награда убежала",
+  "almanac_raised": "Повышен"
 
 }

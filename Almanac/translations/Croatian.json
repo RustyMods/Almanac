@@ -611,6 +611,26 @@
   "almanac_fish_jump_frequency": "Frekvencija skakanja",
   "almanac_fish_fast": "Brza riba",
   "almanac_fish_bait_name": "Naziv mamca",
-  "almanac_fish_bait_chance": "Šansa za udicu mamcem"
-
+  "almanac_fish_bait_chance": "Šansa za udicu mamcem",
+  "almanac_block_radius": "Radijus bloka",
+  "almanac_connect_radius": "Radijus povezivanja",
+  "almanac_ammo_non_equip": "Municija bez opreme",
+  "almanac_collected_reward_already": "Već prikupljena nagrada",
+  "almanac_inventory_full": "Inventar je pun",
+  "almanac_collected_item": "Prikupljeno",
+  "almanac_failed_to_find_skill": "Nije uspjelo pronalaženje vještine",
+  "almanac_raised_skill": "Povećana vještina",
+  "almanac_by": "od",
+  "almanac_quests_button": "Nagrade",
+  "almanac_failed_to_spawn_bounty": "Nije uspjelo stvaranje nagrade",
+  "almanac_bounty_how_to": "Pritisnite ikonu ispod za prihvaćanje nagrade",
+  "almanac_reward": "Nagrada",
+  "almanac_xp": "Iskustvo",
+  "almanac_bounty": "Nagradnja",
+  "almanac_biome": "Biomi",
+  "almanac_level": "Razina",
+  "almanac_hunt": "Lov",
+  "almanac_already_have_active_bounty": "Već imate aktivnu nagradu",
+  "almanac_bounty_escaped": "Nagrada pobjegla",
+  "almanac_raised": "Povećano"
 }

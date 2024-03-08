@@ -611,6 +611,26 @@
   "almanac_fish_jump_frequency": "Hoppstyttri",
   "almanac_fish_fast": "Fljóttur fiskur",
   "almanac_fish_bait_name": "Nafn á agni",
-  "almanac_fish_bait_chance": "Hakihætta á agni"
-
+  "almanac_fish_bait_chance": "Hakihætta á agni",
+  "almanac_block_radius": "Kubbur radíus",
+  "almanac_connect_radius": "Tengingarradíus",
+  "almanac_ammo_non_equip": "Ekki búnaðarbyssa",
+  "almanac_collected_reward_already": "Nú þegar safnaði verðlaun",
+  "almanac_inventory_full": "Vinnslan er full",
+  "almanac_collected_item": "Safnað",
+  "almanac_failed_to_find_skill": "Mistókst að finna hæfileika",
+  "almanac_raised_skill": "Hækkaður hæfileiki",
+  "almanac_by": "af",
+  "almanac_quests_button": "Verðlaun",
+  "almanac_failed_to_spawn_bounty": "Mistókst að spawna verðlaun",
+  "almanac_bounty_how_to": "Ýtið á tákninu hér fyrir neðan til að samþykkja verðlaunin",
+  "almanac_reward": "Verðlaun",
+  "almanac_xp": "XP",
+  "almanac_bounty": "Verðlaun",
+  "almanac_biome": "Líffræði",
+  "almanac_level": "Stig",
+  "almanac_hunt": "Veidd",
+  "almanac_already_have_active_bounty": "Þú hefur þegar virka verðlaun",
+  "almanac_bounty_escaped": "Verðlaun flúin",
+  "almanac_raised": "Hækkað"
 }

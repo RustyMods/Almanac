@@ -611,6 +611,26 @@
   "almanac_fish_jump_frequency": "Ugrás gyakorisága",
   "almanac_fish_fast": "Gyors hal",
   "almanac_fish_bait_name": "Csalétnév",
-  "almanac_fish_bait_chance": "Csaléthorog esély"
-
+  "almanac_fish_bait_chance": "Csaléthorog esély",
+  "almanac_block_radius": "Blokk sugara",
+  "almanac_connect_radius": "Kapcsolat sugara",
+  "almanac_ammo_non_equip": "Nem felszerelt lőszer",
+  "almanac_collected_reward_already": "Már begyűjtött jutalom",
+  "almanac_inventory_full": "A raktár tele van",
+  "almanac_collected_item": "Begyűjtött",
+  "almanac_failed_to_find_skill": "Nem sikerült megtalálni a képességet",
+  "almanac_raised_skill": "Képesség növelve",
+  "almanac_by": "által",
+  "almanac_quests_button": "Jutalmak",
+  "almanac_failed_to_spawn_bounty": "Nem sikerült jutalmat létrehozni",
+  "almanac_bounty_how_to": "Nyomja meg az alábbi ikont a jutalom elfogadásához",
+  "almanac_reward": "Jutalom",
+  "almanac_xp": "Tapasztalati pontok",
+  "almanac_bounty": "Jutalom",
+  "almanac_biome": "Életközösség",
+  "almanac_level": "Szint",
+  "almanac_hunt": "Vadászat",
+  "almanac_already_have_active_bounty": "Már van aktív jutalom",
+  "almanac_bounty_escaped": "Jutalom megszökött",
+  "almanac_raised": "Növekedett"
 }

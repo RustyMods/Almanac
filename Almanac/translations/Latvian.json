@@ -611,6 +611,26 @@
   "almanac_fish_jump_frequency": "Lēciena biežums",
   "almanac_fish_fast": "Ātra zivs",
   "almanac_fish_bait_name": "Barības nosaukums",
-  "almanac_fish_bait_chance": "Barības āķa iespējas"
-
+  "almanac_fish_bait_chance": "Barības āķa iespējas",
+  "almanac_block_radius": "Bloka rādiuss",
+  "almanac_connect_radius": "Savienojuma rādiuss",
+  "almanac_ammo_non_equip": "Neapģērbta munīcija",
+  "almanac_collected_reward_already": "Jau savākta atlīdzība",
+  "almanac_inventory_full": "Inventārs ir pilns",
+  "almanac_collected_item": "Savākts",
+  "almanac_failed_to_find_skill": "Neizdevās atrast prasmi",
+  "almanac_raised_skill": "Paaugstināta prasme",
+  "almanac_by": "ar",
+  "almanac_quests_button": "Atlīdzības",
+  "almanac_failed_to_spawn_bounty": "Neizdevās radīt atlīdzību",
+  "almanac_bounty_how_to": "Nospiediet ikonu zemāk, lai pieņemtu atlīdzību",
+  "almanac_reward": "Atlīdzība",
+  "almanac_xp": "Pieredze",
+  "almanac_bounty": "Atlīdzība",
+  "almanac_biome": "Bioms",
+  "almanac_level": "Līmenis",
+  "almanac_hunt": "Medības",
+  "almanac_already_have_active_bounty": "Jau ir aktīva atlīdzība",
+  "almanac_bounty_escaped": "Atlīdzība pabēga",
+  "almanac_raised": "Paaugstināta"
 }

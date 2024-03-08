@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using Almanac.Achievements;
+using Almanac.Bounties;
 using Almanac.FileSystem;
 using Almanac.Utilities;
 using BepInEx;
 using HarmonyLib;
-using UnityEngine;
 using YamlDotNet.Serialization;
 using Patches = Almanac.FileSystem.Patches;
 
@@ -69,6 +69,7 @@ public static class PlayerStats
             }
         }
         TerminalCommands.AddAlmanacCommands();
+        // Bounty.AddBountyCommands();
     }
 
     private static void ReadCustomTrackerData(string CurrentData, bool hasFile, bool hasCustomData = true)

@@ -610,6 +610,26 @@
   "almanac_fish_jump_frequency": "Честота на скок",
   "almanac_fish_fast": "Бърза Риба",
   "almanac_fish_bait_name": "Име на примамката",
-  "almanac_fish_bait_chance": "Шанс за хващане с примамка"
-
+  "almanac_fish_bait_chance": "Шанс за хващане с примамка",
+  "almanac_block_radius": "Радиус на блока",
+  "almanac_connect_radius": "Радиус на връзка",
+  "almanac_ammo_non_equip": "Боеприпаси извън екипировка",
+  "almanac_collected_reward_already": "Вече събрана награда",
+  "almanac_inventory_full": "Инвентарът е пълен",
+  "almanac_collected_item": "Събрано",
+  "almanac_failed_to_find_skill": "Неуспешно търсене на умение",
+  "almanac_raised_skill": "Повишено умение",
+  "almanac_by": "от",
+  "almanac_quests_button": "Награди",
+  "almanac_failed_to_spawn_bounty": "Неуспешно появяване на награда",
+  "almanac_bounty_how_to": "Натиснете иконата по-долу, за да приемете наградата",
+  "almanac_reward": "Награда",
+  "almanac_xp": "Опит",
+  "almanac_bounty": "Награда",
+  "almanac_biome": "Биом",
+  "almanac_level": "Ниво",
+  "almanac_hunt": "Лов",
+  "almanac_already_have_active_bounty": "Вече имате активна награда",
+  "almanac_bounty_escaped": "Наградата избяга",
+  "almanac_raised": "Повишено"
 }

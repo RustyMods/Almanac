@@ -611,6 +611,26 @@
   "almanac_fish_jump_frequency": "Frecuencia de saltos",
   "almanac_fish_fast": "Pez rápido",
   "almanac_fish_bait_name": "Nombre del cebo",
-  "almanac_fish_bait_chance": "Probabilidad de anzuelo con cebo"
-
+  "almanac_fish_bait_chance": "Probabilidad de anzuelo con cebo",
+  "almanac_block_radius": "Radio de Bloque",
+  "almanac_connect_radius": "Radio de Conexión",
+  "almanac_ammo_non_equip": "Munición no Equipada",
+  "almanac_collected_reward_already": "Recompensa ya Recogida",
+  "almanac_inventory_full": "Inventario Lleno",
+  "almanac_collected_item": "Recogido",
+  "almanac_failed_to_find_skill": "No se Pudo Encontrar la Habilidad",
+  "almanac_raised_skill": "Habilidad Aumentada",
+  "almanac_by": "por",
+  "almanac_quests_button": "Recompensas",
+  "almanac_failed_to_spawn_bounty": "No se Pudo Generar la Recompensa",
+  "almanac_bounty_how_to": "Presiona el icono debajo para aceptar la recompensa",
+  "almanac_reward": "Recompensa",
+  "almanac_xp": "EXP",
+  "almanac_bounty": "Recompensa",
+  "almanac_biome": "Bioma",
+  "almanac_level": "Nivel",
+  "almanac_hunt": "Caza",
+  "almanac_already_have_active_bounty": "Ya tienes una recompensa activa",
+  "almanac_bounty_escaped": "Recompensa Escapada",
+  "almanac_raised": "Aumentada"
 }

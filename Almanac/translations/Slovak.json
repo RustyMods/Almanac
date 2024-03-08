@@ -611,6 +611,26 @@
   "almanac_fish_jump_frequency": "Frekvencia skokov",
   "almanac_fish_fast": "Rýchla ryba",
   "almanac_fish_bait_name": "Názov návnady",
-  "almanac_fish_bait_chance": "Šanca na háčik s návnadou"
-
+  "almanac_fish_bait_chance": "Šanca na háčik s návnadou",
+  "almanac_block_radius": "Polomer bloku",
+  "almanac_connect_radius": "Polomer pripojenia",
+  "almanac_ammo_non_equip": "Neoprávnené strelivo",
+  "almanac_collected_reward_already": "Už zbieraná odmena",
+  "almanac_inventory_full": "Inventár je plný",
+  "almanac_collected_item": "Zbierané",
+  "almanac_failed_to_find_skill": "Nepodarilo sa nájsť schopnosť",
+  "almanac_raised_skill": "Zvýšená schopnosť",
+  "almanac_by": "od",
+  "almanac_quests_button": "Odmeny",
+  "almanac_failed_to_spawn_bounty": "Nepodarilo sa vytvoriť odmenu",
+  "almanac_bounty_how_to": "Stlačte ikonu nižšie pre prijatie odmeny",
+  "almanac_reward": "Odmena",
+  "almanac_xp": "EXP",
+  "almanac_bounty": "Odmena",
+  "almanac_biome": "Bióm",
+  "almanac_level": "Úroveň",
+  "almanac_hunt": "Poľovanie",
+  "almanac_already_have_active_bounty": "Už máte aktívnu odmenu",
+  "almanac_bounty_escaped": "Odmena unikla",
+  "almanac_raised": "Zvýšená"
 }

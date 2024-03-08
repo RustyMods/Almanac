@@ -611,6 +611,26 @@
   "almanac_fish_jump_frequency": "Frequência do Salto",
   "almanac_fish_fast": "Peixe Rápido",
   "almanac_fish_bait_name": "Nome da Isca",
-  "almanac_fish_bait_chance": "Chance do Gancho com Isca"
-
+  "almanac_fish_bait_chance": "Chance do Gancho com Isca",
+  "almanac_block_radius": "Raio do Bloco",
+  "almanac_connect_radius": "Raio de Conexão",
+  "almanac_ammo_non_equip": "Munição Não Equipada",
+  "almanac_collected_reward_already": "Recompensa já Coletada",
+  "almanac_inventory_full": "Inventário Cheio",
+  "almanac_collected_item": "Coletado",
+  "almanac_failed_to_find_skill": "Falha ao Encontrar Habilidade",
+  "almanac_raised_skill": "Habilidade Aumentada",
+  "almanac_by": "por",
+  "almanac_quests_button": "Recompensas",
+  "almanac_failed_to_spawn_bounty": "Falha ao Gerar Recompensa",
+  "almanac_bounty_how_to": "Pressione o ícone abaixo para aceitar a recompensa",
+  "almanac_reward": "Recompensa",
+  "almanac_xp": "XP",
+  "almanac_bounty": "Recompensa",
+  "almanac_biome": "Bioma",
+  "almanac_level": "Nível",
+  "almanac_hunt": "Caçar",
+  "almanac_already_have_active_bounty": "Já possui uma recompensa ativa",
+  "almanac_bounty_escaped": "Recompensa Escapou",
+  "almanac_raised": "Aumentada"
 }

@@ -611,7 +611,27 @@
   "almanac_fish_jump_frequency": "Sprongfrequentie",
   "almanac_fish_fast": "Snelle vis",
   "almanac_fish_bait_name": "Aasnaam",
-  "almanac_fish_bait_chance": "Kans om te haken met aas"
-
+  "almanac_fish_bait_chance": "Kans om te haken met aas",
+  "almanac_block_radius": "Blokstraal",
+  "almanac_connect_radius": "Verbindingsstraal",
+  "almanac_ammo_non_equip": "Niet-uitgeruste munitie",
+  "almanac_collected_reward_already": "Al beloning verzameld",
+  "almanac_inventory_full": "Inventaris vol",
+  "almanac_collected_item": "Verzameld",
+  "almanac_failed_to_find_skill": "Kan vaardigheid niet vinden",
+  "almanac_raised_skill": "Vaardigheid verhoogd",
+  "almanac_by": "door",
+  "almanac_quests_button": "Beloningen",
+  "almanac_failed_to_spawn_bounty": "Kon beloning niet genereren",
+  "almanac_bounty_how_to": "Druk op het pictogram hieronder om de beloning te accepteren",
+  "almanac_reward": "Beloning",
+  "almanac_xp": "XP",
+  "almanac_bounty": "Beloning",
+  "almanac_biome": "Biomen",
+  "almanac_level": "Niveau",
+  "almanac_hunt": "Jacht",
+  "almanac_already_have_active_bounty": "Heeft al een actieve beloning",
+  "almanac_bounty_escaped": "Beloning ontsnapt",
+  "almanac_raised": "Verhoogd"
 
 }

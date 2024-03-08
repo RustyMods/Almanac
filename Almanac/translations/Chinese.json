@@ -611,6 +611,26 @@
   "almanac_fish_jump_frequency": "跳跃频率",
   "almanac_fish_fast": "快速鱼",
   "almanac_fish_bait_name": "鱼饵名称",
-  "almanac_fish_bait_chance": "鱼饵钩子几率"
-
+  "almanac_fish_bait_chance": "鱼饵钩子几率",
+  "almanac_block_radius": "方块半径",
+  "almanac_connect_radius": "连接半径",
+  "almanac_ammo_non_equip": "非装备弹药",
+  "almanac_collected_reward_already": "已经收集奖励",
+  "almanac_inventory_full": "库存已满",
+  "almanac_collected_item": "已收集",
+  "almanac_failed_to_find_skill": "无法找到技能",
+  "almanac_raised_skill": "提升技能",
+  "almanac_by": "通过",
+  "almanac_quests_button": "悬赏",
+  "almanac_failed_to_spawn_bounty": "无法生成赏金",
+  "almanac_bounty_how_to": "按下面的图标接受赏金",
+  "almanac_reward": "奖励",
+  "almanac_xp": "经验",
+  "almanac_bounty": "赏金",
+  "almanac_biome": "生物群系",
+  "almanac_level": "等级",
+  "almanac_hunt": "狩猎",
+  "almanac_already_have_active_bounty": "已经有活跃的赏金",
+  "almanac_bounty_escaped": "赏金逃跑了",
+  "almanac_raised": "提升"
 }

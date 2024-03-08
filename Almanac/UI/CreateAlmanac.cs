@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Almanac.Achievements;
+using Almanac.Bounties;
 using Almanac.Data;
 using Almanac.Utilities;
 using HarmonyLib;
@@ -251,7 +252,43 @@ public static class CreateAlmanac
         AchievementPanelButton.fontSizeMax = 20;
         AchievementPanelButton.text = Localization.instance.Localize("$almanac_stats_button");
         
-        AchievementButton.onClick.AddListener(OnClickAchievement);
+        AchievementButton.onClick.AddListener(OnClickAchievementPanel);
+    }
+
+    private static void OnClickAchievementPanel()
+    {
+        if (Categories.SelectedTab == "$almanac_achievement_button")
+        {
+            OnClickAchievement();
+        }
+
+        if (Categories.SelectedTab == "$almanac_quests_button")
+        {
+            OnClickBounty();
+        }
+    }
+
+    private static void OnClickBounty()
+    {
+        Bounty.AcceptBounty(new Bounties.Data.BountyLocation()
+        {
+            data = new Bounties.Data.BountyData()
+            {
+                m_name = UpdateAlmanac.SelectedBounty.m_creatureName,
+                m_damageMultiplier = UpdateAlmanac.SelectedBounty.m_damageMultiplier,
+                m_health = UpdateAlmanac.SelectedBounty.m_health,
+                m_hunter = Player.m_localPlayer.GetPlayerID(),
+                m_rewardType = UpdateAlmanac.SelectedBounty.m_rewardType,
+                m_rewardAmount = UpdateAlmanac.SelectedBounty.m_itemAmount,
+                m_rewardItem = UpdateAlmanac.SelectedBounty.m_itemReward == null ? "" : UpdateAlmanac.SelectedBounty.m_itemReward.name,
+                m_damages = UpdateAlmanac.SelectedBounty.m_damages,
+                m_level = UpdateAlmanac.SelectedBounty.level,
+                m_skillType = UpdateAlmanac.SelectedBounty.m_skill.ToString(),
+                m_skillAmount = UpdateAlmanac.SelectedBounty.m_skillAmount
+            },
+            m_biome = UpdateAlmanac.SelectedBounty.m_biome,
+            m_critter = UpdateAlmanac.SelectedBounty.m_critter,
+        });
     }
     private static void OnClickAchievement()
     {
@@ -287,7 +324,7 @@ public static class CreateAlmanac
             else
             {
                 List<string> collectedData = new(){UpdateAlmanac.SelectedAchievement.m_uniqueName};
-                var collectedRewardData = serializer.Serialize(collectedData);
+                string collectedRewardData = serializer.Serialize(collectedData);
                 Player.m_localPlayer.m_customData[AchievementManager.CollectedRewardKey] = collectedRewardData;
             }
         }

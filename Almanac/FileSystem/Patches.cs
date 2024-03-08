@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Almanac.Achievements;
+using Almanac.Bounties;
 using Almanac.Data;
 using HarmonyLib;
 using YamlDotNet.Serialization;
@@ -18,9 +19,12 @@ public static class Patches
             AlmanacPaths.CreateFolderDirectories();
             AchievementManager.ReadAchievements();
             AchievementManager.InitAchievements(AchievementManager.LoadAchievementData(AchievementManager.AchievementData));
+            BountyManager.InitBounties();
+            
             ServerSyncedData.InitServerAchievements();
             ServerSyncedData.InitServerIgnoreList();
             ServerSyncedData.InitServerCreatureList();
+            ServerSyncedData.InitServerBountyList();
         }
     }
     

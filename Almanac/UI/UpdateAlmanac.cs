@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Almanac.Achievements;
+using Almanac.Bounties;
 using Almanac.Data;
 using Almanac.FileSystem;
 using Almanac.Utilities;
@@ -44,6 +45,7 @@ public static class UpdateAlmanac
     private static CreatureData SelectedCreature = null!;
     private static GameObject SelectedPiece = null!;
     public static Achievement SelectedAchievement = null!;
+    public static Bounties.Data.ValidatedBounty SelectedBounty = null!;
     
     public static bool isMetricsActive;
     public static bool CheckedCompletion;
@@ -163,6 +165,9 @@ public static class UpdateAlmanac
                     break;
                 case "$almanac_leaderboard_button":
                     UpdateLeaderboardPanel();
+                    break;
+                case "$almanac_quests_button":
+                    UpdateBountyList(GUI, BountyManager.RegisteredBounties);
                     break;
                 default:
                     UpdateItemList(GUI, filter.IsNullOrWhiteSpace() 
@@ -354,6 +359,65 @@ public static class UpdateAlmanac
         instance.m_trophieListRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(instance.m_trophieListBaseSize, totalHeight));
         instance.m_trophyListScroll.value = 1f;
     }
+
+    public static void UpdateBountyList(InventoryGui instance, List<Bounties.Data.ValidatedBounty> bounties)
+    {
+        float a1 = 0.0f;
+        for (int index = 0; index < bounties.Count; ++index)
+        {
+            Bounties.Data.ValidatedBounty bounty = bounties[index];
+
+            GameObject gameObject = Object.Instantiate(instance.m_trophieElementPrefab, instance.m_trophieListRoot);
+            
+            gameObject.SetActive(true);
+            RectTransform? transform = gameObject.transform as RectTransform;
+            if (transform == null) continue;
+
+            float x = (index % 7) * TrophySpacing;
+            float y = Mathf.FloorToInt(index / 7f) * -TrophySpacing;
+            
+            transform.anchoredPosition = new Vector2(x, y);
+            
+            a1 = Mathf.Min(a1, transform.anchoredPosition.y - instance.m_trophieListSpace);
+
+            Transform icon = transform.Find("icon_bkg/icon");
+            if (!icon.TryGetComponent(out Image iconImage)) continue;
+            iconImage.sprite = bounty.m_icon ? bounty.m_icon : SpriteManager.AlmanacIcon;
+
+            transform.Find("name").GetComponent<TMP_Text>().text = bounty.m_creatureName;
+            transform.Find("description").GetComponent<TMP_Text>().text = bounty.m_biome.ToString();
+
+            Button button = icon.gameObject.AddComponent<Button>();
+            button.interactable = true;
+            button.targetGraphic = iconImage;
+            button.transition = Selectable.Transition.ColorTint;
+            button.colors = new ColorBlock()
+            {
+                highlightedColor = new Color(1f, 1f, 1f, 1f),
+                pressedColor = new Color(0.5f, 0.5f, 0.5f, 1f),
+                disabledColor = new Color(0f, 0f, 0f, 1f),
+                colorMultiplier = 1f,
+                fadeDuration = 0.1f,
+                normalColor = new Color(0.5f, 0.5f, 0.5f, 1f),
+                selectedColor = Color.white
+            };
+            button.onClick = new Button.ButtonClickedEvent();
+            button.onClick.AddListener(() =>
+            {
+                CreateAlmanac.AchievementPanelButton.text = Localization.instance.Localize(isMetricsActive ? "$almanac_leaderboard_button" : "$almanac_stats_button");
+                CreateAlmanac.AchievementGUI.SetActive(true);
+                CreateAlmanac.AlmanacGUI.SetActive(false);
+                SelectedBounty = bounty;
+                UpdateBountyPanel();
+            });
+            ButtonSfx sfx = icon.gameObject.AddComponent<ButtonSfx>();
+            sfx.m_sfxPrefab = CacheAssets.ButtonSFX.m_sfxPrefab;
+            
+            instance.m_trophyList.Add(gameObject);
+        }
+        instance.m_trophieListRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(instance.m_trophieListBaseSize, -a1));
+        instance.m_trophyListScroll.value = 1f;
+    }
     public static void UpdateAchievementList(InventoryGui instance, List<Achievement> achievements, bool completed = false)
     {
         float a1 = 0.0f;
@@ -418,6 +482,17 @@ public static class UpdateAlmanac
         }
         instance.m_trophieListRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(instance.m_trophieListBaseSize, -a1));
         instance.m_trophyListScroll.value = 1f;
+    }
+
+    private static void UpdateBountyPanel()
+    {
+        DestroyPanelElements();
+        CreateAlmanac.AchievementPanelDesc.text = Localization.instance.Localize("$almanac_bounty_how_to");
+        CreateAlmanac.AchievementPanelIcon.sprite = SelectedBounty.m_icon;
+        CreateAlmanac.AchievementButton.interactable = true;
+        CreateAlmanac.AchievementPanelTitle.text = SelectedBounty.m_creatureName;
+        CreateAlmanac.AchievementPanelLore.text = Localization.instance.Localize(FormatBountyRewardText(SelectedBounty));
+        CreateAlmanac.AchievementPanelTooltip.text = Localization.instance.Localize(FormatBountyDetails(SelectedBounty)) ;
     }
     private static void UpdateAchievementPanel()
     {

@@ -611,6 +611,26 @@
   "almanac_fish_jump_frequency": "Frekvence skoků",
   "almanac_fish_fast": "Rychlá ryba",
   "almanac_fish_bait_name": "Název návnady",
-  "almanac_fish_bait_chance": "Šance na háček návnadou"
-
+  "almanac_fish_bait_chance": "Šance na háček návnadou",
+  "almanac_block_radius": "Poloměr bloku",
+  "almanac_connect_radius": "Poloměr spojení",
+  "almanac_ammo_non_equip": "Nenaváděcí munice",
+  "almanac_collected_reward_already": "Již vybraná odměna",
+  "almanac_inventory_full": "Inventář je plný",
+  "almanac_collected_item": "Vybráno",
+  "almanac_failed_to_find_skill": "Nepodařilo se najít dovednost",
+  "almanac_raised_skill": "Zvýšená dovednost",
+  "almanac_by": "od",
+  "almanac_quests_button": "Odměny",
+  "almanac_failed_to_spawn_bounty": "Selhání při vytvoření odměny",
+  "almanac_bounty_how_to": "Stiskněte ikonu níže pro přijetí odměny",
+  "almanac_reward": "Odměna",
+  "almanac_xp": "Zkušenosti",
+  "almanac_bounty": "Odměna",
+  "almanac_biome": "Biomy",
+  "almanac_level": "Úroveň",
+  "almanac_hunt": "Lov",
+  "almanac_already_have_active_bounty": "Máte již aktivní odměnu",
+  "almanac_bounty_escaped": "Odměna uprchla",
+  "almanac_raised": "Zvýšeno"
 }

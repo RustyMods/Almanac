@@ -611,6 +611,26 @@
   "almanac_fish_jump_frequency": "ジャンプの頻度",
   "almanac_fish_fast": "速い魚",
   "almanac_fish_bait_name": "エサの名前",
-  "almanac_fish_bait_chance": "エサの釣りの確率"
-
+  "almanac_fish_bait_chance": "エサの釣りの確率",
+  "almanac_block_radius": "ブロック半径",
+  "almanac_connect_radius": "接続半径",
+  "almanac_ammo_non_equip": "非装備弾薬",
+  "almanac_collected_reward_already": "すでに収集された報酬",
+  "almanac_inventory_full": "インベントリがいっぱいです",
+  "almanac_collected_item": "収集された",
+  "almanac_failed_to_find_skill": "スキルが見つかりませんでした",
+  "almanac_raised_skill": "スキルが上昇しました",
+  "almanac_by": "によって",
+  "almanac_quests_button": "報酬",
+  "almanac_failed_to_spawn_bounty": "報酬の生成に失敗しました",
+  "almanac_bounty_how_to": "報酬を受け取るには、下のアイコンを押してください",
+  "almanac_reward": "報酬",
+  "almanac_xp": "経験値",
+  "almanac_bounty": "報酬",
+  "almanac_biome": "生物群系",
+  "almanac_level": "レベル",
+  "almanac_hunt": "狩猟",
+  "almanac_already_have_active_bounty": "すでにアクティブな報酬があります",
+  "almanac_bounty_escaped": "報酬が逃げました",
+  "almanac_raised": "上昇しました"
 }

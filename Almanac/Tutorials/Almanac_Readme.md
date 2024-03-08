@@ -99,6 +99,7 @@ Requires a goal to be set:
 - EnemyKills
 - RuneStones
 - Recipes
+- CustomPickable
 ```
 ```
 Knowledge Achievements
@@ -288,7 +289,7 @@ version 3.1.3 - Adds custom creature groups
 - As an example, your file name is: "Custom_Brutes.yml", then you use "Custom_Brutes" as the key.
 
 #### Example Achievement File
-
+Any entries that has no value can be removed
 ```yaml
 unique_name: make sure this is a unique name
 display_name: ''
@@ -306,6 +307,7 @@ duration: 0
 reward_type: StatusEffect
 achievement_group: ''
 achievement_index: 0
+custom_pickable_name: Pickable Prefab Name
 item: ''
 item_amount: 0
 skill: ''

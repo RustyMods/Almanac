@@ -611,6 +611,26 @@
   "almanac_fish_jump_frequency": "Hopp frekvens",
   "almanac_fish_fast": "Rask fisk",
   "almanac_fish_bait_name": "Agens navn",
-  "almanac_fish_bait_chance": "Agens krok sjanse"
-
+  "almanac_fish_bait_chance": "Agens krok sjanse",
+  "almanac_block_radius": "Blokkradius",
+  "almanac_connect_radius": "Tilkoblingsradius",
+  "almanac_ammo_non_equip": "Ikke-utstyrt ammunisjon",
+  "almanac_collected_reward_already": "Allerede samlet belønning",
+  "almanac_inventory_full": "Inventar er fullt",
+  "almanac_collected_item": "Samlet",
+  "almanac_failed_to_find_skill": "Kunne ikke finne ferdighet",
+  "almanac_raised_skill": "Økt ferdighet",
+  "almanac_by": "av",
+  "almanac_quests_button": "Belønninger",
+  "almanac_failed_to_spawn_bounty": "Kunne ikke generere belønning",
+  "almanac_bounty_how_to": "Trykk på ikonet nedenfor for å akseptere belønningen",
+  "almanac_reward": "Belønning",
+  "almanac_xp": "Erfaring",
+  "almanac_bounty": "Belønning",
+  "almanac_biome": "Biomer",
+  "almanac_level": "Nivå",
+  "almanac_hunt": "Jakt",
+  "almanac_already_have_active_bounty": "Har allerede aktiv belønning",
+  "almanac_bounty_escaped": "Belønning unnslapp",
+  "almanac_raised": "Økt"
 }

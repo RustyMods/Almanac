@@ -611,6 +611,26 @@
   "almanac_fish_jump_frequency": "Fréquence de saut",
   "almanac_fish_fast": "Poisson rapide",
   "almanac_fish_bait_name": "Nom de l'appât",
-  "almanac_fish_bait_chance": "Chance d'hameçonnage avec l'appât"
-
+  "almanac_fish_bait_chance": "Chance d'hameçonnage avec l'appât",
+  "almanac_block_radius": "Rayon de bloc",
+  "almanac_connect_radius": "Rayon de connexion",
+  "almanac_ammo_non_equip": "Munitions non équipées",
+  "almanac_collected_reward_already": "Récompense déjà collectée",
+  "almanac_inventory_full": "Inventaire plein",
+  "almanac_collected_item": "Objet collecté",
+  "almanac_failed_to_find_skill": "Impossible de trouver la compétence",
+  "almanac_raised_skill": "Compétence augmentée",
+  "almanac_by": "par",
+  "almanac_quests_button": "Récompenses",
+  "almanac_failed_to_spawn_bounty": "Impossible de générer la récompense",
+  "almanac_bounty_how_to": "Appuyez sur l'icône ci-dessous pour accepter la récompense",
+  "almanac_reward": "Récompense",
+  "almanac_xp": "EXP",
+  "almanac_bounty": "Récompense",
+  "almanac_biome": "Biome",
+  "almanac_level": "Niveau",
+  "almanac_hunt": "Chasse",
+  "almanac_already_have_active_bounty": "Déjà une récompense active",
+  "almanac_bounty_escaped": "Récompense échappée",
+  "almanac_raised": "Augmentée"
 }

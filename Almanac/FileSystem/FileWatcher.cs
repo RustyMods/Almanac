@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using Almanac.Achievements;
+using Almanac.Bounties;
 using Almanac.Data;
 using BepInEx;
 using YamlDotNet.Serialization;
@@ -60,6 +61,18 @@ public static class FileWatcher
 
         ServerPlayerDataListWatcher.Changed += OnServerPlayerDataListChange;
         ServerPlayerDataListWatcher.Created += OnServerPlayerDataListChange;
+
+        FileSystemWatcher ServerBountyListWatcher = new FileSystemWatcher(AlmanacPaths.BountyFolderPath)
+        {
+            Filter = "*.yml",
+            EnableRaisingEvents = true,
+            IncludeSubdirectories = true,
+            SynchronizingObject = ThreadingHelper.SynchronizingObject,
+            NotifyFilter = NotifyFilters.LastWrite
+        };
+        ServerBountyListWatcher.Changed += OnBountyChange;
+        ServerBountyListWatcher.Created += OnBountyChange;
+        ServerBountyListWatcher.Deleted += OnBountyChange;
     }
 
     private static void OnServerPlayerDataListChange(object sender, FileSystemEventArgs e)
@@ -143,5 +156,34 @@ public static class FileWatcher
         {
             ServerSyncedData.UpdateServerCreatureList();
         }
+    }
+
+    private static void OnBountyChange(object sender, FileSystemEventArgs e)
+    {
+
+        string fileName = Path.GetFileName(e.Name);
+        switch (e.ChangeType)
+        {
+            case WatcherChangeTypes.Changed:
+                AlmanacPlugin.AlmanacLogger.LogDebug(fileName + " changed, reloading bounty list");
+                break;
+            case WatcherChangeTypes.Created:
+                AlmanacPlugin.AlmanacLogger.LogDebug(fileName + " created, reloading bounty list");
+                break;
+            case WatcherChangeTypes.Deleted:
+                AlmanacPlugin.AlmanacLogger.LogDebug(fileName + " deleted, reloading bounty list");
+                break;
+        }
+
+        if (AlmanacPlugin.WorkingAsType is not AlmanacPlugin.WorkingAs.Client)
+        {
+            BountyManager.InitBounties();
+            ServerSyncedData.UpdateServerBountyList();
+        }
+        else
+        {
+            BountyManager.InitBounties();
+        }
+        
     }
 }

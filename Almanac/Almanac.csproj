@@ -129,6 +129,11 @@
         <Compile Include="Achievements\AchievementTypes.cs" />
         <Compile Include="Achievements\AchievementYML.cs" />
         <Compile Include="Achievements\CreatureLists.cs" />
+        <Compile Include="Bounties\Bounty.cs" />
+        <Compile Include="Bounties\BountyManager.cs" />
+        <Compile Include="Bounties\BountyPatches.cs" />
+        <Compile Include="Bounties\CachedEffects.cs" />
+        <Compile Include="Bounties\Data.cs" />
         <Compile Include="Data\CreatureDataCollector.cs" />
         <Compile Include="Data\ItemDataCollector.cs" />
         <Compile Include="Data\PieceDataCollector.cs" />

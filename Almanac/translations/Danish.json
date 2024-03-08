@@ -611,7 +611,27 @@
   "almanac_fish_jump_frequency": "Hopfrekvens",
   "almanac_fish_fast": "Hurtig fisk",
   "almanac_fish_bait_name": "Agensnavn",
-  "almanac_fish_bait_chance": "Chancer for at fange med agn"
-
+  "almanac_fish_bait_chance": "Chancer for at fange med agn",
+  "almanac_block_radius": "Blok radius",
+  "almanac_connect_radius": "Forbindelsesradius",
+  "almanac_ammo_non_equip": "Ikke-udstyr ammunitions",
+  "almanac_collected_reward_already": "Allerede indsamlet belønning",
+  "almanac_inventory_full": "Inventar er fuld",
+  "almanac_collected_item": "Indsamlet",
+  "almanac_failed_to_find_skill": "Kunne ikke finde færdighed",
+  "almanac_raised_skill": "Forbedret færdighed",
+  "almanac_by": "af",
+  "almanac_quests_button": "Belønninger",
+  "almanac_failed_to_spawn_bounty": "Kunne ikke generere belønning",
+  "almanac_bounty_how_to": "Tryk på ikonet nedenfor for at acceptere belønningen",
+  "almanac_reward": "Belønning",
+  "almanac_xp": "Erfaring",
+  "almanac_bounty": "Belønning",
+  "almanac_biome": "Biomer",
+  "almanac_level": "Niveau",
+  "almanac_hunt": "Jagt",
+  "almanac_already_have_active_bounty": "Allerede har aktiv belønning",
+  "almanac_bounty_escaped": "Belønning undslap",
+  "almanac_raised": "Forbedret"
 
 }

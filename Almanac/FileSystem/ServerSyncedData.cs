@@ -195,15 +195,15 @@ public static class ServerSyncedData
     public static void UpdateServerBountyList()
     {
         AlmanacPlugin.AlmanacLogger.LogDebug("Server: Initializing server bounties");
-        var serializer = new SerializerBuilder().Build();
-        var data = serializer.Serialize(BountyManager.ValidatedBounties);
+        ISerializer serializer = new SerializerBuilder().Build();
+        string data = serializer.Serialize(BountyManager.ValidatedBounties);
         ServerBountyList.Value = data;
     }
 
     private static void OnServerBountyListChange()
     {
         AlmanacPlugin.AlmanacLogger.LogDebug("Client: Received server bounties");
-        BountyManager.InitBounties();
+        BountyManager.InitBounties(false);
         
     }
 

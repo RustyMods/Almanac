@@ -33,6 +33,7 @@ public static class SpriteManager
     private static readonly Sprite? woodLogsIcon = RegisterSprite("wood_logs_three.png");
     private static readonly Sprite? ringGoldMagic = RegisterSprite("ring_gold_magic.png");
     public static readonly Sprite? Checkmark = RegisterSprite("Checkmark.png");
+    public static readonly Sprite? FlatDaggers = RegisterSprite("Daggers_Icon.png");
     public static bool GetSprite(string name, out Sprite? sprite)
     {
         sprite = name switch

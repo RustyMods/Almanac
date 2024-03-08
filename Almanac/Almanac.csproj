@@ -193,6 +193,7 @@
         <EmbeddedResource Include="icons\wood_log.png" />
         <EmbeddedResource Include="icons\wood_logs_three.png" />
         <EmbeddedResource Include="icons\Checkmark.png" />
+        <EmbeddedResource Include="icons\Daggers_Icon.png" />
         <Content Include="ILRepack.targets" />
         <Content Include="Libs\LocalizationManager.dll">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

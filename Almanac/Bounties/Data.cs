@@ -51,6 +51,7 @@ public static class Data
         public float damage_multiplier = 1f;
         public BountyDamages damages = new();
         public int level = 1;
+        public string defeat_key = "";
     }
 
     public class ValidatedBounty
@@ -68,6 +69,7 @@ public static class Data
         public float m_damageMultiplier = 1f;
         public BountyDamages m_damages = new();
         public int level = 1;
+        public string m_defeatKey = "";
     }
 
     [Serializable]
@@ -95,5 +97,14 @@ public static class Data
         public float lightning = 0f;
         public float poison = 0f;
         public float spirit = 0f;
+    }
+
+    [Serializable]
+    public class BountyInfo
+    {
+        public string prefab = null!;
+        public float health;
+        public string key = null!;
+        public string sprite = "";
     }
 }

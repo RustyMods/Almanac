@@ -1,6 +1,11 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using Almanac.Data;
+using Almanac.FileSystem;
 using Almanac.UI;
+using Almanac.Utilities;
 using BepInEx;
 using UnityEngine;
 using YamlDotNet.Serialization;
@@ -13,7 +18,6 @@ public class Bounty : MonoBehaviour
 {
     public static Data.BountyLocation? ActiveBountyLocation;
     
-    public Data.BountyData _data = null!;
     private static readonly int bountyHash = "QuestBounty".GetStableHashCode();
     private const float maxRadius = 10000f;
     private const float minSpawnDistance = 2f;
@@ -39,7 +43,7 @@ public class Bounty : MonoBehaviour
     public void OnDestroy()
     {
         DestroyPin();
-        if (_character.GetHealth() > 0)
+        if (!_character.IsDead())
         {
             Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$almanac_bounty_escaped");
             ActiveBountyLocation = null;
@@ -79,6 +83,7 @@ public class Bounty : MonoBehaviour
         
         _znv.GetZDO().Set(ZDOVars.s_maxHealth, data.m_health);
         _znv.GetZDO().Set(ZDOVars.s_health, data.m_health);
+        _znv.GetZDO().Set(ZDOVars.s_level, data.m_level);
     }
 
     private void ApplyCharacterData(Data.BountyData data)
@@ -166,7 +171,16 @@ public class Bounty : MonoBehaviour
     {
         if (ActiveBountyLocation != null)
         {
-            Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$almanac_already_have_active_bounty");
+            if (ActiveBountyLocation.m_critter == bountyLocation.m_critter)
+            {
+                Minimap.instance.RemovePin(ActiveBountyLocation.m_pin);
+                ActiveBountyLocation = null;
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Canceled bounty");
+            }
+            else
+            {
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$almanac_already_have_active_bounty");
+            }
             return false;
         }
         if (!FindSpawnLocation(bountyLocation.m_biome, out Vector3 pos)) return false;
@@ -269,7 +283,6 @@ public class Bounty : MonoBehaviour
         GameObject go = UnityEngine.Object.Instantiate(prefab, pos, Quaternion.identity);
 
         Bounty bounty = go.AddComponent<Bounty>();
-        bounty._data = bountyData;
         
         if (go.TryGetComponent(out ZNetView znv))
         {
@@ -335,5 +348,28 @@ public class Bounty : MonoBehaviour
                 m_critter = critter,
             });
         }),isSecret: true);
+
+        Terminal.ConsoleCommand WriteBountyLedger = new("write_bounties", "", args =>
+        {
+            var serializer = new SerializerBuilder().Build();
+            List<Data.BountyInfo> ledger = new();
+            foreach (var creature in CreatureDataCollector.tempCreatureData)
+            {
+                var prefab = creature.name;
+                var key = creature.defeatedKey;
+                var health = creature.health;
+                var trophy = creature.trophyName;
+                var info = new Bounties.Data.BountyInfo
+                {
+                    prefab = prefab,
+                    key = key,
+                    health = health,
+                    sprite = trophy
+                };
+                ledger.Add(info);
+            }
+            File.WriteAllText(AlmanacPaths.BountyFolderPath + Path.DirectorySeparatorChar + "info.txt", serializer.Serialize(ledger));
+
+        });
     }
 }

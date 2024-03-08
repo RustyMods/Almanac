@@ -350,4 +350,51 @@ modifiers:
   FallDamage: 1
   EitrRegen: 1
 ```
+#### Bounties
+New feature with version 3.1.7
+
+Almanac bounties allows for users to select a bounty to hunt down. 
+The system, randomly finds a location using the information given in the YML files and once player enters the area, will spawn said bounty.
+If the player leaves the area, then the bounty will escape. This is to avoid any lingering bounties in the world.
+
+Notes:
+- You can only have one bounty active at a time.
+- You can cancel bounty by selecting the same bounty.
+- damages are additive
+- health is fixed
+- Player who activated bounty must get the last hit to get the reward
+
+Server:
+
+- Server owners can update and create bounties during run-time
+
+#### Example Bounty YML
+```yaml
+creature_prefab_name: Bonemass
+bounty_name: Bonemass the Decaying
+sprite_name: TrophyBonemass
+biome: BlackForest
+reward_type: Skill
+item_reward:
+  item_name: ''
+  amount: 0
+skill_reward:
+  type: Clubs
+  amount: 20000
+bounty_health: 5000
+damage_multiplier: 2
+damages:
+  blunt: 60
+  slash: 0
+  pierce: 0
+  fire: 0
+  frost: 0
+  lightning: 0
+  poison: 30
+  spirit: 0
+level: 3
+defeat_key: defeated_bonemass
+```
+You can delete any void entries
+
 

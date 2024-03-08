@@ -1,9 +1,7 @@
 ﻿# Almanac
 The Valheim Almanac plugin is a comprehensive tool that meticulously indexes creatures, items, equipment, and player achievements, providing a detailed record of the Viking's journey. It seamlessly weaves together a rich tapestry of the player's accomplishments, transforming their adventures into a living achievement system within the expansive world of Valheim.
-### Disclaimer
-Complete overhaul of project!
 
-If you are a Almanac user pre-3.0.0 release. Please make sure to delete your old files as it may cause unwanted errors.
+**NEW FEATURE 3.1.7:** Almanac Bounties
 ### Features
 - Creature data
 - Item data
@@ -12,6 +10,8 @@ If you are a Almanac user pre-3.0.0 release. Please make sure to delete your old
 - Achievement system
   - Achievement Rewards: Items, Skill EXP or Status Effect
 - Leaderboard
+- Bounties
+
 ### Configurations
 - Knowledge wall server synced configuration
 - Achievement server synced configurations
@@ -60,6 +60,8 @@ If you are a Almanac user pre-3.0.0 release. Please make sure to delete your old
 | 3.1.3     | - Added new achievement reward types (Items,Skills,StatusEffect) and a redundancy if almanac fails to get item icon |
 | 3.1.4     | - Added function that updates leaderboard if player is server                                                       |
 | 3.1.5     | - Added feature to create grouped achievements                                                                      |
+| 3.1.6     | 	- Improved terminal commands and tweaked player controller to not move while almanac is open                       |
+| 3.1.7     | - Added new achievement type: CustomPickable and Almanac Bounties                                                   |
 
 ![](https://i.imgur.com/wgmkQTD.png)
 ![](https://i.imgur.com/f8II690.png)

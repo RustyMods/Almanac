@@ -21,6 +21,7 @@ using static Almanac.Data.PlayerStats;
 using static Almanac.UI.Categories;
 using static Almanac.Utilities.Utility;
 using Object = UnityEngine.Object;
+using Utility = Almanac.Utilities.Utility;
 
 namespace Almanac.UI;
 
@@ -366,7 +367,9 @@ public static class UpdateAlmanac
         for (int index = 0; index < bounties.Count; ++index)
         {
             Bounties.Data.ValidatedBounty bounty = bounties[index];
-
+            bool hasKey = Player.m_localPlayer.NoCostCheat() || ZoneSystem.instance.CheckKey(bounty.m_defeatKey) || ZoneSystem.instance.CheckKey(bounty.m_defeatKey, GameKeyType.Player);
+            if (!hasKey) continue;
+            
             GameObject gameObject = Object.Instantiate(instance.m_trophieElementPrefab, instance.m_trophieListRoot);
             
             gameObject.SetActive(true);
@@ -488,7 +491,7 @@ public static class UpdateAlmanac
     {
         DestroyPanelElements();
         CreateAlmanac.AchievementPanelDesc.text = Localization.instance.Localize("$almanac_bounty_how_to");
-        CreateAlmanac.AchievementPanelIcon.sprite = SelectedBounty.m_icon;
+        CreateAlmanac.AchievementPanelIcon.sprite = SpriteManager.FlatDaggers;
         CreateAlmanac.AchievementButton.interactable = true;
         CreateAlmanac.AchievementPanelTitle.text = SelectedBounty.m_creatureName;
         CreateAlmanac.AchievementPanelLore.text = Localization.instance.Localize(FormatBountyRewardText(SelectedBounty));

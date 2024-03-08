@@ -177,12 +177,12 @@ public static class FileWatcher
 
         if (AlmanacPlugin.WorkingAsType is not AlmanacPlugin.WorkingAs.Client)
         {
-            BountyManager.InitBounties();
+            BountyManager.InitBounties(false);
             ServerSyncedData.UpdateServerBountyList();
         }
         else
         {
-            BountyManager.InitBounties();
+            BountyManager.InitBounties(false);
         }
         
     }

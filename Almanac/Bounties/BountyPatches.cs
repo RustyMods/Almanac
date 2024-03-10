@@ -29,25 +29,52 @@ public static class BountyPatches
         private static void Postfix(Player __instance)
         {
             if (!__instance) return;
+            CheckBountyLocation(__instance);
+            CheckTreasureLocation(__instance);
+        }
+    }
 
-            if (Bounty.ActiveBountyLocation == null) return;
-
-            if (Bounty.ActiveBountyLocation.m_spawned) return;
-            
-            if (IsWithinBountyLocation(Bounty.ActiveBountyLocation.m_position, __instance.transform.position, 100f))
+    private static void CheckTreasureLocation(Player instance)
+    {
+        if (TreasureHunt.TreasureHunt.ActiveTreasureLocation == null) return;
+        if (TreasureHunt.TreasureHunt.ActiveTreasureLocation.m_spawned) return;
+        if (IsWithinBountyLocation(TreasureHunt.TreasureHunt.ActiveTreasureLocation.m_pos, instance.transform.position,
+                100f))
+        {
+            Minimap.instance.RemovePin(TreasureHunt.TreasureHunt.ActiveTreasureLocation.m_pin);
+            if (TreasureHunt.TreasureHunt.SpawnTreasure(TreasureHunt.CacheLootBox.GetBarrelPrefab(),
+                    TreasureHunt.TreasureHunt.ActiveTreasureLocation.m_pos, 50f,
+                    TreasureHunt.TreasureHunt.ActiveTreasureLocation.m_data))
             {
-                Minimap.instance.RemovePin(Bounty.ActiveBountyLocation.m_pin);
+                TreasureHunt.TreasureHunt.ActiveTreasureLocation.m_spawned = true;
+            }
+            else
+            {
+                instance.Message(MessageHud.MessageType.Center, "Failed to spawn treasure loot");
+                TreasureHunt.TreasureHunt.ActiveTreasureLocation = null;
+            }
+        }
+    }
+
+    private static void CheckBountyLocation(Player instance)
+    {
+        if (Bounty.ActiveBountyLocation == null) return;
+
+        if (Bounty.ActiveBountyLocation.m_spawned) return;
+            
+        if (IsWithinBountyLocation(Bounty.ActiveBountyLocation.m_position, instance.transform.position, 100f))
+        {
+            Minimap.instance.RemovePin(Bounty.ActiveBountyLocation.m_pin);
                 
-                if (Bounty.SpawnCreature(Bounty.ActiveBountyLocation.m_critter,
-                        __instance.transform.position, 10f, Bounty.ActiveBountyLocation.data))
-                {
-                    Bounty.ActiveBountyLocation.m_spawned = true;
-                }
-                else
-                {
-                    __instance.Message(MessageHud.MessageType.Center, "$almanac_failed_to_spawn_bounty");
-                    Bounty.ActiveBountyLocation = null;
-                }
+            if (Bounty.SpawnCreature(Bounty.ActiveBountyLocation.m_critter,
+                    instance.transform.position, 10f, Bounty.ActiveBountyLocation.data))
+            {
+                Bounty.ActiveBountyLocation.m_spawned = true;
+            }
+            else
+            {
+                instance.Message(MessageHud.MessageType.Center, "$almanac_failed_to_spawn_bounty");
+                Bounty.ActiveBountyLocation = null;
             }
         }
     }

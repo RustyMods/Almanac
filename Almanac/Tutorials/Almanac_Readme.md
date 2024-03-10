@@ -363,6 +363,7 @@ Notes:
 - damages are additive
 - health is fixed
 - Player who activated bounty must get the last hit to get the reward
+- If player does not have defeat_key, he cannot accept bounty
 
 Server:
 

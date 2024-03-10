@@ -20,11 +20,13 @@ public static class Patches
             AchievementManager.ReadAchievements();
             AchievementManager.InitAchievements(AchievementManager.LoadAchievementData(AchievementManager.AchievementData));
             BountyManager.InitBounties();
+            TreasureHunt.TreasureManager.InitTreasureManager();
             
             ServerSyncedData.InitServerAchievements();
             ServerSyncedData.InitServerIgnoreList();
             ServerSyncedData.InitServerCreatureList();
             ServerSyncedData.InitServerBountyList();
+            ServerSyncedData.InitServerTreasureHunt();
         }
     }
     

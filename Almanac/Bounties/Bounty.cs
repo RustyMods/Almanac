@@ -5,7 +5,6 @@ using System.IO;
 using Almanac.Data;
 using Almanac.FileSystem;
 using Almanac.UI;
-using Almanac.Utilities;
 using BepInEx;
 using UnityEngine;
 using YamlDotNet.Serialization;
@@ -19,7 +18,7 @@ public class Bounty : MonoBehaviour
     public static Data.BountyLocation? ActiveBountyLocation;
     
     private static readonly int bountyHash = "QuestBounty".GetStableHashCode();
-    private const float maxRadius = 10000f;
+    private const float maxRadius = 9500f;
     private const float minSpawnDistance = 2f;
     private const float maxYDistance = 10f;
     private const int solidHeightMargin = 1000;
@@ -166,8 +165,8 @@ public class Bounty : MonoBehaviour
         data = deserializer.Deserialize<Data.BountyData>(value);
         return true;
     }
-    
-    public static bool AcceptBounty(Data.BountyLocation bountyLocation)
+
+    private static bool AcceptBounty(Data.BountyLocation bountyLocation)
     {
         if (ActiveBountyLocation != null)
         {
@@ -176,6 +175,7 @@ public class Bounty : MonoBehaviour
                 Minimap.instance.RemovePin(ActiveBountyLocation.m_pin);
                 ActiveBountyLocation = null;
                 Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Canceled bounty");
+                UpdateAlmanac.UpdateBountyPanel();
             }
             else
             {
@@ -192,12 +192,12 @@ public class Bounty : MonoBehaviour
 
         bountyLocation.m_pin = BountyPin;
 
+        ActiveBountyLocation = bountyLocation;
+        
         Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$almanac_hunt " + bountyLocation.data.m_name);
         
         AlmanacPlugin.AlmanacLogger.LogDebug("Successfully added bounty: " + bountyLocation.data.m_name);
         AlmanacPlugin.AlmanacLogger.LogDebug("Location: " + pos.x + " " + pos.z);
-        
-        ActiveBountyLocation = bountyLocation;
         
         return true;
     }
@@ -294,6 +294,34 @@ public class Bounty : MonoBehaviour
         CachedEffects.DoneSpawnEffectList.Create(go.transform.position, Quaternion.identity);
     }
     
+    public static void OnClickBounty()
+    {
+        if (AcceptBounty(new Data.BountyLocation()
+        {
+            data = new Data.BountyData()
+            {
+                m_name = UpdateAlmanac.SelectedBounty.m_creatureName,
+                m_damageMultiplier = UpdateAlmanac.SelectedBounty.m_damageMultiplier,
+                m_health = UpdateAlmanac.SelectedBounty.m_health,
+                m_hunter = Player.m_localPlayer.GetPlayerID(),
+                m_rewardType = UpdateAlmanac.SelectedBounty.m_rewardType,
+                m_rewardAmount = UpdateAlmanac.SelectedBounty.m_itemAmount,
+                m_rewardItem = UpdateAlmanac.SelectedBounty.m_itemReward == null
+                    ? ""
+                    : UpdateAlmanac.SelectedBounty.m_itemReward.name,
+                m_damages = UpdateAlmanac.SelectedBounty.m_damages,
+                m_level = UpdateAlmanac.SelectedBounty.level,
+                m_skillType = UpdateAlmanac.SelectedBounty.m_skill.ToString(),
+                m_skillAmount = UpdateAlmanac.SelectedBounty.m_skillAmount
+            },
+            m_biome = UpdateAlmanac.SelectedBounty.m_biome,
+            m_critter = UpdateAlmanac.SelectedBounty.m_critter,
+        }))
+        {
+            UpdateAlmanac.UpdateBountyPanel();
+        }
+    }
+    
     public static void AddBountyCommands()
     {
         Terminal.ConsoleCommand SpawnBounty = new("spawn_bounty", "", (Terminal.ConsoleEventFailable)(args =>
@@ -369,7 +397,6 @@ public class Bounty : MonoBehaviour
                 ledger.Add(info);
             }
             File.WriteAllText(AlmanacPaths.BountyFolderPath + Path.DirectorySeparatorChar + "info.txt", serializer.Serialize(ledger));
-
         });
     }
 }

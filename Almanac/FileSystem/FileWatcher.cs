@@ -73,6 +73,45 @@ public static class FileWatcher
         ServerBountyListWatcher.Changed += OnBountyChange;
         ServerBountyListWatcher.Created += OnBountyChange;
         ServerBountyListWatcher.Deleted += OnBountyChange;
+
+        FileSystemWatcher TreasureListWatcher = new FileSystemWatcher(AlmanacPaths.TreasureHuntFolderPath)
+        {
+            Filter = "*.yml",
+            EnableRaisingEvents = true,
+            IncludeSubdirectories = true,
+            SynchronizingObject = ThreadingHelper.SynchronizingObject,
+            NotifyFilter = NotifyFilters.LastWrite
+        };
+        TreasureListWatcher.Changed += OnTreasureChange;
+        TreasureListWatcher.Created += OnTreasureChange;
+        TreasureListWatcher.Deleted += OnTreasureChange;
+    }
+
+    private static void OnTreasureChange(object sender, FileSystemEventArgs e)
+    {
+        string fileName = Path.GetFileName(e.Name);
+        switch (e.ChangeType)
+        {
+            case WatcherChangeTypes.Changed:
+                AlmanacPlugin.AlmanacLogger.LogDebug(fileName + " changed, reloading treasures");
+                break;
+            case WatcherChangeTypes.Created:
+                AlmanacPlugin.AlmanacLogger.LogDebug(fileName + " created, reloading treasures");
+                break;
+            case WatcherChangeTypes.Deleted:
+                AlmanacPlugin.AlmanacLogger.LogDebug(fileName + " deleted, reloading treasures");
+                break;
+        }
+        
+        if (AlmanacPlugin.WorkingAsType is not AlmanacPlugin.WorkingAs.Client)
+        {
+            TreasureHunt.TreasureManager.InitTreasureManager();
+            ServerSyncedData.UpdateServerTreasureList();
+        }
+        else
+        {
+            TreasureHunt.TreasureManager.InitTreasureManager(true);
+        }
     }
 
     private static void OnServerPlayerDataListChange(object sender, FileSystemEventArgs e)

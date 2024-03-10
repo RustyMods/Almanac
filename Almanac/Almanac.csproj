@@ -146,9 +146,14 @@
         <Compile Include="FileSystem\Patches.cs" />
         <Compile Include="Plugin.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
+        <Compile Include="TreasureHunt\CacheLootBox.cs" />
+        <Compile Include="TreasureHunt\Data.cs" />
+        <Compile Include="TreasureHunt\TreasureHunt.cs" />
+        <Compile Include="TreasureHunt\TreasureManager.cs" />
         <Compile Include="UI\CacheAssets.cs" />
         <Compile Include="UI\Categories.cs" />
         <Compile Include="UI\CreateAlmanac.cs" />
+        <Compile Include="UI\UITools.cs" />
         <Compile Include="UI\UpdateAlmanac.cs" />
         <Compile Include="Utilities\LocalizationManager.cs" />
         <Compile Include="Utilities\SpriteManager.cs" />

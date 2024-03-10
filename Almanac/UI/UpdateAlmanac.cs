@@ -21,7 +21,6 @@ using static Almanac.Data.PlayerStats;
 using static Almanac.UI.Categories;
 using static Almanac.Utilities.Utility;
 using Object = UnityEngine.Object;
-using Utility = Almanac.Utilities.Utility;
 
 namespace Almanac.UI;
 
@@ -47,6 +46,7 @@ public static class UpdateAlmanac
     private static GameObject SelectedPiece = null!;
     public static Achievement SelectedAchievement = null!;
     public static Bounties.Data.ValidatedBounty SelectedBounty = null!;
+    public static TreasureHunt.Data.ValidatedTreasure SelectedTreasure = null!;
     
     public static bool isMetricsActive;
     public static bool CheckedCompletion;
@@ -170,6 +170,9 @@ public static class UpdateAlmanac
                 case "$almanac_quests_button":
                     UpdateBountyList(GUI, BountyManager.RegisteredBounties);
                     break;
+                case "$almanac_treasure_hunt_button":
+                    UpdateTreasureList(GUI, TreasureHunt.TreasureManager.RegisteredTreasure);
+                    break;
                 default:
                     UpdateItemList(GUI, filter.IsNullOrWhiteSpace() 
                         ? GetTrophies() 
@@ -226,21 +229,8 @@ public static class UpdateAlmanac
             transform.Find("description").GetComponent<TMP_Text>().text = isKnown ? isTrophies ? LocalizedLore : LocalizedDesc : "";
             iconImage.color = isKnown ? Color.white : Color.black;
 
-            Button button = icon.gameObject.AddComponent<Button>();
-            button.interactable = isKnown;
-            button.targetGraphic = iconImage;
-            button.transition = Selectable.Transition.ColorTint;
-            button.colors = new ColorBlock()
-            {
-                highlightedColor = new Color(1f, 1f, 1f, 1f),
-                pressedColor = new Color(0.5f, 0.5f, 0.5f, 1f),
-                disabledColor = new Color(0f, 0f, 0f, 1f),
-                colorMultiplier = 1f,
-                fadeDuration = 0.1f,
-                normalColor = new Color(0.5f, 0.5f, 0.5f, 1f),
-                selectedColor = Color.white
-            };
-            button.onClick = new Button.ButtonClickedEvent();
+            Button button = UITools.AddButtonComponent(icon.gameObject, iconImage, isKnown);
+
             button.onClick.AddListener(() =>
             {
                 CreateAlmanac.AchievementGUI.SetActive(false);
@@ -248,13 +238,10 @@ public static class UpdateAlmanac
                 SelectedItemDrop = component;
                 UpdateItemPanel();
             });
-            ButtonSfx sfx = icon.gameObject.AddComponent<ButtonSfx>();
-            sfx.m_sfxPrefab = CacheAssets.ButtonSFX.m_sfxPrefab;
-            
+
             instance.m_trophyList.Add(gameObject);
         }
-        instance.m_trophieListRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(instance.m_trophieListBaseSize, -a1));
-        instance.m_trophyListScroll.value = 1f;
+        UITools.ResizePanel(instance, -a1);
     }
     private static void UpdatePieceList(InventoryGui instance, List<GameObject> prefabs)
     {
@@ -289,21 +276,7 @@ public static class UpdateAlmanac
             transform.Find("description").GetComponent<TMP_Text>().text = isKnown ? LocalizedDesc : "";
             iconImage.color = isKnown ? Color.white : Color.black;
 
-            Button button = icon.gameObject.AddComponent<Button>();
-            button.interactable = isKnown;
-            button.targetGraphic = iconImage;
-            button.transition = Selectable.Transition.ColorTint;
-            button.colors = new ColorBlock()
-            {
-                highlightedColor = new Color(1f, 1f, 1f, 1f),
-                pressedColor = new Color(0.5f, 0.5f, 0.5f, 1f),
-                disabledColor = new Color(0f, 0f, 0f, 1f),
-                colorMultiplier = 1f,
-                fadeDuration = 0.1f,
-                normalColor = new Color(0.5f, 0.5f, 0.5f, 1f),
-                selectedColor = Color.white
-            };
-            button.onClick = new Button.ButtonClickedEvent();
+            Button button = UITools.AddButtonComponent(icon.gameObject, iconImage, isKnown);
             button.onClick.AddListener(() =>
             {
                 CreateAlmanac.AchievementGUI.SetActive(false);
@@ -311,13 +284,10 @@ public static class UpdateAlmanac
                 SelectedPiece = prefab;
                 UpdatePiecePanel();
             });
-            ButtonSfx sfx = icon.gameObject.AddComponent<ButtonSfx>();
-            sfx.m_sfxPrefab = CacheAssets.ButtonSFX.m_sfxPrefab;
-            
+
             instance.m_trophyList.Add(gameObject);
         }
-        instance.m_trophieListRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(instance.m_trophieListBaseSize, -a1));
-        instance.m_trophyListScroll.value = 1f;
+        UITools.ResizePanel(instance, -a1);
     }
     private static void UpdateCreatureList(InventoryGui instance, List<CreatureData> creatures)
     {
@@ -357,19 +327,59 @@ public static class UpdateAlmanac
             
             instance.m_trophyList.Add(gameObject);
         }
-        instance.m_trophieListRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(instance.m_trophieListBaseSize, totalHeight));
-        instance.m_trophyListScroll.value = 1f;
+        UITools.ResizePanel(instance, totalHeight);
     }
+    private static void UpdateTreasureList(InventoryGui instance, List<TreasureHunt.Data.ValidatedTreasure> treasures)
+    {
+        float a1 = 0.0f;
+        for (int index = 0; index < treasures.Count; ++index)
+        {
+            TreasureHunt.Data.ValidatedTreasure treasure = treasures[index];
+            bool isKnown = Player.m_localPlayer.IsBiomeKnown(treasure.m_biome) || Player.m_localPlayer.NoCostCheat();
 
-    public static void UpdateBountyList(InventoryGui instance, List<Bounties.Data.ValidatedBounty> bounties)
+            GameObject gameObject = Object.Instantiate(instance.m_trophieElementPrefab, instance.m_trophieListRoot);
+            
+            gameObject.SetActive(true);
+            RectTransform? transform = gameObject.transform as RectTransform;
+            if (transform == null) continue;
+
+            float x = (index % 7) * TrophySpacing;
+            float y = Mathf.FloorToInt(index / 7f) * -TrophySpacing;
+            
+            transform.anchoredPosition = new Vector2(x, y);
+            
+            a1 = Mathf.Min(a1, transform.anchoredPosition.y - instance.m_trophieListSpace);
+
+            Transform icon = transform.Find("icon_bkg/icon");
+            if (!icon.TryGetComponent(out Image iconImage)) continue;
+            iconImage.sprite = treasure.m_sprite ? treasure.m_sprite : SpriteManager.AlmanacIcon;
+            iconImage.color = isKnown ? Color.white : Color.black;
+
+            transform.Find("name").GetComponent<TMP_Text>().text = isKnown ? treasure.m_name : UnknownText;
+            transform.Find("description").GetComponent<TMP_Text>().text = isKnown ? treasure.m_biome.ToString() : UnknownText;
+
+            Button button = UITools.AddButtonComponent(icon.gameObject, iconImage, isKnown);
+            button.onClick.AddListener(() =>
+            {
+                CreateAlmanac.AchievementPanelButton.text = Localization.instance.Localize(isMetricsActive ? "$almanac_leaderboard_button" : "$almanac_stats_button");
+                CreateAlmanac.AchievementGUI.SetActive(false);
+                CreateAlmanac.AlmanacGUI.SetActive(true);
+                SelectedTreasure = treasure;
+                UpdateTreasurePanel();
+            });
+
+            instance.m_trophyList.Add(gameObject);
+        }
+        UITools.ResizePanel(instance, -a1);
+    }
+    private static void UpdateBountyList(InventoryGui instance, List<Bounties.Data.ValidatedBounty> bounties)
     {
         float a1 = 0.0f;
         for (int index = 0; index < bounties.Count; ++index)
         {
             Bounties.Data.ValidatedBounty bounty = bounties[index];
-            bool hasKey = Player.m_localPlayer.NoCostCheat() || ZoneSystem.instance.CheckKey(bounty.m_defeatKey) || ZoneSystem.instance.CheckKey(bounty.m_defeatKey, GameKeyType.Player);
-            if (!hasKey) continue;
-            
+            bool isKnown = ZoneSystem.instance.GetGlobalKeys().Contains(bounty.m_defeatKey) || ZoneSystem.instance.GetGlobalKey(bounty.m_defeatKey) || Player.m_localPlayer.NoCostCheat();
+
             GameObject gameObject = Object.Instantiate(instance.m_trophieElementPrefab, instance.m_trophieListRoot);
             
             gameObject.SetActive(true);
@@ -386,40 +396,23 @@ public static class UpdateAlmanac
             Transform icon = transform.Find("icon_bkg/icon");
             if (!icon.TryGetComponent(out Image iconImage)) continue;
             iconImage.sprite = bounty.m_icon ? bounty.m_icon : SpriteManager.AlmanacIcon;
+            iconImage.color = isKnown ? Color.white : Color.black;
 
-            transform.Find("name").GetComponent<TMP_Text>().text = bounty.m_creatureName;
-            transform.Find("description").GetComponent<TMP_Text>().text = bounty.m_biome.ToString();
+            transform.Find("name").GetComponent<TMP_Text>().text = isKnown ? bounty.m_creatureName : UnknownText;
+            transform.Find("description").GetComponent<TMP_Text>().text = isKnown ? bounty.m_biome.ToString() : UnknownText;
 
-            Button button = icon.gameObject.AddComponent<Button>();
-            button.interactable = true;
-            button.targetGraphic = iconImage;
-            button.transition = Selectable.Transition.ColorTint;
-            button.colors = new ColorBlock()
-            {
-                highlightedColor = new Color(1f, 1f, 1f, 1f),
-                pressedColor = new Color(0.5f, 0.5f, 0.5f, 1f),
-                disabledColor = new Color(0f, 0f, 0f, 1f),
-                colorMultiplier = 1f,
-                fadeDuration = 0.1f,
-                normalColor = new Color(0.5f, 0.5f, 0.5f, 1f),
-                selectedColor = Color.white
-            };
-            button.onClick = new Button.ButtonClickedEvent();
+            Button button = UITools.AddButtonComponent(icon.gameObject, iconImage, isKnown);
             button.onClick.AddListener(() =>
             {
                 CreateAlmanac.AchievementPanelButton.text = Localization.instance.Localize(isMetricsActive ? "$almanac_leaderboard_button" : "$almanac_stats_button");
-                CreateAlmanac.AchievementGUI.SetActive(true);
-                CreateAlmanac.AlmanacGUI.SetActive(false);
+                CreateAlmanac.AchievementGUI.SetActive(false);
+                CreateAlmanac.AlmanacGUI.SetActive(true);
                 SelectedBounty = bounty;
                 UpdateBountyPanel();
             });
-            ButtonSfx sfx = icon.gameObject.AddComponent<ButtonSfx>();
-            sfx.m_sfxPrefab = CacheAssets.ButtonSFX.m_sfxPrefab;
-            
             instance.m_trophyList.Add(gameObject);
         }
-        instance.m_trophieListRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(instance.m_trophieListBaseSize, -a1));
-        instance.m_trophyListScroll.value = 1f;
+        UITools.ResizePanel(instance, -a1);
     }
     public static void UpdateAchievementList(InventoryGui instance, List<Achievement> achievements, bool completed = false)
     {
@@ -455,21 +448,7 @@ public static class UpdateAlmanac
                 transform.Find("$part_outline").gameObject.SetActive(Player.m_localPlayer.GetSEMan().HaveStatusEffect(achievement.m_statusEffect.name));
             }
 
-            Button button = icon.gameObject.AddComponent<Button>();
-            button.interactable = true;
-            button.targetGraphic = iconImage;
-            button.transition = Selectable.Transition.ColorTint;
-            button.colors = new ColorBlock()
-            {
-                highlightedColor = new Color(1f, 1f, 1f, 1f),
-                pressedColor = new Color(0.5f, 0.5f, 0.5f, 1f),
-                disabledColor = new Color(0f, 0f, 0f, 1f),
-                colorMultiplier = 1f,
-                fadeDuration = 0.1f,
-                normalColor = isCompleted ? new Color(0.5f, 0.5f, 0.5f, 1f) : Color.black,
-                selectedColor = Color.white
-            };
-            button.onClick = new Button.ButtonClickedEvent();
+            Button button = UITools.AddButtonComponent(icon.gameObject, iconImage, true);
             button.onClick.AddListener(() =>
             {
                 CreateAlmanac.AchievementPanelButton.text = Localization.instance.Localize(isMetricsActive ? "$almanac_leaderboard_button" : "$almanac_stats_button");
@@ -478,24 +457,198 @@ public static class UpdateAlmanac
                 SelectedAchievement = achievement;
                 UpdateAchievementPanel();
             });
-            ButtonSfx sfx = icon.gameObject.AddComponent<ButtonSfx>();
-            sfx.m_sfxPrefab = CacheAssets.ButtonSFX.m_sfxPrefab;
-            
             instance.m_trophyList.Add(gameObject);
         }
-        instance.m_trophieListRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(instance.m_trophieListBaseSize, -a1));
-        instance.m_trophyListScroll.value = 1f;
+        UITools.ResizePanel(instance, -a1);
     }
-
-    private static void UpdateBountyPanel()
+    public static void UpdateBountyPanel()
     {
         DestroyPanelElements();
-        CreateAlmanac.AchievementPanelDesc.text = Localization.instance.Localize("$almanac_bounty_how_to");
-        CreateAlmanac.AchievementPanelIcon.sprite = SpriteManager.FlatDaggers;
-        CreateAlmanac.AchievementButton.interactable = true;
-        CreateAlmanac.AchievementPanelTitle.text = SelectedBounty.m_creatureName;
-        CreateAlmanac.AchievementPanelLore.text = Localization.instance.Localize(FormatBountyRewardText(SelectedBounty));
-        CreateAlmanac.AchievementPanelTooltip.text = Localization.instance.Localize(FormatBountyDetails(SelectedBounty)) ;
+
+        CreateAlmanac.PanelIcon.sprite = SelectedBounty.m_icon;
+        CreateAlmanac.PanelTitle.text = SelectedBounty.m_creatureName;
+
+        Dictionary<string, string> output = new()
+        {
+            { "$almanac_reward", "title" },
+        };
+
+        switch (SelectedBounty.m_rewardType)
+        {
+            case Bounties.Data.QuestRewardType.Item:
+                if (SelectedBounty.m_itemReward == null) break;
+                output.Add("$almanac_item", SelectedBounty.m_itemReward.m_itemData.m_shared.m_name);
+                output.Add("$almanac_amount", SelectedBounty.m_itemAmount.ToString(CultureInfo.CurrentCulture));
+                break;
+            case Bounties.Data.QuestRewardType.Skill:
+                output.Add("$almanac_skill_type", ConvertSkills(SelectedBounty.m_skill));
+                output.Add("$almanac_amount", SelectedBounty.m_skillAmount.ToString(CultureInfo.CurrentCulture) + "<color=orange>$almanac_xp</color>");
+                break;
+        }
+
+        Dictionary<string, string> BountyData = new Dictionary<string, string>()
+        {
+            { "$almanac_bounty_info", "title" },
+            { "$almanac_creature_prefab", SelectedBounty.m_critter.name },
+            { "$almanac_level", SelectedBounty.level.ToString() },
+            { "$almanac_health", SelectedBounty.m_health.ToString(CultureInfo.CurrentCulture) },
+            { "$almanac_damage_multiplier", SelectedBounty.m_damageMultiplier.ToString(CultureInfo.CurrentCulture) },
+        };
+
+        Dictionary<string, string> BountyDamages = new()
+        {
+            { "$almanac_damages", "title" },
+            { "$almanac_blunt", SelectedBounty.m_damages.blunt.ToString(CultureInfo.CurrentCulture) },
+            { "$almanac_slash", SelectedBounty.m_damages.slash.ToString(CultureInfo.CurrentCulture) },
+            { "$almanac_pierce", SelectedBounty.m_damages.pierce.ToString(CultureInfo.CurrentCulture) },
+            { "$almanac_fire", SelectedBounty.m_damages.fire.ToString(CultureInfo.CurrentCulture) },
+            { "$almanac_frost", SelectedBounty.m_damages.frost.ToString(CultureInfo.CurrentCulture) },
+            { "$almanac_lightning", SelectedBounty.m_damages.lightning.ToString(CultureInfo.CurrentCulture) },
+            { "$almanac_poison", SelectedBounty.m_damages.poison.ToString(CultureInfo.CurrentCulture) },
+            { "$almanac_spirit", SelectedBounty.m_damages.spirit.ToString(CultureInfo.CurrentCulture) },
+        };
+        
+        MergeDictionaries(output, BountyData);
+        if (HasBountyDamages()) MergeDictionaries(output, BountyDamages);
+        
+        foreach (KeyValuePair<string, string> kvp in output)
+        {
+            if (IsValueToBeIgnored(kvp.Value)) continue;
+            
+            if (kvp.Value == "title")
+            {
+                GameObject data = Object.Instantiate(CacheAssets.ItemTitle, CreateAlmanac.PanelContent);
+                if (!data.transform.Find("$part_text").TryGetComponent(out TextMeshProUGUI component)) continue;
+
+                component.text = Localization.instance.Localize(RemoveNumbers(kvp.Key));
+                
+                PanelElements.Add(data);
+            }
+            else
+            {
+                
+                GameObject data = Object.Instantiate(CacheAssets.Item, CreateAlmanac.PanelContent);
+                if (!Utils.FindChild(data.transform, "$part_infoType").TryGetComponent(out TextMeshProUGUI TypeComponent)) continue;
+                if (!Utils.FindChild(data.transform, "$part_data").GetComponent<TextMeshProUGUI>().TryGetComponent(out TextMeshProUGUI DataComponent)) continue;
+                
+                TypeComponent.text = Localization.instance.Localize(RemoveNumbers(kvp.Key));
+                DataComponent.text = Localization.instance.Localize(kvp.Value);
+    
+                PanelElements.Add(data);
+            }
+        }
+        
+        GameObject tab = Object.Instantiate(BaseTab, CreateAlmanac.PanelContent);
+        Transform text = Utils.FindChild(tab.transform, "text");
+        if (text.TryGetComponent(out TextMeshProUGUI textMesh))
+        {
+            if (Bounty.ActiveBountyLocation != null)
+            {
+                textMesh.text = Localization.instance.Localize(Bounty.ActiveBountyLocation.m_critter == SelectedBounty.m_critter 
+                    ? "$almanac_cancel_bounty" : "$almanac_accept_bounty");
+            }
+            else
+            {
+                textMesh.text = Localization.instance.Localize("$almanac_accept_bounty");
+            }
+            
+        }
+        if (tab.TryGetComponent(out Button button))
+        {
+            button.onClick.AddListener(Bounty.OnClickBounty);
+        }
+        
+        PanelElements.Add(tab);
+    }
+    private static bool HasBountyDamages()
+    {
+        return SelectedBounty.m_damages.blunt > 0 ||
+               SelectedBounty.m_damages.slash > 0 ||
+               SelectedBounty.m_damages.pierce > 0 ||
+               SelectedBounty.m_damages.fire > 0 ||
+               SelectedBounty.m_damages.frost > 0 ||
+               SelectedBounty.m_damages.lightning > 0 ||
+               SelectedBounty.m_damages.poison > 0 ||
+               SelectedBounty.m_damages.spirit > 0;
+    }
+    public static void UpdateTreasurePanel()
+    {
+        DestroyPanelElements();
+        CreateAlmanac.PanelIcon.sprite = SelectedTreasure.m_sprite;
+        CreateAlmanac.PanelTitle.text = SelectedTreasure.m_name;
+
+        Dictionary<string, string> output = new()
+        {
+            { "$almanac_reward", "title" },
+        };
+
+        for (int index = 0; index < SelectedTreasure.m_dropTable.m_drops.Count; index++)
+        {
+            var drop = SelectedTreasure.m_dropTable.m_drops[index];
+            string name = drop.m_item.GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
+            string amount = $"{drop.m_stackMin} - {drop.m_stackMax}";
+            
+            output.Add(name + " " + index, amount);
+        }
+
+        Dictionary<string, string> BountyData = new Dictionary<string, string>()
+        {
+            { "$almanac_treasure_info", "title" },
+            { "$almanac_biome", SelectedTreasure.m_biome.ToString() },
+        };
+        
+        MergeDictionaries(output, BountyData);
+
+        foreach (KeyValuePair<string, string> kvp in output)
+        {
+            if (kvp.Value == "title")
+            {
+                GameObject data = Object.Instantiate(CacheAssets.ItemTitle, CreateAlmanac.PanelContent);
+                if (!data.transform.Find("$part_text").TryGetComponent(out TextMeshProUGUI component)) continue;
+
+                component.text = Localization.instance.Localize(RemoveNumbers(kvp.Key));
+                
+                PanelElements.Add(data);
+            }
+            else
+            {
+                
+                GameObject data = Object.Instantiate(CacheAssets.Item, CreateAlmanac.PanelContent);
+                if (!Utils.FindChild(data.transform, "$part_infoType").TryGetComponent(out TextMeshProUGUI TypeComponent)) continue;
+                if (!Utils.FindChild(data.transform, "$part_data").GetComponent<TextMeshProUGUI>().TryGetComponent(out TextMeshProUGUI DataComponent)) continue;
+                
+                TypeComponent.text = Localization.instance.Localize(RemoveNumbers(kvp.Key));
+                DataComponent.text = Localization.instance.Localize(kvp.Value);
+    
+                PanelElements.Add(data);
+            }
+        }
+        
+        
+        GameObject tab = Object.Instantiate(BaseTab, CreateAlmanac.PanelContent);
+        Transform text = Utils.FindChild(tab.transform, "text");
+        if (text.TryGetComponent(out TextMeshProUGUI textMesh))
+        {
+            textMesh.overflowMode = TextOverflowModes.Overflow;
+            textMesh.textWrappingMode = TextWrappingModes.NoWrap;
+            if (TreasureHunt.TreasureHunt.ActiveTreasureLocation != null)
+            {
+                textMesh.text = Localization.instance.Localize(TreasureHunt.TreasureHunt.ActiveTreasureLocation.m_data.m_name == SelectedTreasure.m_name
+                    ? "$almanac_cancel_treasure" : "$almanac_accept_treasure");
+            }
+            else
+            {
+                textMesh.text = Localization.instance.Localize("$almanac_accept_treasure");
+            }
+            
+        }
+        if (tab.TryGetComponent(out Button button))
+        {
+            button.onClick.AddListener(TreasureHunt.TreasureHunt.OnClickTreasure);
+        }
+        
+        PanelElements.Add(tab);
+        
     }
     private static void UpdateAchievementPanel()
     {
@@ -508,6 +661,7 @@ public static class UpdateAlmanac
         CreateAlmanac.AchievementPanelIcon.color = isCompleted ? Color.white : Color.black;
         CreateAlmanac.AchievementButton.interactable = isCompleted && _AchievementPowers.Value is AlmanacPlugin.Toggle.On;
         CreateAlmanac.AchievementPanelTitle.text = isCompleted ? SelectedAchievement.m_displayName : UnknownText;
+        CreateAlmanac.AchievementPanelTooltip.alignment = TextAlignmentOptions.Center;
         switch (SelectedAchievement.m_rewardType)
         {
             case AchievementTypes.AchievementRewardType.Item:
@@ -2226,9 +2380,13 @@ public static class UpdateAlmanac
         {
             if (!__instance) return;
             DestroyTabs();
-            CreateAlmanac.AlmanacGUI.SetActive(false);
-            CreateAlmanac.AchievementGUI.SetActive(false);
+            HideAlmanac();
         }
+    }
+    public static void HideAlmanac()
+    {
+        CreateAlmanac.AlmanacGUI.SetActive(false);
+        CreateAlmanac.AchievementGUI.SetActive(false);
     }
     public static void UpdateGUI()
     {
@@ -2239,8 +2397,8 @@ public static class UpdateAlmanac
             if (AreTabsVisible() || CreateAlmanac.IsPanelActive() || CreateAlmanac.IsAchievementActive())
             {
                 DestroyTabs();
-                CreateAlmanac.AlmanacGUI.SetActive(false);
-                CreateAlmanac.AchievementGUI.SetActive(false);
+                HideAlmanac();
+                InventoryGui.instance.Hide();
             }
         }
         // Hotkey to open almanac
@@ -2249,8 +2407,7 @@ public static class UpdateAlmanac
             if (!InventoryGui.instance) return;
             if (CreateAlmanac.IsPanelActive())
             {
-                CreateAlmanac.AlmanacGUI.SetActive(false);
-                CreateAlmanac.AchievementGUI.SetActive(false);
+                HideAlmanac();
                 InventoryGui.instance.Hide();
                 Categories.DestroyTabs();
             }
@@ -2286,5 +2443,11 @@ public static class UpdateAlmanac
             
             return InventoryGui.instance.m_trophiesPanel && InventoryGui.instance.m_trophiesPanel.activeInHierarchy;
         }
+    }
+
+    [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.Hide))]
+    private static class AlmanacHidePatch
+    {
+        private static bool Prefix() => !CreateAlmanac.IsAchievementActive() || !CreateAlmanac.IsPanelActive();
     }
 }

@@ -1,4 +1,4 @@
-﻿# Almanac
+# Almanac
 The Valheim Almanac plugin is a comprehensive tool that meticulously indexes creatures, items, equipment, and player achievements, providing a detailed record of the Viking's journey. It seamlessly weaves together a rich tapestry of the player's accomplishments, transforming their adventures into a living achievement system within the expansive world of Valheim.
 
 **NEW FEATURE 3.1.7:** Almanac Bounties

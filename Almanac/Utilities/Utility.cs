@@ -11,6 +11,18 @@ public static class Utility
 {
     private static readonly Color32 OrangeColor = new (255, 164, 0, 255);
 
+    public static string FormatTreasureRewardText(TreasureHunt.Data.ValidatedTreasure data)
+    {
+        string output = "$almanac_reward:\n";
+        foreach (var drop in data.m_dropTable.m_drops)
+        {
+            string name =
+                Localization.instance.Localize(drop.m_item.GetComponent<ItemDrop>().m_itemData.m_shared.m_name);
+            output +=
+                $"<color=orange>{drop.m_stackMin}</color> - <color=orange>{drop.m_stackMax}</color> x <color=yellow>{name}</color>\n";
+        }
+        return output;
+    }
     public static string FormatBountyRewardText(Bounties.Data.ValidatedBounty data)
     {
         switch (data.m_rewardType)
@@ -27,12 +39,12 @@ public static class Utility
 
     public static string FormatBountyDetails(Bounties.Data.ValidatedBounty data)
     {
-        return $"$almanac_bounty: <color=yellow>{data.m_critter.name}</color>" 
-               + $"\n$almanac_biome: <color=orange>{data.m_biome}</color>"
-               + $"\n$almanac_health: <color=orange>{data.m_health}</color>"
-               + $"\n$almanac_damage Multiplier: <color=orange>{data.m_damageMultiplier}</color>"
-               + $"\n$almanac_level: <color=orange>{data.level}</color>"
-               + "\n" + FormatBountyDamages(data);
+        return $"                       $almanac_bounty: <color=yellow>{data.m_critter.name}</color>" 
+               + $"\n                       $almanac_biome: <color=orange>{data.m_biome}</color>"
+               + $"\n                       $almanac_health: <color=orange>{data.m_health}</color>"
+               + $"\n                       $almanac_damage Multiplier: <color=orange>{data.m_damageMultiplier}</color>"
+               + $"\n                       $almanac_level: <color=orange>{data.level}</color>"
+               + "\n                       " + FormatBountyDamages(data);
     }
 
     private static string FormatBountyDamages(Bounties.Data.ValidatedBounty data)

@@ -3,6 +3,7 @@ using System.Linq;
 using Almanac.Achievements;
 using Almanac.Bounties;
 using Almanac.Data;
+using Almanac.TreasureHunt;
 using BepInEx;
 using ServerSync;
 using YamlDotNet.Serialization;
@@ -185,10 +186,7 @@ public static class ServerSyncedData
         else
         {
             if (BountyManager.ValidatedBounties.Count <= 0) return;
-            AlmanacPlugin.AlmanacLogger.LogDebug("Server: Initializing server bounties");
-            ISerializer serializer = new SerializerBuilder().Build();
-            string data = serializer.Serialize(BountyManager.ValidatedBounties);
-            ServerBountyList.Value = data;
+            UpdateServerBountyList();
         }
     }
 
@@ -207,6 +205,40 @@ public static class ServerSyncedData
         
     }
 
+    #endregion
+    
+    #region Treasure Hunt
+
+    public static readonly CustomSyncedValue<string> ServerTreasureList = new(AlmanacPlugin.ConfigSync, "ServerTreasure", "");
+
+    public static void InitServerTreasureHunt()
+    {
+        if (AlmanacPlugin.WorkingAsType is AlmanacPlugin.WorkingAs.Client)
+        {
+            AlmanacPlugin.AlmanacLogger.LogDebug("Client: Awaiting server treasure hunts");
+            ServerTreasureList.ValueChanged += OnServerTreasureChange;
+        }
+        else
+        {
+            UpdateServerTreasureList();
+        }
+    }
+
+    public static void UpdateServerTreasureList()
+    {
+        AlmanacPlugin.AlmanacLogger.LogDebug("Server: Updating server treasure");
+        TreasureManager.InitTreasureManager();
+        var serializer = new SerializerBuilder().Build();
+        var data = serializer.Serialize(TreasureManager.ValidatedYML);
+        ServerTreasureList.Value = data;
+    }
+
+    private static void OnServerTreasureChange()
+    {
+        AlmanacPlugin.AlmanacLogger.LogDebug("Client: Received server treasures");
+        TreasureManager.InitTreasureManager(true);
+    }
+    
     #endregion
 
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Almanac.Data;
 using Almanac.FileSystem;
 using Almanac.Utilities;
 using BepInEx;
@@ -16,12 +17,10 @@ public static class BountyManager
     
     public static void InitBounties(bool first = true)
     {
-        if (first) AlmanacPlugin.AlmanacLogger.LogDebug("Client: Initializing Bounty Manager");
-        else
-        {
-            AlmanacPlugin.AlmanacLogger.LogDebug("Client: Reloading bounties");
-        }
-        
+        AlmanacPlugin.AlmanacLogger.LogDebug(first
+            ? "Client: Initializing Bounty Manager"
+            : "Client: Reloading bounties");
+
         RegisteredBounties.Clear();
         ValidatedBounties.Clear();
         
@@ -119,6 +118,8 @@ public static class BountyManager
             validatedData.m_skill = skillType;
             validatedData.m_skillAmount = data.skill_reward.amount;
         }
+
+        if (!CreatureDataCollector.TempDefeatKeys.Contains(data.defeat_key)) return false;
         
         validatedData.m_critter = critter;
         validatedData.m_creatureName = data.bounty_name;
@@ -128,13 +129,14 @@ public static class BountyManager
         validatedData.m_damageMultiplier = data.damage_multiplier;
         validatedData.m_damages = data.damages;
         validatedData.level = data.level;
+        validatedData.m_defeatKey = data.defeat_key;
 
         return true;
     }
 
     private static List<Data.ValidatedBounty> GetDefaultBounties()
     {
-        List<Data.BountyYML> defaultYmls = new()
+        List<Data.BountyYML> output = new()
         {
             new Data.BountyYML()
             {
@@ -812,7 +814,7 @@ public static class BountyManager
             },
         };
         List<Data.ValidatedBounty> validated = new();
-        foreach (Data.BountyYML data in defaultYmls)
+        foreach (Data.BountyYML data in output)
         {
             if (!ValidateBounty(data, out Data.ValidatedBounty validate)) continue;
             validated.Add(validate);

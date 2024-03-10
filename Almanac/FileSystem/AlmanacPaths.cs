@@ -18,6 +18,7 @@ public static class AlmanacPaths
     public static readonly string ServerPlayerDataFilePath = ServerPlayerDataFolderPath + Path.DirectorySeparatorChar + "PlayerListData.yml";
     public static readonly string CustomCreatureGroupFolder = CreatureFolderPath + Path.DirectorySeparatorChar + "Custom";
     public static readonly string BountyFolderPath = FolderPath + Path.DirectorySeparatorChar + "Bounties";
+    public static readonly string TreasureHuntFolderPath = FolderPath + Path.DirectorySeparatorChar + "Treasures";
     public static void CreateFolderDirectories()
     {
         if (!Directory.Exists(FolderPath)) Directory.CreateDirectory(FolderPath);
@@ -28,5 +29,6 @@ public static class AlmanacPaths
         if (!Directory.Exists(ServerPlayerDataFolderPath)) Directory.CreateDirectory(ServerPlayerDataFolderPath);
         if (!Directory.Exists(CustomCreatureGroupFolder)) Directory.CreateDirectory(CustomCreatureGroupFolder);
         if (!Directory.Exists(BountyFolderPath)) Directory.CreateDirectory(BountyFolderPath);
+        if (!Directory.Exists(TreasureHuntFolderPath)) Directory.CreateDirectory(TreasureHuntFolderPath);
     }
 }

@@ -13,8 +13,8 @@ public static class Categories
     private static GameObject PieceTabs = null!;
     private static GameObject AlmanacTabs = null!;
     private static GameObject SpecialTabs = null!;
-    
-    private static GameObject BaseTab = null!;
+
+    public static GameObject BaseTab = null!;
 
     public static string SelectedTab = "$almanac_trophies_button";
 
@@ -44,7 +44,7 @@ public static class Categories
 
     private static readonly List<string> AlmanacOptions = new()
     {
-        "$almanac_achievements_button", "$almanac_quests_button"
+        "$almanac_achievements_button", "$almanac_quests_button", "$almanac_treasure_hunt_button"
     };
 
     private static readonly List<string> SpecialOptions = new();
@@ -58,7 +58,7 @@ public static class Categories
         if (PieceDataCollector.modPieces.Count > 0 && !PieceOptions.Contains("$almanac_modPieces_button")) PieceOptions.Add("$almanac_modPieces_button");
         CreateBaseTabs(ItemTabs, ItemOptions, -750f, 425f);
         CreateBaseTabs(PieceTabs, PieceOptions, -750f, -425f);
-        CreateBaseTabs(AlmanacTabs, AlmanacOptions, 605f, 425f);
+        CreateBaseTabs(AlmanacTabs, AlmanacOptions, 530f, 425f);
         CreateBaseTabs(SpecialTabs, SpecialOptions, -750f, 473);
     }
 

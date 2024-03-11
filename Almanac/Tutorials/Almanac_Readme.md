@@ -398,4 +398,31 @@ defeat_key: defeated_bonemass
 ```
 You can delete any void entries
 
+#### Example Treasure YML
+```yaml
+name: Meadow Treasure
+sprite_name: map
+biome: Meadows
+currency: Coins
+cost: 10
+loot:
+- item_name: Coins
+  min_stack: 10
+  max_stack: 20
+  weight: 1
+- item_name: Flint
+  min_stack: 2
+  max_stack: 10
+  weight: 1
+- item_name: DeerStew
+  min_stack: 1
+  max_stack: 20
+  weight: 1
+- item_name: SurtlingCore
+  min_stack: 1
+  max_stack: 5
+  weight: 1
+
+```
+
 

@@ -1,8 +1,5 @@
-﻿
-using System;
-using Almanac.UI;
+﻿using Almanac.UI;
 using UnityEngine;
-using UnityEngine.PlayerLoop;
 using Random = UnityEngine.Random;
 
 namespace Almanac.TreasureHunt;
@@ -136,9 +133,9 @@ public class TreasureHunt : MonoBehaviour
 
     private static Vector3 GetRandomVector()
     {
-        float x = UnityEngine.Random.Range(-maxRadius, maxRadius);
-        float y = UnityEngine.Random.Range(0f, 5000f);
-        float z = UnityEngine.Random.Range(-maxRadius, maxRadius);
+        float x = Random.Range(-maxRadius, maxRadius);
+        float y = Random.Range(0f, 5000f);
+        float z = Random.Range(-maxRadius, maxRadius);
         return new Vector3(x, y, z);
     }
     

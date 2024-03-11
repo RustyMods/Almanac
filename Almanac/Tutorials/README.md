@@ -2,6 +2,8 @@
 The Valheim Almanac plugin is a comprehensive tool that meticulously indexes creatures, items, equipment, and player achievements, providing a detailed record of the Viking's journey. It seamlessly weaves together a rich tapestry of the player's accomplishments, transforming their adventures into a living achievement system within the expansive world of Valheim.
 
 **NEW FEATURE 3.1.7:** Almanac Bounties
+
+**NEW FEATURE 3.1.9:** Almanac Treasure Hunt
 ### Features
 - Creature data
 - Item data
@@ -11,10 +13,14 @@ The Valheim Almanac plugin is a comprehensive tool that meticulously indexes cre
   - Achievement Rewards: Items, Skill EXP or Status Effect
 - Leaderboard
 - Bounties
+- Treasure Hunt
 
 ### Configurations
 - Knowledge wall server synced configuration
 - Achievement server synced configurations
+
+<details>
+<summary><b>Changelog</b></summary>
 
 | `Version` | `Update Notes`                                                                                                      |
 |-----------|---------------------------------------------------------------------------------------------------------------------|
@@ -60,8 +66,14 @@ The Valheim Almanac plugin is a comprehensive tool that meticulously indexes cre
 | 3.1.3     | - Added new achievement reward types (Items,Skills,StatusEffect) and a redundancy if almanac fails to get item icon |
 | 3.1.4     | - Added function that updates leaderboard if player is server                                                       |
 | 3.1.5     | - Added feature to create grouped achievements                                                                      |
-| 3.1.6     | 	- Improved terminal commands and tweaked player controller to not move while almanac is open                       |
+| 3.1.6     | - Improved terminal commands and tweaked player controller to not move while almanac is open                        |
 | 3.1.7     | - Added new achievement type: CustomPickable and Almanac Bounties                                                   |
+| 3.1.8     | - Fixed achievement button                                                                                          |
+| 3.1.9     | - Improved Bounty UI, Added Treasure Hunt                                                                           |
+| 3.2.0     | - Fixed logout issues and patched eating food metric                                                                |
+| 3.2.1     | - Added cost to treasure hunts                                                                                      |
+</details>
+
 
 ![](https://i.imgur.com/wgmkQTD.png)
 ![](https://i.imgur.com/f8II690.png)

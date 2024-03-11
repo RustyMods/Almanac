@@ -1,245 +1,95 @@
 # Almanac
-Welcome to Rusty's Almanac, your gateway to the enchanting world of Valheim! 
-Rusty's comprehensive plugin catalogs all the items, pieces, and creatures 
-that is loaded into the game. 
+The Valheim Almanac plugin is a comprehensive tool that meticulously indexes creatures, items, equipment, and player achievements, providing a detailed record of the Viking's journey. It seamlessly weaves together a rich tapestry of the player's accomplishments, transforming their adventures into a living achievement system within the expansive world of Valheim.
 
-Explore the depths of Valheim with ease, armed with a wealth of information 
-at your fingertips. 
+**NEW FEATURE 3.1.7:** Almanac Bounties
 
-Moreover, Rusty's Almanac goes beyond mere documentation. 
-With an integrated customizable achievement system and a leaderboard,
-users can shape their own unique experiences. 
-
-## Features
-
-- Indexed items, pieces and creatures
-- ServerSynced Filters
-- Achievements
-- Achievement Rewards
+**NEW FEATURE 3.1.9:** Almanac Treasure Hunt
+### Features
+- Creature data
+- Item data
+- Pieces data
+- Player metrics
+- Achievement system
+  - Achievement Rewards: Items, Skill EXP or Status Effect
 - Leaderboard
-- ServerSynced Achievements
+- Bounties
+- Treasure Hunt
 
-## Achievements
-The plugin comes pre-loaded with a set of default achievements crafted by Rusty himself. 
-Head to the configuration folder, easily accessible at:
+### Configurations
+- Knowledge wall server synced configuration
+- Achievement server synced configurations
 
-[ BepinEx/config/Almanac/Achievements ]
+<details>
+<summary><b>Changelog</b></summary>
 
-In the configuration folder, discover a collection of YML files. 
-Create and add your own to introduce custom achievements into the game. 
-
-### Achievement Configurations
-Make sure each achievement has a unique name or else it will be ignored - no white spaces,
-use underscore
-
-#### Active vs Passive Effects
-If duration is set to anything higher than 0, power is set as guardian power. 
-Effects only applied while active, and countdown is running.
-#### Icons
-You can use any loaded prefabs (ex:HardAntler) to use as sprite_name  
-or you can choose from almanac's custom icons:
-- skull
-- sword_blue
-- sword_brown
-- arrow
-- hood
-- bottle_empty
-- bottle_blue
-- bottle_green
-- fish
-- bow
-- necklace
-- mushroom
-- coins_gold
-- key
-- bone
-- book
-- crown
-- gem
-- gold
-- map
-- shield
-- silver
-- coins_silver
-- log
-- log_stack
-
-If the sprite_name is invalid, the Almanac will default to use almanac icon
-
-#### Achievement Types
-```
-Warning: 
-If this is not set correctly, the game will give you errors. 
-Make sure to use formatted text below.
-```
-
-These are categories to set for the Almanac to use to determine which values to use
-to check against. Some require a goal to be set, while others do not. You can find a
-comprehensive list of available types below:
-```
-Goal Achievements
-Requires a goal to be set:
-- Deaths
-- EnemyKills
-- RuneStones
-- Recipes
-```
-```
-Knowledge Achievements
-Goal is ignored, these compare to the total values of loaded lists:
-- Fish
-- Materials
-- Consumables
-- Weapons
-- Swords
-- Axes
-- PoleArms
-- Spears
-- Maces
-- Knives
-- Shields
-- Staves
-- Arrows
-- Bows
-- Valuables
-- Potions
-- Trophies
-```
-```
-Custom Creature List Achievements
-These can be defined in the configurations of the Almanac in the "Creatures" Folder
-Goal is ignored, these compare to the total  values of the loaded lists:
-- MeadowCreatures
-- BlackForestCreatures
-- SwampCreatures
-- MountainCreatures
-- PlainsCreatures
-- MistLandCreatures
-- AshLandCreatures
-- DeepNorthCreatures
-- OceanCreatures
-```
-```
-Player Stats Achievements
-Requires a goal to be set:
-- DeathByFall
-- TreesChopped
-- DeathByTree
-- DeathByEdgeOfWorld
-- TimeInBase
-- TimeOutOfBase
-- ArrowsShot
-- TotalJumps
-- TotalBuilds
-- EnemyHits
-- PlayerKills
-- HitsTaken
-- ItemsPicked
-- DistanceWalked
-- DistanceRan
-- DistanceSailed
-- DistanceInAir
-- MineHits
-- TotalMined
-- CreatureTamed
-- FoodEaten
-- SkeletonSummoned
-- DeathByDrowning
-- DeathByBurning
-- DeathByFreezing
-- DeathByPoisoned
-- DeathBySmoke
-- DeathByStalagtite
-- BeesHarvested
-- SapHarvested
-- TrapsArmed
-```
-```
-Defeat Achievement
-You can find a list of defeat keys available by looking at your configurations PlayerData folder,
-There, you can find a list of all the creature's defeat keys and your characters saved stats
-Requires a goal and a defeat key to be set:
-- CustomKills
-```
-#### Achievement Descriptors
-- lore is displayed on the UI
-- start_message is shown when activating achievement effect
-- stop_message is shown when stopping achievement effect
-- tooltip shown on the UI and is followed by all the modifiers associated with it
-#### Achievement Visual and Sound Effects
-start_effects and stop_effects is a list prefab names that will be created upon starting or stopping effect.
-These prefabs go through Almanac validation filters, so you may end up with no effects being applied.
-This is done to avoid any unwanted things being created upon effect activation or deactivation.
-
-ex: sfx_coins_placed - will play the sound effect
-#### Achievement Modifiers
-Most of these key, values are self evident in their naming scheme,
-Do not change m_type since I list all available damage modifiers for you,
-Change the m_modifier value to the desired value. 
-```
-Make sure to follow the format of the text
-Available damage modifier values:
-- Normal
-- Resistant
-- Weak
-- Immune
-- Ignore
-- VeryResistant
-- VeryWeak
-```
-Normal will be ignored from tooltip as it changes nothing.
-```
-Values below 1 reduces player output
-ex:
-  0 = 100% decrease 
-0.5 = 50% decrease
-  1 = 0% no change
-  2 = 100% increase
-
-- Attack
-- HealthRegen
-- RaiseSkills
-- Speed
-- Noise
-- Stealth
-- RunStaminaDrain
-- DamageReduction
-- FallDamage
-- EitrRegen
-```
-```
-Values are direct additions or substractions
-ex:
-
--50 = -50
-  0 = no change
- 50 = 50
-
-- MaxCarryWeight
-```
-#### Player Data
-You will find in your Almanac configuration folder and folder aptly named PlayerData
-This is a local folder that saves custom Almanac data. 
-
-Do not touch!
-#### Leaderboard
-If the system is recognized as a server, a folder named "Players" will be generated where it will save
-the players information to populate the leaderboard. This file will be updated upon new client log in and logout,
-as well as periodic updates during runtime of the server.
-
-Do not touch!
-
-the data will be overwritten by the incoming data being sent by the clients.
-#### Filters
-In this folder you will find a YML file with a list of prefab names that the Almanac ignores.
-Feel free to add or remove from this list. It will hot reload while the game is running.
-
-- Any values added prefixed with a # will be ignored
-#### Creatures
-In this folder you find a list of YML files with a list of prefab names that the Almanac will use to determine
-the set of creatures per biome. This is to be used in conjunction with Achievements.
-
-- The list will be validated by the Almanac against its cached creature data.
-- Any values added prefixed with a # will be ignored
+| `Version` | `Update Notes`                                                                                                      |
+|-----------|---------------------------------------------------------------------------------------------------------------------|
+| 1.0.0     | - Initial Release                                                                                                   |
+| 1.0.1     | - Wrong name lol                                                                                                    |
+| 1.0.2     | - Small Tweak for compatibility with RtdMonsters and monsterlabz                                                    |
+| 1.0.3     | - Fixed compatibility with modded monster mods that have missing values                                             |
+| 1.0.4     | - Minor tweaks to make mod work in various languages by having text dynamically resize                              |
+| 1.0.5     | - Minor changes to the logic on how it finds creature to display in languages other than english                    |
+| 1.0.6     | - Added a patch to fix any overlapping trophies                                                                     |
+| 1.0.7     | - Hotfix for latest valheim patch - more updates to come soon                                                       |
+| 2.0.0     | - Major update - Almanac now supports items                                                                         |
+| 2.0.1     | - Almanac now supports pieces                                                                                       |
+| 2.1.0     | - Added Black List feature and fixed minor bugs                                                                     |
+| 2.1.1     | - fixed minor bug                                                                                                   |
+| 2.1.2     | - fixed black list and duplicate pieces                                                                             |
+| 2.1.3     | - improved blacklist and added drop chance to creature info                                                         |
+| 2.2.0     | - Player Metrics and Achievement system                                                                             |
+| 2.2.1     | - Added item count / total to panels and compatibility with MinimalUI                                               |
+| 2.2.2     | - Controller Support                                                                                                |
+| 2.2.3     | - minor bug fix with kill tracker and added config to make almanac panel transparent to use with minimal ui         |
+| 2.2.4     | - another minor bug fix                                                                                             |
+| 2.2.5     | - Compatibility with World Advancement Progression                                                                  |
+| 2.2.6     | - Added Auga incompatibility flag and fixed guardian power icon for custom powers                                   |
+| 2.2.7     | - auga incompatibility                                                                                              |
+| 2.2.8     | - More redundancy on custom status effects and french translations update                                           |
+| 2.2.9     | - Some krumpac compatibility work and moved ignore list to a yml format in the config folder                        |
+| 2.3.0     | - Hotfix compatibility with recent valheim patch update                                                             |
+| 2.3.1     | - fix for list of biome creatures config                                                                            |
+| 3.0.0     | - Overhaul of entire project. Delete all old config files to clean up workspace                                     |
+| 3.0.1     | - Fixed the leaderboard and tweaked the creature panel                                                              |
+| 3.0.2     | - Localization for many languages built-in and some minor fixes                                                     |
+| 3.0.3     | - Fixed creature panel - achievement panel improved - localization improved                                         |
+| 3.0.4     | - Small localization fixes and filtering                                                                            |
+| 3.0.5     | - Added further information on fish and fixed achievement completion percentage                                     |
+| 3.0.6     | - Check completed achievements when achievements are changed                                                        |
+| 3.0.7     | - Fixed interact button not working until you opened inventory                                                      |
+| 3.0.8     | - Hotfix if defeat key not found in player data                                                                     |
+| 3.0.9     | - Fixed achievements rewards                                                                                        |
+| 3.1.0     | - Small fixes for compatibility with Krumpac                                                                        |
+| 3.1.1     | - Tweaked visuals of achievement panel to showcase active effects - effects persist upon death and log out / log in |
+| 3.1.2     | - Moved player tracked data to player custom data and added configurable hotkey to open almanac                     |
+| 3.1.3     | - Added new achievement reward types (Items,Skills,StatusEffect) and a redundancy if almanac fails to get item icon |
+| 3.1.4     | - Added function that updates leaderboard if player is server                                                       |
+| 3.1.5     | - Added feature to create grouped achievements                                                                      |
+| 3.1.6     | - Improved terminal commands and tweaked player controller to not move while almanac is open                        |
+| 3.1.7     | - Added new achievement type: CustomPickable and Almanac Bounties                                                   |
+| 3.1.8     | - Fixed achievement button                                                                                          |
+| 3.1.9     | - Improved Bounty UI, Added Treasure Hunt                                                                           |
+| 3.2.0     | - Fixed logout issues and patched eating food metric                                                                |
+| 3.2.1     | - Added cost to treasure hunts                                                                                      |
+</details>
 
 
+![](https://i.imgur.com/wgmkQTD.png)
+![](https://i.imgur.com/f8II690.png)
+
+## Contact information
+For Questions or Comments, find <span style="color:orange">Rusty</span> in the Odin Plus Team Discord
+
+[![https://i.imgur.com/XXP6HCU.png](https://i.imgur.com/XXP6HCU.png)](https://discord.gg/v89DHnpvwS)
+
+Or come find me at the [Modding Corner](https://discord.gg/fB8aHSfA8B)
+
+##
+If you enjoy this mod and want to support me:
+[PayPal](https://paypal.me/mpei)
+
+<span>
+<img src="https://i.imgur.com/rbNygUc.png" alt="" width="150">
+<img src="https://i.imgur.com/VZfZR0k.png" alt="https://www.buymeacoffee.com/peimalcolm2" width="150">
+</span>

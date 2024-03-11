@@ -47,30 +47,40 @@ public static class Leaderboard
 
     public static void RPC_Leaderboard_Receive(long sender, ZPackage pkg)
     {
-        string data = pkg.ReadString();
-        IDeserializer deserializer = new DeserializerBuilder().Build();
-        ServerPlayerData receivedData = deserializer.Deserialize<ServerPlayerData>(data);
-        AlmanacPlugin.AlmanacLogger.LogDebug($"Server: Received new leaderboard data from {receivedData.player_name}");
-        if (LeaderboardData.TryGetValue(receivedData.player_name, out PlayerData localData))
+        try
         {
-            if (localData.completed_achievements >= receivedData.data.completed_achievements)
+            string data = pkg.ReadString();
+            IDeserializer deserializer = new DeserializerBuilder().Build();
+            ServerPlayerData receivedData = deserializer.Deserialize<ServerPlayerData>(data);
+            AlmanacPlugin.AlmanacLogger.LogDebug(
+                $"Server: Received new leaderboard data from {receivedData.player_name}");
+            if (LeaderboardData.TryGetValue(receivedData.player_name, out PlayerData localData))
             {
-                // To make sure completed achievements is added rather than overwritten
-                LeaderboardData[receivedData.player_name].total_deaths = receivedData.data.total_deaths;
-                LeaderboardData[receivedData.player_name].total_kills = receivedData.data.total_kills;
+                if (localData.completed_achievements >= receivedData.data.completed_achievements)
+                {
+                    // To make sure completed achievements is added rather than overwritten
+                    LeaderboardData[receivedData.player_name].total_deaths = receivedData.data.total_deaths;
+                    LeaderboardData[receivedData.player_name].total_kills = receivedData.data.total_kills;
+                }
+                else
+                {
+                    LeaderboardData[receivedData.player_name].completed_achievements =
+                        receivedData.data.completed_achievements;
+                    LeaderboardData[receivedData.player_name].total_deaths = receivedData.data.total_deaths;
+                    LeaderboardData[receivedData.player_name].total_kills = receivedData.data.total_kills;
+                }
             }
             else
             {
-                LeaderboardData[receivedData.player_name].completed_achievements = receivedData.data.completed_achievements;
-                LeaderboardData[receivedData.player_name].total_deaths = receivedData.data.total_deaths;
-                LeaderboardData[receivedData.player_name].total_kills = receivedData.data.total_kills;
+                LeaderboardData[receivedData.player_name] = receivedData.data;
             }
+
+            SaveLeaderboardToFile();
         }
-        else
+        catch
         {
-            LeaderboardData[receivedData.player_name] = receivedData.data;
+            AlmanacPlugin.AlmanacLogger.LogDebug("Failed to save received leaderboard");
         }
-        SaveLeaderboardToFile();
     }
 
     public static void BothLeaderboardCoroutine()

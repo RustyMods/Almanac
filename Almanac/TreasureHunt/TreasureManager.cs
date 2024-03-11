@@ -22,6 +22,7 @@ public static class TreasureManager
 
         if (useServerData)
         {
+            if (ServerSyncedData.ServerTreasureList.Value.IsNullOrWhiteSpace()) return;
             AlmanacPlugin.AlmanacLogger.LogDebug("Client: Updating treasure hunts");
 
             IDeserializer deserializer = new DeserializerBuilder().Build();

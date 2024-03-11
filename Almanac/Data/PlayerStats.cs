@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using Almanac.Achievements;
-using Almanac.Bounties;
 using Almanac.FileSystem;
 using Almanac.Utilities;
 using BepInEx;
@@ -239,14 +238,14 @@ public static class PlayerStats
         }
     }
 
-    // [HarmonyPatch(typeof(Player), nameof(Player.EatFood))]
-    // private static class PlayerEatFoodFix
-    // {
-    //     private static void Postfix(Player __instance)
-    //     {
-    //         
-    //     }
-    // }
+    [HarmonyPatch(typeof(Player), nameof(Player.EatFood))]
+    private static class PlayerEatFoodFix
+    {
+        private static void Postfix(ref bool __result)
+        {
+            if (__result) Game.instance.IncrementPlayerStat(PlayerStatType.FoodEaten);
+        }
+    }
 
     [HarmonyPatch(typeof(Pickable), nameof(Pickable.Interact))]
     private static class PickableInteractPatch

@@ -201,6 +201,9 @@ public static class UpdateAlmanac
         {
             ItemDrop component = items[index];
             string LocalizedName = Localization.instance.Localize(component.m_itemData.m_shared.m_name);
+            string LocalizedDesc = Localization.instance.Localize(component.m_itemData.m_shared.m_description);
+            string LocalizedLore = Localization.instance.Localize(component.m_itemData.m_shared.m_name + "_lore");
+            Sprite? ItemIcon = UITools.TryGetIcon(component);
             bool isKnown = _KnowledgeWall.Value is AlmanacPlugin.Toggle.Off || Player.m_localPlayer.IsKnownMaterial(component.m_itemData.m_shared.m_name) || Player.m_localPlayer.NoCostCheat();
             
             GameObject gameObject = Object.Instantiate(instance.m_trophieElementPrefab, instance.m_trophieListRoot);
@@ -209,24 +212,15 @@ public static class UpdateAlmanac
             RectTransform? transform = gameObject.transform as RectTransform;
             if (transform == null) continue;
 
-            float x = (index % 7) * TrophySpacing;
-            float y = Mathf.FloorToInt(index / 7f) * -TrophySpacing;
-            
-            transform.anchoredPosition = new Vector2(x, y);
-            
+            UITools.PlaceElement(transform, index, TrophySpacing);
+
             a1 = Mathf.Min(a1, transform.anchoredPosition.y - instance.m_trophieListSpace);
             
-            string LocalizedDesc = Localization.instance.Localize(component.m_itemData.m_shared.m_description);
-            string LocalizedLore = Localization.instance.Localize(component.m_itemData.m_shared.m_name + "_lore");
-
+            UITools.SetElementText(transform, isKnown, LocalizedName, LocalizedDesc, UnknownText);
+            
             Transform icon = transform.Find("icon_bkg/icon");
             if (!icon.TryGetComponent(out Image iconImage)) continue;
-            Sprite? ItemIcon;
-            try { ItemIcon = component.m_itemData.GetIcon(); }
-            catch { ItemIcon = SpriteManager.AlmanacIcon;}
             iconImage.sprite = ItemIcon;
-            transform.Find("name").GetComponent<TMP_Text>().text = isKnown ? LocalizedName : UnknownText;
-            transform.Find("description").GetComponent<TMP_Text>().text = isKnown ? isTrophies ? LocalizedLore : LocalizedDesc : "";
             iconImage.color = isKnown ? Color.white : Color.black;
 
             Button button = UITools.AddButtonComponent(icon.gameObject, iconImage, isKnown);
@@ -251,6 +245,8 @@ public static class UpdateAlmanac
             GameObject prefab = prefabs[index];
             if (!prefab.TryGetComponent(out Piece piece)) continue;
             string LocalizedName = Localization.instance.Localize(piece.m_name);
+            string LocalizedDesc = Localization.instance.Localize(piece.m_description);
+
             bool isKnown = _KnowledgeWall.Value is AlmanacPlugin.Toggle.Off || Player.m_localPlayer.IsRecipeKnown(piece.m_name) || Player.m_localPlayer.NoCostCheat();
             
             GameObject gameObject = Object.Instantiate(instance.m_trophieElementPrefab, instance.m_trophieListRoot);
@@ -259,21 +255,15 @@ public static class UpdateAlmanac
             RectTransform? transform = gameObject.transform as RectTransform;
             if (transform == null) continue;
 
-            float x = (index % 7) * TrophySpacing;
-            float y = Mathf.FloorToInt(index / 7f) * -TrophySpacing;
-            
-            transform.anchoredPosition = new Vector2(x, y);
-            
+            UITools.PlaceElement(transform, index, TrophySpacing);
+
             a1 = Mathf.Min(a1, transform.anchoredPosition.y - instance.m_trophieListSpace);
             
-            string LocalizedDesc = Localization.instance.Localize(piece.m_description);
-
+            UITools.SetElementText(transform, isKnown, LocalizedName, LocalizedDesc, UnknownText);
+            
             Transform icon = transform.Find("icon_bkg/icon");
             if (!icon.TryGetComponent(out Image iconImage)) continue;
             iconImage.sprite = piece.m_icon;
-            
-            transform.Find("name").GetComponent<TMP_Text>().text = isKnown ? LocalizedName : UnknownText;
-            transform.Find("description").GetComponent<TMP_Text>().text = isKnown ? LocalizedDesc : "";
             iconImage.color = isKnown ? Color.white : Color.black;
 
             Button button = UITools.AddButtonComponent(icon.gameObject, iconImage, isKnown);
@@ -293,17 +283,17 @@ public static class UpdateAlmanac
     {
         float totalHeight = (Mathf.CeilToInt(creatures.Count / 5f) * 34f);
         float half = (totalHeight / 2f) - 17f;
-        if (totalHeight <= instance.m_trophieListBaseSize)
-        {
-            half = 306f;
-        }
+        if (totalHeight <= instance.m_trophieListBaseSize) half = 306f;
+        
         for (int index = 0; index < creatures.Count; ++index)
         {
             CreatureData data = creatures[index];
             string LocalizedName = Localization.instance.Localize(data.display_name);
             bool isKnown = ZoneSystem.instance.GetGlobalKeys().Contains(data.defeatedKey) || ZoneSystem.instance.GetGlobalKey(data.defeatedKey) || _KnowledgeWall.Value is AlmanacPlugin.Toggle.Off || Player.m_localPlayer.NoCostCheat();
+            
             GameObject gameObject = Object.Instantiate(CreateAlmanac.CreaturePanelElement, instance.m_trophieListRoot);
             gameObject.SetActive(true);
+            
             RectTransform? transform = gameObject.transform as RectTransform;
             if (transform == null) continue;
 
@@ -343,21 +333,17 @@ public static class UpdateAlmanac
             RectTransform? transform = gameObject.transform as RectTransform;
             if (transform == null) continue;
 
-            float x = (index % 7) * TrophySpacing;
-            float y = Mathf.FloorToInt(index / 7f) * -TrophySpacing;
-            
-            transform.anchoredPosition = new Vector2(x, y);
-            
+            UITools.PlaceElement(transform, index, TrophySpacing);
             a1 = Mathf.Min(a1, transform.anchoredPosition.y - instance.m_trophieListSpace);
+            
+            UITools.SetElementText(transform, isKnown, treasure.m_name, treasure.m_biome.ToString(), UnknownText);
 
             Transform icon = transform.Find("icon_bkg/icon");
             if (!icon.TryGetComponent(out Image iconImage)) continue;
             iconImage.sprite = treasure.m_sprite ? treasure.m_sprite : SpriteManager.AlmanacIcon;
             iconImage.color = isKnown ? Color.white : Color.black;
-
-            transform.Find("name").GetComponent<TMP_Text>().text = isKnown ? treasure.m_name : UnknownText;
-            transform.Find("description").GetComponent<TMP_Text>().text = isKnown ? treasure.m_biome.ToString() : UnknownText;
-
+            
+            
             Button button = UITools.AddButtonComponent(icon.gameObject, iconImage, isKnown);
             button.onClick.AddListener(() =>
             {
@@ -386,20 +372,15 @@ public static class UpdateAlmanac
             RectTransform? transform = gameObject.transform as RectTransform;
             if (transform == null) continue;
 
-            float x = (index % 7) * TrophySpacing;
-            float y = Mathf.FloorToInt(index / 7f) * -TrophySpacing;
-            
-            transform.anchoredPosition = new Vector2(x, y);
-            
+            UITools.PlaceElement(transform, index, TrophySpacing);
             a1 = Mathf.Min(a1, transform.anchoredPosition.y - instance.m_trophieListSpace);
+            
+            UITools.SetElementText(transform, isKnown, bounty.m_creatureName, bounty.m_biome.ToString(), UnknownText);
 
             Transform icon = transform.Find("icon_bkg/icon");
             if (!icon.TryGetComponent(out Image iconImage)) continue;
             iconImage.sprite = bounty.m_icon ? bounty.m_icon : SpriteManager.AlmanacIcon;
             iconImage.color = isKnown ? Color.white : Color.black;
-
-            transform.Find("name").GetComponent<TMP_Text>().text = isKnown ? bounty.m_creatureName : UnknownText;
-            transform.Find("description").GetComponent<TMP_Text>().text = isKnown ? bounty.m_biome.ToString() : UnknownText;
 
             Button button = UITools.AddButtonComponent(icon.gameObject, iconImage, isKnown);
             button.onClick.AddListener(() =>
@@ -421,25 +402,21 @@ public static class UpdateAlmanac
         for (int index = 0; index < achievements.Count; ++index)
         {
             Achievement achievement = achievements[index];
-
+            
+            bool isCompleted = achievement.m_isCompleted || Player.m_localPlayer.NoCostCheat();
+            
             GameObject gameObject = Object.Instantiate(instance.m_trophieElementPrefab, instance.m_trophieListRoot);
             
             gameObject.SetActive(true);
             RectTransform? transform = gameObject.transform as RectTransform;
             if (transform == null) continue;
 
-            float x = (index % 7) * TrophySpacing;
-            float y = Mathf.FloorToInt(index / 7f) * -TrophySpacing;
-            
-            transform.anchoredPosition = new Vector2(x, y);
-            
+            UITools.PlaceElement(transform, index, TrophySpacing);
             a1 = Mathf.Min(a1, transform.anchoredPosition.y - instance.m_trophieListSpace);
 
             Transform icon = transform.Find("icon_bkg/icon");
             if (!icon.TryGetComponent(out Image iconImage)) continue;
             iconImage.sprite = achievement.m_sprite ? achievement.m_sprite : SpriteManager.AlmanacIcon;
-
-            bool isCompleted = achievement.m_isCompleted || Player.m_localPlayer.NoCostCheat();
             
             transform.Find("name").GetComponent<TMP_Text>().text = isCompleted ? achievement.m_displayName : UnknownText;
             transform.Find("description").GetComponent<TMP_Text>().text = achievement.m_desc;
@@ -448,7 +425,24 @@ public static class UpdateAlmanac
                 transform.Find("$part_outline").gameObject.SetActive(Player.m_localPlayer.GetSEMan().HaveStatusEffect(achievement.m_statusEffect.name));
             }
 
-            Button button = UITools.AddButtonComponent(icon.gameObject, iconImage, true);
+            Button button = gameObject.AddComponent<Button>();
+            button.interactable = true;
+            button.targetGraphic = iconImage;
+            button.transition = Selectable.Transition.ColorTint;
+            button.colors = new ColorBlock()
+            {
+                highlightedColor = new Color(1f, 1f, 1f, 1f),
+                pressedColor = new Color(0.5f, 0.5f, 0.5f, 1f),
+                disabledColor = new Color(0f, 0f, 0f, 1f),
+                colorMultiplier = 1f,
+                fadeDuration = 0.1f,
+                normalColor = isCompleted ? new Color(0.5f, 0.5f, 0.5f, 1f) : Color.black,
+                selectedColor = Color.white
+            };
+            button.onClick = new Button.ButtonClickedEvent();
+            ButtonSfx sfx = gameObject.gameObject.AddComponent<ButtonSfx>();
+            sfx.m_sfxPrefab = CacheAssets.ButtonSFX.m_sfxPrefab;
+            
             button.onClick.AddListener(() =>
             {
                 CreateAlmanac.AchievementPanelButton.text = Localization.instance.Localize(isMetricsActive ? "$almanac_leaderboard_button" : "$almanac_stats_button");

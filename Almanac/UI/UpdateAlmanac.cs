@@ -216,7 +216,7 @@ public static class UpdateAlmanac
 
             a1 = Mathf.Min(a1, transform.anchoredPosition.y - instance.m_trophieListSpace);
             
-            UITools.SetElementText(transform, isKnown, LocalizedName, LocalizedDesc, UnknownText);
+            UITools.SetElementText(transform, isKnown, LocalizedName, isTrophies ? LocalizedLore : LocalizedDesc, UnknownText);
             
             Transform icon = transform.Find("icon_bkg/icon");
             if (!icon.TryGetComponent(out Image iconImage)) continue;
@@ -589,6 +589,9 @@ public static class UpdateAlmanac
         {
             { "$almanac_treasure_info", "title" },
             { "$almanac_biome", SelectedTreasure.m_biome.ToString() },
+            { "Wishbone Pings", ConvertBoolean(true) },
+            { "Purchase Item", SelectedTreasure.m_currency.m_itemData.m_shared.m_name },
+            { "Purchase Cost", SelectedTreasure.m_cost == 0 ? "Free" : SelectedTreasure.m_cost.ToString() }
         };
         
         MergeDictionaries(output, BountyData);

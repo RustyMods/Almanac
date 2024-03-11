@@ -26,6 +26,8 @@ public static class Data
     {
         public string m_name = null!;
         public Sprite m_sprite = null!;
+        public ItemDrop m_currency = null!;
+        public int m_cost = 0;
         public Heightmap.Biome m_biome = Heightmap.Biome.None;
         public DropTable m_dropTable = new();
     }
@@ -35,6 +37,8 @@ public static class Data
     {
         public string name = "";
         public string sprite_name = "";
+        public string currency = "Coins";
+        public int cost = 0;
         public Heightmap.Biome biome = Heightmap.Biome.None;
         public List<LootData> loot = new();
     }

@@ -2,6 +2,7 @@
 using System;
 using Almanac.UI;
 using UnityEngine;
+using UnityEngine.PlayerLoop;
 using Random = UnityEngine.Random;
 
 namespace Almanac.TreasureHunt;
@@ -16,12 +17,11 @@ public class TreasureHunt : MonoBehaviour
     private const int solidHeightMargin = 1000;
     private const float spawnOffset = 10f;
 
-    public Data.TreasureData data = null!;
     public DropTable DropTable = null!;
     public DropOnDestroyed _DropOnDestroyed = null!;
     public ZNetView _znv = null!;
 
-    public Minimap.PinData? pin;
+    private Minimap.PinData? pin;
 
     public void Awake()
     {
@@ -55,22 +55,6 @@ public class TreasureHunt : MonoBehaviour
 
     private static bool AcceptTreasureHunt(Data.TreasureLocation treasureLocation)
     {
-        if (ActiveTreasureLocation != null)
-        {
-            if (ActiveTreasureLocation.m_data.m_name == treasureLocation.m_data.m_name)
-            {
-                Minimap.instance.RemovePin(ActiveTreasureLocation.m_pin);
-                ActiveTreasureLocation = null;
-                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Canceled Treasure hunt");
-                UpdateAlmanac.UpdateTreasurePanel();
-            }
-            else
-            {
-                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Already have active treasure hunt");
-            }
-            return false;
-        }
-
         if (!FindSpawnLocation(treasureLocation.m_biome, out Vector3 pos)) return false;
         treasureLocation.m_pos = pos;
         Minimap.PinData treasurePin = Minimap.instance.AddPin(pos, Minimap.PinType.Boss, treasureLocation.m_data.m_name, false, false);
@@ -90,37 +74,31 @@ public class TreasureHunt : MonoBehaviour
 
     public static bool SpawnTreasure(GameObject prefab, Vector3 point, float maxDistance, Data.TreasureData data)
     {
-        for (int index = 0; index < 100; ++index)
+        Vector3 vector3 = GetRandomVectorWithin(point, maxDistance);
+        if (WorldGenerator.instance.GetBiome(vector3) == Heightmap.Biome.Ocean)
         {
-            Vector3 vector3 = GetRandomVectorWithin(point, maxDistance);
-            if (WorldGenerator.instance.GetBiome(vector3) == Heightmap.Biome.Ocean)
+            vector3.y = ZoneSystem.instance.m_waterLevel;
+        }
+        else
+        {
+            ZoneSystem.instance.GetSolidHeight(vector3, out float height, solidHeightMargin);
+            if (height >= 0.0 && Mathf.Abs(height - point.y) <= maxYDistance &&
+                Vector3.Distance(vector3, point) >= minSpawnDistance)
             {
-                vector3.y = ZoneSystem.instance.m_waterLevel;
+                vector3.y = height + spawnOffset;
             }
             else
             {
-                ZoneSystem.instance.GetSolidHeight(vector3, out float height, solidHeightMargin);
-                if (height >= 0.0 && Mathf.Abs(height - point.y) <= maxYDistance &&
-                    Vector3.Distance(vector3, point) >= minSpawnDistance)
-                {
-                    vector3.y = height + spawnOffset;
-                }
-                else
-                {
-                    continue;
-                }
+                vector3.y = Player.m_localPlayer.transform.position.y + spawnOffset;
             }
-
-            GameObject go = UnityEngine.Object.Instantiate(prefab, vector3, Quaternion.identity);
-            TreasureHunt treasure = go.AddComponent<TreasureHunt>();
-            HoverText hoverText = go.AddComponent<HoverText>();
-            hoverText.m_text = data.m_name;
-            treasure.DropTable = data.m_drops;
-            treasure.data = data;
-            return true;
         }
 
-        return false;
+        GameObject go = Instantiate(prefab, vector3, Quaternion.identity);
+        if (!go) return false;
+        go.AddComponent<TreasureHunt>().DropTable = data.m_drops;
+        go.AddComponent<HoverText>().m_text = data.m_name;
+        go.AddComponent<Beacon>().m_range = 50f;
+        return true;
     }
     
     private static bool FindSpawnLocation(Heightmap.Biome biome, out Vector3 pos)
@@ -166,6 +144,9 @@ public class TreasureHunt : MonoBehaviour
     
     public static void OnClickTreasure()
     {
+        if (!CheckForActiveTreasureHunt()) return;
+        if (!CheckForTreasureCost()) return;
+        
         if (AcceptTreasureHunt(new Data.TreasureLocation()
         {
             m_data = new Data.TreasureData()
@@ -178,5 +159,71 @@ public class TreasureHunt : MonoBehaviour
         {
             UpdateAlmanac.UpdateTreasurePanel();
         }
+        else
+        {
+            // Return cost of treasure hunt
+            if (UpdateAlmanac.SelectedTreasure.m_cost > 0)
+            {
+                ReturnCost();
+            }
+        }
+    }
+
+    private static bool CheckForActiveTreasureHunt()
+    {
+        if (ActiveTreasureLocation == null) return true;
+        if (ActiveTreasureLocation.m_data.m_name == UpdateAlmanac.SelectedTreasure.m_name)
+        {
+            Minimap.instance.RemovePin(ActiveTreasureLocation.m_pin);
+            ActiveTreasureLocation = null;
+            Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Canceled Treasure hunt");
+            UpdateAlmanac.UpdateTreasurePanel();
+            if (UpdateAlmanac.SelectedTreasure.m_cost > 0)
+            {
+                ReturnCost();
+            }
+        }
+        else
+        {
+            Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Already have active treasure hunt");
+        }
+
+        return false;
+    }
+
+    public static void ReturnCost()
+    {
+        Inventory? inventory = Player.m_localPlayer.GetInventory();
+        if (!inventory.CanAddItem(UpdateAlmanac.SelectedTreasure.m_currency.m_itemData, UpdateAlmanac.SelectedTreasure.m_cost)) return;
+        ItemDrop.ItemData? item = UpdateAlmanac.SelectedTreasure.m_currency.m_itemData.Clone();
+        item.m_stack = UpdateAlmanac.SelectedTreasure.m_cost;
+        inventory.AddItem(item);
+    }
+
+    private static bool CheckForTreasureCost()
+    {
+        if (UpdateAlmanac.SelectedTreasure.m_cost <= 0) return true;
+        Inventory? inventory = Player.m_localPlayer.GetInventory();
+        if (!inventory.HaveItem(UpdateAlmanac.SelectedTreasure.m_currency.m_itemData.m_shared.m_name)) return false;
+        ItemDrop.ItemData? item = inventory.GetItem(UpdateAlmanac.SelectedTreasure.m_currency.m_itemData.m_shared.m_name);
+        if (item == null)
+        {
+            AlmanacPlugin.AlmanacLogger.LogDebug("Failed to get currency item from inventory");
+            return false;
+        }
+
+        if (item.m_stack > UpdateAlmanac.SelectedTreasure.m_cost)
+        {
+            item.m_stack -= UpdateAlmanac.SelectedTreasure.m_cost;
+            return true;
+        }
+        if (item.m_stack == UpdateAlmanac.SelectedTreasure.m_cost)
+        {
+            inventory.RemoveItem(item);
+            return true;
+        }
+        Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Not enough " + UpdateAlmanac.SelectedTreasure.m_currency.m_itemData.m_shared.m_name);
+        AlmanacPlugin.AlmanacLogger.LogDebug("Not enough currency to buy treasure");
+        return false;
     }
 }

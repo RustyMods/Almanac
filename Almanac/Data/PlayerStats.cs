@@ -67,8 +67,7 @@ public static class PlayerStats
                 ReadCustomTrackerData(FileData, true, false);
             }
         }
-        TerminalCommands.AddAlmanacCommands();
-        // Bounty.AddBountyCommands();
+
     }
 
     private static void ReadCustomTrackerData(string CurrentData, bool hasFile, bool hasCustomData = true)
@@ -224,6 +223,8 @@ public static class PlayerStats
             if (!__instance) return;
             if (!Player.m_localPlayer) return;
             LoadPlayerData();
+            TerminalCommands.AddAlmanacCommands();
+            // Bounty.AddBountyCommands();
             Patches.CheckIfServer();
             switch (AlmanacPlugin.WorkingAsType)
             {

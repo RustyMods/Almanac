@@ -86,6 +86,7 @@ public static class TreasureManager
             {
                 name = "Meadow Treasure",
                 sprite_name = "map",
+                cost = 10,
                 biome = Heightmap.Biome.Meadows,
                 loot = new List<Data.LootData>()
                 {
@@ -119,6 +120,7 @@ public static class TreasureManager
             {
                 name = "Black Forest Treasure",
                 sprite_name = "map",
+                cost = 20,
                 biome = Heightmap.Biome.BlackForest,
                 loot = new List<Data.LootData>()
                 {
@@ -152,6 +154,7 @@ public static class TreasureManager
             {
                 name = "Swamp Treasure",
                 sprite_name = "map",
+                cost = 30,
                 biome = Heightmap.Biome.Swamp,
                 loot = new List<Data.LootData>()
                 {
@@ -185,6 +188,7 @@ public static class TreasureManager
             {
                 name = "Mountain Treasure",
                 sprite_name = "map",
+                cost = 40,
                 biome = Heightmap.Biome.Mountain,
                 loot = new List<Data.LootData>()
                 {
@@ -218,6 +222,7 @@ public static class TreasureManager
             {
                 name = "Plains Treasure",
                 sprite_name = "map",
+                cost = 50,
                 biome = Heightmap.Biome.Plains,
                 loot = new List<Data.LootData>()
                 {
@@ -251,6 +256,7 @@ public static class TreasureManager
             {
                 name = "Mistlands Treasure",
                 sprite_name = "map",
+                cost = 100,
                 biome = Heightmap.Biome.Mistlands,
                 loot = new List<Data.LootData>()
                 {
@@ -284,6 +290,7 @@ public static class TreasureManager
             {
                 name = "Deep North Treasure",
                 sprite_name = "map",
+                cost = 150,
                 biome = Heightmap.Biome.DeepNorth,
                 loot = new List<Data.LootData>()
                 {
@@ -317,6 +324,7 @@ public static class TreasureManager
             {
                 name = "Ashlands Treasure",
                 sprite_name = "map",
+                cost = 150,
                 biome = Heightmap.Biome.AshLands,
                 loot = new List<Data.LootData>()
                 {
@@ -381,9 +389,11 @@ public static class TreasureManager
             if (sprite == null) return false;
             output.m_sprite = sprite;
         }
-
+        
         output.m_name = data.name;
         output.m_biome = data.biome;
+        output.m_currency = TryGetCurrency(data);
+        output.m_cost = data.cost;
         output.m_dropTable = new()
         {
             m_drops = drops,
@@ -393,5 +403,18 @@ public static class TreasureManager
             m_dropChance = 1f
         };
         return true;
+    }
+
+    private static ItemDrop TryGetCurrency(Data.TreasureYML data)
+    {
+        GameObject currency = ObjectDB.instance.GetItemPrefab(data.currency);
+        if (!currency) return GetDefaultCurrency();
+        return currency.TryGetComponent(out ItemDrop currencyItem) ? currencyItem : GetDefaultCurrency();
+    }
+
+    private static ItemDrop GetDefaultCurrency()
+    {
+        GameObject coins = ObjectDB.instance.GetItemPrefab("Coins");
+        return coins.GetComponent<ItemDrop>();
     }
 }

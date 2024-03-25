@@ -86,6 +86,7 @@ public static class Leaderboard
     public static void BothLeaderboardCoroutine()
     {
         AlmanacPlugin.AlmanacLogger.LogDebug("Server: Starting coroutine to update local leaderboard");
+        AlmanacPlugin._plugin.StopCoroutine(UpdateLocalPlayerLeaderboard());
         AlmanacPlugin._plugin.StartCoroutine(UpdateLocalPlayerLeaderboard());
     }
     
@@ -138,12 +139,14 @@ public static class Leaderboard
         AlmanacPlugin.AlmanacLogger.LogDebug("Server: Starting coroutine to send leaderboard data to clients");
 
         InitServerPlayerListData();
+        AlmanacPlugin._plugin.StopCoroutine(UpdateSendLeaderboardToClients());
         AlmanacPlugin._plugin.StartCoroutine(UpdateSendLeaderboardToClients());
     }
 
     public static void ClientLeaderboardCoroutine()
     {
         AlmanacPlugin.AlmanacLogger.LogDebug("Client: Starting coroutine to send leaderboard data to server");
+        AlmanacPlugin._plugin.StopCoroutine(UpdateSendPlayerDataToServer());
         AlmanacPlugin._plugin.StartCoroutine(UpdateSendPlayerDataToServer());
     }
     

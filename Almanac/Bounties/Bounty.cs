@@ -170,6 +170,7 @@ public class Bounty : MonoBehaviour
     {
         if (ActiveBountyLocation != null)
         {
+            
             if (ActiveBountyLocation.m_critter == bountyLocation.m_critter)
             {
                 Minimap.instance.RemovePin(ActiveBountyLocation.m_pin);
@@ -296,6 +297,7 @@ public class Bounty : MonoBehaviour
     
     public static void OnClickBounty()
     {
+        if (!CheckForBountyCost()) return;
         if (AcceptBounty(new Data.BountyLocation()
         {
             data = new Data.BountyData()
@@ -310,7 +312,7 @@ public class Bounty : MonoBehaviour
                     ? ""
                     : UpdateAlmanac.SelectedBounty.m_itemReward.name,
                 m_damages = UpdateAlmanac.SelectedBounty.m_damages,
-                m_level = UpdateAlmanac.SelectedBounty.level,
+                m_level = UpdateAlmanac.SelectedBounty.m_level,
                 m_skillType = UpdateAlmanac.SelectedBounty.m_skill.ToString(),
                 m_skillAmount = UpdateAlmanac.SelectedBounty.m_skillAmount
             },
@@ -320,6 +322,32 @@ public class Bounty : MonoBehaviour
         {
             UpdateAlmanac.UpdateBountyPanel();
         }
+    }
+
+    private static bool CheckForBountyCost()
+    {
+        if (UpdateAlmanac.SelectedBounty.m_cost <= 0) return true;
+        Inventory? inventory = Player.m_localPlayer.GetInventory();
+        if (!inventory.HaveItem(UpdateAlmanac.SelectedBounty.m_currency.m_itemData.m_shared.m_name)) return false;
+        ItemDrop.ItemData? item = inventory.GetItem(UpdateAlmanac.SelectedTreasure.m_currency.m_itemData.m_shared.m_name);
+        if (item == null)
+        {
+            AlmanacPlugin.AlmanacLogger.LogDebug("Failed to get currency item from inventory");
+            return false;
+        }
+        if (item.m_stack > UpdateAlmanac.SelectedTreasure.m_cost)
+        {
+            item.m_stack -= UpdateAlmanac.SelectedTreasure.m_cost;
+            return true;
+        }
+        if (item.m_stack == UpdateAlmanac.SelectedTreasure.m_cost)
+        {
+            inventory.RemoveItem(item);
+            return true;
+        }
+        Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Not enough " + UpdateAlmanac.SelectedTreasure.m_currency.m_itemData.m_shared.m_name);
+        AlmanacPlugin.AlmanacLogger.LogDebug("Not enough currency to buy bounty");
+        return false;
     }
     
     public static void AddBountyCommands()

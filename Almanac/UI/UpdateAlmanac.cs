@@ -484,9 +484,11 @@ public static class UpdateAlmanac
         {
             { "$almanac_bounty_info", "title" },
             { "$almanac_creature_prefab", SelectedBounty.m_critter.name },
-            { "$almanac_level", SelectedBounty.level.ToString() },
+            { "$almanac_level", SelectedBounty.m_level.ToString() },
             { "$almanac_health", SelectedBounty.m_health.ToString(CultureInfo.CurrentCulture) },
             { "$almanac_damage_multiplier", SelectedBounty.m_damageMultiplier.ToString(CultureInfo.CurrentCulture) },
+            { "Purchase Currency", SelectedBounty.m_currency.m_itemData.m_shared.m_name},
+            { "Purchase Cost", SelectedBounty.m_cost == 0 ? "Free" : SelectedBounty.m_cost.ToString()}
         };
 
         Dictionary<string, string> BountyDamages = new()

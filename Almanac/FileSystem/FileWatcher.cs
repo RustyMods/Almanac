@@ -105,7 +105,6 @@ public static class FileWatcher
         
         if (AlmanacPlugin.WorkingAsType is not AlmanacPlugin.WorkingAs.Client)
         {
-            TreasureHunt.TreasureManager.InitTreasureManager();
             ServerSyncedData.UpdateServerTreasureList();
         }
         else

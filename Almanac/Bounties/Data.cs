@@ -52,6 +52,8 @@ public static class Data
         public BountyDamages damages = new();
         public int level = 1;
         public string defeat_key = "";
+        public int cost = 0;
+        public string currency = "Coins";
     }
 
     public class ValidatedBounty
@@ -68,8 +70,10 @@ public static class Data
         public float m_health = 1000f;
         public float m_damageMultiplier = 1f;
         public BountyDamages m_damages = new();
-        public int level = 1;
+        public int m_level = 1;
         public string m_defeatKey = "";
+        public int m_cost = 0;
+        public ItemDrop m_currency = null!;
     }
 
     [Serializable]

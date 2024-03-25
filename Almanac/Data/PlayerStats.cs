@@ -189,6 +189,8 @@ public static class PlayerStats
         private static void Prefix(Player __instance)
         {
             if (!__instance) return;
+            if (!Player.m_localPlayer) return;
+            if (__instance != Player.m_localPlayer) return;
             UpdatePlayerDeaths(__instance);
             ISerializer serializer = new SerializerBuilder().Build();
             Player.m_localPlayer.m_customData[AlmanacEffectManager.AchievementKey] = serializer.Serialize(AlmanacEffectManager.SavedAchievementEffectNames);
@@ -222,6 +224,7 @@ public static class PlayerStats
         {
             if (!__instance) return;
             if (!Player.m_localPlayer) return;
+            if (__instance != Player.m_localPlayer) return;
             LoadPlayerData();
             TerminalCommands.AddAlmanacCommands();
             // Bounty.AddBountyCommands();

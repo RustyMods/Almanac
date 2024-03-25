@@ -61,6 +61,7 @@ public static class Patches
         private static void Postfix(Player __instance)
         {
             if (!__instance) return;
+            if (__instance != Player.m_localPlayer) return;
             if (AlmanacPlugin.WorkingAsType is AlmanacPlugin.WorkingAs.Client)
             {
                 PlayerStats.UpdatePlayerStats();

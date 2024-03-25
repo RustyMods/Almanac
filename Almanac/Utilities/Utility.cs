@@ -43,7 +43,7 @@ public static class Utility
                + $"\n                       $almanac_biome: <color=orange>{data.m_biome}</color>"
                + $"\n                       $almanac_health: <color=orange>{data.m_health}</color>"
                + $"\n                       $almanac_damage Multiplier: <color=orange>{data.m_damageMultiplier}</color>"
-               + $"\n                       $almanac_level: <color=orange>{data.level}</color>"
+               + $"\n                       $almanac_level: <color=orange>{data.m_level}</color>"
                + "\n                       " + FormatBountyDamages(data);
     }
 

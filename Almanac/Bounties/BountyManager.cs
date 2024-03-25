@@ -13,7 +13,7 @@ namespace Almanac.Bounties;
 public static class BountyManager
 {
     public static List<Data.ValidatedBounty> RegisteredBounties = new();
-    public static List<Data.BountyYML> ValidatedBounties = new();
+    public static readonly List<Data.BountyYML> ValidatedBounties = new();
     
     public static void InitBounties(bool first = true)
     {
@@ -120,7 +120,11 @@ public static class BountyManager
         }
 
         if (!CreatureDataCollector.TempDefeatKeys.Contains(data.defeat_key)) return false;
-        
+
+        var currency = ObjectDB.instance.GetItemPrefab(data.currency);
+        if (!currency) return false;
+        if (!currency.TryGetComponent(out ItemDrop currencyData)) return false;
+
         validatedData.m_critter = critter;
         validatedData.m_creatureName = data.bounty_name;
         validatedData.m_biome = biome;
@@ -128,8 +132,10 @@ public static class BountyManager
         validatedData.m_health = data.bounty_health;
         validatedData.m_damageMultiplier = data.damage_multiplier;
         validatedData.m_damages = data.damages;
-        validatedData.level = data.level;
+        validatedData.m_level = data.level;
         validatedData.m_defeatKey = data.defeat_key;
+        validatedData.m_cost = data.cost;
+        validatedData.m_currency = currencyData;
 
         return true;
     }

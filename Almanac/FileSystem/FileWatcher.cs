@@ -48,19 +48,6 @@ public static class FileWatcher
         CreatureWatcher.Changed += OnCreatureChange;
         CreatureWatcher.Deleted += OnCreatureChange;
         CreatureWatcher.Created += OnCreatureChange;
-        
-        FileSystemWatcher ServerPlayerDataListWatcher =
-            new FileSystemWatcher(AlmanacPaths.ServerPlayerDataFolderPath)
-            {
-                Filter = "*.yml",
-                EnableRaisingEvents = true,
-                IncludeSubdirectories = true,
-                SynchronizingObject = ThreadingHelper.SynchronizingObject,
-                NotifyFilter = NotifyFilters.LastWrite
-            };
-
-        ServerPlayerDataListWatcher.Changed += OnServerPlayerDataListChange;
-        ServerPlayerDataListWatcher.Created += OnServerPlayerDataListChange;
 
         FileSystemWatcher ServerBountyListWatcher = new FileSystemWatcher(AlmanacPaths.BountyFolderPath)
         {

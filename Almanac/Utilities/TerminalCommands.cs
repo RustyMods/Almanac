@@ -13,6 +13,7 @@ public static class TerminalCommands
     public static void AddAlmanacCommands()
     {
         AlmanacLogger.LogDebug("Client: Adding almanac commands to terminal");
+
         Terminal.ConsoleCommand GetCustomData = new("almanac_data", "Local player tracker data, searchable using currently registered defeat keys", (Terminal.ConsoleEventFailable)(args =>
         {
             if (args.Length < 2) return false;

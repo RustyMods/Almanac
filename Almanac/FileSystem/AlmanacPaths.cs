@@ -7,9 +7,9 @@ public static class AlmanacPaths
 {
     private static readonly string LocalPath = Utils.GetSaveDataPath(FileHelpers.FileSource.Local) + Path.DirectorySeparatorChar + "AlmanacData";
     private static readonly string FolderPath = Paths.ConfigPath + Path.DirectorySeparatorChar + "Almanac";
-    public static readonly string CustomDataFileName = "_Data.yml";
+    // public static readonly string CustomDataFileName = "_Data.yml";
     public static readonly string AchievementFolderPath = FolderPath + Path.DirectorySeparatorChar + "AchievementData";
-    public static readonly string PlayerDataFolderPath = (AlmanacPlugin._RootPath.Value is AlmanacPlugin.DataPath.LocalLow ? LocalPath : FolderPath) + Path.DirectorySeparatorChar + "PlayerData";
+    // public static readonly string PlayerDataFolderPath = (AlmanacPlugin._RootPath.Value is AlmanacPlugin.DataPath.LocalLow ? LocalPath : FolderPath) + Path.DirectorySeparatorChar + "PlayerData";
     public static readonly string FilterFolderPath = FolderPath + Path.DirectorySeparatorChar + "Filters";
     public static readonly string IgnoreListFileName = "IgnoreList.yml";
     public static readonly string IgnorePath = FilterFolderPath + Path.DirectorySeparatorChar + IgnoreListFileName;
@@ -25,7 +25,7 @@ public static class AlmanacPaths
         if (!Directory.Exists(AchievementFolderPath)) Directory.CreateDirectory(AchievementFolderPath);
         if (!Directory.Exists(FilterFolderPath)) Directory.CreateDirectory(FilterFolderPath);
         if (!Directory.Exists(CreatureFolderPath)) Directory.CreateDirectory(CreatureFolderPath);
-        if (!Directory.Exists(PlayerDataFolderPath)) Directory.CreateDirectory(PlayerDataFolderPath);
+        // if (!Directory.Exists(PlayerDataFolderPath)) Directory.CreateDirectory(PlayerDataFolderPath);
         if (!Directory.Exists(ServerPlayerDataFolderPath)) Directory.CreateDirectory(ServerPlayerDataFolderPath);
         if (!Directory.Exists(CustomCreatureGroupFolder)) Directory.CreateDirectory(CustomCreatureGroupFolder);
         if (!Directory.Exists(BountyFolderPath)) Directory.CreateDirectory(BountyFolderPath);

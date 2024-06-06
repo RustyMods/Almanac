@@ -34,6 +34,7 @@ public static class AchievementYML
         public int item_amount = 0;
         public string skill = "";
         public int skill_amount = 0;
+        public int class_experience = 0;
         public List<string> start_effects = new();
         public List<string> stop_effects = new();
         public List<HitData.DamageModPair> damage_modifiers = new()

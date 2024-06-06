@@ -361,14 +361,11 @@ public static class CreatureDataCollector
                         
             List<AttackData> creatureAttackData = new List<AttackData>();
                         
-            if (defaultItems != null) foreach (GameObject item in defaultItems) SaveAttackData(item, creatureAttackData);
-            if (randomWeapons != null) foreach (GameObject weapon in randomWeapons) SaveAttackData(weapon, creatureAttackData);
-            if (randomSets != null)
+            foreach (GameObject item in defaultItems) SaveAttackData(item, creatureAttackData);
+            foreach (GameObject weapon in randomWeapons) SaveAttackData(weapon, creatureAttackData);
+            foreach (Humanoid.ItemSet set in randomSets)
             {
-                foreach (Humanoid.ItemSet set in randomSets)
-                {
-                    foreach (GameObject? attackItem in set.m_items) SaveAttackData(attackItem, creatureAttackData);
-                }
+                foreach (GameObject? attackItem in set.m_items) SaveAttackData(attackItem, creatureAttackData);
             }
             data.defaultItems = creatureAttackData;
         }
@@ -383,7 +380,7 @@ public static class CreatureDataCollector
         {
             AttackData attackData = new AttackData();
 
-            if (prefab.TryGetComponent(out ItemDrop itemDrop)) return;
+            if (!prefab.TryGetComponent(out ItemDrop itemDrop)) return;
 
             ItemDrop.ItemData.SharedData? sharedData = itemDrop.m_itemData.m_shared;
             HitData.DamageTypes damages = sharedData.m_damages;

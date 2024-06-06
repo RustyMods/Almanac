@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Almanac.API;
 using Almanac.Data;
 using Almanac.FileSystem;
 using Almanac.UI;
@@ -96,10 +97,14 @@ public class Bounty : MonoBehaviour
 
     // Static
 
-    public static void OnDeath(Character instance)
+    public void OnDeath(Character instance)
     {
         if (!instance) return;
-        if (instance.m_lastHit == null) return;
+        if (instance.m_lastHit == null)
+        {
+            ActiveBountyLocation = null;
+            return;
+        }
         Character attacker = instance.m_lastHit.GetAttacker();
         if (attacker == null) return;
         if (!attacker.IsPlayer()) return;
@@ -130,6 +135,13 @@ public class Bounty : MonoBehaviour
                 Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, $"$almanac_raised {Utility.ConvertSkills(skillType)} $almanac_by {data.m_skillAmount} $almanac_xp");
                 break;
         }
+
+        if (data.m_experience > 0)
+        {
+            // Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, $"Added {data.m_experience} class experience");
+            ClassesAPI.AddEXP(data.m_experience);
+        }
+        ActiveBountyLocation = null;
     }
 
     public static void ApplyBountyModifiers(HitData hit)
@@ -170,7 +182,6 @@ public class Bounty : MonoBehaviour
     {
         if (ActiveBountyLocation != null)
         {
-            
             if (ActiveBountyLocation.m_critter == bountyLocation.m_critter)
             {
                 Minimap.instance.RemovePin(ActiveBountyLocation.m_pin);
@@ -314,7 +325,8 @@ public class Bounty : MonoBehaviour
                 m_damages = UpdateAlmanac.SelectedBounty.m_damages,
                 m_level = UpdateAlmanac.SelectedBounty.m_level,
                 m_skillType = UpdateAlmanac.SelectedBounty.m_skill.ToString(),
-                m_skillAmount = UpdateAlmanac.SelectedBounty.m_skillAmount
+                m_skillAmount = UpdateAlmanac.SelectedBounty.m_skillAmount,
+                m_experience =  UpdateAlmanac.SelectedBounty.m_experience
             },
             m_biome = UpdateAlmanac.SelectedBounty.m_biome,
             m_critter = UpdateAlmanac.SelectedBounty.m_critter,
@@ -329,23 +341,23 @@ public class Bounty : MonoBehaviour
         if (UpdateAlmanac.SelectedBounty.m_cost <= 0) return true;
         Inventory? inventory = Player.m_localPlayer.GetInventory();
         if (!inventory.HaveItem(UpdateAlmanac.SelectedBounty.m_currency.m_itemData.m_shared.m_name)) return false;
-        ItemDrop.ItemData? item = inventory.GetItem(UpdateAlmanac.SelectedTreasure.m_currency.m_itemData.m_shared.m_name);
+        ItemDrop.ItemData? item = inventory.GetItem(UpdateAlmanac.SelectedBounty.m_currency.m_itemData.m_shared.m_name);
         if (item == null)
         {
             AlmanacPlugin.AlmanacLogger.LogDebug("Failed to get currency item from inventory");
             return false;
         }
-        if (item.m_stack > UpdateAlmanac.SelectedTreasure.m_cost)
+        if (item.m_stack > UpdateAlmanac.SelectedBounty.m_cost)
         {
-            item.m_stack -= UpdateAlmanac.SelectedTreasure.m_cost;
+            item.m_stack -= UpdateAlmanac.SelectedBounty.m_cost;
             return true;
         }
-        if (item.m_stack == UpdateAlmanac.SelectedTreasure.m_cost)
+        if (item.m_stack == UpdateAlmanac.SelectedBounty.m_cost)
         {
             inventory.RemoveItem(item);
             return true;
         }
-        Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Not enough " + UpdateAlmanac.SelectedTreasure.m_currency.m_itemData.m_shared.m_name);
+        Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Not enough " + UpdateAlmanac.SelectedBounty.m_currency.m_itemData.m_shared.m_name);
         AlmanacPlugin.AlmanacLogger.LogDebug("Not enough currency to buy bounty");
         return false;
     }

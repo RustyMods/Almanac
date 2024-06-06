@@ -30,6 +30,7 @@ public static class Data
         public int m_cost = 0;
         public Heightmap.Biome m_biome = Heightmap.Biome.None;
         public DropTable m_dropTable = new();
+        public int m_experience = 0;
     }
 
     [Serializable]

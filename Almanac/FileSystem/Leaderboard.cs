@@ -23,9 +23,17 @@ public static class Leaderboard
     }
     private static void SendLeaderboardToClients()
     {
-        ISerializer serializer = new SerializerBuilder().Build();
-        string data = serializer.Serialize(LeaderboardData);
-        SendToClients(data);
+        if (!ZNet.instance) return;
+        try
+        {
+            ISerializer serializer = new SerializerBuilder().Build();
+            string data = serializer.Serialize(LeaderboardData);
+            SendToClients(data);
+        }
+        catch
+        {
+            AlmanacPlugin.AlmanacLogger.LogDebug("Failed to send leaderboard data to clients");
+        }
     }
     private static void SendToServer(string data)
     {

@@ -22,52 +22,26 @@ public static class PlayerStats
         if (!PlayerProfileStats.TryGetValue(type, out float value)) return 0;
         return value;
     }
-    private static string GetCustomDataFilePath()
-    {
-        string PrefixPath = AlmanacPaths.PlayerDataFolderPath + Path.DirectorySeparatorChar;
-        string FormattedPlayerName = Player.m_localPlayer.GetHoverName().Replace(" ", "_");
-        return PrefixPath + FormattedPlayerName + AlmanacPaths.CustomDataFileName;
-    }
 
     private static void InitPlayerTracker()
     {
         if (!Player.m_localPlayer) return;
         AlmanacPlugin.AlmanacLogger.LogDebug("Client: Initializing Player Kill Death Tracker");
 
-        if (!File.Exists(GetCustomDataFilePath()))
+        AlmanacPlugin.AlmanacLogger.LogDebug("Client: Player Kill Death File not found");
+        if (Player.m_localPlayer.m_customData.TryGetValue(AlmanacStatsKey, out string CurrentData))
         {
-            AlmanacPlugin.AlmanacLogger.LogDebug("Client: Player Kill Death File not found");
-            if (Player.m_localPlayer.m_customData.TryGetValue(AlmanacStatsKey, out string CurrentData))
-            {
-                ReadCustomTrackerData(CurrentData, false);
-            }
-            else
-            {
-                AlmanacPlugin.AlmanacLogger.LogDebug("Client: Generating kill death custom data");
-                foreach (string key in CreatureDataCollector.TempDefeatKeys)
-                {
-                    LocalPlayerData.Player_Kill_Deaths[key] = new KillDeaths();
-                }
-            }
-            WriteCurrentCustomData();
+            ReadCustomTrackerData(CurrentData, false);
         }
         else
         {
-            AlmanacPlugin.AlmanacLogger.LogDebug("Client: Player Kill Death File found");
-            if (Player.m_localPlayer.m_customData.TryGetValue(AlmanacStatsKey, out string CurrentData))
+            AlmanacPlugin.AlmanacLogger.LogDebug("Client: Generating kill death custom data");
+            foreach (string key in CreatureDataCollector.TempDefeatKeys)
             {
-                ReadCustomTrackerData(CurrentData, true);
-            }
-            else
-            {
-                AlmanacPlugin.AlmanacLogger.LogDebug("Client: Loaded player data file: " + GetCustomDataFilePath());
-                AlmanacPlugin.AlmanacLogger.LogDebug("Client: Saving loaded player data to player custom data");
-                string FileData = File.ReadAllText(GetCustomDataFilePath());
-                Player.m_localPlayer.m_customData[AlmanacStatsKey] = FileData;
-                ReadCustomTrackerData(FileData, true, false);
+                LocalPlayerData.Player_Kill_Deaths[key] = new KillDeaths();
             }
         }
-
+        WriteCurrentCustomData();
     }
 
     private static void ReadCustomTrackerData(string CurrentData, bool hasFile, bool hasCustomData = true)
@@ -150,11 +124,19 @@ public static class PlayerStats
 
     private static void AddRuneStoneLabels(RuneStone instance)
     {
-        if (!instance) return;
-        foreach (RuneStone.RandomRuneText text in instance.m_randomTexts)
+        try
         {
-            if (!text.m_label.IsNullOrWhiteSpace()) continue;
-            text.m_label = text.m_text + "_label";
+            if (!instance) return;
+            foreach (RuneStone.RandomRuneText text in instance.m_randomTexts)
+            {
+                if (!text.m_label.IsNullOrWhiteSpace()) continue;
+                if (text.m_text.IsNullOrWhiteSpace()) continue;
+                text.m_label = text.m_text + "_label";
+            }
+        }
+        catch
+        {
+            AlmanacPlugin.AlmanacLogger.LogDebug("Failed to add label to runestone");
         }
     }
     

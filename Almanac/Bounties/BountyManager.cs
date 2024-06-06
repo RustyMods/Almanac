@@ -79,8 +79,6 @@ public static class BountyManager
             AlmanacPlugin.AlmanacLogger.LogDebug("Invalid bounty prefab: " + data.creature_prefab_name);
             return false;
         }
-        
-
         if (data.sprite_name.IsNullOrWhiteSpace()) return false;
         if (!SpriteManager.GetSprite(data.sprite_name, out Sprite? sprite))
         {
@@ -136,6 +134,7 @@ public static class BountyManager
         validatedData.m_defeatKey = data.defeat_key;
         validatedData.m_cost = data.cost;
         validatedData.m_currency = currencyData;
+        validatedData.m_experience = data.experience_reward;
 
         return true;
     }

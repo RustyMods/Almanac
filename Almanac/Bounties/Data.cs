@@ -19,6 +19,7 @@ public static class Data
         public float m_damageMultiplier = 2f;
         public BountyDamages m_damages = new();
         public int m_level = 1;
+        public int m_experience = 0;
     }
 
     public enum QuestRewardType
@@ -47,6 +48,7 @@ public static class Data
         public QuestRewardType reward_type = QuestRewardType.Item;
         public BountyReward item_reward = new();
         public BountySkill skill_reward = new();
+        public int experience_reward = 0;
         public float bounty_health = 1000f;
         public float damage_multiplier = 1f;
         public BountyDamages damages = new();
@@ -74,6 +76,7 @@ public static class Data
         public string m_defeatKey = "";
         public int m_cost = 0;
         public ItemDrop m_currency = null!;
+        public int m_experience = 0;
     }
 
     [Serializable]

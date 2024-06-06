@@ -18,8 +18,8 @@ public static class BountyPatches
         private static void Prefix(Character __instance)
         {
             if (!__instance) return;
-            Bounty.OnDeath(__instance);
-            Bounty.ActiveBountyLocation = null;
+            if (!__instance.TryGetComponent(out Bounty component)) return;
+            component.OnDeath(__instance);
         }
     }
 
@@ -51,7 +51,7 @@ public static class BountyPatches
             {
                 instance.Message(MessageHud.MessageType.Center, "Failed to spawn treasure loot, returning cost");
                 TreasureHunt.TreasureHunt.ActiveTreasureLocation = null;
-                TreasureHunt.TreasureHunt.ReturnCost();
+                TreasureHunt.TreasureHunt.ReturnCost(true);
             }
         }
     }

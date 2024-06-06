@@ -46,6 +46,7 @@ public static class AchievementManager
         public string m_achievement_group = "";
         public string m_customPickable = "";
         public int m_achievement_index = 0;
+        public int m_class_experience = 0;
     }
     public static void OnAchievementConfigChanged(object sender, EventArgs e)
     {
@@ -397,7 +398,8 @@ public static class AchievementManager
                 Skill: YmlData.skill,
                 SkillAmount: YmlData.skill_amount,
                 AchievementGroup: YmlData.achievement_group,
-                AchievementIndex: YmlData.achievement_index
+                AchievementIndex: YmlData.achievement_index,
+                ClassExperience: YmlData.class_experience
             );
             if (!achievement.m_achievement_group.IsNullOrWhiteSpace())
             {
@@ -436,7 +438,8 @@ public static class AchievementManager
         string[]? StartEffects = null,
         string[]? StopEffects = null,
         HitData.DamageModPair[] DamageMods = null!,
-        Dictionary<Modifier, float> Modifiers = null!)
+        Dictionary<Modifier, float> Modifiers = null!,
+        int ClassExperience = 0)
     {
         Achievement achievement = new Achievement()
         {
@@ -455,7 +458,8 @@ public static class AchievementManager
             m_skillAmount = SkillAmount,
             m_item_amount = ItemAmount,
             m_achievement_group = AchievementGroup,
-            m_achievement_index = AchievementIndex
+            m_achievement_index = AchievementIndex,
+            m_class_experience = ClassExperience
         };
         achievement.m_effectData = new()
         {

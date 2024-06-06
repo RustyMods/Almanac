@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Almanac.Achievements;
-using Almanac.Bounties;
+using Almanac.API;
 using Almanac.Data;
 using Almanac.Utilities;
 using HarmonyLib;
@@ -291,6 +291,12 @@ public static class CreateAlmanac
                 string collectedRewardData = serializer.Serialize(collectedData);
                 Player.m_localPlayer.m_customData[AchievementManager.CollectedRewardKey] = collectedRewardData;
             }
+
+            if (UpdateAlmanac.SelectedAchievement.m_class_experience > 0)
+            {
+                // Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, $"Added {UpdateAlmanac.SelectedAchievement.m_class_experience} class experience");
+                ClassesAPI.AddEXP(UpdateAlmanac.SelectedAchievement.m_class_experience);
+            }
         }
         
         if (UpdateAlmanac.SelectedAchievement.m_rewardType is AchievementTypes.AchievementRewardType.Skill)
@@ -337,7 +343,7 @@ public static class CreateAlmanac
             }
             
             SEMan StatusEffectMan = Player.m_localPlayer.GetSEMan();
-            if (StatusEffectMan.HaveStatusEffect(UpdateAlmanac.SelectedAchievement.m_statusEffect.name))
+            if (StatusEffectMan.HaveStatusEffect(UpdateAlmanac.SelectedAchievement.m_statusEffect.name.GetStableHashCode()))
             {
                 if (!StatusEffectMan.RemoveStatusEffect(UpdateAlmanac.SelectedAchievement.m_statusEffect, true)) return;    
                 AlmanacEffectManager.ActiveAchievementEffects.Remove(UpdateAlmanac.SelectedAchievement.m_statusEffect);

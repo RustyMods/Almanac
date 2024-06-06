@@ -78,13 +78,15 @@ public static class Patches
         if (AlmanacEffectManager.SavedAchievementEffectNames.Count <= 0) return;
         AlmanacPlugin.AlmanacLogger.LogDebug("Client: Applying saved achievement effects");
         SEMan PlayerSEMan = player.GetSEMan();
+        AlmanacEffectManager.ActiveAchievementEffects.Clear();
         foreach (string name in AlmanacEffectManager.SavedAchievementEffectNames)
         {
-            if (PlayerSEMan.HaveStatusEffect(name)) continue;
-            AchievementManager.Achievement achievement = AchievementManager.AchievementList.Find(x => x.m_statusEffect?.name == name);
+            if (PlayerSEMan.HaveStatusEffect(name.GetStableHashCode())) continue;
+            AchievementManager.Achievement achievement = AchievementManager.AchievementList.Find(x => x.m_statusEffect != null && x.m_statusEffect.name == name);
             if (achievement != null && achievement.m_statusEffect != null)
             {
                 PlayerSEMan.AddStatusEffect(achievement.m_statusEffect);
+                AlmanacEffectManager.ActiveAchievementEffects.Add(achievement.m_statusEffect);
             }
         }
     }

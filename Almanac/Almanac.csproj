@@ -129,6 +129,7 @@
         <Compile Include="Achievements\AchievementTypes.cs" />
         <Compile Include="Achievements\AchievementYML.cs" />
         <Compile Include="Achievements\CreatureLists.cs" />
+        <Compile Include="API\ClassesAPI.cs" />
         <Compile Include="Bounties\Bounty.cs" />
         <Compile Include="Bounties\BountyManager.cs" />
         <Compile Include="Bounties\BountyPatches.cs" />
@@ -152,6 +153,7 @@
         <Compile Include="UI\CacheAssets.cs" />
         <Compile Include="UI\Categories.cs" />
         <Compile Include="UI\CreateAlmanac.cs" />
+        <Compile Include="UI\Entries.cs" />
         <Compile Include="UI\UITools.cs" />
         <Compile Include="UI\UpdateAlmanac.cs" />
         <Compile Include="Utilities\LocalizationManager.cs" />

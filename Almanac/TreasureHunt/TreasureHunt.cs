@@ -149,7 +149,7 @@ public class TreasureHunt : MonoBehaviour
             m_data = new Data.TreasureData()
             {
                 m_name = UpdateAlmanac.SelectedTreasure.m_name,
-                m_drops = UpdateAlmanac.SelectedTreasure.m_dropTable
+                m_drops = UpdateAlmanac.SelectedTreasure.m_dropTable,
             },
             m_biome = UpdateAlmanac.SelectedTreasure.m_biome
         }))
@@ -188,8 +188,9 @@ public class TreasureHunt : MonoBehaviour
         return false;
     }
 
-    public static void ReturnCost()
+    public static void ReturnCost(bool enabled = false)
     {
+        if (!enabled) return;
         Inventory? inventory = Player.m_localPlayer.GetInventory();
         if (!inventory.CanAddItem(UpdateAlmanac.SelectedTreasure.m_currency.m_itemData, UpdateAlmanac.SelectedTreasure.m_cost)) return;
         ItemDrop.ItemData? item = UpdateAlmanac.SelectedTreasure.m_currency.m_itemData.Clone();

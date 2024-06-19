@@ -24,7 +24,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.2.9";
+        internal const string ModVersion = "3.3.0";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         private static readonly string ConfigFileName = ModGUID + ".cfg";
@@ -137,6 +137,8 @@ namespace Almanac
         public static ConfigEntry<Color> _OutlineColor = null!;
         public static ConfigEntry<KeyCode> _AlmanacHotKey = null!;
         public static ConfigEntry<Toggle> _LoadDefaultAchievements = null!;
+        public static ConfigEntry<int> _TreasureCooldown = null!;
+        public static ConfigEntry<int> _BountyCooldown = null!;
         public enum DataPath { LocalLow, ConfigPath }
         private void InitConfigs()
         {
@@ -174,6 +176,10 @@ namespace Almanac
 
             _LoadDefaultAchievements = config("1 - General", "8 - Load Default Achievements", Toggle.Off,
                 "If on, Almanac will write any missing default achievements to file", false);
+
+            _TreasureCooldown = config("Cooldown", "Treasure Hunt", 30,
+                "Set cooldown between treasure hunts, in minutes");
+            _BountyCooldown = config("Cooldown", "Bounties", 30, "Set cooldown between bounty hunts, in minutes");
 
         }
         #endregion

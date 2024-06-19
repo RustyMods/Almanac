@@ -17,6 +17,7 @@ namespace Almanac.Bounties;
 public class Bounty : MonoBehaviour
 {
     public static Data.BountyLocation? ActiveBountyLocation;
+    public static DateTime m_dateTime = DateTime.MaxValue;
     
     private static readonly int bountyHash = "QuestBounty".GetStableHashCode();
     private const float maxRadius = 9500f;
@@ -186,7 +187,7 @@ public class Bounty : MonoBehaviour
             {
                 Minimap.instance.RemovePin(ActiveBountyLocation.m_pin);
                 ActiveBountyLocation = null;
-                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Canceled bounty");
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$msg_canceled_bounty");
                 UpdateAlmanac.UpdateBountyPanel();
             }
             else
@@ -208,6 +209,8 @@ public class Bounty : MonoBehaviour
         
         Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$almanac_hunt " + bountyLocation.data.m_name);
         
+        m_dateTime = DateTime.Now;
+
         AlmanacPlugin.AlmanacLogger.LogDebug("Successfully added bounty: " + bountyLocation.data.m_name);
         AlmanacPlugin.AlmanacLogger.LogDebug("Location: " + pos.x + " " + pos.z);
         
@@ -338,6 +341,16 @@ public class Bounty : MonoBehaviour
 
     private static bool CheckForBountyCost()
     {
+        if (m_dateTime != DateTime.MaxValue)
+        {
+            DateTime lastBounty = m_dateTime + TimeSpan.FromMinutes(AlmanacPlugin._BountyCooldown.Value);
+            if (lastBounty > DateTime.Now)
+            {
+                int difference = (lastBounty - DateTime.Now).Minutes;
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"$msg_bounty_available {difference} $info_minutes");
+                return false;
+            }
+        }
         if (UpdateAlmanac.SelectedBounty.m_cost <= 0) return true;
         Inventory? inventory = Player.m_localPlayer.GetInventory();
         if (!inventory.HaveItem(UpdateAlmanac.SelectedBounty.m_currency.m_itemData.m_shared.m_name)) return false;
@@ -357,7 +370,7 @@ public class Bounty : MonoBehaviour
             inventory.RemoveItem(item);
             return true;
         }
-        Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Not enough " + UpdateAlmanac.SelectedBounty.m_currency.m_itemData.m_shared.m_name);
+        Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$info_not_enough " + UpdateAlmanac.SelectedBounty.m_currency.m_itemData.m_shared.m_name);
         AlmanacPlugin.AlmanacLogger.LogDebug("Not enough currency to buy bounty");
         return false;
     }

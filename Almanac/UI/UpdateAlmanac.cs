@@ -983,7 +983,7 @@ public static class UpdateAlmanac
             {
                 GameObject data = Object.Instantiate(CacheAssets.ItemTitle, CreateAlmanac.PanelContent);
                 if (!data.transform.Find("$part_text").TryGetComponent(out TextMeshProUGUI component)) continue;
-                component.text = Localization.instance.Localize(RemoveNumbers(entry.title));
+                component.text = Localization.instance.Localize(entry.title);
                 PanelElements.Add(data);
             }
             else

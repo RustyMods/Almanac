@@ -1,4 +1,5 @@
-﻿using Almanac.UI;
+﻿using System;
+using Almanac.UI;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -7,6 +8,7 @@ namespace Almanac.TreasureHunt;
 public class TreasureHunt : MonoBehaviour
 {
     public static Data.TreasureLocation? ActiveTreasureLocation;
+    private static DateTime m_dateTime = DateTime.MaxValue;
     
     private const float maxRadius = 9500f;
     private const float minSpawnDistance = 2f;
@@ -63,6 +65,7 @@ public class TreasureHunt : MonoBehaviour
 
         treasureLocation.m_pin = treasurePin;
         ActiveTreasureLocation = treasureLocation;
+        m_dateTime = DateTime.Now;
         
         AlmanacPlugin.AlmanacLogger.LogDebug("Successfully added treasure hunt: " + treasureLocation.m_data.m_name);
         AlmanacPlugin.AlmanacLogger.LogDebug("Location: " + pos.x + " " + pos.z);
@@ -168,12 +171,22 @@ public class TreasureHunt : MonoBehaviour
 
     private static bool CheckForActiveTreasureHunt()
     {
+        if (m_dateTime != DateTime.MaxValue)
+        {
+            DateTime lastAccept = m_dateTime + TimeSpan.FromMinutes(AlmanacPlugin._TreasureCooldown.Value);
+            if (lastAccept > DateTime.Now)
+            {
+                int difference = (lastAccept - DateTime.Now).Minutes;
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"$msg_treasure_available {difference} $info_minutes");
+                return false;
+            }
+        }
         if (ActiveTreasureLocation == null) return true;
         if (ActiveTreasureLocation.m_data.m_name == UpdateAlmanac.SelectedTreasure.m_name)
         {
             Minimap.instance.RemovePin(ActiveTreasureLocation.m_pin);
             ActiveTreasureLocation = null;
-            Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Canceled Treasure hunt");
+            Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$msg_canceled_treasure");
             UpdateAlmanac.UpdateTreasurePanel();
             if (UpdateAlmanac.SelectedTreasure.m_cost > 0)
             {
@@ -182,7 +195,7 @@ public class TreasureHunt : MonoBehaviour
         }
         else
         {
-            Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Already have active treasure hunt");
+            Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$msg_active_treasure");
         }
 
         return false;
@@ -220,7 +233,7 @@ public class TreasureHunt : MonoBehaviour
             inventory.RemoveItem(item);
             return true;
         }
-        Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Not enough " + UpdateAlmanac.SelectedTreasure.m_currency.m_itemData.m_shared.m_name);
+        Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$info_not_enough " + UpdateAlmanac.SelectedTreasure.m_currency.m_itemData.m_shared.m_name);
         AlmanacPlugin.AlmanacLogger.LogDebug("Not enough currency to buy treasure");
         return false;
     }

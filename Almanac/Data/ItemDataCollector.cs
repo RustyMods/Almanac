@@ -272,6 +272,7 @@ public static class ItemDataCollector
 
                 if (Filters.FilterList.Contains(itemDrop.name) && AlmanacPlugin._UseIgnoreList.Value is AlmanacPlugin.Toggle.On) continue;
                 if (!itemDrop.enabled) continue;
+                if (ObjectDB.instance.GetRecipe(data.m_itemData) == null) continue;
                 output.Add(data);
             }
             catch (IndexOutOfRangeException)

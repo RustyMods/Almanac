@@ -33,7 +33,8 @@ public static class Filters
         "VegvisirShard_Bonemass",
         "CapeOdin",
         "HelmetOdin",
-        "TankardOdin"
+        "TankardOdin",
+        "ShieldIronSquare"
     };
     public static void InitFilters()
     {

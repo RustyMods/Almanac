@@ -56,9 +56,14 @@ public static class Categories
         if (AlmanacPlugin.JewelCraftLoaded) SpecialOptions.Add("$almanac_jewel_button");
         if (AlmanacPlugin.KGEnchantmentLoaded) SpecialOptions.Add("$almanac_scroll_button");
         if (PieceDataCollector.modPieces.Count > 0 && !PieceOptions.Contains("$almanac_modPieces_button")) PieceOptions.Add("$almanac_modPieces_button");
+        AlmanacOptions.Clear();
+        if (AlmanacPlugin._AchievementsEnabled.Value is AlmanacPlugin.Toggle.On) AlmanacOptions.Add("$almanac_achievements_button");
+        if (AlmanacPlugin._BountyEnabled.Value is AlmanacPlugin.Toggle.On) AlmanacOptions.Add("$almanac_quests_button");
+        if (AlmanacPlugin._TreasureEnabled.Value is AlmanacPlugin.Toggle.On) AlmanacOptions.Add("$almanac_treasure_hunt_button");
+        
         CreateBaseTabs(ItemTabs, ItemOptions, -750f, 425f);
         CreateBaseTabs(PieceTabs, PieceOptions, -750f, -425f);
-        CreateBaseTabs(AlmanacTabs, AlmanacOptions, 530f, 425f);
+        CreateBaseTabs(AlmanacTabs, AlmanacOptions, 530f + 75f * (3 - AlmanacOptions.Count), 425f);
         CreateBaseTabs(SpecialTabs, SpecialOptions, -750f, 473);
     }
 

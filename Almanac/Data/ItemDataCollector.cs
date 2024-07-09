@@ -256,28 +256,16 @@ public static class ItemDataCollector
             {
                 ItemDrop data = itemDrop;
                 Sprite sprite = data.m_itemData.GetIcon();
-
-                // List<string> krumpBait = new()
-                // {
-                //     "Krump_Mat_FishingBaits_NeckTails",
-                //     "Krump_Mat_FishingBaits_Forest",
-                //     "Krump_Mat_FishingBaits_Entrails",
-                //     "Krump_Mat_FishingBaits_Chicken",
-                //     "Krump_Mat_FishingBaits_Dragon",
-                //     "Krump_Mat_FishingBaits_Vermin",
-                //     "Krump_Mat_FishingBaits_Wolf"
-                // };
                 
                 if (!sprite) continue;
 
                 if (Filters.FilterList.Contains(itemDrop.name) && AlmanacPlugin._UseIgnoreList.Value is AlmanacPlugin.Toggle.On) continue;
                 if (!itemDrop.enabled) continue;
-                if (ObjectDB.instance.GetRecipe(data.m_itemData) == null) continue;
                 output.Add(data);
             }
-            catch (IndexOutOfRangeException)
+            catch 
             {
-                // AlmanacPlugin.AlmanacLogger.LogDebug($"Invalid item drop data: {Localization.instance.Localize(itemDrop.m_itemData.m_shared.m_name)}");
+                // ignored
             }
         }
         return output;

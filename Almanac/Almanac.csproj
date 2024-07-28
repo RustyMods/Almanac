@@ -76,6 +76,9 @@
         <Reference Include="BepInEx">
             <HintPath>$(BepInExPath)\core\BepInEx.dll</HintPath>
         </Reference>
+        <Reference Include="Groups">
+          <HintPath>Libs\GroupsAPI.dll</HintPath>
+        </Reference>
         <Reference Include="ServerSync">
             <HintPath>Libs\ServerSync.dll</HintPath>
         </Reference>
@@ -201,6 +204,7 @@
         <EmbeddedResource Include="icons\Checkmark.png" />
         <EmbeddedResource Include="icons\Daggers_Icon.png" />
         <Content Include="ILRepack.targets" />
+        <Content Include="Libs\GroupsAPI.dll" />
         <Content Include="Libs\LocalizationManager.dll">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>

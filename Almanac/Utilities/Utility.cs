@@ -264,6 +264,7 @@ public static class Utility
             AlmanacEffectManager.Modifier.Stamina => "$se_stamina",
             AlmanacEffectManager.Modifier.Eitr => "$se_eitr",
             AlmanacEffectManager.Modifier.LifeSteal => "$se_lifesteal",
+            AlmanacEffectManager.Modifier.Armor => "$se_armor",
             _ => "Unknown Modifier"
         };
     }

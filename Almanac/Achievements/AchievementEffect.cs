@@ -55,7 +55,8 @@ public static class AlmanacEffectManager
         Health,
         Stamina,
         Eitr,
-        LifeSteal
+        LifeSteal,
+        Armor
     }
     public class EffectData
     {
@@ -217,7 +218,7 @@ public static class AlmanacEffectManager
                 string key = Utility.ConvertEffectModifiers(kvp.Key);
                 switch (kvp.Key)
                 {
-                    case Modifier.MaxCarryWeight or Modifier.Health or Modifier.Stamina or Modifier.Eitr:
+                    case Modifier.MaxCarryWeight or Modifier.Health or Modifier.Stamina or Modifier.Eitr or Modifier.Armor:
                         if (kvp.Value == 0f) continue;
                         stringBuilder.AppendFormat("{0}: <color=orange>{1:+0;-0}</color>\n", key, kvp.Value);
                         break;
@@ -317,6 +318,24 @@ public static class AlmanacEffectManager
                         health += amount;
                     }
                 }
+            }
+        }
+
+        [HarmonyPatch(typeof(Player), nameof(Player.GetBodyArmor))]
+        private static class Player_GetBodyArmor_Patch
+        {
+            private static void Postfix(Player __instance, ref float __result)
+            {
+                float amount = 0f;
+                foreach (var effect in __instance.GetSEMan().GetStatusEffects())
+                {
+                    if (effect is not AchievementEffect achievementEffect) continue;
+                    if (achievementEffect.data.m_modifiers.TryGetValue(Modifier.Armor, out float value))
+                    {
+                        amount += value;
+                    }
+                }
+                __result += amount;
             }
         }
     }

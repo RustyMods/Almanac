@@ -12,17 +12,6 @@ public static class BountyPatches
         private static void Prefix(HitData hit) => Bounty.ApplyBountyModifiers(hit);
     }
 
-    // [HarmonyPatch(typeof(Character), nameof(Character.OnDeath))]
-    // private static class CharacterOnDeathPatch
-    // {
-    //     private static void Prefix(Character __instance)
-    //     {
-    //         if (!__instance) return;
-    //         if (!__instance.TryGetComponent(out Bounty component)) return;
-    //         component.OnDeath(__instance);
-    //     }
-    // }
-
     [HarmonyPatch(typeof(Player), nameof(Player.Update))]
     private static class PlayerUpdatePatch
     {

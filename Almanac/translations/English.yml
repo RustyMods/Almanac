@@ -745,3 +745,4 @@ info_not_enough: "Not enough"
 msg_bounty_available: "Next bounty available in"
 msg_canceled_bounty: "Canceled bounty"
 se_lifesteal: 'Life steal'
+se_armor: 'Armor'

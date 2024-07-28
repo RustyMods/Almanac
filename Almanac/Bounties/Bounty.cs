@@ -7,6 +7,7 @@ using Almanac.Data;
 using Almanac.FileSystem;
 using Almanac.UI;
 using BepInEx;
+using Groups;
 using UnityEngine;
 using YamlDotNet.Serialization;
 using Random = UnityEngine.Random;
@@ -113,10 +114,10 @@ public class Bounty : MonoBehaviour
         Player? player = attacker as Player;
         if (player == null) return;
         if (!_character.m_nview.IsValid()) return;
-            
+        
         if (!TryGetBountyData(_character.m_nview, out Data.BountyData data)) return;
-
-        if (player.GetPlayerID() != data.m_hunter)
+        PlayerReference? group = Groups.API.FindGroupMemberByPlayerId(player.GetPlayerID());
+        if (player.GetPlayerID() != data.m_hunter && group == null)
         {
             AlmanacPlugin.AlmanacLogger.LogDebug("Bounty: Invalid Player ID");
             return;

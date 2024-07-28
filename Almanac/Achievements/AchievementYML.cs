@@ -73,8 +73,13 @@ public static class AchievementYML
             { Modifier.RunStaminaDrain, 1f },
             { Modifier.DamageReduction, 0f },
             { Modifier.FallDamage, 1f },
-            { Modifier.EitrRegen, 1f }
+            { Modifier.EitrRegen, 1f },
+            { Modifier.Health , 0f },
+            { Modifier.Stamina , 0f},
+            { Modifier.Eitr , 0f}
         };
+
+        public Dictionary<string, float> skill_bonus = new();
     }
 
     public static void InitDefaultAchievements(bool overwrite = false)

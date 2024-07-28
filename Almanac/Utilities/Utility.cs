@@ -249,8 +249,8 @@ public static class Utility
         {
             AlmanacEffectManager.Modifier.None => "$almanac_none",
             AlmanacEffectManager.Modifier.Attack => "$almanac_attack",
-            AlmanacEffectManager.Modifier.HealthRegen => "$almanac_food_health_regen",
-            AlmanacEffectManager.Modifier.StaminaRegen => "$almanac_consume_stamina_regen",
+            AlmanacEffectManager.Modifier.HealthRegen => "$se_healthregen",
+            AlmanacEffectManager.Modifier.StaminaRegen => "$se_staminaregen",
             AlmanacEffectManager.Modifier.RaiseSkills => "$almanac_raise_skill",
             AlmanacEffectManager.Modifier.Speed => "$almanac_speed",
             AlmanacEffectManager.Modifier.Noise => "$almanac_noise",
@@ -259,7 +259,11 @@ public static class Utility
             AlmanacEffectManager.Modifier.RunStaminaDrain => "$almanac_run_stamina_drain",
             AlmanacEffectManager.Modifier.DamageReduction => "$almanac_damage_reduction",
             AlmanacEffectManager.Modifier.FallDamage => "$almanac_fall_damage",
-            AlmanacEffectManager.Modifier.EitrRegen => "$almanac_eitr_regen",
+            AlmanacEffectManager.Modifier.EitrRegen => "$se_eitrregen",
+            AlmanacEffectManager.Modifier.Health => "$se_health",
+            AlmanacEffectManager.Modifier.Stamina => "$se_stamina",
+            AlmanacEffectManager.Modifier.Eitr => "$se_eitr",
+            AlmanacEffectManager.Modifier.LifeSteal => "$se_lifesteal",
             _ => "Unknown Modifier"
         };
     }

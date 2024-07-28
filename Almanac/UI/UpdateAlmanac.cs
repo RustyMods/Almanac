@@ -691,7 +691,7 @@ public static class UpdateAlmanac
                 }
                 break;
             case AchievementTypes.AchievementRewardType.StatusEffect:
-                if (SelectedAchievement.m_statusEffect != null) CreateAlmanac.AchievementPanelTooltip.text = SelectedAchievement.m_statusEffect.m_tooltip;
+                if (SelectedAchievement.m_statusEffect != null) CreateAlmanac.AchievementPanelTooltip.text = SelectedAchievement.m_statusEffect.GetTooltipString();
                 break;
         }
 

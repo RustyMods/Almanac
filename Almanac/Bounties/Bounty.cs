@@ -27,12 +27,14 @@ public class Bounty : MonoBehaviour
     private const float spawnOffset = 5f;
     public Character _character = null!;
     public ZNetView _znv = null!;
+    public bool m_isDead;
 
     private Minimap.PinData pin = null!;
     public void Awake()
     {
         _znv = GetComponent<ZNetView>();
         _character = GetComponent<Character>();
+        _character.m_onDeath += OnDeath;
         
         _znv.Register<string>(nameof(RPC_SetBountyData),RPC_SetBountyData);
         
@@ -44,7 +46,7 @@ public class Bounty : MonoBehaviour
     public void OnDestroy()
     {
         DestroyPin();
-        if (!_character.IsDead())
+        if (!m_isDead)
         {
             Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$almanac_bounty_escaped");
             ActiveBountyLocation = null;
@@ -96,25 +98,23 @@ public class Bounty : MonoBehaviour
         _character.m_level = data.m_level;
     }
 
-    // Static
-
-    public void OnDeath(Character instance)
+    public void OnDeath()
     {
-        if (!instance) return;
-        if (instance.m_lastHit == null)
+        if (!_character) return;
+        m_isDead = true;
+        if (_character.m_lastHit == null)
         {
             ActiveBountyLocation = null;
             return;
         }
-        Character attacker = instance.m_lastHit.GetAttacker();
+        Character attacker = _character.m_lastHit.GetAttacker();
         if (attacker == null) return;
         if (!attacker.IsPlayer()) return;
         Player? player = attacker as Player;
         if (player == null) return;
-
-        if (!instance.m_nview.IsValid()) return;
+        if (!_character.m_nview.IsValid()) return;
             
-        if (!TryGetBountyData(instance.m_nview, out Data.BountyData data)) return;
+        if (!TryGetBountyData(_character.m_nview, out Data.BountyData data)) return;
 
         if (player.GetPlayerID() != data.m_hunter)
         {
@@ -126,7 +126,7 @@ public class Bounty : MonoBehaviour
             case Data.QuestRewardType.Item:
                 GameObject item = ZNetScene.instance.GetPrefab(data.m_rewardItem);
                 if (!item) return;
-                GameObject drop = Instantiate(item, instance.transform.position, Quaternion.identity);
+                GameObject drop = Instantiate(item, _character.transform.position, Quaternion.identity);
                 if (!drop.TryGetComponent(out ItemDrop component)) return;
                 component.m_itemData.m_stack = data.m_rewardAmount;
                 break;
@@ -139,7 +139,6 @@ public class Bounty : MonoBehaviour
 
         if (data.m_experience > 0)
         {
-            // Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, $"Added {data.m_experience} class experience");
             ClassesAPI.AddEXP(data.m_experience);
         }
         ActiveBountyLocation = null;

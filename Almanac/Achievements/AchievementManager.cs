@@ -399,7 +399,8 @@ public static class AchievementManager
                 SkillAmount: YmlData.skill_amount,
                 AchievementGroup: YmlData.achievement_group,
                 AchievementIndex: YmlData.achievement_index,
-                ClassExperience: YmlData.class_experience
+                ClassExperience: YmlData.class_experience,
+                SE_Skills: YmlData.skill_bonus
             );
             if (!achievement.m_achievement_group.IsNullOrWhiteSpace())
             {
@@ -439,7 +440,8 @@ public static class AchievementManager
         string[]? StopEffects = null,
         HitData.DamageModPair[] DamageMods = null!,
         Dictionary<Modifier, float> Modifiers = null!,
-        int ClassExperience = 0)
+        int ClassExperience = 0,
+        Dictionary<string, float>? SE_Skills = null)
     {
         Achievement achievement = new Achievement()
         {
@@ -470,10 +472,10 @@ public static class AchievementManager
             stopMsg = StopMsg,
             effectTooltip = Tooltip,
             damageMods = DamageMods.ToList(),
-            Modifiers = Modifiers,
+            m_modifiers = Modifiers,
             effectName = achievement.m_uniqueName,
             displayName = achievement.m_displayName,
-            sprite = achievement.m_sprite
+            sprite = achievement.m_sprite,
         };
 
         if (!achievement.m_spriteName.IsNullOrWhiteSpace())
@@ -518,6 +520,17 @@ public static class AchievementManager
                 skill = (Skills.SkillType)Math.Abs(Skill.GetStableHashCode());
             }
             achievement.m_skill = Enum.IsDefined(typeof(Skills.SkillType), skill) ? skill : Skills.SkillType.None;
+        }
+
+        if (SE_Skills != null)
+        {
+            foreach (var kvp in SE_Skills)
+            {
+                if (Enum.TryParse(kvp.Key, true, out Skills.SkillType type))
+                {
+                    achievement.m_effectData.m_skills[type] = kvp.Value;
+                }
+            }
         }
         
         achievement.m_statusEffect = achievement.m_effectData.Init();

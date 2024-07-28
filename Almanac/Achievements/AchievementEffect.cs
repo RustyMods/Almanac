@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
+using System.Text;
 using Almanac.Utilities;
 using HarmonyLib;
 using UnityEngine;
@@ -22,22 +22,18 @@ public static class AlmanacEffectManager
         {
             if (_AchievementIcons.Value is Toggle.On) return;
             if (!Player.m_localPlayer) return;
-            
-            string texts = __instance.m_texts[0].m_text;
-
-            string addedText = "";
-
-            foreach (StatusEffect effect in ActiveAchievementEffects)
-            {
-                string text = $"\n<color=orange>{effect.m_name}</color>{effect.m_tooltip}\n";
-                addedText += text;
-            }
-
             if (ActiveAchievementEffects.Count > 0)
             {
-                string appendedText = addedText + "\n\n" + texts;
-
-                __instance.m_texts[0].m_text = appendedText;
+                StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.Append(__instance.m_texts[0].m_text);
+                stringBuilder.Append("\n\n");
+                foreach (StatusEffect effect in ActiveAchievementEffects)
+                {
+                    stringBuilder.AppendFormat("<color=orange>{0}</color>", effect.m_name);
+                    stringBuilder.AppendFormat("\n{0}", effect.GetTooltipString());
+                }
+                
+                __instance.m_texts[0].m_text = stringBuilder.ToString();
             }
         }
     }
@@ -55,7 +51,11 @@ public static class AlmanacEffectManager
         RunStaminaDrain,
         DamageReduction,
         FallDamage,
-        EitrRegen
+        EitrRegen,
+        Health,
+        Stamina,
+        Eitr,
+        LifeSteal
     }
     public class EffectData
     {
@@ -69,85 +69,14 @@ public static class AlmanacEffectManager
         public string? stopMsg = "";
         public string? effectTooltip = "";
         public List<HitData.DamageModPair> damageMods = new();
-        public Dictionary<Modifier, float> Modifiers = new();
-
-        private readonly Dictionary<Modifier, float> defaultModifiers = new()
-        {
-            { Modifier.Attack, 1f },
-            { Modifier.HealthRegen , 1f },
-            { Modifier.StaminaRegen , 1f },
-            { Modifier.RaiseSkills , 1f },
-            { Modifier.Speed , 1f },
-            { Modifier.Noise , 1f },
-            { Modifier.MaxCarryWeight , 0f },
-            { Modifier.Stealth , 1f },
-            { Modifier.RunStaminaDrain , 1f },
-            { Modifier.DamageReduction , 0f },
-            { Modifier.FallDamage , 1f },
-            { Modifier.EitrRegen , 1f }
-        };
-        
+        public Dictionary<Modifier, float> m_modifiers = new();
+        public readonly Dictionary<Skills.SkillType, float> m_skills = new();
         public StatusEffect? Init()
         {
             ObjectDB obd = ObjectDB.instance;
 
             // Make sure new effects have unique names
             if (obd.m_StatusEffects.Find(effect => effect.name == effectName)) return null;
-
-            string appendedTooltip = effectTooltip ?? "";
-
-            List<HitData.DamageModPair> ValidatedDamageMods = new();
-
-            foreach (HitData.DamageModPair mod in damageMods)
-            {
-                if (mod.m_modifier == HitData.DamageModifier.Normal) continue;
-
-                string formattedModifier = Localization.instance.Localize(Utility.ConvertDamageModifiers(mod.m_modifier));
-                string formattedModType = Localization.instance.Localize(Utility.ConvertDamageTypes(mod.m_type));
-                
-                string tooltip = $"\n<color=orange>{formattedModifier}</color> VS <color=orange>{formattedModType}</color>";
-                appendedTooltip += tooltip;
-                
-                ValidatedDamageMods.Add(mod);
-            }
-
-            damageMods = ValidatedDamageMods;
-
-            foreach (KeyValuePair<Modifier, float> mod in Modifiers)
-            {
-                if (Math.Abs(mod.Value - defaultModifiers[mod.Key]) < 0.009f) continue;
-
-                string FormattedKey = Localization.instance.Localize(Utility.ConvertEffectModifiers(mod.Key));
-                
-                switch (mod.Key)
-                {
-                    case Modifier.None:
-                        break;
-                    case Modifier.DamageReduction:
-                        appendedTooltip += $"\n{FormattedKey} -<color=orange>{Mathf.Clamp01(mod.Value) * 100}</color>%";
-                        break;
-                    case Modifier.MaxCarryWeight:
-                        if (mod.Value < 0)
-                        {
-                            appendedTooltip += $"\n{FormattedKey} -<color=orange>{mod.Value.ToString(CultureInfo.CurrentCulture).Replace("-","")}</color>";
-                        }
-                        else
-                        {
-                            appendedTooltip += $"\n{FormattedKey} +<color=orange>{mod.Value}</color>";;
-                        }
-                        break;
-                    default:
-                        if (mod.Value > 1)
-                        {
-                            appendedTooltip += $"\n{FormattedKey} +<color=orange>{Mathf.Round((mod.Value - 1) * 100)}</color>%";
-                        }
-                        if (mod.Value < 1)
-                        {
-                            appendedTooltip += $"\n{FormattedKey} -<color=orange>{Mathf.Round((1 - mod.Value) * 100)}</color>%";
-                        }
-                        break;
-                }
-            }
             AchievementEffect Effect = ScriptableObject.CreateInstance<AchievementEffect>();
             Effect.name = effectName;
             Effect.data = this;
@@ -155,7 +84,7 @@ public static class AlmanacEffectManager
             Effect.m_name = displayName;
             Effect.m_cooldown = duration * 1.3f; // guardian power cool down
             Effect.m_ttl = duration; // status effect cool down
-            Effect.m_tooltip = _AchievementPowers.Value is Toggle.On ? appendedTooltip : "";
+            Effect.m_tooltip = _AchievementPowers.Value is Toggle.On ? effectTooltip : "";
             Effect.m_startMessageType = MessageHud.MessageType.TopLeft;
             Effect.m_stopMessageType = MessageHud.MessageType.TopLeft;
             Effect.m_startMessage = startMsg;
@@ -239,29 +168,156 @@ public static class AlmanacEffectManager
     public class AchievementEffect : StatusEffect
     {
         public EffectData data = null!;
-        public override void ModifyAttack(Skills.SkillType skill, ref HitData hitData) => hitData.ApplyModifier(data.Modifiers[Modifier.Attack]);
-        public override void ModifyHealthRegen(ref float regenMultiplier) => regenMultiplier *= data.Modifiers[Modifier.HealthRegen];
-        public override void ModifyStaminaRegen(ref float staminaRegen) => staminaRegen *= data.Modifiers[Modifier.StaminaRegen];
-        public override void ModifyRaiseSkill(Skills.SkillType skill, ref float value) => value *= data.Modifiers[Modifier.RaiseSkills];
+
+        public override void ModifyAttack(Skills.SkillType skill, ref HitData hitData)
+        {
+            hitData.ApplyModifier(data.m_modifiers[Modifier.Attack]);
+        } 
+        public override void ModifyHealthRegen(ref float regenMultiplier) => regenMultiplier *= data.m_modifiers[Modifier.HealthRegen];
+        public override void ModifyStaminaRegen(ref float staminaRegen) => staminaRegen *= data.m_modifiers[Modifier.StaminaRegen];
+        public override void ModifyRaiseSkill(Skills.SkillType skill, ref float value) => value *= data.m_modifiers[Modifier.RaiseSkills];
         public override void ModifySpeed(float baseSpeed, ref float speed, Character character, Vector3 dir)
         {
-            speed *= data.Modifiers[Modifier.Speed];
+            speed *= data.m_modifiers[Modifier.Speed];
         }
-
-        public override void ModifyNoise(float baseNoise, ref float noise) => noise *= data.Modifiers[Modifier.Noise];
-        public override void ModifyStealth(float baseStealth, ref float stealth) => stealth *= data.Modifiers[Modifier.Stealth];
-        public override void ModifyMaxCarryWeight(float baseLimit, ref float limit) => limit += data.Modifiers[Modifier.MaxCarryWeight];
-        public override void ModifyRunStaminaDrain(float baseDrain, ref float drain) => drain *= data.Modifiers[Modifier.RunStaminaDrain];
-        public override void ModifyJumpStaminaUsage(float baseStaminaUse, ref float staminaUse) => staminaUse *= data.Modifiers[Modifier.RunStaminaDrain];
-        public override void OnDamaged(HitData hit, Character attacker) => hit.ApplyModifier(Mathf.Clamp01(1f - data.Modifiers[Modifier.DamageReduction]));
+        public override void ModifyNoise(float baseNoise, ref float noise) => noise *= data.m_modifiers[Modifier.Noise];
+        public override void ModifyStealth(float baseStealth, ref float stealth) => stealth *= data.m_modifiers[Modifier.Stealth];
+        public override void ModifyMaxCarryWeight(float baseLimit, ref float limit) => limit += data.m_modifiers[Modifier.MaxCarryWeight];
+        public override void ModifyRunStaminaDrain(float baseDrain, ref float drain) => drain *= data.m_modifiers[Modifier.RunStaminaDrain];
+        public override void ModifyJumpStaminaUsage(float baseStaminaUse, ref float staminaUse) => staminaUse *= data.m_modifiers[Modifier.RunStaminaDrain];
+        public override void OnDamaged(HitData hit, Character attacker) => hit.ApplyModifier(Mathf.Clamp01(1f - data.m_modifiers[Modifier.DamageReduction]));
         public override void ModifyDamageMods(ref HitData.DamageModifiers modifiers) => modifiers.Apply(data.damageMods);
         public override void ModifyFallDamage(float baseDamage, ref float damage)
         {
             if (m_character.GetSEMan().HaveStatusEffect("SlowFall".GetStableHashCode())) return;
-            damage = baseDamage * data.Modifiers[Modifier.FallDamage];
+            damage = baseDamage * data.m_modifiers[Modifier.FallDamage];
             if (damage >= 0.0) return;
             damage = 0.0f;
         }
-        public override void ModifyEitrRegen(ref float eitrRegen) => eitrRegen *= data.Modifiers[Modifier.EitrRegen];
+        public override void ModifyEitrRegen(ref float eitrRegen) => eitrRegen *= data.m_modifiers[Modifier.EitrRegen];
+        public override void ModifySkillLevel(Skills.SkillType skill, ref float level)
+        {
+            if (data.m_skills.TryGetValue(Skills.SkillType.All, out float allModifier))
+            {
+                level += allModifier;
+            }
+
+            if (data.m_skills.TryGetValue(skill, out float amount))
+            {
+                level += amount;
+            }
+        }
+
+        public override string GetTooltipString()
+        {
+            StringBuilder stringBuilder = new StringBuilder();
+            if (!string.IsNullOrWhiteSpace(m_tooltip)) stringBuilder.AppendFormat("{0}\n", m_tooltip);
+            foreach (var kvp in data.m_modifiers)
+            {
+                string key = Utility.ConvertEffectModifiers(kvp.Key);
+                switch (kvp.Key)
+                {
+                    case Modifier.MaxCarryWeight or Modifier.Health or Modifier.Stamina or Modifier.Eitr:
+                        if (kvp.Value == 0f) continue;
+                        stringBuilder.AppendFormat("{0}: <color=orange>{1:+0;-0}</color>\n", key, kvp.Value);
+                        break;
+                    case Modifier.DamageReduction:
+                        if (kvp.Value == 0f) continue;
+                        stringBuilder.AppendFormat("{0}: <color=orange>{1:+0;-0}%</color>\n", key, Mathf.Clamp01(1f - kvp.Value) * 100f - 100);
+                        break;
+                    default:
+                        if (Math.Abs(kvp.Value - 1f) < 0.01f) continue;
+                        stringBuilder.AppendFormat("{0}: <color=orange>{1:+0;-0}%</color>\n", key, kvp.Value * 100f - 100);
+                        break;
+                }
+            }
+
+            foreach (var kvp in data.m_skills)
+            {
+                if (kvp.Value == 0f) continue;
+                stringBuilder.AppendFormat("{0}: <color=orange>{1:+0;-0}</color>\n", "$skill_" + kvp.Key.ToString().ToLower(), kvp.Value);
+            }
+
+            stringBuilder.AppendFormat("{0}\n", SE_Stats.GetDamageModifiersTooltipString(data.damageMods));
+
+            return Localization.instance.Localize(stringBuilder.ToString());
+        }
+
+        [HarmonyPatch(typeof(Character), nameof(Character.RPC_Damage))]
+        private static class Character_RPC_Damage_Patch
+        {
+            private static void Postfix(HitData hit)
+            {
+                Character attacker = hit.GetAttacker();
+                if (attacker == null) return;
+                if (attacker is not Player player) return;
+                float leech = 0f;
+                foreach (StatusEffect? effect in player.GetSEMan().GetStatusEffects())
+                {
+                    if (effect is not AchievementEffect achievementEffect) continue;
+                    if (achievementEffect.data.m_modifiers.TryGetValue(Modifier.LifeSteal, out float amount))
+                    {
+                        leech += amount - 1f;
+                    }
+                }
+                if (leech > 1f) leech = 1f;
+                if (leech > 0f)
+                {
+                    float total = hit.GetTotalDamage() * leech;
+                    player.Heal(total);
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(Player), nameof(Player.SetMaxEitr))]
+        private static class Player_SetMaxEitr_Patch
+        {
+            private static void Prefix(Player __instance, ref float eitr)
+            {
+                if (__instance != Player.m_localPlayer) return;
+                foreach (var effect in __instance.GetSEMan().GetStatusEffects())
+                {
+                    if (effect is not AchievementEffect achievementEffect) continue;
+                    if (achievementEffect.data.m_modifiers.TryGetValue(Modifier.Eitr, out float amount))
+                    {
+                        eitr += amount;
+                    }
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(Player), nameof(Player.SetMaxStamina))]
+        private static class Player_SetMaxStamina_Patch
+        {
+            private static void Prefix(Player __instance, ref float stamina)
+            {
+                if (__instance != Player.m_localPlayer) return;
+                foreach (var effect in __instance.GetSEMan().GetStatusEffects())
+                {
+                    if (effect is not AchievementEffect achievementEffect) continue;
+                    if (achievementEffect.data.m_modifiers.TryGetValue(Modifier.Stamina, out float amount))
+                    {
+                        stamina += amount;
+                    }
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(Player), nameof(Player.SetMaxHealth))]
+        private static class Player_SetMaxHealth_Patch
+        {
+            private static void Prefix(Player __instance, ref float health)
+            {
+                if (__instance != Player.m_localPlayer) return;
+                foreach (var effect in __instance.GetSEMan().GetStatusEffects())
+                {
+                    if (effect is not AchievementEffect achievementEffect) continue;
+                    if (achievementEffect.data.m_modifiers.TryGetValue(Modifier.Health, out float amount))
+                    {
+                        health += amount;
+                    }
+                }
+            }
+        }
     }
 }

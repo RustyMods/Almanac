@@ -1259,7 +1259,14 @@ public static class UpdateAlmanac
         CreateAlmanac.PanelTitle.text = Player.m_localPlayer.GetHoverName();
         CreateAlmanac.PanelButton.text = Localization.instance.Localize("$almanac_leaderboard_button");
 
-        foreach (Entries.Entry entry in Entries.GetMetricEntries())
+        List<Entries.Entry> list = new();
+        list.AddRange(Entries.GetPlayerResistances());
+        if (_AchievementsEnabled.Value is AlmanacPlugin.Toggle.On)
+        {
+            list.AddRange(Entries.GetTotalAchievementEffects());
+        }
+        list.AddRange(Entries.GetMetricEntries());
+        foreach (Entries.Entry entry in list)
         {
             if (entry.value == "title")
             {

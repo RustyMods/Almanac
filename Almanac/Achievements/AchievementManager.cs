@@ -478,6 +478,8 @@ public static class AchievementManager
             sprite = achievement.m_sprite,
         };
 
+        achievement.m_effectData.damageMods.RemoveAll(x => x.m_modifier is HitData.DamageModifier.Normal);
+
         if (!achievement.m_spriteName.IsNullOrWhiteSpace())
         {
             if (SpriteManager.GetSprite(achievement.m_spriteName, out Sprite? sprite))

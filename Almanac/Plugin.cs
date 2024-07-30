@@ -24,7 +24,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.3.3";
+        internal const string ModVersion = "3.3.4";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         private static readonly string ConfigFileName = ModGUID + ".cfg";

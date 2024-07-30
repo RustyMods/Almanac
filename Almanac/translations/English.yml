@@ -746,3 +746,8 @@ msg_bounty_available: "Next bounty available in"
 msg_canceled_bounty: "Canceled bounty"
 se_lifesteal: 'Life steal'
 se_armor: 'Armor'
+skill_all: 'All Skills'
+
+almanac_player_resistances: 'Player Resistances'
+almanac_statuseffects: 'Achievement Effects'
+almanac_total_effects: 'Effect Count'

@@ -233,7 +233,7 @@ public static class AlmanacEffectManager
                 }
             }
 
-            foreach (var kvp in data.m_skills)
+            foreach (KeyValuePair<Skills.SkillType, float> kvp in data.m_skills)
             {
                 if (kvp.Value == 0f) continue;
                 stringBuilder.AppendFormat("{0}: <color=orange>{1:+0;-0}</color>\n", "$skill_" + kvp.Key.ToString().ToLower(), kvp.Value);
@@ -327,7 +327,7 @@ public static class AlmanacEffectManager
             private static void Postfix(Player __instance, ref float __result)
             {
                 float amount = 0f;
-                foreach (var effect in __instance.GetSEMan().GetStatusEffects())
+                foreach (StatusEffect? effect in __instance.GetSEMan().GetStatusEffects())
                 {
                     if (effect is not AchievementEffect achievementEffect) continue;
                     if (achievementEffect.data.m_modifiers.TryGetValue(Modifier.Armor, out float value))

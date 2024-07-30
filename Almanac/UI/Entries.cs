@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using Almanac.Achievements;
 using Almanac.Data;
 using BepInEx;
 using UnityEngine;
@@ -738,6 +739,165 @@ public static class Entries
         }
         
         return output;
+    }
+
+    public static List<Entry> GetPlayerResistances()
+    {
+        if (!Player.m_localPlayer) return new();
+        HitData.DamageModifiers modifiers = Player.m_localPlayer.GetDamageModifiers(null);
+        return new List<Entry>()
+        {
+            new Entry(){title = "$almanac_player_resistances", value = "title"},
+            new Entry() { title = ConvertDamageTypes(HitData.DamageType.Blunt), value = ConvertDamageModifiers(modifiers.m_blunt) },
+            new Entry() { title = ConvertDamageTypes(HitData.DamageType.Slash), value = ConvertDamageModifiers(modifiers.m_slash) },
+            new Entry() { title = ConvertDamageTypes(HitData.DamageType.Pierce), value = ConvertDamageModifiers(modifiers.m_pierce) },
+            new Entry() { title = ConvertDamageTypes(HitData.DamageType.Chop), value = ConvertDamageModifiers(modifiers.m_chop) },
+            new Entry() { title = ConvertDamageTypes(HitData.DamageType.Pickaxe), value = ConvertDamageModifiers(modifiers.m_pickaxe) },
+            new Entry() { title = ConvertDamageTypes(HitData.DamageType.Fire), value = ConvertDamageModifiers(modifiers.m_fire) },
+            new Entry() { title = ConvertDamageTypes(HitData.DamageType.Frost), value = ConvertDamageModifiers(modifiers.m_frost) },
+            new Entry() { title = ConvertDamageTypes(HitData.DamageType.Lightning), value = ConvertDamageModifiers(modifiers.m_lightning) },
+            new Entry() { title = ConvertDamageTypes(HitData.DamageType.Poison), value = ConvertDamageModifiers(modifiers.m_poison) },
+            new Entry() { title = ConvertDamageTypes(HitData.DamageType.Spirit), value = ConvertDamageModifiers(modifiers.m_spirit) }
+        };
+    }
+
+    public static List<Entry> GetTotalAchievementEffects()
+    {
+        if (!Player.m_localPlayer) return new();
+        List<Entry> result = new();
+        Dictionary<AlmanacEffectManager.Modifier, float> modifiers = new();
+        HitData.DamageModifiers mods = new HitData.DamageModifiers();
+        Dictionary<Skills.SkillType, float> skills = new();
+        foreach (Skills.SkillType type in Enum.GetValues(typeof(Skills.SkillType))) skills[type] = 0;
+        foreach (AlmanacEffectManager.Modifier type in Enum.GetValues(typeof(AlmanacEffectManager.Modifier))) modifiers[type] = 0;
+        int count = 0;
+        foreach (StatusEffect? statusEffect in Player.m_localPlayer.GetSEMan().GetStatusEffects())
+        {
+            if (statusEffect is not AlmanacEffectManager.AchievementEffect achievementEffect) continue;
+            ++count;
+            foreach (KeyValuePair<AlmanacEffectManager.Modifier, float> kvp in achievementEffect.data.m_modifiers)
+            {
+                switch (kvp.Key)
+                {
+                    case AlmanacEffectManager.Modifier.MaxCarryWeight
+                        or AlmanacEffectManager.Modifier.Health
+                        or AlmanacEffectManager.Modifier.Eitr
+                        or AlmanacEffectManager.Modifier.Stamina
+                        or AlmanacEffectManager.Modifier.Armor:
+                        modifiers[kvp.Key] += kvp.Value;
+                        break;
+                    case AlmanacEffectManager.Modifier.DamageReduction:
+                        modifiers[kvp.Key] += Mathf.Clamp01(1f - kvp.Value) * 100f - 100;
+                        break;
+                    default:
+                        modifiers[kvp.Key] += kvp.Value * 100f - 100;
+                        break;  
+                }
+            }
+            mods.Apply(achievementEffect.data.damageMods);
+            foreach (var kvp in achievementEffect.data.m_skills)
+            {
+                skills[kvp.Key] += kvp.Value;
+            }
+        }
+        result.Add(new Entry(){title = "$almanac_statuseffects", value = "title"});
+        result.Add(new Entry(){title = "$almanac_total_effects", value = count.ToString()});
+        foreach (KeyValuePair<AlmanacEffectManager.Modifier, float> kvp in modifiers)
+        {
+            if (kvp.Key is AlmanacEffectManager.Modifier.None) continue;
+            if (kvp.Value == 0) continue;
+            switch (kvp.Key)
+            {
+                case AlmanacEffectManager.Modifier.MaxCarryWeight 
+                    or AlmanacEffectManager.Modifier.Health 
+                    or AlmanacEffectManager.Modifier.Stamina 
+                    or AlmanacEffectManager.Modifier.Eitr
+                    or AlmanacEffectManager.Modifier.Armor:
+                    result.Add(new Entry(){ 
+                        title = ConvertEffectModifiers(kvp.Key), 
+                        value = $"{kvp.Value:+0;-0}\n"
+                    });
+                    break;
+                default:
+                    result.Add(new Entry(){ 
+                        title = ConvertEffectModifiers(kvp.Key), 
+                        value = $"{kvp.Value:+0;-0}%\n"
+                    });
+                    break;
+            }
+        }
+        if (mods.m_blunt is not HitData.DamageModifier.Normal)
+            result.Add(new Entry()
+            {
+                title = ConvertDamageTypes(HitData.DamageType.Blunt), 
+                value = ConvertDamageModifiers(mods.m_blunt)
+            });
+        if (mods.m_slash is not HitData.DamageModifier.Normal)
+            result.Add(new Entry()
+            {
+                title = ConvertDamageTypes(HitData.DamageType.Slash),
+                value = ConvertDamageModifiers(mods.m_slash)
+            });
+        if (mods.m_pierce is not HitData.DamageModifier.Normal)
+            result.Add(new Entry()
+            {
+                title = ConvertDamageTypes(HitData.DamageType.Pierce), 
+                value = ConvertDamageModifiers(mods.m_pierce)
+            });
+        if (mods.m_chop is not HitData.DamageModifier.Normal)
+            result.Add(new Entry()
+            {
+                title = ConvertDamageTypes(HitData.DamageType.Chop),
+                value = ConvertDamageModifiers(mods.m_chop)
+            });
+        if (mods.m_pickaxe is not HitData.DamageModifier.Normal)
+            result.Add(new Entry()
+            {
+                title = ConvertDamageTypes(HitData.DamageType.Pickaxe), 
+                value = ConvertDamageModifiers(mods.m_pickaxe)
+            });
+        if (mods.m_fire is not HitData.DamageModifier.Normal)
+            result.Add(new Entry()
+            {
+                title = ConvertDamageTypes(HitData.DamageType.Fire),
+                value = ConvertDamageModifiers(mods.m_fire)
+            });
+        if (mods.m_frost is not HitData.DamageModifier.Normal)
+            result.Add(new Entry()
+            {
+                title = ConvertDamageTypes(HitData.DamageType.Frost), 
+                value = ConvertDamageModifiers(mods.m_frost)
+            });
+        if (mods.m_lightning is not HitData.DamageModifier.Normal)
+            result.Add(new Entry()
+            {
+                title = ConvertDamageTypes(HitData.DamageType.Lightning),
+                value = ConvertDamageModifiers(mods.m_lightning)
+            });
+        if (mods.m_poison is not HitData.DamageModifier.Normal)
+            result.Add(new Entry()
+            {
+                title = ConvertDamageTypes(HitData.DamageType.Poison), 
+                value = ConvertDamageModifiers(mods.m_poison)
+            });
+        if (mods.m_spirit is not HitData.DamageModifier.Normal)
+            result.Add(new Entry()
+            {
+                title = ConvertDamageTypes(HitData.DamageType.Spirit),
+                value = ConvertDamageModifiers(mods.m_spirit)
+            });
+
+        foreach (KeyValuePair<Skills.SkillType, float> kvp in skills)
+        {
+            if (kvp.Key is Skills.SkillType.None) continue;
+            if (kvp.Value == 0) continue;
+            result.Add(new Entry()
+            {
+                title = "$skill_" + kvp.Key.ToString().ToLower(),
+                value = kvp.Value.ToString("0")
+            });
+        }
+        return result;
     }
     public static List<Entry> GetMetricEntries()
     {

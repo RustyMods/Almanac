@@ -29,13 +29,20 @@ public static class BountyManager
         if (ServerSyncedData.ServerBountyList.Value.IsNullOrWhiteSpace() || AlmanacPlugin.WorkingAsType is not AlmanacPlugin.WorkingAs.Client) AddLocalBounties();
         else
         {
-            IDeserializer deserializer = new DeserializerBuilder().Build();
-            List<Data.BountyYML> deserialized = deserializer.Deserialize<List<Data.BountyYML>>(ServerSyncedData.ServerBountyList.Value);
-            foreach (Data.BountyYML bountyYML in deserialized)
+            try
             {
-                if (!ValidateBounty(bountyYML, out Data.ValidatedBounty validatedBounty)) continue;
-                RegisteredBounties.Add(validatedBounty);
-                ValidatedBounties.Add(bountyYML);
+                IDeserializer deserializer = new DeserializerBuilder().Build();
+                List<Data.BountyYML> deserialized = deserializer.Deserialize<List<Data.BountyYML>>(ServerSyncedData.ServerBountyList.Value);
+                foreach (Data.BountyYML bountyYML in deserialized)
+                {
+                    if (!ValidateBounty(bountyYML, out Data.ValidatedBounty validatedBounty)) continue;
+                    RegisteredBounties.Add(validatedBounty);
+                    ValidatedBounties.Add(bountyYML);
+                }
+            }
+            catch
+            {
+                AlmanacPlugin.AlmanacLogger.LogDebug("Failed to parse server bounties");
             }
         }
     }
@@ -53,11 +60,18 @@ public static class BountyManager
             IDeserializer deserializer = new DeserializerBuilder().Build();
             foreach (string path in paths)
             {
-                string data = File.ReadAllText(path);
-                Data.BountyYML bountyData = deserializer.Deserialize<Data.BountyYML>(data);
-                if (!ValidateBounty(bountyData, out Data.ValidatedBounty validatedBounty)) continue;
-                RegisteredBounties.Add(validatedBounty);
-                ValidatedBounties.Add(bountyData);
+                try
+                {
+                    string data = File.ReadAllText(path);
+                    Data.BountyYML bountyData = deserializer.Deserialize<Data.BountyYML>(data);
+                    if (!ValidateBounty(bountyData, out Data.ValidatedBounty validatedBounty)) continue;
+                    RegisteredBounties.Add(validatedBounty);
+                    ValidatedBounties.Add(bountyData);
+                }
+                catch
+                {
+                    AlmanacPlugin.AlmanacLogger.LogDebug("Failed to parse file: " + Path.GetFileName(path));
+                }
             }
         }
     }

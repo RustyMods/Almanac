@@ -80,12 +80,25 @@ public static class CreatureDataCollector
         foreach (CreatureData? data in creatureData)
         {
             RenameCreatureData(data);
+            RenameVikingNPC(data);
             filteredCreatures.Add(data);
         }
 
         List<CreatureData> sortedList = filteredCreatures.OrderBy(item => Localization.instance.Localize(item.display_name)).ToList();
         
         tempCreatureData = sortedList;
+    }
+
+    private static void RenameVikingNPC(CreatureData creatureData)
+    {
+        creatureData.display_name = creatureData.defeatedKey switch
+        {
+            "defeated_vikingsettler" => "Viking Settler",
+            "defeated_vikingraider" => "Viking Raider",
+            "defeated_vikingelf" => "Viking Elf",
+            "defeated_vikingsailor" => "Viking Sailor",
+            _ => creatureData.display_name
+        };
     }
     private static void RenameCreatureData(CreatureData creatureData)
     {

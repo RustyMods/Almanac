@@ -122,6 +122,7 @@ public static class AchievementManager
         {
             SetCompletedAchievement(achievement);
         }
+        Leaderboard.SendPlayerData();
     }
     private static void SetCompletedAchievement(Achievement data)
     {

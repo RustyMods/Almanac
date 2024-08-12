@@ -172,26 +172,74 @@ public static class AlmanacEffectManager
 
         public override void ModifyAttack(Skills.SkillType skill, ref HitData hitData)
         {
-            hitData.ApplyModifier(data.m_modifiers[Modifier.Attack]);
-        } 
-        public override void ModifyHealthRegen(ref float regenMultiplier) => regenMultiplier *= data.m_modifiers[Modifier.HealthRegen];
-        public override void ModifyStaminaRegen(ref float staminaRegen) => staminaRegen *= data.m_modifiers[Modifier.StaminaRegen];
-        public override void ModifyRaiseSkill(Skills.SkillType skill, ref float value) => value *= data.m_modifiers[Modifier.RaiseSkills];
+            if (!data.m_modifiers.TryGetValue(Modifier.Attack, out float modifier)) return;
+            hitData.ApplyModifier(modifier);
+        }
+
+        public override void ModifyHealthRegen(ref float regenMultiplier)
+        {
+            if (!data.m_modifiers.TryGetValue(Modifier.HealthRegen, out float modifier)) return;
+            regenMultiplier *= modifier;
+        }
+
+        public override void ModifyStaminaRegen(ref float staminaRegen)
+        {
+            if (!data.m_modifiers.TryGetValue(Modifier.StaminaRegen, out float modifier)) return;
+            staminaRegen *= modifier;
+        }
+
+        public override void ModifyRaiseSkill(Skills.SkillType skill, ref float value)
+        {
+            if (!data.m_modifiers.TryGetValue(Modifier.RaiseSkills, out float raiseSkill)) return;
+            value *= raiseSkill;
+        }
         public override void ModifySpeed(float baseSpeed, ref float speed, Character character, Vector3 dir)
         {
-            speed *= data.m_modifiers[Modifier.Speed];
+            if (!data.m_modifiers.TryGetValue(Modifier.Speed, out float modifier)) return;
+            speed *= modifier;
         }
-        public override void ModifyNoise(float baseNoise, ref float noise) => noise *= data.m_modifiers[Modifier.Noise];
-        public override void ModifyStealth(float baseStealth, ref float stealth) => stealth *= data.m_modifiers[Modifier.Stealth];
-        public override void ModifyMaxCarryWeight(float baseLimit, ref float limit) => limit += data.m_modifiers[Modifier.MaxCarryWeight];
-        public override void ModifyRunStaminaDrain(float baseDrain, ref float drain) => drain *= data.m_modifiers[Modifier.RunStaminaDrain];
-        public override void ModifyJumpStaminaUsage(float baseStaminaUse, ref float staminaUse) => staminaUse *= data.m_modifiers[Modifier.RunStaminaDrain];
-        public override void OnDamaged(HitData hit, Character attacker) => hit.ApplyModifier(Mathf.Clamp01(1f - data.m_modifiers[Modifier.DamageReduction]));
+
+        public override void ModifyNoise(float baseNoise, ref float noise)
+        {
+            if (!data.m_modifiers.TryGetValue(Modifier.Noise, out float modifier)) return;
+            noise *= modifier;
+        }
+
+        public override void ModifyStealth(float baseStealth, ref float stealth)
+        {
+            if (!data.m_modifiers.TryGetValue(Modifier.Stealth, out float modifier)) return;
+            stealth *= modifier;
+        }
+
+        public override void ModifyMaxCarryWeight(float baseLimit, ref float limit)
+        {
+            if (!data.m_modifiers.TryGetValue(Modifier.MaxCarryWeight, out float maxCarry)) return;
+            limit += maxCarry;
+        }
+
+        public override void ModifyRunStaminaDrain(float baseDrain, ref float drain)
+        {
+            if (!data.m_modifiers.TryGetValue(Modifier.RunStaminaDrain, out float runStaminaDrain)) return;
+            drain *= runStaminaDrain;
+        }
+
+        // public override void ModifyJumpStaminaUsage(float baseStaminaUse, ref float staminaUse)
+        // {
+        //     if (!data.m_modifiers.TryGetValue(Modifier.RunStaminaDrain, out float runStaminaDrain)) return;
+        //     staminaUse *= runStaminaDrain;
+        // }
+
+        public override void OnDamaged(HitData hit, Character attacker)
+        {
+            if (!data.m_modifiers.TryGetValue(Modifier.DamageReduction, out float damageReduction)) return;
+            hit.ApplyModifier(Mathf.Clamp01(1f - damageReduction));
+        }
         public override void ModifyDamageMods(ref HitData.DamageModifiers modifiers) => modifiers.Apply(data.damageMods);
         public override void ModifyFallDamage(float baseDamage, ref float damage)
         {
             if (m_character.GetSEMan().HaveStatusEffect("SlowFall".GetStableHashCode())) return;
-            damage = baseDamage * data.m_modifiers[Modifier.FallDamage];
+            if (!data.m_modifiers.TryGetValue(Modifier.FallDamage, out float fallDamage)) return;
+            damage = baseDamage * fallDamage;
             if (damage >= 0.0) return;
             damage = 0.0f;
         }
@@ -269,7 +317,6 @@ public static class AlmanacEffectManager
                 }
             }
         }
-
         [HarmonyPatch(typeof(Player), nameof(Player.SetMaxEitr))]
         private static class Player_SetMaxEitr_Patch
         {

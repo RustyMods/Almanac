@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Almanac.Achievements;
 using Almanac.Data;
+using Almanac.UI;
 using HarmonyLib;
 using UnityEngine;
 using YamlDotNet.Serialization;
@@ -60,8 +61,7 @@ public static class Leaderboard
             string data = pkg.ReadString();
             IDeserializer deserializer = new DeserializerBuilder().Build();
             ServerPlayerData receivedData = deserializer.Deserialize<ServerPlayerData>(data);
-            AlmanacPlugin.AlmanacLogger.LogDebug(
-                $"Server: Received new leaderboard data from {receivedData.player_name}");
+            AlmanacPlugin.AlmanacLogger.LogDebug($"Server: Received new leaderboard data from {receivedData.player_name}");
             if (LeaderboardData.TryGetValue(receivedData.player_name, out PlayerData localData))
             {
                 if (localData.completed_achievements >= receivedData.data.completed_achievements)
@@ -162,17 +162,22 @@ public static class Leaderboard
     {
         while (Player.m_localPlayer)
         {
-            AlmanacPlugin.AlmanacLogger.LogDebug("Client: Sending leaderboard data to server");
-            ISerializer serializer = new SerializerBuilder().Build();
-            string data = serializer.Serialize(PlayerStats.GetServerPlayerData());
-            SendToServer(data);
+            SendPlayerData();
             yield return new WaitForSeconds(30f * 60f);
         }
+    }
+
+    public static void SendPlayerData()
+    {
+        AlmanacPlugin.AlmanacLogger.LogDebug("Client: Sending leaderboard data to server");
+        ISerializer serializer = new SerializerBuilder().Build();
+        string data = serializer.Serialize(PlayerStats.GetServerPlayerData());
+        SendToServer(data);
     }
     
     private static IEnumerator UpdateSendLeaderboardToClients()
     {
-        while (true)
+        while (ZNet.instance)
         {
             SendLeaderboardToClients();
             yield return new WaitForSeconds(30f * 60f);

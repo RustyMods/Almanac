@@ -3,6 +3,7 @@ using System.Text;
 using Almanac.Achievements;
 using Almanac.Data;
 using Almanac.FileSystem;
+using Almanac.UI;
 using YamlDotNet.Serialization;
 using static Almanac.AlmanacPlugin;
 
@@ -38,7 +39,8 @@ public static class TerminalCommands
                             { "size", "Prints the kilobyte size of almanac custom data saved in player save file" },
                             { "write_achievements", "Writes to file all the default achievements for the almanac" },
                             { "pickable [PrefabName]", "Prints total amount of picked item, you can use 'all' to print a list of entire pickable data"},
-                            { "almanac_data [defeat key]", "Prints total kills and deaths for defeat key"}
+                            { "almanac_data [defeat key]", "Prints total kills and deaths for defeat key"},
+                            { "reload", "Reloads graphic assets"}
                         };
                         foreach (KeyValuePair<string, string> kvp in commandsInfo)
                         {
@@ -101,6 +103,10 @@ public static class TerminalCommands
                             return false;
                         };
                         AlmanacLogger.LogInfo(Player.m_localPlayer.GetHoverName() + " has picked " + pickableValue + " " + args[2]);
+                        break;
+                    case "reload":
+                        CacheAssets.ReloadAssets();
+                        AlmanacPlugin.AlmanacLogger.LogDebug("Reloaded graphics");
                         break;
                 }
                 return true;

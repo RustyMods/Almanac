@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Net.NetworkInformation;
 using System.Text.RegularExpressions;
 using Almanac.FileSystem;
 using BepInEx;
@@ -17,7 +18,15 @@ public static class PieceDataCollector
     public static readonly List<GameObject> craftingPieces = new();
     public static readonly List<GameObject> defaultPieces = new();
     public static readonly List<GameObject> comfortPieces = new();
-    public static List<GameObject> GetFilteredPieces(List<GameObject> list) => AlmanacPlugin._UseIgnoreList.Value is AlmanacPlugin.Toggle.Off ? list : list.FindAll(piece => !Filters.FilterList.Contains(piece.name));
+
+    public static List<GameObject> GetFilteredPieces(List<GameObject> list, string filter)
+    {
+        if (filter.IsNullOrWhiteSpace()) return list;
+        return list.FindAll(piece =>
+            !piece.TryGetComponent(out Piece component) ||
+            Localization.instance.Localize(component.m_name).ToLower().Contains(filter));
+    }
+    public static List<GameObject> GetValidPieces(List<GameObject> list) => AlmanacPlugin._UseIgnoreList.Value is AlmanacPlugin.Toggle.Off ? list : list.FindAll(piece => !Filters.FilterList.Contains(piece.name));
     private static void ClearCachedPieces()
     {
         plantPieces.Clear();

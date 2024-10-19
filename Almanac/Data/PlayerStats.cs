@@ -95,14 +95,13 @@ public static class PlayerStats
 
     private static void UpdatePlayerKills(Character instance)
     {
-        if (!instance) return;
-        if (!Player.m_localPlayer) return;
+        if (!instance || !Player.m_localPlayer) return;
 
         HitData? lastHit = instance.m_lastHit;
         if (lastHit == null) return;
         Character? killer = instance.m_lastHit.GetAttacker();
         if (!killer) return;
-        if (killer.GetOwner() != Player.m_localPlayer.GetOwner()) return;
+        if (killer.GetHoverName() != Player.m_localPlayer.GetHoverName()) return;
             
         string key = instance.m_defeatSetGlobalKey;
         if (!LocalPlayerData.Player_Kill_Deaths.ContainsKey(key)) return;

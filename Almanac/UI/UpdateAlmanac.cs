@@ -117,44 +117,28 @@ public static class UpdateAlmanac
                         : GetSavedCreatureData().FindAll(item => Localization.instance.Localize(item.display_name).ToLower().Contains(filter)));
                     break;
                 case "$almanac_miscPieces_button":
-                    UpdatePieceList(GUI, filter.IsNullOrWhiteSpace() 
-                        ? GetFilteredPieces(miscPieces)
-                        : GetFilteredPieces(miscPieces).FindAll(item => Localization.instance.Localize(item.GetComponent<Piece>().m_name).ToLower().Contains(filter)));
+                    UpdatePieceList(GUI, GetFilteredPieces(GetValidPieces(miscPieces), filter));
                     break;
                 case "$almanac_plantPieces_button":
-                    UpdatePieceList(GUI, filter.IsNullOrWhiteSpace() 
-                        ? GetFilteredPieces(plantPieces) 
-                        : GetFilteredPieces(plantPieces).FindAll(item => Localization.instance.Localize(item.GetComponent<Piece>().m_name).ToLower().Contains(filter)));
+                    UpdatePieceList(GUI, GetFilteredPieces(GetValidPieces(plantPieces), filter));
                     break;
                 case "$almanac_buildPieces_button":
-                    UpdatePieceList(GUI, filter.IsNullOrWhiteSpace() 
-                        ? GetFilteredPieces(buildPieces) 
-                        : GetFilteredPieces(buildPieces).FindAll(item => Localization.instance.Localize(item.GetComponent<Piece>().m_name).ToLower().Contains(filter)));
+                    UpdatePieceList(GUI, GetFilteredPieces(GetValidPieces(buildPieces), filter));
                     break;
                 case "$almanac_craftingPieces_button":
-                    UpdatePieceList(GUI, filter.IsNullOrWhiteSpace() 
-                        ? GetFilteredPieces(craftingPieces) 
-                        : GetFilteredPieces(craftingPieces).FindAll(item => Localization.instance.Localize(item.GetComponent<Piece>().m_name).ToLower().Contains(filter)));
+                    UpdatePieceList(GUI, GetFilteredPieces(GetValidPieces(craftingPieces), filter));
                     break;
                 case "$almanac_furniturePieces_button":
-                    UpdatePieceList(GUI, filter.IsNullOrWhiteSpace() 
-                        ? GetFilteredPieces(furniturePieces) 
-                        : GetFilteredPieces(furniturePieces).FindAll(item => Localization.instance.Localize(item.GetComponent<Piece>().m_name).ToLower().Contains(filter)));
+                    UpdatePieceList(GUI, GetFilteredPieces(GetValidPieces(furniturePieces), filter));
                     break;
                 case "$almanac_other_button":
-                    UpdatePieceList(GUI, filter.IsNullOrWhiteSpace() 
-                        ? GetFilteredPieces(defaultPieces) 
-                        : GetFilteredPieces(defaultPieces).FindAll(item => Localization.instance.Localize(item.GetComponent<Piece>().m_name).ToLower().Contains(filter)));
+                    UpdatePieceList(GUI, GetFilteredPieces(GetValidPieces(defaultPieces), filter));
                     break;
                 case "$almanac_modPieces_button":
-                    UpdatePieceList(GUI, filter.IsNullOrWhiteSpace() 
-                        ? GetFilteredPieces(modPieces) 
-                        : GetFilteredPieces(modPieces).FindAll(item => Localization.instance.Localize(item.GetComponent<Piece>().m_name).ToLower().Contains(filter)));
+                    UpdatePieceList(GUI, GetFilteredPieces(GetValidPieces(modPieces), filter));
                     break;
                 case "$almanac_comfortPieces_button":
-                    UpdatePieceList(GUI, filter.IsNullOrWhiteSpace() 
-                        ? GetFilteredPieces(comfortPieces) 
-                        : GetFilteredPieces(comfortPieces).FindAll(item => Localization.instance.Localize(item.GetComponent<Piece>().m_name).ToLower().Contains(filter)));
+                    UpdatePieceList(GUI, GetFilteredPieces(GetValidPieces(comfortPieces), filter));
                     break;
                 case "$almanac_achievements_button":
                     UpdateAchievementList(GUI, filter.IsNullOrWhiteSpace() 
@@ -182,16 +166,13 @@ public static class UpdateAlmanac
     }
     private static void UpdateTopic()
     {
-         Transform topic = CacheAssets.TrophiesFrame.Find("topic");
-
-         if (!topic.TryGetComponent(out TextMeshProUGUI textMesh)) return;
-
-         textMesh.text = Localization.instance.Localize(SelectedTab);
+        Transform topic = Utils.FindChild(CacheAssets.TrophiesFrame, "topic");
+        if (!topic.TryGetComponent(out TextMeshProUGUI textMesh)) return;
+        textMesh.text = Localization.instance.Localize(SelectedTab);
     }
     public static void DestroyTrophies(InventoryGui instance)
     {
         foreach (GameObject trophy in instance.m_trophyList) Object.Destroy(trophy);
-        
         instance.m_trophyList.Clear();
     }
     private static void UpdateItemList(InventoryGui instance, List<ItemDrop> items, bool isTrophies = false)
@@ -205,27 +186,19 @@ public static class UpdateAlmanac
             string LocalizedLore = Localization.instance.Localize(component.m_itemData.m_shared.m_name + "_lore");
             Sprite? ItemIcon = UITools.TryGetIcon(component);
             bool isKnown = _KnowledgeWall.Value is AlmanacPlugin.Toggle.Off || Player.m_localPlayer.IsKnownMaterial(component.m_itemData.m_shared.m_name) || Player.m_localPlayer.NoCostCheat();
-            
-            GameObject gameObject = Object.Instantiate(instance.m_trophieElementPrefab, instance.m_trophieListRoot);
-
+            GameObject gameObject = Object.Instantiate(CacheAssets.TrophyElement, instance.m_trophieListRoot);
             gameObject.SetActive(true);
-            RectTransform? transform = gameObject.transform as RectTransform;
-            if (transform == null) continue;
-
+            if (gameObject.transform is not RectTransform transform) continue;
             UITools.PlaceElement(transform, index, TrophySpacing);
-
             a1 = Mathf.Min(a1, transform.anchoredPosition.y - instance.m_trophieListSpace);
-            
             UITools.SetElementText(transform, isKnown, LocalizedName, isTrophies ? LocalizedLore : LocalizedDesc, UnknownText);
-            
-            Transform icon = transform.Find("icon_bkg/icon");
+            Transform iconBkg = Utils.FindChild(transform, "icon_bkg");
+            Transform icon = Utils.FindChild(iconBkg, "icon");
             if (!icon.TryGetComponent(out Image iconImage)) continue;
             iconImage.sprite = ItemIcon;
             iconImage.color = isKnown ? Color.white : Color.black;
 
-            Button button = UITools.AddButtonComponent(icon.gameObject, iconImage, isKnown);
-
-            button.onClick.AddListener(() =>
+            UITools.SetupButton(gameObject, iconImage, isKnown, () =>
             {
                 CreateAlmanac.AchievementGUI.SetActive(false);
                 CreateAlmanac.AlmanacGUI.SetActive(true);
@@ -248,26 +221,22 @@ public static class UpdateAlmanac
             string LocalizedDesc = Localization.instance.Localize(piece.m_description);
 
             bool isKnown = _KnowledgeWall.Value is AlmanacPlugin.Toggle.Off || Player.m_localPlayer.IsRecipeKnown(piece.m_name) || Player.m_localPlayer.NoCostCheat();
-            
-            GameObject gameObject = Object.Instantiate(instance.m_trophieElementPrefab, instance.m_trophieListRoot);
-            
+            GameObject gameObject = Object.Instantiate(CacheAssets.TrophyElement, instance.m_trophieListRoot);
             gameObject.SetActive(true);
-            RectTransform? transform = gameObject.transform as RectTransform;
-            if (transform == null) continue;
-
+            if (gameObject.transform is not RectTransform transform) continue;
             UITools.PlaceElement(transform, index, TrophySpacing);
 
             a1 = Mathf.Min(a1, transform.anchoredPosition.y - instance.m_trophieListSpace);
             
             UITools.SetElementText(transform, isKnown, LocalizedName, LocalizedDesc, UnknownText);
             
-            Transform icon = transform.Find("icon_bkg/icon");
+            Transform iconBkg = Utils.FindChild(transform, "icon_bkg");
+            Transform icon = Utils.FindChild(iconBkg, "icon");
             if (!icon.TryGetComponent(out Image iconImage)) continue;
             iconImage.sprite = piece.m_icon;
             iconImage.color = isKnown ? Color.white : Color.black;
 
-            Button button = UITools.AddButtonComponent(icon.gameObject, iconImage, isKnown);
-            button.onClick.AddListener(() =>
+            UITools.SetupButton(gameObject, iconImage, isKnown, () =>
             {
                 CreateAlmanac.AchievementGUI.SetActive(false);
                 CreateAlmanac.AlmanacGUI.SetActive(true);
@@ -290,19 +259,15 @@ public static class UpdateAlmanac
             CreatureData data = creatures[index];
             string LocalizedName = Localization.instance.Localize(data.display_name);
             bool isKnown = ZoneSystem.instance.GetGlobalKeys().Contains(data.defeatedKey) || ZoneSystem.instance.GetGlobalKey(data.defeatedKey) || _KnowledgeWall.Value is AlmanacPlugin.Toggle.Off || Player.m_localPlayer.NoCostCheat();
-            
             GameObject gameObject = Object.Instantiate(CreateAlmanac.CreaturePanelElement, instance.m_trophieListRoot);
             gameObject.SetActive(true);
-            
-            RectTransform? transform = gameObject.transform as RectTransform;
-            if (transform == null) continue;
-
+            if (gameObject.transform is not RectTransform transform) continue;
             float x = -501f + ((index % 5) * 251f); 
             float y = half - (Mathf.FloorToInt(index / 5f) * 34f);
 
             transform.anchoredPosition = new Vector2(x, y);
-            
-            if (!transform.Find("text").TryGetComponent(out TextMeshProUGUI text)) continue;
+            if (!Utils.FindChild(transform, "text").TryGetComponent(out TextMeshProUGUI text)) continue;
+
             text.text = isKnown ? LocalizedName : UnknownText;
             
             if (!gameObject.TryGetComponent(out Button button)) continue;
@@ -326,26 +291,21 @@ public static class UpdateAlmanac
         {
             TreasureHunt.Data.ValidatedTreasure treasure = treasures[index];
             bool isKnown = Player.m_localPlayer.IsBiomeKnown(treasure.m_biome) || Player.m_localPlayer.NoCostCheat();
-
-            GameObject gameObject = Object.Instantiate(instance.m_trophieElementPrefab, instance.m_trophieListRoot);
-            
+            GameObject gameObject = Object.Instantiate(CacheAssets.TrophyElement, instance.m_trophieListRoot);
             gameObject.SetActive(true);
-            RectTransform? transform = gameObject.transform as RectTransform;
-            if (transform == null) continue;
-
+            if (gameObject.transform is not RectTransform transform) continue;
             UITools.PlaceElement(transform, index, TrophySpacing);
             a1 = Mathf.Min(a1, transform.anchoredPosition.y - instance.m_trophieListSpace);
             
             UITools.SetElementText(transform, isKnown, treasure.m_name, treasure.m_biome.ToString(), UnknownText);
 
-            Transform icon = transform.Find("icon_bkg/icon");
+            Transform iconBkg = Utils.FindChild(transform, "icon_bkg");
+            Transform icon = Utils.FindChild(iconBkg, "icon");
             if (!icon.TryGetComponent(out Image iconImage)) continue;
             iconImage.sprite = treasure.m_sprite ? treasure.m_sprite : SpriteManager.AlmanacIcon;
             iconImage.color = isKnown ? Color.white : Color.black;
             
-            
-            Button button = UITools.AddButtonComponent(icon.gameObject, iconImage, isKnown);
-            button.onClick.AddListener(() =>
+            UITools.SetupButton(gameObject, iconImage, isKnown, () =>
             {
                 CreateAlmanac.AchievementPanelButton.text = Localization.instance.Localize(isMetricsActive ? "$almanac_leaderboard_button" : "$almanac_stats_button");
                 CreateAlmanac.AchievementGUI.SetActive(false);
@@ -365,25 +325,17 @@ public static class UpdateAlmanac
         {
             Bounties.Data.ValidatedBounty bounty = bounties[index];
             bool isKnown = ZoneSystem.instance.GetGlobalKeys().Contains(bounty.m_defeatKey) || ZoneSystem.instance.GetGlobalKey(bounty.m_defeatKey) || Player.m_localPlayer.NoCostCheat();
-
-            GameObject gameObject = Object.Instantiate(instance.m_trophieElementPrefab, instance.m_trophieListRoot);
-            
+            GameObject gameObject = Object.Instantiate(CacheAssets.TrophyElement, instance.m_trophieListRoot);
             gameObject.SetActive(true);
-            RectTransform? transform = gameObject.transform as RectTransform;
-            if (transform == null) continue;
-
+            if (gameObject.transform is not RectTransform transform) continue;
             UITools.PlaceElement(transform, index, TrophySpacing);
             a1 = Mathf.Min(a1, transform.anchoredPosition.y - instance.m_trophieListSpace);
-            
             UITools.SetElementText(transform, isKnown, bounty.m_creatureName, bounty.m_biome.ToString(), UnknownText);
-
-            Transform icon = transform.Find("icon_bkg/icon");
+            Transform icon = Utils.FindChild(transform, "icon");
             if (!icon.TryGetComponent(out Image iconImage)) continue;
             iconImage.sprite = bounty.m_icon ? bounty.m_icon : SpriteManager.AlmanacIcon;
             iconImage.color = isKnown ? Color.white : Color.black;
-
-            Button button = UITools.AddButtonComponent(icon.gameObject, iconImage, isKnown);
-            button.onClick.AddListener(() =>
+            UITools.SetupButton(gameObject, iconImage, isKnown, () =>
             {
                 CreateAlmanac.AchievementPanelButton.text = Localization.instance.Localize(isMetricsActive ? "$almanac_leaderboard_button" : "$almanac_stats_button");
                 CreateAlmanac.AchievementGUI.SetActive(false);
@@ -402,55 +354,35 @@ public static class UpdateAlmanac
         for (int index = 0; index < achievements.Count; ++index)
         {
             Achievement achievement = achievements[index];
-            
             bool isCompleted = achievement.m_isCompleted || Player.m_localPlayer.NoCostCheat();
-            
-            GameObject gameObject = Object.Instantiate(instance.m_trophieElementPrefab, instance.m_trophieListRoot);
-            
+            GameObject gameObject = Object.Instantiate(CacheAssets.TrophyElement, instance.m_trophieListRoot);
             gameObject.SetActive(true);
-            RectTransform? transform = gameObject.transform as RectTransform;
-            if (transform == null) continue;
-
+            if (gameObject.transform is not RectTransform transform) continue;
             UITools.PlaceElement(transform, index, TrophySpacing);
             a1 = Mathf.Min(a1, transform.anchoredPosition.y - instance.m_trophieListSpace);
-
-            Transform icon = transform.Find("icon_bkg/icon");
+            Transform icon = Utils.FindChild(transform, "icon");
             if (!icon.TryGetComponent(out Image iconImage)) continue;
             iconImage.sprite = achievement.m_sprite ? achievement.m_sprite : SpriteManager.AlmanacIcon;
-            
-            transform.Find("name").GetComponent<TMP_Text>().text = isCompleted ? achievement.m_displayName : UnknownText;
-            transform.Find("description").GetComponent<TMP_Text>().text = achievement.m_desc;
-            if (achievement.m_statusEffect != null)
-            {
-                transform.Find("$part_outline").gameObject.SetActive(Player.m_localPlayer.GetSEMan().HaveStatusEffect(achievement.m_statusEffect.name.GetStableHashCode()));
-            }
 
-            Button button = gameObject.AddComponent<Button>();
-            button.interactable = true;
-            button.targetGraphic = iconImage;
-            button.transition = Selectable.Transition.ColorTint;
-            button.colors = new ColorBlock()
+            if (Utils.FindChild(transform, "name").TryGetComponent(out TMP_Text nameText))
+                nameText.text = isCompleted ? achievement.m_displayName : UnknownText;
+            if (Utils.FindChild(transform, "description").TryGetComponent(out TMP_Text descText))
+                descText.text = achievement.m_desc;
+            if (achievement.m_statusEffect is { } statusEffect)
             {
-                highlightedColor = new Color(1f, 1f, 1f, 1f),
-                pressedColor = new Color(0.5f, 0.5f, 0.5f, 1f),
-                disabledColor = new Color(0f, 0f, 0f, 1f),
-                colorMultiplier = 1f,
-                fadeDuration = 0.1f,
-                normalColor = isCompleted ? new Color(0.5f, 0.5f, 0.5f, 1f) : Color.black,
-                selectedColor = Color.white
-            };
-            button.onClick = new Button.ButtonClickedEvent();
-            ButtonSfx sfx = gameObject.gameObject.AddComponent<ButtonSfx>();
-            sfx.m_sfxPrefab = CacheAssets.ButtonSFX.m_sfxPrefab;
-            
-            button.onClick.AddListener(() =>
+                Utils.FindChild(transform, "$part_outline").gameObject.SetActive(Player.m_localPlayer.GetSEMan().HaveStatusEffect(statusEffect.name.GetStableHashCode()));
+            }
+            UITools.SetupButton(gameObject, iconImage, isCompleted,() =>
             {
-                CreateAlmanac.AchievementPanelButton.text = Localization.instance.Localize(isMetricsActive ? "$almanac_leaderboard_button" : "$almanac_stats_button");
+                CreateAlmanac.AchievementPanelButton.text =
+                    Localization.instance.Localize(isMetricsActive
+                        ? "$almanac_leaderboard_button"
+                        : "$almanac_stats_button");
                 CreateAlmanac.AchievementGUI.SetActive(true);
                 CreateAlmanac.AlmanacGUI.SetActive(false);
                 SelectedAchievement = achievement;
                 UpdateAchievementPanel();
-            });
+            } );
             instance.m_trophyList.Add(gameObject);
         }
         UITools.ResizePanel(instance, -a1);
@@ -470,7 +402,7 @@ public static class UpdateAlmanac
         switch (SelectedBounty.m_rewardType)
         {
             case Bounties.Data.QuestRewardType.Item:
-                if (SelectedBounty.m_itemReward == null) break;
+                if (SelectedBounty.m_itemReward is not { }) break;
                 output.Add("$almanac_item", SelectedBounty.m_itemReward.m_itemData.m_shared.m_name);
                 output.Add("$almanac_amount", SelectedBounty.m_itemAmount.ToString(CultureInfo.CurrentCulture));
                 break;
@@ -519,18 +451,16 @@ public static class UpdateAlmanac
             if (kvp.Value == "title")
             {
                 GameObject data = Object.Instantiate(CacheAssets.ItemTitle, CreateAlmanac.PanelContent);
-                if (!data.transform.Find("$part_text").TryGetComponent(out TextMeshProUGUI component)) continue;
-
+                if (!Utils.FindChild(data.transform, "$part_text").TryGetComponent(out TextMeshProUGUI component)) continue;
                 component.text = Localization.instance.Localize(RemoveNumbers(kvp.Key));
                 
                 PanelElements.Add(data);
             }
             else
             {
-                
                 GameObject data = Object.Instantiate(CacheAssets.Item, CreateAlmanac.PanelContent);
                 if (!Utils.FindChild(data.transform, "$part_infoType").TryGetComponent(out TextMeshProUGUI TypeComponent)) continue;
-                if (!Utils.FindChild(data.transform, "$part_data").GetComponent<TextMeshProUGUI>().TryGetComponent(out TextMeshProUGUI DataComponent)) continue;
+                if (!Utils.FindChild(data.transform, "$part_data").TryGetComponent(out TextMeshProUGUI DataComponent)) continue;
                 
                 TypeComponent.text = Localization.instance.Localize(RemoveNumbers(kvp.Key));
                 DataComponent.text = Localization.instance.Localize(kvp.Value);
@@ -586,7 +516,7 @@ public static class UpdateAlmanac
         for (int index = 0; index < SelectedTreasure.m_dropTable.m_drops.Count; index++)
         {
             var drop = SelectedTreasure.m_dropTable.m_drops[index];
-            string name = drop.m_item.GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
+            string name = drop.m_item.TryGetComponent(out ItemDrop itemDrop) ? itemDrop.m_itemData.m_shared.m_name : "";
             string amount = $"{drop.m_stackMin} - {drop.m_stackMax}";
             
             output.Add(name + " " + index, amount);
@@ -608,7 +538,8 @@ public static class UpdateAlmanac
             if (kvp.Value == "title")
             {
                 GameObject data = Object.Instantiate(CacheAssets.ItemTitle, CreateAlmanac.PanelContent);
-                if (!data.transform.Find("$part_text").TryGetComponent(out TextMeshProUGUI component)) continue;
+                Transform itemText = Utils.FindChild(data.transform, "$part_text");
+                if (!itemText.TryGetComponent(out TextMeshProUGUI component)) continue;
 
                 component.text = Localization.instance.Localize(RemoveNumbers(kvp.Key));
                 
@@ -619,7 +550,7 @@ public static class UpdateAlmanac
                 
                 GameObject data = Object.Instantiate(CacheAssets.Item, CreateAlmanac.PanelContent);
                 if (!Utils.FindChild(data.transform, "$part_infoType").TryGetComponent(out TextMeshProUGUI TypeComponent)) continue;
-                if (!Utils.FindChild(data.transform, "$part_data").GetComponent<TextMeshProUGUI>().TryGetComponent(out TextMeshProUGUI DataComponent)) continue;
+                if (!Utils.FindChild(data.transform, "$part_data").TryGetComponent(out TextMeshProUGUI DataComponent)) continue;
                 
                 TypeComponent.text = Localization.instance.Localize(RemoveNumbers(kvp.Key));
                 DataComponent.text = Localization.instance.Localize(kvp.Value);
@@ -691,7 +622,8 @@ public static class UpdateAlmanac
                 }
                 break;
             case AchievementTypes.AchievementRewardType.StatusEffect:
-                if (SelectedAchievement.m_statusEffect != null) CreateAlmanac.AchievementPanelTooltip.text = SelectedAchievement.m_statusEffect.GetTooltipString();
+                if (SelectedAchievement.m_statusEffect is not { } statusEffect) break;
+                CreateAlmanac.AchievementPanelTooltip.text = statusEffect.GetTooltipString();
                 break;
         }
 
@@ -982,15 +914,16 @@ public static class UpdateAlmanac
             if (entry.value == "title")
             {
                 GameObject data = Object.Instantiate(CacheAssets.ItemTitle, CreateAlmanac.PanelContent);
-                if (!data.transform.Find("$part_text").TryGetComponent(out TextMeshProUGUI component)) continue;
-                component.text = Localization.instance.Localize(entry.title);
+                if (Utils.FindChild(data.transform, "$part_text").TryGetComponent(out TextMeshProUGUI component))
+                    component.text = Localization.instance.Localize(entry.title);
+
                 PanelElements.Add(data);
             }
             else
             {
                 GameObject data = Object.Instantiate(CacheAssets.Item, CreateAlmanac.PanelContent);
                 if (!Utils.FindChild(data.transform, "$part_infoType").TryGetComponent(out TextMeshProUGUI TypeComponent)) continue;
-                if (!Utils.FindChild(data.transform, "$part_data").GetComponent<TextMeshProUGUI>().TryGetComponent(out TextMeshProUGUI DataComponent)) continue;
+                if (!Utils.FindChild(data.transform, "$part_data").TryGetComponent(out TextMeshProUGUI DataComponent)) continue;
                 
                 TypeComponent.text = Localization.instance.Localize(entry.title);
                 DataComponent.text = Localization.instance.Localize(entry.value);
@@ -1015,17 +948,16 @@ public static class UpdateAlmanac
             if (entry.value == "title")
             {
                 GameObject data = Object.Instantiate(CacheAssets.ItemTitle, CreateAlmanac.PanelContent);
-                if (!data.transform.Find("$part_text").TryGetComponent(out TextMeshProUGUI component)) return;
+                if (Utils.FindChild(data.transform, "$part_text").TryGetComponent(out TextMeshProUGUI component))
+                    component.text = Localization.instance.Localize(RemoveNumbers(entry.title));
 
-                component.text = Localization.instance.Localize(RemoveNumbers(entry.title));
-                
                 PanelElements.Add(data);
             }
             else
             {
                 GameObject data = Object.Instantiate(CacheAssets.Item, CreateAlmanac.PanelContent);
                 if (!Utils.FindChild(data.transform, "$part_infoType").TryGetComponent(out TextMeshProUGUI TypeComponent)) continue;
-                if (!Utils.FindChild(data.transform, "$part_data").GetComponent<TextMeshProUGUI>().TryGetComponent(out TextMeshProUGUI DataComponent)) continue;
+                if (!Utils.FindChild(data.transform, "$part_data").TryGetComponent(out TextMeshProUGUI DataComponent)) continue;
                 
                 TypeComponent.text = Localization.instance.Localize(RemoveNumbers(entry.title));
                 DataComponent.text = Localization.instance.Localize(entry.value);
@@ -1047,44 +979,46 @@ public static class UpdateAlmanac
         CreateAlmanac.PanelIcon.sprite = SelectedCreature.trophyImage ? SelectedCreature.trophyImage : SpriteManager.AlmanacIcon;
         CreateAlmanac.PanelTitle.text = Localization.instance.Localize(SelectedCreature.display_name);
 
-        foreach (var entry in Entries.GetCreatureEntries(SelectedCreature))
+        foreach (Entries.Entry entry in Entries.GetCreatureEntries(SelectedCreature))
         {
             if (IsValueToBeIgnored(entry.value)) continue;
             if (entry.value == "title")
             {
                 GameObject item = Object.Instantiate(CacheAssets.ItemTitle, CreateAlmanac.PanelContent);
-                if (!item.transform.Find("$part_text").TryGetComponent(out TextMeshProUGUI component)) return;
-                component.text = Localization.instance.Localize(RemoveNumbers(entry.title));
+                if (Utils.FindChild(item.transform, "$part_text").TryGetComponent(out TextMeshProUGUI component))
+                    component.text = Localization.instance.Localize(RemoveNumbers(entry.title));
                 PanelElements.Add(item);
             }
             else
             {
                 GameObject item = Object.Instantiate(CacheAssets.Item, CreateAlmanac.PanelContent);
-                Utils.FindChild(item.transform, "$part_infoType").GetComponent<TextMeshProUGUI>().text = Localization.instance.Localize(entry.title);
-                Utils.FindChild(item.transform, "$part_data").GetComponent<TextMeshProUGUI>().text = Localization.instance.Localize(entry.value);
-                
+                if (Utils.FindChild(item.transform, "$part_infoType").TryGetComponent(out TextMeshProUGUI infoText))
+                    infoText.text = Localization.instance.Localize(entry.title);
+                if (Utils.FindChild(item.transform, "$part_data").TryGetComponent(out TextMeshProUGUI dataText))
+                    dataText.text = Localization.instance.Localize(entry.value);
                 PanelElements.Add(item);
             }
         }
 
         AddCreatureDrops();
 
-        foreach (var entry in Entries.GetCreatureEntries_1(SelectedCreature))
+        foreach (Entries.Entry entry in Entries.GetCreatureEntries_1(SelectedCreature))
         {
             if (IsValueToBeIgnored(entry.value)) continue;
             if (entry.value == "title")
             {
                 GameObject item = Object.Instantiate(CacheAssets.ItemTitle, CreateAlmanac.PanelContent);
-                if (!item.transform.Find("$part_text").TryGetComponent(out TextMeshProUGUI component)) return;
-                component.text = Localization.instance.Localize(entry.title);
+                if (Utils.FindChild(item.transform, "$part_text").TryGetComponent(out TextMeshProUGUI component))
+                    component.text = Localization.instance.Localize(entry.title);
                 PanelElements.Add(item);
             }
             else
             {
                 GameObject item = Object.Instantiate(CacheAssets.Item, CreateAlmanac.PanelContent);
-                Utils.FindChild(item.transform, "$part_infoType").GetComponent<TextMeshProUGUI>().text = Localization.instance.Localize(entry.title);
-                Utils.FindChild(item.transform, "$part_data").GetComponent<TextMeshProUGUI>().text = Localization.instance.Localize(entry.value);
-                
+                if (Utils.FindChild(item.transform, "$part_infoType").TryGetComponent(out TextMeshProUGUI infoText))
+                    infoText.text = Localization.instance.Localize(entry.title);
+                if (Utils.FindChild(item.transform, "$part_data").TryGetComponent(out TextMeshProUGUI dataText))
+                    dataText.text = Localization.instance.Localize(entry.value);
                 PanelElements.Add(item);
             }
         }
@@ -1095,156 +1029,146 @@ public static class UpdateAlmanac
     {
         if (!SelectedPiece.TryGetComponent(out Piece piece)) return;
         int resourcesRow =  Mathf.FloorToInt(piece.m_resources.Length / 8f) + 1;
-        if (piece.m_resources.Length != 0)
+        if (piece.m_resources.Length == 0) return;
+        for (int index = 0; index < resourcesRow; ++index)
         {
-            for (int index = 0; index < resourcesRow; ++index)
+            GameObject container = Object.Instantiate(CacheAssets.Drops, CreateAlmanac.PanelContent);
+            if (!Utils.FindChild(container.transform, "$part_title").TryGetComponent(out TextMeshProUGUI component)) continue;
+            component.text = Localization.instance.Localize("$almanac_resources");
+            PanelElements.Add(container);
+            int j = 0;
+            for (int i = index * 7; i < (index + 1) * 7; ++i)
             {
-                GameObject container = Object.Instantiate(CacheAssets.Drops, CreateAlmanac.PanelContent);
-                Transform title = container.transform.Find("$part_title");
-                if (!title.TryGetComponent(out TextMeshProUGUI component)) continue;
-                component.text = Localization.instance.Localize("$almanac_resources");
-                PanelElements.Add(container);
-                int j = 0;
-                for (int i = index * 7; i < (index + 1) * 7; ++i)
-                {
-                    if (i >= piece.m_resources.Length) break;
-                    Transform part = Utils.FindChild(container.transform, $"$part_drop_{j}");
-                    Transform name = part.GetChild(0);
+                if (i >= piece.m_resources.Length) break;
+                Transform part = Utils.FindChild(container.transform, $"$part_drop_{j}");
+                Transform name = part.GetChild(0);
                 
-                    if (!part.TryGetComponent(out Image image)) continue;
-                    if (!name.TryGetComponent(out TextMeshProUGUI text)) continue;
+                if (!part.TryGetComponent(out Image image)) continue;
+                if (!name.TryGetComponent(out TextMeshProUGUI text)) continue;
                     
-                    Piece.Requirement resource = piece.m_resources[i];
+                Piece.Requirement resource = piece.m_resources[i];
 
-                    bool isKnown = Player.m_localPlayer.IsKnownMaterial(resource.m_resItem.m_itemData.m_shared.m_name) || _KnowledgeWall.Value is AlmanacPlugin.Toggle.Off || Player.m_localPlayer.NoCostCheat();
+                bool isKnown = Player.m_localPlayer.IsKnownMaterial(resource.m_resItem.m_itemData.m_shared.m_name) || _KnowledgeWall.Value is AlmanacPlugin.Toggle.Off || Player.m_localPlayer.NoCostCheat();
 
-                    image.sprite = resource.m_resItem.m_itemData.GetIcon();
-                    image.color = isKnown ? Color.white : Color.black;
-                    text.text = isKnown ? ReplaceSpaceWithNewLine(Localization.instance.Localize(resource.m_resItem.m_itemData.m_shared.m_name))
-                                + $"\n<color=orange>{resource.m_amount}</color>" : UnknownText;
+                image.sprite = resource.m_resItem.m_itemData.GetIcon();
+                image.color = isKnown ? Color.white : Color.black;
+                text.text = isKnown ? ReplaceSpaceWithNewLine(Localization.instance.Localize(resource.m_resItem.m_itemData.m_shared.m_name))
+                                      + $"\n<color=orange>{resource.m_amount}</color>" : UnknownText;
                 
-                    part.gameObject.SetActive(true);
-                    ++j;
-                }
+                part.gameObject.SetActive(true);
+                ++j;
             }
         }
     }
     private static void AddCreatureDrops()
     {
         int dropContainerCount =  Mathf.FloorToInt(SelectedCreature.drops.Count / 8f) + 1;
-        if (SelectedCreature.drops.Count != 0)
+        if (SelectedCreature.drops.Count == 0) return;
+        for (int index = 0; index < dropContainerCount; ++index)
         {
-            for (int index = 0; index < dropContainerCount; ++index)
+            GameObject dropContainer = Object.Instantiate(CacheAssets.Drops, CreateAlmanac.PanelContent);
+            PanelElements.Add(dropContainer);
+            int j = 0;
+            for (int i = index * 7; i < (index + 1) * 7; ++i)
             {
-                GameObject dropContainer = Object.Instantiate(CacheAssets.Drops, CreateAlmanac.PanelContent);
-                PanelElements.Add(dropContainer);
-                int j = 0;
-                for (int i = index * 7; i < (index + 1) * 7; ++i)
-                {
-                    if (i >= SelectedCreature.drops.Count) break;
-                    Transform part = Utils.FindChild(dropContainer.transform, $"$part_drop_{j}");
-                    Transform name = part.GetChild(0);
+                if (i >= SelectedCreature.drops.Count) break;
+                Transform part = Utils.FindChild(dropContainer.transform, $"$part_drop_{j}");
+                Transform name = part.GetChild(0);
                 
-                    if (!part.TryGetComponent(out Image image)) continue;
-                    if (!name.TryGetComponent(out TextMeshProUGUI text)) continue;
+                if (!part.TryGetComponent(out Image image)) continue;
+                if (!name.TryGetComponent(out TextMeshProUGUI text)) continue;
                     
-                    string drop = SelectedCreature.drops[i];
-                    float dropChance = SelectedCreature.dropChance[SelectedCreature.drops[i]];
+                string drop = SelectedCreature.drops[i];
+                float dropChance = SelectedCreature.dropChance[SelectedCreature.drops[i]];
                     
-                    GameObject dropPrefab = ObjectDB.instance.GetItemPrefab(drop);
-                    if (!dropPrefab) continue;
-                    if (!dropPrefab.TryGetComponent(out ItemDrop itemDrop)) continue;
+                GameObject dropPrefab = ObjectDB.instance.GetItemPrefab(drop);
+                if (!dropPrefab) continue;
+                if (!dropPrefab.TryGetComponent(out ItemDrop itemDrop)) continue;
 
-                    bool isKnown = Player.m_localPlayer.IsKnownMaterial(itemDrop.m_itemData.m_shared.m_name) || _KnowledgeWall.Value is AlmanacPlugin.Toggle.Off || Player.m_localPlayer.NoCostCheat();
+                bool isKnown = Player.m_localPlayer.IsKnownMaterial(itemDrop.m_itemData.m_shared.m_name) || _KnowledgeWall.Value is AlmanacPlugin.Toggle.Off || Player.m_localPlayer.NoCostCheat();
 
-                    image.sprite = itemDrop.m_itemData.GetIcon();
-                    image.color = isKnown ? Color.white : Color.black;
-                    text.text = isKnown ? ReplaceSpaceWithNewLine(Localization.instance.Localize(itemDrop.m_itemData.m_shared.m_name))
-                                + $"\n(<color=orange>{dropChance}%</color>)" : UnknownText;
+                image.sprite = itemDrop.m_itemData.GetIcon();
+                image.color = isKnown ? Color.white : Color.black;
+                text.text = isKnown ? ReplaceSpaceWithNewLine(Localization.instance.Localize(itemDrop.m_itemData.m_shared.m_name))
+                                      + $"\n(<color=orange>{dropChance}%</color>)" : UnknownText;
                 
-                    part.gameObject.SetActive(true);
-                    ++j;
-                }
+                part.gameObject.SetActive(true);
+                ++j;
             }
         }
     }
     private static void AddCreatureConsumeItems()
     {
         int consumeItemCount =  Mathf.FloorToInt(SelectedCreature.consumeItems.Count / 8f) + 1;
-        if (SelectedCreature.consumeItems.Count != 0)
+        if (SelectedCreature.consumeItems.Count == 0) return;
+        for (int index = 0; index < consumeItemCount; ++index)
         {
-            for (int index = 0; index < consumeItemCount; ++index)
-            {
-                GameObject dropContainer = Object.Instantiate(CacheAssets.Drops, CreateAlmanac.PanelContent);
-                Transform title = dropContainer.transform.Find("$part_title");
-                if (!title.TryGetComponent(out TextMeshProUGUI component)) continue;
-                component.text = Localization.instance.Localize("$almanac_taming_items");
-                if (index > 0) title.gameObject.SetActive(false);
-                PanelElements.Add(dropContainer);
+            GameObject dropContainer = Object.Instantiate(CacheAssets.Drops, CreateAlmanac.PanelContent);
+            Transform title = Utils.FindChild(dropContainer.transform, "$part_title");
+            if (!title.TryGetComponent(out TextMeshProUGUI component)) continue;
+            component.text = Localization.instance.Localize("$almanac_taming_items");
+            if (index > 0) title.gameObject.SetActive(false);
+            PanelElements.Add(dropContainer);
             
-                for (int i = index * 7; i < (index + 1) * 7; ++i)
-                {
-                    if (i >= SelectedCreature.consumeItems.Count) break;
-                    Transform part = Utils.FindChild(dropContainer.transform, $"$part_drop_{i}");
-                    Transform name = part.GetChild(0);
+            for (int i = index * 7; i < (index + 1) * 7; ++i)
+            {
+                if (i >= SelectedCreature.consumeItems.Count) break;
+                Transform part = Utils.FindChild(dropContainer.transform, $"$part_drop_{i}");
+                Transform name = part.GetChild(0);
                 
-                    if (!part.TryGetComponent(out Image image)) continue;
-                    if (!name.TryGetComponent(out TextMeshProUGUI text)) continue;
+                if (!part.TryGetComponent(out Image image)) continue;
+                if (!name.TryGetComponent(out TextMeshProUGUI text)) continue;
                     
-                    string item = SelectedCreature.consumeItems[i];
+                string item = SelectedCreature.consumeItems[i];
                     
-                    GameObject dropPrefab = ObjectDB.instance.GetItemPrefab(item);
-                    if (!dropPrefab) continue;
-                    if (!dropPrefab.TryGetComponent(out ItemDrop itemDrop)) continue;
+                GameObject dropPrefab = ObjectDB.instance.GetItemPrefab(item);
+                if (!dropPrefab) continue;
+                if (!dropPrefab.TryGetComponent(out ItemDrop itemDrop)) continue;
 
-                    bool isKnown = Player.m_localPlayer.IsKnownMaterial(itemDrop.m_itemData.m_shared.m_name) || _KnowledgeWall.Value is AlmanacPlugin.Toggle.Off || Player.m_localPlayer.NoCostCheat();
+                bool isKnown = Player.m_localPlayer.IsKnownMaterial(itemDrop.m_itemData.m_shared.m_name) || _KnowledgeWall.Value is AlmanacPlugin.Toggle.Off || Player.m_localPlayer.NoCostCheat();
 
-                    image.sprite = itemDrop.m_itemData.GetIcon();
-                    image.color = isKnown ? Color.white : Color.black;
-                    text.text = isKnown ? ReplaceSpaceWithNewLine(Localization.instance.Localize(itemDrop.m_itemData.m_shared.m_name)) : UnknownText;
+                image.sprite = itemDrop.m_itemData.GetIcon();
+                image.color = isKnown ? Color.white : Color.black;
+                text.text = isKnown ? ReplaceSpaceWithNewLine(Localization.instance.Localize(itemDrop.m_itemData.m_shared.m_name)) : UnknownText;
 
-                    part.gameObject.SetActive(true);
-                }
+                part.gameObject.SetActive(true);
             }
         }
     }
     private static void AddItemRecipe(ItemDrop.ItemData itemData)
     {
-        Recipe recipe = ObjectDB.instance.GetRecipe(itemData);
-        if (recipe == null) return;
-        
+        if (ObjectDB.instance.GetRecipe(itemData) is not { } recipe) return;
         int resourceCount =  Mathf.FloorToInt(recipe.m_resources.Length / 8f) + 1;
-        if (recipe.m_resources.Length != 0)
+        if (recipe.m_resources.Length == 0) return;
+        for (int index = 0; index < resourceCount; ++index)
         {
-            for (int index = 0; index < resourceCount; ++index)
+            GameObject recipeContainer = Object.Instantiate(CacheAssets.Drops, CreateAlmanac.PanelContent);
+            if (Utils.FindChild(recipeContainer.transform, "$part_title")
+                .TryGetComponent(out TextMeshProUGUI recipeTitle))
+                recipeTitle.text = index > 0 ? "" : Localization.instance.Localize("$almanac_recipe_title");
+            PanelElements.Add(recipeContainer);
+            int j = 0;
+            for (int i = index * 7; i < (index + 1) * 7; ++i)
             {
-                GameObject recipeContainer = Object.Instantiate(CacheAssets.Drops, CreateAlmanac.PanelContent);
-                Utils.FindChild(recipeContainer.transform, "$part_title").GetComponent<TextMeshProUGUI>().text = index > 0 ? "" :
-                    Localization.instance.Localize("$almanac_recipe_title");
-                PanelElements.Add(recipeContainer);
-                int j = 0;
-                for (int i = index * 7; i < (index + 1) * 7; ++i)
-                {
-                    if (i >= recipe.m_resources.Length) break;
-                    Transform part = Utils.FindChild(recipeContainer.transform, $"$part_drop_{j}");
-                    Transform name = part.GetChild(0);
+                if (i >= recipe.m_resources.Length) break;
+                Transform part = Utils.FindChild(recipeContainer.transform, $"$part_drop_{j}");
+                Transform name = part.GetChild(0);
                 
-                    if (!part.TryGetComponent(out Image image)) continue;
-                    if (!name.TryGetComponent(out TextMeshProUGUI text)) continue;
+                if (!part.TryGetComponent(out Image image)) continue;
+                if (!name.TryGetComponent(out TextMeshProUGUI text)) continue;
                     
-                    Piece.Requirement req = recipe.m_resources[i];
-                    ItemDrop item = req.m_resItem;
+                Piece.Requirement req = recipe.m_resources[i];
+                ItemDrop item = req.m_resItem;
 
-                    bool isKnown = Player.m_localPlayer.IsKnownMaterial(item.m_itemData.m_shared.m_name) || _KnowledgeWall.Value is AlmanacPlugin.Toggle.Off || Player.m_localPlayer.NoCostCheat();
+                bool isKnown = Player.m_localPlayer.IsKnownMaterial(item.m_itemData.m_shared.m_name) || _KnowledgeWall.Value is AlmanacPlugin.Toggle.Off || Player.m_localPlayer.NoCostCheat();
 
-                    image.sprite = item.m_itemData.GetIcon();
-                    image.color = isKnown ? Color.white : Color.black;
-                    text.text = isKnown ? ReplaceSpaceWithNewLine(Localization.instance.Localize(item.m_itemData.m_shared.m_name))
-                                + $"\n(<color=orange>{req.m_amount}</color> +<color=orange>{req.m_amountPerLevel}</color>/lvl)" : UnknownText;
+                image.sprite = item.m_itemData.GetIcon();
+                image.color = isKnown ? Color.white : Color.black;
+                text.text = isKnown ? ReplaceSpaceWithNewLine(Localization.instance.Localize(item.m_itemData.m_shared.m_name))
+                                      + $"\n(<color=orange>{req.m_amount}</color> +<color=orange>{req.m_amountPerLevel}</color>/lvl)" : UnknownText;
                 
-                    part.gameObject.SetActive(true);
-                    ++j;
-                }
+                part.gameObject.SetActive(true);
+                ++j;
             }
         }
     }
@@ -1271,15 +1195,15 @@ public static class UpdateAlmanac
             if (entry.value == "title")
             {
                 GameObject data = Object.Instantiate(CacheAssets.ItemTitle, CreateAlmanac.PanelContent);
-                if (!data.transform.Find("$part_text").TryGetComponent(out TextMeshProUGUI component)) continue;
-                component.text = Localization.instance.Localize(entry.title);
+                if (Utils.FindChild(data.transform, "$part_text").TryGetComponent(out TextMeshProUGUI component))
+                    component.text = Localization.instance.Localize(entry.title);
                 PanelElements.Add(data);
             }
             else
             {
                 GameObject data = Object.Instantiate(CacheAssets.Item, CreateAlmanac.PanelContent);
                 if (!Utils.FindChild(data.transform, "$part_infoType").TryGetComponent(out TextMeshProUGUI TypeComponent)) continue;
-                if (!Utils.FindChild(data.transform, "$part_data").GetComponent<TextMeshProUGUI>().TryGetComponent(out TextMeshProUGUI DataComponent)) continue;
+                if (!Utils.FindChild(data.transform, "$part_data").TryGetComponent(out TextMeshProUGUI DataComponent)) continue;
 
                 TypeComponent.text = Localization.instance.Localize(entry.title);
                 DataComponent.text = Localization.instance.Localize(entry.value);

@@ -32,8 +32,8 @@ public static class CreateAlmanac
     public static TextMeshProUGUI PanelButton = null!;
     public static TextMeshProUGUI AchievementPanelButton = null!;
 
-    private static Image PanelImage = null!;
-    private static Image AchievementPanelImage = null!;
+    public static Image PanelImage = null!;
+    public static Image AchievementPanelImage = null!;
 
     private static GameObject AchievementCheckmark = null!;
     public static void OnPanelTransparencyConfigChange(object sender, EventArgs e)
@@ -52,8 +52,8 @@ public static class CreateAlmanac
     public static bool IsAchievementActive() => AchievementGUI && AchievementGUI.activeInHierarchy;
     private static void CreateAlmanacPanel(InventoryGui GUI)
     {
-        if (AlmanacGUI != null) return; 
-        
+        if (AlmanacGUI != null) return;
+
         AlmanacGUI = Object.Instantiate(CacheAssets.Panel, GUI.transform);
         AlmanacGUI.SetActive(false);
         
@@ -65,7 +65,7 @@ public static class CreateAlmanac
         PanelImage = Utils.FindChild(AlmanacGUI.transform, "Panel").GetComponent<Image>();
         PanelImage.material = CacheAssets.WoodPanel.material;
         PanelImage.sprite = CacheAssets.WoodPanel.sprite;
-        PanelImage.color = AlmanacPlugin._PanelImage.Value is  AlmanacPlugin.Toggle.Off ? Color.white : Color.clear;
+        PanelImage.color = AlmanacPlugin._PanelImage.Value is AlmanacPlugin.Toggle.Off ? Color.white : Color.clear;
 
         if (!Utils.FindChild(AlmanacGUI.transform, "$part_left_braid").TryGetComponent(out Image leftImage)) return;
         if (!Utils.FindChild(AlmanacGUI.transform, "$part_right_braid").TryGetComponent(out Image rightImage)) return;

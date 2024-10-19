@@ -133,6 +133,7 @@
         <Compile Include="Achievements\AchievementYML.cs" />
         <Compile Include="Achievements\CreatureLists.cs" />
         <Compile Include="API\ClassesAPI.cs" />
+        <Compile Include="API\TrackMinimalUI.cs" />
         <Compile Include="Bounties\Bounty.cs" />
         <Compile Include="Bounties\BountyManager.cs" />
         <Compile Include="Bounties\BountyPatches.cs" />
@@ -235,6 +236,7 @@
         <EmbeddedResource Include="translations\Slovak.json" />
         <EmbeddedResource Include="translations\Spanish.json" />
         <EmbeddedResource Include="translations\Swedish.json" />
+        <EmbeddedResource Include="translations\Ukrainian.json" />
         <Content Include="Tutorials\Almanac_Readme.md" />
         <Content Include="Tutorials\README.md" />
         <Content Include="UpdateManifest.ps1" />

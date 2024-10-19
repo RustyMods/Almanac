@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Reflection;
 using Almanac.Achievements;
+using Almanac.API;
 using Almanac.FileSystem;
 using Almanac.UI;
 using Almanac.Utilities;
@@ -24,7 +25,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.3.5";
+        internal const string ModVersion = "3.3.6";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         private static readonly string ConfigFileName = ModGUID + ".cfg";
@@ -35,6 +36,7 @@ namespace Almanac
         public static readonly ConfigSync ConfigSync = new(ModGUID) { DisplayName = ModName, CurrentVersion = ModVersion, MinimumRequiredVersion = ModVersion };
         public static AlmanacPlugin _plugin = null!;
         public static AssetBundle _assets = null!;
+        public static GameObject _root = null!;
         public void Awake()
         {
             Localizer.Load();
@@ -42,6 +44,10 @@ namespace Almanac
             _plugin = this;
             WorkingAsType = SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null ? WorkingAs.Server : WorkingAs.Client;
             _assets = GetAssetBundle("almanacbundle");
+
+            _root = new GameObject("root");
+            DontDestroyOnLoad(_root);
+            _root.SetActive(false);
             
             InitConfigs();
             CheckChainLoader();
@@ -50,10 +56,10 @@ namespace Almanac
             AchievementYML.InitDefaultAchievements();
             Filters.InitFilters();
             FileWatcher.InitFileSystemWatch();
-            
             Assembly assembly = Assembly.GetExecutingAssembly();
             _harmony.PatchAll(assembly);
             SetupWatcher();
+            TrackMinimalUI.SetupWatcher();
         }
         public void Update() => UpdateAlmanac.UpdateGUI();
         private void OnDestroy() => Config.Save();
@@ -187,7 +193,6 @@ namespace Almanac
             _BountyEnabled = config("2 - Settings", "Bounties", Toggle.On, "If on, bounty feature is enabled");
             _TreasureEnabled = config("2 - Settings", "Treasures", Toggle.On, "If on, treasure feature is enabled");
             _AchievementsEnabled = config("2 - Settings", "Achievements", Toggle.On, "If on, achievements is enabled");
-
         }
         #endregion
 

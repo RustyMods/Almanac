@@ -26,6 +26,8 @@ public static class CacheAssets
     public static GameObject AchievementPanel = null!;
     public static GameObject SearchBar = null!;
     public static GameObject LeaderboardItem = null!;
+
+    public static GameObject TrophyElement = null!;
     
     [HarmonyWrapSafe]
     public static void GetAssets(InventoryGui GUI)
@@ -48,6 +50,28 @@ public static class CacheAssets
         WoodPanel = Border.GetComponent<Image>();
         BraidLeft = GUI.m_info.transform.Find("TitlePanel/BraidLineHorisontalMedium (1)").GetComponent<Image>();
         BraidRight = GUI.m_info.transform.Find("TitlePanel/BraidLineHorisontalMedium (2)").GetComponent<Image>();
+
+        TrophyElement = Object.Instantiate(GUI.m_trophieElementPrefab, AlmanacPlugin._root.transform, false);
+        TrophyElement.name = "AlmanacElement";
+        UITools.AddButtonComponent(TrophyElement);
+    }
+
+    public static void ReloadAssets()
+    {
+        try
+        {
+            GetAssets(InventoryGui.instance);
+            CreateAlmanac.PanelImage.material = WoodPanel.material;
+            CreateAlmanac.PanelImage.sprite = WoodPanel.sprite;
+            CreateAlmanac.PanelImage.color = WoodPanel.color;
+            CreateAlmanac.AchievementPanelImage.material = WoodPanel.material;
+            CreateAlmanac.AchievementPanelImage.sprite = WoodPanel.sprite;
+            CreateAlmanac.AchievementPanelImage.color = WoodPanel.color;
+        }
+        catch
+        {
+            AlmanacPlugin.AlmanacLogger.LogDebug("Failed to reload graphics");
+        }
     }
 
     public static void LoadAssets()

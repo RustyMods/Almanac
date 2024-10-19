@@ -136,7 +136,7 @@ public class TreasureHunt : MonoBehaviour
 
     private static Vector3 GetRandomVector()
     {
-        var max = WorldGenerator.worldSize / 2;
+        // var max = WorldGenerator.worldSize / 2;
         float x = Random.Range(-maxRadius, maxRadius);
         float y = Random.Range(0f, 5000f);
         float z = Random.Range(-maxRadius, maxRadius);

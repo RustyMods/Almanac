@@ -551,7 +551,7 @@ public static class CreateAlmanac
     {
         GameObject ElementOutline = new GameObject("$part_outline");
         RectTransform rect = ElementOutline.AddComponent<RectTransform>();
-        rect.SetParent(instance.m_trophieElementPrefab.transform);
+        rect.SetParent(CacheAssets.TrophyElement.transform);
         rect.anchoredPosition = new Vector2(0f, 50f);
         rect.sizeDelta = new Vector2(72f, 72f);
         
@@ -580,8 +580,8 @@ public static class CreateAlmanac
             EditTitleItem();
             EditInventoryGUI(__instance);
             AddSearchBar();
+            // EditTrophyElement(__instance);
             EditLeaderboardItem();
-            EditTrophyElement(__instance);
             CreateFilterCompletedAchievementsButton(__instance.m_trophiesPanel);
             if (CreaturePanelElement == null) CreaturePanelElement = CreateCreaturePanelElement();
             CreatureDataCollector.GetSortedCreatureData();

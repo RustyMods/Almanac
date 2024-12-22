@@ -1,9 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Almanac.Data;
+using BepInEx;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using static Almanac.UI.CacheAssets;
+using Object = UnityEngine.Object;
 
 namespace Almanac.UI;
 
@@ -17,6 +20,8 @@ public static class Categories
     public static GameObject BaseTab = null!;
 
     public static string SelectedTab = "$almanac_trophies_button";
+
+    public static readonly Dictionary<string, Action<InventoryGui, string>> m_tabs = new();
 
     // If you change options here, make sure to match it on other conditions
     private static readonly List<string> ItemOptions = new()
@@ -48,6 +53,12 @@ public static class Categories
     };
 
     private static readonly List<string> SpecialOptions = new();
+
+    public static void Setup()
+    {
+        m_tabs["$almanac_scroll_button"] = (GUI, filter) => UpdateAlmanac.UpdateItemList(GUI, ItemDataCollector.GetScrolls(filter));
+        
+    }
 
     public static void CreateTabs()
     {

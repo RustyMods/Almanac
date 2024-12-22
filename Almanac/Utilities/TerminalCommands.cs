@@ -110,6 +110,6 @@ public static class TerminalCommands
                         break;
                 }
                 return true;
-            }),optionsFetcher: ()=> new () { "help", "keys", "size", "write_achievements", "pickable" });
+            }),optionsFetcher: ()=> new List<string> { "help", "keys", "size", "write_achievements", "pickable" });
     }
 }

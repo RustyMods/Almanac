@@ -186,7 +186,7 @@ public static class Utility
 
     public static string ConvertItemType(ItemDrop.ItemData.ItemType type)
     {
-        return (type) switch
+        return type switch
         {
             ItemDrop.ItemData.ItemType.None => "$almanac_none",
             ItemDrop.ItemData.ItemType.Material => "$almanac_material_button",

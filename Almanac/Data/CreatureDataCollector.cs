@@ -69,7 +69,16 @@ public static class CreatureDataCollector
     }
     public static List<CreatureData> tempCreatureData = new();
     public static readonly List<string> TempDefeatKeys = new();
-    public static List<CreatureData> GetSavedCreatureData() => AlmanacPlugin._UseIgnoreList.Value is AlmanacPlugin.Toggle.Off ? tempCreatureData : tempCreatureData.FindAll(creature => !Filters.FilterList.Contains(creature.name));
+
+    public static List<CreatureData> GetSavedCreatureData(string filter = "")
+    {
+        var list = AlmanacPlugin._UseIgnoreList.Value is AlmanacPlugin.Toggle.Off
+            ? tempCreatureData
+            : tempCreatureData.FindAll(creature => !Filters.FilterList.Contains(creature.name));
+        return filter.IsNullOrWhiteSpace()
+            ? list
+            : list.FindAll(creature => creature.display_name.ToLower().Contains(filter));
+    }
     public static void GetSortedCreatureData()
     {
         AlmanacPlugin.AlmanacLogger.LogDebug("Caching Creature Data");

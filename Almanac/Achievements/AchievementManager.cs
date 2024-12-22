@@ -123,6 +123,7 @@ public static class AchievementManager
             SetCompletedAchievement(achievement);
         }
         Leaderboard.SendPlayerData();
+        UpdateAlmanac.CheckedCompletion = true;
     }
     private static void SetCompletedAchievement(Achievement data)
     {
@@ -596,11 +597,11 @@ public static class AchievementManager
         return output.Values.ToList();
     }
 
-    public static List<Achievement> GetAchievements()
+    public static List<Achievement> GetAchievements(string filter = "")
     {
         List<Achievement> output = new(AchievementList);
         List<Achievement> groups = GetGroupedAchievement();
         if (groups.Any()) output.AddRange(groups);
-        return output;
+        return filter.IsNullOrWhiteSpace() ? output : output.FindAll(x => x.m_displayName.ToLower().Contains(filter));
     }
 }

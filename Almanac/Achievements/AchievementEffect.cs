@@ -80,6 +80,7 @@ public static class AlmanacEffectManager
             if (obd.m_StatusEffects.Find(effect => effect.name == effectName)) return null;
             AchievementEffect Effect = ScriptableObject.CreateInstance<AchievementEffect>();
             Effect.name = effectName;
+            Effect.m_nameHash = effectName.GetStableHashCode();
             Effect.data = this;
             Effect.m_icon = _AchievementIcons.Value is Toggle.On ? sprite : null;
             Effect.m_name = displayName;

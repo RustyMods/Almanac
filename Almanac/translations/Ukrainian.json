@@ -1,6 +1,5 @@
 {
-	
-	
+		
   "almanac_creature_button": "Істоти",
   "almanac_trophies_button": "Трофеї",
   "almanac_material_button": "Матеріали",
@@ -32,7 +31,7 @@
 
   "almanac_door_title": "Двері",
   "almanac_can_not_be_closed": "Неможливо зачинити",
-  "almanac_weak_spot": "Слабке місце"
+  "almanac_weak_spot": "Слабке місце",
 
   "almanac_health": "Здоров'я",
   "almanac_faction": "Фракція",
@@ -162,8 +161,8 @@
   "almanac_stagger_multiplier_label": "Множник затримки",
   "almanac_recoil_pushback_label": "Віддача",
   "almanac_self_damage_label": "Шкода собі",
-  "almanac_attack_label": "Атака"
-  "almanac_secondary_attack_label": "Наступна"
+  "almanac_attack_label": "Атака",
+  "almanac_secondary_attack_label": "Наступна",
 
   "almanac_set_name": "Назва комплекту",
   "almanac_set_size": "Розмір комплекту",
@@ -372,7 +371,7 @@
   "almanac_spawn_distance": "Дистанція спавну",
   "almanac_max_spawned_area": "Максимальний спавн в області",
 
-  "almanac_players": "Гравці"
+  "almanac_players": "Гравці",
   "almanac_forest_monsters": "Лісові монстри",
   "almanac_undead": "Нежить",
   "almanac_mountain_monsters": "Гірські монстри",
@@ -719,38 +718,36 @@
   "almanac_hunt": "Полювання",
   "almanac_already_have_active_bounty": "Вже обрана активна нагорода",
   "almanac_bounty_escaped": "Нагорода втекла",
-  "almanac_raised": "Підвищений"
+  "almanac_raised": "Підвищений",
 
-  "almanac_treasure_how_to": "Натисніть піктограму, щоб погодитися на полювання за скарбами"
-  "almanac_treasure_hunt_button": "Полювання за скарбами"
+  "almanac_treasure_how_to": "Натисніть піктограму, щоб погодитися на полювання за скарбами",
+  "almanac_treasure_hunt_button": "Полювання за скарбами",
 
-  "almanac_item": "Предмет"
-  "almanac_amount": "Сума"
-  "almanac_skill_type": "Тип навику"
-  "almanac_bounty_info": "Інформація про нагороди"
-  "almanac_creature_prefab": "Префаб істоти"
-  "almanac_damage_multiplier": "Множник шкоди"
-  "almanac_damages": "Шкода"
-  "almanac_cancel_bounty": "Відмінити нагороду"
-  "almanac_accept_bounty": "Прийняти нагороду"
-  "almanac_treasure_info": "Інформація про скарби"
-  "almanac_cancel_treasure": "Відмінити полювання за скарбами"
-  "almanac_accept_treasure": "Прийняти полювання за скарбами"
+  "almanac_item": "Предмет",
+  "almanac_amount": "Сума",
+  "almanac_skill_type": "Тип навику",
+  "almanac_bounty_info": "Інформація про нагороди",
+  "almanac_creature_prefab": "Префаб істоти",
+  "almanac_damage_multiplier": "Множник шкоди",
+  "almanac_damages": "Шкода",
+  "almanac_cancel_bounty": "Відмінити нагороду",
+  "almanac_accept_bounty": "Прийняти нагороду",
+  "almanac_treasure_info": "Інформація про скарби",
+  "almanac_cancel_treasure": "Відмінити полювання за скарбами",
+  "almanac_accept_treasure": "Прийняти полювання за скарбами",
 
-  "msg_treasure_available": "Наступні скарби доступні через"
-  "info_minutes": "хвилин"
-  "msg_canceled_treasure": "Полювання за скарбами скасовано"
-  "msg_active_treasure": "Уже активний пошук скарбів"
-  "info_not_enough": "Не достатньо"
-  "msg_bounty_available": "Наступна нагорода доступна через"
-  "msg_canceled_bounty": "Нагорода скасована"
-  "se_lifesteal": "Крадіжка життя"
-  "se_armor": "Броня"
-  "skill_all": "Усі навики"
+  "msg_treasure_available": "Наступні скарби доступні через",
+  "info_minutes": "хвилин",
+  "msg_canceled_treasure": "Полювання за скарбами скасовано",
+  "msg_active_treasure": "Уже активний пошук скарбів",
+  "info_not_enough": "Не достатньо",
+  "msg_bounty_available": "Наступна нагорода доступна через",
+  "msg_canceled_bounty": "Нагорода скасована",
+  "se_lifesteal": "Крадіжка життя",
+  "se_armor": "Броня",
+  "skill_all": "Усі навики",
 
-  "almanac_player_resistances": "Опір гравця"
-  "almanac_statuseffects": "Ефекти досягнень"
+  "almanac_player_resistances": "Опір гравця",
+  "almanac_statuseffects": "Ефекти досягнень",
   "almanac_total_effects": "Підрахунок ефекту"
-  
-  
 }

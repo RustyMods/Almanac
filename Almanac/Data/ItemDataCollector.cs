@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Almanac.FileSystem;
+using BepInEx;
 using UnityEngine;
 
 namespace Almanac.Data;
@@ -29,53 +30,59 @@ public static class ItemDataCollector
         CachedFishes.Clear();
         CachedTrophies.Clear();
     }
-    public static List<ItemDrop> GetTrophies()
+    public static List<ItemDrop> GetTrophies(string filter = "")
     {
-        if (CachedTrophies.Count > 0) return CachedTrophies;
+        if (CachedTrophies.Count > 0)
+            return filter.IsNullOrWhiteSpace()
+                ? CachedTrophies
+                : CachedTrophies.FindAll(item =>
+                    Localization.instance.Localize(item.m_itemData.m_shared.m_name).ToLower().Contains(filter));
         
         CachedTrophies = GetValidItemDropList(ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Trophy, ""));
 
-        return CachedTrophies;
+        return filter.IsNullOrWhiteSpace() ? CachedTrophies : CachedTrophies.FindAll(item =>
+            Localization.instance.Localize(item.m_itemData.m_shared.m_name).ToLower().Contains(filter));
     } 
-    public static List<ItemDrop> GetFishes()
+    public static List<ItemDrop> GetFishes(string filter = "")
     {
-        if (CachedFishes.Count > 0) return CachedFishes;
-        List<ItemDrop> fishes = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Fish, "");
-        
-        if (AlmanacPlugin.KrumpacLoaded)
+        if (CachedFishes.Count <= 0)
         {
-            List<ItemDrop> KrumpFishes = GetConsumables(true).FindAll(x =>
-                x.name.StartsWith("Krump_Mat_") 
-                && !x.name.EndsWith("Dried") 
-                && !x.name.Contains("Krump_Mat_Oil") 
-                && !x.name.EndsWith("_Meat"));
-            fishes.AddRange(KrumpFishes);
+            List<ItemDrop> fishes = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Fish, "");
+            
+            if (AlmanacPlugin.KrumpacLoaded)
+            {
+                List<ItemDrop> KrumpFishes = GetConsumables(true).FindAll(x =>
+                    x.name.StartsWith("Krump_Mat_") 
+                    && !x.name.EndsWith("Dried") 
+                    && !x.name.Contains("Krump_Mat_Oil") 
+                    && !x.name.EndsWith("_Meat"));
+                fishes.AddRange(KrumpFishes);
+            }
+            
+            CachedFishes = fishes.FindAll(fish => !Filters.FilterList.Contains(fish.name) && fish.enabled);
         }
-        
-        CachedFishes = fishes.FindAll(fish => !Filters.FilterList.Contains(fish.name) && fish.enabled);
 
-        return CachedFishes;
+        return filter.IsNullOrWhiteSpace() ? CachedFishes : CachedFishes.FindAll(item => Localization.instance.Localize(item.m_itemData.m_shared.m_name).ToLower().Contains(filter));
     }
-    public static List<ItemDrop> GetScrolls()
+    public static List<ItemDrop> GetScrolls(string filter = "")
     {
-        if (CachedScrolls.Count > 0) return CachedScrolls;
         if (CachedEquipment.Count <= 0) GetEquipments();
-        CachedScrolls = CachedEquipment.FindAll(x => x.name.StartsWith("kg"));
-        return CachedScrolls;
+        var scrolls = CachedScrolls.Count > 0 ? CachedScrolls : CachedEquipment.FindAll(x => x.name.StartsWith("kg"));
+        return filter.IsNullOrWhiteSpace() ? scrolls : scrolls.FindAll(item => Localization.instance.Localize(item.m_itemData.m_shared.m_name).ToLower().Contains(filter));
     }
-    public static List<ItemDrop> GetJewels()
+    public static List<ItemDrop> GetJewels(string filter = "")
     {
-        if (CachedJewels.Count > 0) return CachedJewels;
-        
-        List<ItemDrop> jewels = new();
-        if (CachedMaterials.Count <= 0) GetMaterials();
-        FilterJewels(CachedMaterials, jewels);
+        if (CachedJewels.Count <= 0)
+        {
+            List<ItemDrop> jewels = new();
+            if (CachedMaterials.Count <= 0) GetMaterials();
+            FilterJewels(CachedMaterials, jewels);
 
-        if (CachedEquipment.Count <= 0) GetEquipments();
-        FilterJewels(CachedEquipment, jewels);
-        
-        CachedJewels = GetValidItemDropList(jewels);
-        return CachedJewels;
+            if (CachedEquipment.Count <= 0) GetEquipments();
+            FilterJewels(CachedEquipment, jewels);
+            CachedJewels = GetValidItemDropList(jewels);
+        }
+        return filter.IsNullOrWhiteSpace() ? CachedJewels : CachedJewels.FindAll(item => Localization.instance.Localize(item.m_itemData.m_shared.m_name).ToLower().Contains(filter));
     }
     private static void FilterJewels(List<ItemDrop> source, List<ItemDrop> destination)
     {
@@ -105,32 +112,33 @@ public static class ItemDataCollector
             }
         }
     }
-    public static List<ItemDrop> GetConsumables(bool forFishes = false)
+    public static List<ItemDrop> GetConsumables(bool forFishes = false, string filter = "")
     {
         if (forFishes) return ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Consumable, "");
-        if (CachedConsumables.Count > 0) return CachedConsumables;
+        if (CachedConsumables.Count > 0) return filter.IsNullOrWhiteSpace() ? CachedConsumables : CachedConsumables.FindAll(item => Localization.instance.Localize(item.m_itemData.m_shared.m_name).ToLower().Contains(filter));
         List<ItemDrop> consumables = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Consumable, "");
         if (AlmanacPlugin.KrumpacLoaded) consumables.RemoveAll(x => x.name.EndsWith("_Raw"));
 
         CachedConsumables = GetValidItemDropList(consumables);
 
-        return CachedConsumables;
+        return filter.IsNullOrWhiteSpace() ? CachedConsumables : CachedConsumables.FindAll(item => Localization.instance.Localize(item.m_itemData.m_shared.m_name).ToLower().Contains(filter));
     }
-    public static List<ItemDrop> GetAmmunition()
+    public static List<ItemDrop> GetAmmunition(string filter = "")
     {
-        if (CachedAmmo.Count > 0) return CachedAmmo;
-        
-        List<ItemDrop> ammo = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Ammo, "");
-        List<ItemDrop> ammoNonEquip = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.AmmoNonEquipable, "");
-        
-        List<ItemDrop> ammunition = new List<ItemDrop>();
-        ammunition.AddRange(ammo);
-        ammunition.AddRange(ammoNonEquip);
+        if (CachedAmmo.Count <= 0)
+        {
+            List<ItemDrop> ammo = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Ammo, "");
+            List<ItemDrop> ammoNonEquip = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.AmmoNonEquipable, "");
+            
+            List<ItemDrop> ammunition = new List<ItemDrop>();
+            ammunition.AddRange(ammo);
+            ammunition.AddRange(ammoNonEquip);
 
-        CachedAmmo = GetValidItemDropList(ammunition);
-        return CachedAmmo;
+            CachedAmmo = GetValidItemDropList(ammunition);
+        }
+        return filter.IsNullOrWhiteSpace() ? CachedAmmo : CachedAmmo.FindAll(item => Localization.instance.Localize(item.m_itemData.m_shared.m_name).ToLower().Contains(filter));
     }
-    public static List<ItemDrop> GetMaterials()
+    public static List<ItemDrop> GetMaterials(string filter = "")
     {
         if (AlmanacPlugin.JewelCraftLoaded && CachedMaterials.Count != 0)
         {
@@ -138,18 +146,22 @@ public static class ItemDataCollector
             CachedMaterials.RemoveAll(x => CachedJewels.Contains(x));
         }
         
-        if (CachedMaterials.Count > 0) return CachedMaterials;
+        if (CachedMaterials.Count > 0) return filter.IsNullOrWhiteSpace() ? CachedMaterials : CachedMaterials.FindAll(item => Localization.instance.Localize(item.m_itemData.m_shared.m_name).ToLower().Contains(filter));
         
         List<ItemDrop> materials = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Material, "");
         
         materials.AddRange(GetFilteredMisc(filterOption.toMaterials));
         
         CachedMaterials = GetValidItemDropList(materials);
-        return CachedMaterials;
+        return filter.IsNullOrWhiteSpace() ? CachedMaterials : CachedMaterials.FindAll(item => Localization.instance.Localize(item.m_itemData.m_shared.m_name).ToLower().Contains(filter));
     }
-    public static List<ItemDrop> GetWeapons()
+    public static List<ItemDrop> GetWeapons(string filter = "")
     {
-        if (CachedWeapons.Count > 0) return CachedWeapons;
+        if (CachedWeapons.Count > 0)
+            return filter.IsNullOrWhiteSpace()
+                ? CachedWeapons
+                : CachedWeapons.FindAll(item =>
+                    Localization.instance.Localize(item.m_itemData.m_shared.m_name).ToLower().Contains(filter));
         
         List<ItemDrop> oneHanded = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.OneHandedWeapon, "");
         List<ItemDrop> bow = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Bow, "");
@@ -174,9 +186,10 @@ public static class ItemDataCollector
 
         CachedWeapons = GetValidItemDropList(weaponList);
 
-        return CachedWeapons;
+        return filter.IsNullOrWhiteSpace() ? CachedWeapons :CachedWeapons.FindAll(item =>
+            Localization.instance.Localize(item.m_itemData.m_shared.m_name).ToLower().Contains(filter));
     }
-    public static List<ItemDrop> GetEquipments()
+    public static List<ItemDrop> GetEquipments(string filter = "")
     {
         if (AlmanacPlugin.JewelCraftLoaded && CachedEquipment.Count != 0)
         {
@@ -188,7 +201,7 @@ public static class ItemDataCollector
             CachedEquipment.RemoveAll(x => CachedScrolls.Contains(x));
         }
 
-        if (CachedEquipment.Count > 0) return CachedEquipment;
+        if (CachedEquipment.Count > 0) return filter.IsNullOrWhiteSpace() ? CachedEquipment : CachedEquipment.FindAll(item => Localization.instance.Localize(item.m_itemData.m_shared.m_name).ToLower().Contains(filter));
         
         List<ItemDrop> helmet = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Helmet, "");
         List<ItemDrop> chest = ObjectDB.instance.GetAllItems(ItemDrop.ItemData.ItemType.Chest, "");
@@ -208,7 +221,7 @@ public static class ItemDataCollector
         
         CachedEquipment = new List<ItemDrop>(GetValidItemDropList(gearList).OrderBy(name => Localization.instance.Localize(name.m_itemData.m_shared.m_name)));
 
-        return CachedEquipment;
+        return filter.IsNullOrWhiteSpace() ? CachedEquipment : CachedEquipment.FindAll(item => Localization.instance.Localize(item.m_itemData.m_shared.m_name).ToLower().Contains(filter));
     }
     public static List<ItemDrop> GetSwords() => (CachedWeapons.Count > 0 ? CachedWeapons : GetWeapons()).FindAll(item => item.name.ToLower().Contains("sword"));
     public static List<ItemDrop> GetAxes() => (CachedWeapons.Count > 0 ? CachedWeapons : GetWeapons()).FindAll(item => item.name.ToLower().Contains("axe"));

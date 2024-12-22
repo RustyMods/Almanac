@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection;
 using Almanac.Achievements;
 using Almanac.API;
+using Almanac.Bounties;
 using Almanac.FileSystem;
 using Almanac.UI;
 using Almanac.Utilities;
@@ -14,6 +15,7 @@ using HarmonyLib;
 using ServerSync;
 using UnityEngine;
 using UnityEngine.Rendering;
+using YamlDotNet.Serialization;
 
 namespace Almanac
 {
@@ -25,7 +27,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.3.6";
+        internal const string ModVersion = "3.4.0";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         private static readonly string ConfigFileName = ModGUID + ".cfg";
@@ -37,6 +39,19 @@ namespace Almanac
         public static AlmanacPlugin _plugin = null!;
         public static AssetBundle _assets = null!;
         public static GameObject _root = null!;
+        
+        public void SpawnBounty()
+        {
+            if (Bounty.ActiveBountyLocation is not { } bountyData) return;
+            GameObject go = Instantiate(bountyData.m_critter, bountyData.m_position, Quaternion.identity);
+
+            Bounty bounty = go.AddComponent<Bounty>();
+            ISerializer serializer = new SerializerBuilder().Build();
+            string data = serializer.Serialize(bountyData.data);
+            bounty._znv.GetZDO().Set(Bounty.bountyHash, data);
+            CachedEffects.DoneSpawnEffectList.Create(go.transform.position, Quaternion.identity);
+        }
+        
         public void Awake()
         {
             Localizer.Load();
@@ -68,7 +83,6 @@ namespace Almanac
         public static bool KrumpacLoaded = false;
         public static bool JewelCraftLoaded = false;
         public static bool KGEnchantmentLoaded = false;
-
         private static void CheckChainLoader()
         {
             if (Chainloader.PluginInfos.ContainsKey("kg.ValheimEnchantmentSystem"))
@@ -148,6 +162,7 @@ namespace Almanac
         public static ConfigEntry<Toggle> _TreasureEnabled = null!;
         public static ConfigEntry<Toggle> _BountyEnabled = null!;
         public static ConfigEntry<Toggle> _AchievementsEnabled = null!;
+        public static ConfigEntry<Toggle> _showLore = null!;
         public enum DataPath { LocalLow, ConfigPath }
         private void InitConfigs()
         {
@@ -192,7 +207,8 @@ namespace Almanac
 
             _BountyEnabled = config("2 - Settings", "Bounties", Toggle.On, "If on, bounty feature is enabled");
             _TreasureEnabled = config("2 - Settings", "Treasures", Toggle.On, "If on, treasure feature is enabled");
-            _AchievementsEnabled = config("2 - Settings", "Achievements", Toggle.On, "If on, achievements is enabled");
+            _AchievementsEnabled = config("3 - Achievements", "Enabled", Toggle.On, "If on, achievements is enabled");
+            _showLore = config("3 - Achievements", "Always Show Lore", Toggle.On, "If on, achievements lore is always displayed");
         }
         #endregion
 

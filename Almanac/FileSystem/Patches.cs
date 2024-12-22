@@ -2,6 +2,7 @@
 using Almanac.Achievements;
 using Almanac.Bounties;
 using Almanac.Data;
+using Almanac.UI;
 using HarmonyLib;
 using YamlDotNet.Serialization;
 
@@ -60,12 +61,12 @@ public static class Patches
     {
         private static void Postfix(Player __instance)
         {
-            if (!__instance) return;
-            if (__instance != Player.m_localPlayer) return;
+            if (!__instance || __instance != Player.m_localPlayer) return;
             if (AlmanacPlugin.WorkingAsType is AlmanacPlugin.WorkingAs.Client)
             {
                 PlayerStats.UpdatePlayerStats();
             }
+            if (!UpdateAlmanac.CheckedCompletion) AchievementManager.CheckCompletedAchievements();
             ApplySavedAchievementEffects(__instance);
             AchievementManager.CheckCollectedRewards(__instance);
         }
@@ -81,10 +82,12 @@ public static class Patches
         AlmanacEffectManager.ActiveAchievementEffects.Clear();
         foreach (string name in AlmanacEffectManager.SavedAchievementEffectNames)
         {
+            
             if (PlayerSEMan.HaveStatusEffect(name.GetStableHashCode())) continue;
             AchievementManager.Achievement achievement = AchievementManager.AchievementList.Find(x => x.m_statusEffect != null && x.m_statusEffect.name == name);
             if (achievement != null && achievement.m_statusEffect != null)
             {
+                if (!achievement.m_isCompleted) continue;
                 PlayerSEMan.AddStatusEffect(achievement.m_statusEffect);
                 AlmanacEffectManager.ActiveAchievementEffects.Add(achievement.m_statusEffect);
             }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -56,8 +57,7 @@ public static class UpdateAlmanac
     {
         private static bool Prefix(InventoryGui __instance)
         {
-            if (!__instance) return false;
-            if (!Player.m_localPlayer) return false;
+            if (!__instance || !Player.m_localPlayer) return false;
             
             UpdateTopic();
             UpdateList(__instance);
@@ -69,100 +69,34 @@ public static class UpdateAlmanac
     {
         DestroyTrophies(GUI);
         CreateAlmanac.SetCheckmarkVisible();
-        switch (SelectedTab)
-            {
-                case "$almanac_scroll_button":
-                    UpdateItemList(GUI, filter.IsNullOrWhiteSpace() 
-                        ? GetScrolls() 
-                        : GetScrolls().FindAll(item => Localization.instance.Localize(item.m_itemData.m_shared.m_name).ToLower().Contains(filter)));
-                    break;
-                case "$almanac_jewel_button":
-                    UpdateItemList(GUI, filter.IsNullOrWhiteSpace() 
-                        ? GetJewels() 
-                        : GetJewels().FindAll(item => Localization.instance.Localize(item.m_itemData.m_shared.m_name).ToLower().Contains(filter)));
-                    break;
-                case "$almanac_ammo_button":
-                    UpdateItemList(GUI, filter.IsNullOrWhiteSpace() 
-                        ? GetAmmunition() 
-                        : GetAmmunition().FindAll(item => Localization.instance.Localize(item.m_itemData.m_shared.m_name).ToLower().Contains(filter)));
-                    break;
-                case "$almanac_fish_button":
-                    UpdateItemList(GUI, filter.IsNullOrWhiteSpace() 
-                        ? GetFishes() 
-                        : GetFishes().FindAll(item => Localization.instance.Localize(item.m_itemData.m_shared.m_name).ToLower().Contains(filter)));
-                    break;
-                case "$almanac_material_button":
-                    UpdateItemList(GUI, filter.IsNullOrWhiteSpace() 
-                        ? GetMaterials()
-                        : GetMaterials().FindAll(item => Localization.instance.Localize(item.m_itemData.m_shared.m_name).ToLower().Contains(filter)));
-                    break;
-                case "$almanac_weapon_button":
-                    UpdateItemList(GUI, filter.IsNullOrWhiteSpace() 
-                        ? GetWeapons()
-                        : GetWeapons().FindAll(item => Localization.instance.Localize(item.m_itemData.m_shared.m_name).ToLower().Contains(filter)));
-                    break;
-                case "$almanac_gear_button":
-                    UpdateItemList(GUI, filter.IsNullOrWhiteSpace() 
-                        ? GetEquipments()
-                        : GetEquipments().FindAll(item => Localization.instance.Localize(item.m_itemData.m_shared.m_name).ToLower().Contains(filter)));
-                    break;
-                case "$almanac_consumable_button":
-                    UpdateItemList(GUI, filter.IsNullOrWhiteSpace() 
-                        ? GetConsumables()
-                        : GetConsumables().FindAll(item => Localization.instance.Localize(item.m_itemData.m_shared.m_name).ToLower().Contains(filter)));
-                    break;
-                case "$almanac_creature_button":
-                    UpdateCreatureList(GUI, filter.IsNullOrWhiteSpace() 
-                        ? GetSavedCreatureData()
-                        : GetSavedCreatureData().FindAll(item => Localization.instance.Localize(item.display_name).ToLower().Contains(filter)));
-                    break;
-                case "$almanac_miscPieces_button":
-                    UpdatePieceList(GUI, GetFilteredPieces(GetValidPieces(miscPieces), filter));
-                    break;
-                case "$almanac_plantPieces_button":
-                    UpdatePieceList(GUI, GetFilteredPieces(GetValidPieces(plantPieces), filter));
-                    break;
-                case "$almanac_buildPieces_button":
-                    UpdatePieceList(GUI, GetFilteredPieces(GetValidPieces(buildPieces), filter));
-                    break;
-                case "$almanac_craftingPieces_button":
-                    UpdatePieceList(GUI, GetFilteredPieces(GetValidPieces(craftingPieces), filter));
-                    break;
-                case "$almanac_furniturePieces_button":
-                    UpdatePieceList(GUI, GetFilteredPieces(GetValidPieces(furniturePieces), filter));
-                    break;
-                case "$almanac_other_button":
-                    UpdatePieceList(GUI, GetFilteredPieces(GetValidPieces(defaultPieces), filter));
-                    break;
-                case "$almanac_modPieces_button":
-                    UpdatePieceList(GUI, GetFilteredPieces(GetValidPieces(modPieces), filter));
-                    break;
-                case "$almanac_comfortPieces_button":
-                    UpdatePieceList(GUI, GetFilteredPieces(GetValidPieces(comfortPieces), filter));
-                    break;
-                case "$almanac_achievements_button":
-                    UpdateAchievementList(GUI, filter.IsNullOrWhiteSpace() 
-                        ? GetAchievements() 
-                        : GetAchievements().FindAll(item => item.m_displayName.ToLower().Contains(filter)));
-                    break;
-                case "$almanac_stats_button":
-                    UpdateMetricsPanel();
-                    break;
-                case "$almanac_leaderboard_button":
-                    UpdateLeaderboardPanel();
-                    break;
-                case "$almanac_quests_button":
-                    UpdateBountyList(GUI, BountyManager.RegisteredBounties);
-                    break;
-                case "$almanac_treasure_hunt_button":
-                    UpdateTreasureList(GUI, TreasureHunt.TreasureManager.RegisteredTreasure);
-                    break;
-                default:
-                    UpdateItemList(GUI, filter.IsNullOrWhiteSpace() 
-                        ? GetTrophies() 
-                        : GetTrophies().FindAll(item => Localization.instance.Localize(item.m_itemData.m_shared.m_name).ToLower().Contains(filter)), true);
-                    break;
-            }
+        Action<InventoryGui, string> action = SelectedTab switch
+        {
+            "$almanac_scroll_button" => (gui, input) => UpdateItemList(gui, GetScrolls(input)),
+            "$almanac_jewel_button" => (gui, input) => UpdateItemList(gui, GetJewels(input)),
+            "$almanac_ammo_button" => (gui, input) => UpdateItemList(gui, GetAmmunition(input)),
+            "$almanac_fish_button" => (gui, input) => UpdateItemList(gui, GetFishes(input)),
+            "$almanac_material_button" => (gui, input) => UpdateItemList(gui, GetMaterials(input)),
+            "$almanac_weapon_button" => (gui, input) => UpdateItemList(gui, GetWeapons(input)),
+            "$almanac_gear_button" => (gui, input) => UpdateItemList(gui, GetEquipments(input)),
+            "$almanac_consumable_button" => (gui, input) => UpdateItemList(gui, GetConsumables(false, input)),
+            "$almanac_creature_button" => (gui, input) => UpdateCreatureList(gui, GetSavedCreatureData(input)),
+            "$almanac_miscPieces_button" => (gui, input) => UpdatePieceList(gui, GetFilteredPieces(GetValidPieces(miscPieces), input)),
+            "$almanac_plantPieces_button" => (gui, input) => UpdatePieceList(gui, GetFilteredPieces(GetValidPieces(plantPieces), input)),
+            "$almanac_buildPieces_button" => (gui, input) => UpdatePieceList(gui, GetFilteredPieces(GetValidPieces(buildPieces), input)),
+            "$almanac_craftingPieces_button" => (gui, input) => UpdatePieceList(gui, GetFilteredPieces(GetValidPieces(craftingPieces), input)),
+            "$almanac_furniturePieces_button" => (gui, input) => UpdatePieceList(gui, GetFilteredPieces(GetValidPieces(furniturePieces), input)),
+            "$almanac_other_button" => (gui, input) => UpdatePieceList(gui, GetFilteredPieces(GetValidPieces(defaultPieces), input)),
+            "$almanac_modPieces_button" => (gui, input) => UpdatePieceList(gui, GetFilteredPieces(GetValidPieces(modPieces), input)),
+            "$almanac_comfortPieces_button" => (gui, input) => UpdatePieceList(gui, GetFilteredPieces(GetValidPieces(comfortPieces), input)),
+            "$almanac_achievements_button" => (gui, input) => UpdateAchievementList(gui, GetAchievements(input)),
+            "$almanac_stats_button" => (_,_) => UpdateMetricsPanel(),
+            "$almanac_leaderboard_button" => (_,_) => UpdateLeaderboardPanel(),
+            "$almanac_quests_button" => (gui,_) => UpdateBountyList(gui, BountyManager.RegisteredBounties),
+            "$almanac_treasure_hunt_button" => (gui, _) => UpdateTreasureList(gui, TreasureHunt.TreasureManager.RegisteredTreasure),
+            _ => (gui, input) => UpdateItemList(gui, GetTrophies(input), true)
+        };
+
+        action(GUI, filter);
     }
     private static void UpdateTopic()
     {
@@ -175,7 +109,7 @@ public static class UpdateAlmanac
         foreach (GameObject trophy in instance.m_trophyList) Object.Destroy(trophy);
         instance.m_trophyList.Clear();
     }
-    private static void UpdateItemList(InventoryGui instance, List<ItemDrop> items, bool isTrophies = false)
+    public static void UpdateItemList(InventoryGui instance, List<ItemDrop> items, bool isTrophies = false)
     {
         float a1 = 0.0f;
         for (int index = 0; index < items.Count; ++index)
@@ -363,14 +297,14 @@ public static class UpdateAlmanac
             Transform icon = Utils.FindChild(transform, "icon");
             if (!icon.TryGetComponent(out Image iconImage)) continue;
             iconImage.sprite = achievement.m_sprite ? achievement.m_sprite : SpriteManager.AlmanacIcon;
-
+            
             if (Utils.FindChild(transform, "name").TryGetComponent(out TMP_Text nameText))
                 nameText.text = isCompleted ? achievement.m_displayName : UnknownText;
             if (Utils.FindChild(transform, "description").TryGetComponent(out TMP_Text descText))
-                descText.text = achievement.m_desc;
-            if (achievement.m_statusEffect is { } statusEffect)
+                descText.text = achievement.m_desc ?? "";
+            if (achievement.m_statusEffect is {} statusEffect)
             {
-                Utils.FindChild(transform, "$part_outline").gameObject.SetActive(Player.m_localPlayer.GetSEMan().HaveStatusEffect(statusEffect.name.GetStableHashCode()));
+                Utils.FindChild(transform, "$part_outline").gameObject.SetActive(Player.m_localPlayer.GetSEMan().HaveStatusEffect(statusEffect.m_nameHash));
             }
             UITools.SetupButton(gameObject, iconImage, isCompleted,() =>
             {
@@ -382,7 +316,7 @@ public static class UpdateAlmanac
                 CreateAlmanac.AlmanacGUI.SetActive(false);
                 SelectedAchievement = achievement;
                 UpdateAchievementPanel();
-            } );
+            }, true );
             instance.m_trophyList.Add(gameObject);
         }
         UITools.ResizePanel(instance, -a1);
@@ -627,7 +561,7 @@ public static class UpdateAlmanac
                 break;
         }
 
-        CreateAlmanac.AchievementPanelLore.text = isCompleted ? SelectedAchievement.m_lore : UnknownText;
+        CreateAlmanac.AchievementPanelLore.text = isCompleted || _showLore.Value is AlmanacPlugin.Toggle.On ? SelectedAchievement.m_lore : UnknownText;
     }
     private static void SetAchievementDesc()
     {
@@ -1272,10 +1206,7 @@ public static class UpdateAlmanac
             UpdateMetricsPanel();
             UpdateTopic();
 
-            if (CheckedCompletion) return;
-            
-            CheckCompletedAchievements();
-            CheckedCompletion = true;
+            if (!CheckedCompletion) CheckCompletedAchievements();
         }
     }
 

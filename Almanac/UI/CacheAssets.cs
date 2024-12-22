@@ -30,7 +30,7 @@ public static class CacheAssets
     public static GameObject TrophyElement = null!;
     
     [HarmonyWrapSafe]
-    public static void GetAssets(InventoryGui GUI)
+    public static void GetAssets(InventoryGui GUI, bool reload = false)
     {
         if (!GUI) return;
         TrophiesFrame = Utils.FindChild(GUI.transform, "TrophiesFrame");
@@ -51,8 +51,21 @@ public static class CacheAssets
         BraidLeft = GUI.m_info.transform.Find("TitlePanel/BraidLineHorisontalMedium (1)").GetComponent<Image>();
         BraidRight = GUI.m_info.transform.Find("TitlePanel/BraidLineHorisontalMedium (2)").GetComponent<Image>();
 
+        if (reload) return;
         TrophyElement = Object.Instantiate(GUI.m_trophieElementPrefab, AlmanacPlugin._root.transform, false);
         TrophyElement.name = "AlmanacElement";
+        GameObject ElementOutline = new GameObject("$part_outline");
+        RectTransform rect = ElementOutline.AddComponent<RectTransform>();
+        rect.SetParent(TrophyElement.transform);
+        rect.anchoredPosition = new Vector2(0f, 50f);
+        rect.sizeDelta = new Vector2(72f, 72f);
+        
+        rect.SetAsFirstSibling();
+
+        Image image = ElementOutline.AddComponent<Image>();
+        image.color = AlmanacPlugin._OutlineColor.Value;
+        
+        ElementOutline.SetActive(false);
         UITools.AddButtonComponent(TrophyElement);
     }
 
@@ -60,7 +73,7 @@ public static class CacheAssets
     {
         try
         {
-            GetAssets(InventoryGui.instance);
+            GetAssets(InventoryGui.instance, true);
             CreateAlmanac.PanelImage.material = WoodPanel.material;
             CreateAlmanac.PanelImage.sprite = WoodPanel.sprite;
             CreateAlmanac.PanelImage.color = WoodPanel.color;

@@ -7,7 +7,6 @@ using Almanac.Data;
 using Almanac.FileSystem;
 using Almanac.UI;
 using BepInEx;
-using Groups;
 using UnityEngine;
 using YamlDotNet.Serialization;
 using Random = UnityEngine.Random;
@@ -20,7 +19,7 @@ public class Bounty : MonoBehaviour
     public static Data.BountyLocation? ActiveBountyLocation;
     public static DateTime m_dateTime = DateTime.MaxValue;
     
-    private static readonly int bountyHash = "QuestBounty".GetStableHashCode();
+    public static readonly int bountyHash = "QuestBounty".GetStableHashCode();
     private const float maxRadius = 9500f;
     private const float minSpawnDistance = 2f;
     private const float maxYDistance = 10f;
@@ -36,9 +35,6 @@ public class Bounty : MonoBehaviour
         _znv = GetComponent<ZNetView>();
         _character = GetComponent<Character>();
         _character.m_onDeath += OnDeath;
-        
-        _znv.Register<string>(nameof(RPC_SetBountyData),RPC_SetBountyData);
-        
         AddPin();
         _znv.GetZDO().Persistent = false;
     }
@@ -65,26 +61,17 @@ public class Bounty : MonoBehaviour
     
     public void UpdatePin() => pin.m_pos = gameObject.transform.position;
     public void DestroyPin() => Minimap.instance.RemovePin(pin);
-    
-    public void RPC_SetBountyData(long sender, string value)
-    {
-        if (!_znv.IsValid()) return;
-        ISerializer serializer = new SerializerBuilder().Build();
-        string data = serializer.Serialize(value);
-        _znv.GetZDO().Set(bountyHash, data);
-    }
 
     public void ApplyBountyData()
     {
-        if (!TryGetBountyData(_znv, out Data.BountyData? data)) return;
+        if (GetData() is not { } data) return;
         ApplyCharacterData(data);
-        
-        LevelEffects levelEffects = _character.GetComponentInChildren<LevelEffects>();
-        if (levelEffects)
+            
+        if (_character.GetComponentInChildren<LevelEffects>() is {} levelEffects)
         {
             levelEffects.SetupLevelVisualization(data.m_level);
         }
-        
+            
         _znv.GetZDO().Set(ZDOVars.s_maxHealth, data.m_health);
         _znv.GetZDO().Set(ZDOVars.s_health, data.m_health);
         _znv.GetZDO().Set(ZDOVars.s_level, data.m_level);
@@ -102,56 +89,52 @@ public class Bounty : MonoBehaviour
     public void OnDeath()
     {
         if (!_character) return;
-        m_isDead = true;
-        if (_character.m_lastHit == null)
-        {
-            ActiveBountyLocation = null;
-            return;
-        }
-        Character attacker = _character.m_lastHit.GetAttacker();
-        if (attacker == null) return;
-        if (!attacker.IsPlayer()) return;
-        Player? player = attacker as Player;
-        if (player == null) return;
-        if (!_character.m_nview.IsValid()) return;
-        
-        if (!TryGetBountyData(_character.m_nview, out Data.BountyData data)) return;
-        PlayerReference? group = Groups.API.FindGroupMemberByPlayerId(player.GetPlayerID());
-        if (player.GetPlayerID() != data.m_hunter && group == null)
-        {
-            AlmanacPlugin.AlmanacLogger.LogDebug("Bounty: Invalid Player ID");
-            return;
-        }
-        switch (data.m_rewardType)
-        {
-            case Data.QuestRewardType.Item:
-                GameObject item = ZNetScene.instance.GetPrefab(data.m_rewardItem);
-                if (!item) return;
-                GameObject drop = Instantiate(item, _character.transform.position, Quaternion.identity);
-                if (!drop.TryGetComponent(out ItemDrop component)) return;
-                component.m_itemData.m_stack = data.m_rewardAmount;
-                break;
-            case Data.QuestRewardType.Skill:
-                if (!Enum.TryParse(data.m_skillType, out Skills.SkillType skillType)) return;
-                Player.m_localPlayer.RaiseSkill(skillType, data.m_skillAmount);
-                Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, $"$almanac_raised {Utility.ConvertSkills(skillType)} $almanac_by {data.m_skillAmount} $almanac_xp");
-                break;
-        }
+        // if (_character.m_lastHit == null)
+        // {
+        //     ActiveBountyLocation = null;
+        //     return;
+        // }
 
-        if (data.m_experience > 0)
+        if (_character.m_lastHit?.GetAttacker() is Player player && GetData() is {} bountyData)
         {
-            ClassesAPI.AddEXP(data.m_experience);
+            var killerID = player.GetPlayerID();
+            if (Groups.API.FindGroupMemberByPlayerId(killerID) is { } group || killerID == bountyData.m_hunter)
+            {
+                switch (bountyData.m_rewardType)
+                {
+                    case Data.QuestRewardType.Item:
+                        if (ZNetScene.instance.GetPrefab(bountyData.m_rewardItem) is { } item)
+                        {
+                            GameObject drop = Instantiate(item, _character.transform.position, Quaternion.identity);
+                            if (!drop.TryGetComponent(out ItemDrop component)) break;
+                            component.m_itemData.m_stack = bountyData.m_rewardAmount;
+                        }
+                        break;
+                    case Data.QuestRewardType.Skill:
+                        if (Enum.TryParse(bountyData.m_skillType, out Skills.SkillType skillType))
+                        {
+                            Player.m_localPlayer.RaiseSkill(skillType, bountyData.m_skillAmount);
+                            Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, $"$almanac_raised {Utility.ConvertSkills(skillType)} $almanac_by {bountyData.m_skillAmount} $almanac_xp");
+                        }
+                        break;
+                }
+
+                if (bountyData.m_experience > 0) ClassesAPI.AddEXP(bountyData.m_experience);
+            }
+            else
+            {
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Bounty stolen by: " + player.GetPlayerName());
+            }
+            
         }
+        m_isDead = true;
         ActiveBountyLocation = null;
     }
 
     public static void ApplyBountyModifiers(HitData hit)
     {
-        Character attacker = hit.GetAttacker();
-        if (!attacker) return;
-        if (attacker.IsPlayer()) return;
-        if (!attacker.m_nview.IsValid()) return;
-            
+        if (hit.GetAttacker() is not { } attacker || attacker.IsPlayer() || !attacker.m_nview.IsValid()) return;
+
         string bountyData = attacker.m_nview.GetZDO().GetString(bountyHash);
         if (bountyData.IsNullOrWhiteSpace()) return;
         IDeserializer deserializer = new DeserializerBuilder().Build();
@@ -167,16 +150,13 @@ public class Bounty : MonoBehaviour
         hit.m_damage.m_poison += data.m_damages.poison;
         hit.m_damage.m_spirit += data.m_damages.spirit;
     }
-    
-    private static bool TryGetBountyData(ZNetView znv, out Data.BountyData data)
+
+    private Data.BountyData? GetData()
     {
-        data = new Data.BountyData();
-        if (!znv.IsValid()) return false;
+        if (!_znv.IsValid()) return null;
         IDeserializer deserializer = new DeserializerBuilder().Build();
-        string value = znv.GetZDO().GetString(bountyHash);
-        if (value.IsNullOrWhiteSpace()) return false;
-        data = deserializer.Deserialize<Data.BountyData>(value);
-        return true;
+        string value = _znv.GetZDO().GetString(bountyHash);
+        return value.IsNullOrWhiteSpace() ? null : deserializer.Deserialize<Data.BountyData>(value);
     }
 
     private static bool AcceptBounty(Data.BountyLocation bountyLocation)
@@ -225,9 +205,9 @@ public class Bounty : MonoBehaviour
         for (int index = 0; index < 1000; ++index)
         {
             Vector3 vector3 = GetRandomVectorWithin(Player.m_localPlayer.transform.position, 3000f);
-
-            if (WorldGenerator.instance.GetBiome(vector3) != biome) continue;
             
+            if (WorldGenerator.instance.GetBiome(vector3) != biome) continue;
+            if (WorldGenerator.instance.GetBiomeArea(vector3) is not Heightmap.BiomeArea.Median) continue;
             pos = vector3;
             return true;
         }
@@ -237,7 +217,7 @@ public class Bounty : MonoBehaviour
             Vector3 vector3 = GetRandomVector();
 
             if (WorldGenerator.instance.GetBiome(vector3) != biome) continue;
-            
+            if (WorldGenerator.instance.GetBiomeArea(vector3) is not Heightmap.BiomeArea.Median) continue;
             pos = vector3;
             return true;
         }
@@ -260,8 +240,7 @@ public class Bounty : MonoBehaviour
 
     public static bool SpawnCreature(GameObject critter, Vector3 point, float maxDistance, Data.BountyData data)
     {
-        if (!critter) return false;
-        if (!critter.GetComponent<MonsterAI>()) return false;
+        if (!critter || !critter.GetComponent<MonsterAI>()) return false;
 
         for (int index = 0; index < 100; index++)
         {
@@ -286,33 +265,20 @@ public class Bounty : MonoBehaviour
             }
             CachedEffects.PreSpawnEffectList.Create(vector3, Quaternion.identity);
 
-            AlmanacPlugin._plugin.StartCoroutine(DelayedSpawn(critter, vector3, data));
+            if (ActiveBountyLocation != null)
+            {
+                ActiveBountyLocation.m_position = vector3;
+            }
+            AlmanacPlugin._plugin.Invoke(nameof(AlmanacPlugin.SpawnBounty), 10f);
             return true;
         }
-
         return false;
     }
-    private static IEnumerator DelayedSpawn(GameObject prefab, Vector3 pos, Data.BountyData bountyData)
-    {
-        yield return new WaitForSeconds(10f);
-        GameObject go = UnityEngine.Object.Instantiate(prefab, pos, Quaternion.identity);
 
-        Bounty bounty = go.AddComponent<Bounty>();
-        
-        if (go.TryGetComponent(out ZNetView znv))
-        {
-            ISerializer serializer = new SerializerBuilder().Build();
-            string data = serializer.Serialize(bountyData);
-            znv.GetZDO().Set(bountyHash, data);
-        }
-
-        CachedEffects.DoneSpawnEffectList.Create(go.transform.position, Quaternion.identity);
-    }
-    
     public static void OnClickBounty()
     {
-        if (!CheckForBountyCost()) return;
-        if (AcceptBounty(new Data.BountyLocation()
+        if (!HasRequirements()) return;
+        Data.BountyLocation bountyLocation = new Data.BountyLocation()
         {
             data = new Data.BountyData()
             {
@@ -322,24 +288,24 @@ public class Bounty : MonoBehaviour
                 m_hunter = Player.m_localPlayer.GetPlayerID(),
                 m_rewardType = UpdateAlmanac.SelectedBounty.m_rewardType,
                 m_rewardAmount = UpdateAlmanac.SelectedBounty.m_itemAmount,
-                m_rewardItem = UpdateAlmanac.SelectedBounty.m_itemReward == null
-                    ? ""
-                    : UpdateAlmanac.SelectedBounty.m_itemReward.name,
+                m_rewardItem = "",
                 m_damages = UpdateAlmanac.SelectedBounty.m_damages,
                 m_level = UpdateAlmanac.SelectedBounty.m_level,
                 m_skillType = UpdateAlmanac.SelectedBounty.m_skill.ToString(),
                 m_skillAmount = UpdateAlmanac.SelectedBounty.m_skillAmount,
-                m_experience =  UpdateAlmanac.SelectedBounty.m_experience
+                m_experience = UpdateAlmanac.SelectedBounty.m_experience
             },
             m_biome = UpdateAlmanac.SelectedBounty.m_biome,
             m_critter = UpdateAlmanac.SelectedBounty.m_critter,
-        }))
+        };
+        if (UpdateAlmanac.SelectedBounty.m_itemReward is { } itemDrop)
         {
-            UpdateAlmanac.UpdateBountyPanel();
+            bountyLocation.data.m_rewardItem = itemDrop.name;
         }
+        if (AcceptBounty(bountyLocation)) UpdateAlmanac.UpdateBountyPanel();
     }
 
-    private static bool CheckForBountyCost()
+    private static bool HasRequirements()
     {
         if (m_dateTime != DateTime.MaxValue)
         {
@@ -354,8 +320,7 @@ public class Bounty : MonoBehaviour
         if (UpdateAlmanac.SelectedBounty.m_cost <= 0) return true;
         Inventory? inventory = Player.m_localPlayer.GetInventory();
         if (!inventory.HaveItem(UpdateAlmanac.SelectedBounty.m_currency.m_itemData.m_shared.m_name)) return false;
-        ItemDrop.ItemData? item = inventory.GetItem(UpdateAlmanac.SelectedBounty.m_currency.m_itemData.m_shared.m_name);
-        if (item == null)
+        if (inventory.GetItem(UpdateAlmanac.SelectedBounty.m_currency.m_itemData.m_shared.m_name) is not {} item)
         {
             AlmanacPlugin.AlmanacLogger.LogDebug("Failed to get currency item from inventory");
             return false;
@@ -373,83 +338,5 @@ public class Bounty : MonoBehaviour
         Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$info_not_enough " + UpdateAlmanac.SelectedBounty.m_currency.m_itemData.m_shared.m_name);
         AlmanacPlugin.AlmanacLogger.LogDebug("Not enough currency to buy bounty");
         return false;
-    }
-    
-    public static void AddBountyCommands()
-    {
-        Terminal.ConsoleCommand SpawnBounty = new("spawn_bounty", "", (Terminal.ConsoleEventFailable)(args =>
-        {
-            if (args.Length < 2) return false;
-
-            GameObject? prefab = ZNetScene.instance.GetPrefab(args[1]);
-            
-            if (!prefab) return false;
-            if (!prefab.GetComponent<MonsterAI>()) return false;
-
-            Transform transform = Player.m_localPlayer.transform;
-            Vector3 position = transform.position;
-
-            return Bounty.SpawnCreature(prefab, position, 10f, new Data.BountyData()
-            {
-                m_name = prefab.name,
-                m_rewardType = Data.QuestRewardType.Item,
-                m_rewardAmount = 1,
-                m_rewardItem = "Coins",
-                m_health = 100,
-                m_damageMultiplier = 2f,
-                m_hunter = Player.m_localPlayer.GetPlayerID(),
-                m_level = 3
-            });
-        }), isSecret: true);
-
-        Terminal.ConsoleCommand GetBounty = new("get_bounty", "[monster] [biome]", (Terminal.ConsoleEventFailable)(args =>
-        {
-            if (args.Length < 3) return false;
-
-            GameObject critter = ZNetScene.instance.GetPrefab(args[1]);
-            if (!critter) return false;
-            if (!critter.GetComponent<MonsterAI>()) return false;
-
-            if (!Enum.TryParse(args[2], out Heightmap.Biome biome)) return false;
-
-            return Bounty.AcceptBounty(new Data.BountyLocation()
-            {
-                data = new Data.BountyData()
-                {
-                    m_hunter = Player.m_localPlayer.GetPlayerID(),
-                    m_name = critter.name,
-                    m_rewardType = Data.QuestRewardType.Item,
-                    m_rewardAmount = 100,
-                    m_rewardItem = "Coins",
-                    m_health = 1,
-                    m_damageMultiplier = 10,
-                    m_level = 3
-                },
-                m_biome = biome,
-                m_critter = critter,
-            });
-        }),isSecret: true);
-
-        Terminal.ConsoleCommand WriteBountyLedger = new("write_bounties", "", args =>
-        {
-            var serializer = new SerializerBuilder().Build();
-            List<Data.BountyInfo> ledger = new();
-            foreach (var creature in CreatureDataCollector.tempCreatureData)
-            {
-                var prefab = creature.name;
-                var key = creature.defeatedKey;
-                var health = creature.health;
-                var trophy = creature.trophyName;
-                var info = new Bounties.Data.BountyInfo
-                {
-                    prefab = prefab,
-                    key = key,
-                    health = health,
-                    sprite = trophy
-                };
-                ledger.Add(info);
-            }
-            File.WriteAllText(AlmanacPaths.BountyFolderPath + Path.DirectorySeparatorChar + "info.txt", serializer.Serialize(ledger));
-        });
     }
 }

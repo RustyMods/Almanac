@@ -284,9 +284,11 @@ public static class PlayerStats
                             or EffectMan.Modifier.Stamina 
                             or EffectMan.Modifier.Eitr
                             or EffectMan.Modifier.Armor:
+                            if (kvp.Value == 0f) break;
                             builder.Add(Helpers.ConvertEffectModifiers(kvp.Key), kvp.Value, Entries.EntryBuilder.Option.Add);
                             break;
                         default:
+                            if (kvp.Value == 0f) break;
                             builder.Add(Helpers.ConvertEffectModifiers(kvp.Key), kvp.Value, Entries.EntryBuilder.Option.Percentage);
                             break;
                     }
@@ -295,11 +297,13 @@ public static class PlayerStats
                 foreach (HitData.DamageType mod in Enum.GetValues(typeof(HitData.DamageType)))
                 {
                     var modifier = mods.GetModifier(mod);
+                    if (modifier == HitData.DamageModifier.Normal) continue;
                     builder.Add(mod, modifier);
                 }
 
                 foreach (var kvp in skills)
                 {
+                    if (kvp.Value == 0f) continue;
                     builder.Add(kvp.Key, kvp.Value);
                 }
             }

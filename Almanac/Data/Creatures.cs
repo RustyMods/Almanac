@@ -183,6 +183,7 @@ public static class Creatures
         public List<Entry> GetEntries()
         {
             EntryBuilder builder = new();
+            if (AlmanacPlugin._ShowAllData.Value is AlmanacPlugin.Toggle.On) builder.Add("$label_prefabname", m_prefabName);
             builder.Add("$se_health", m_health);
             builder.Add("$label_faction", m_faction);
             builder.Add("$title_resistances");

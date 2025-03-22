@@ -16,6 +16,7 @@ public static class Assets
     public static Button ButtonComponent = null!;
     public static Image TrophyImage = null!;
     public static Image WoodPanel = null!;
+    public static Sprite m_woodPanel = null!;
     public static Image BraidLeft = null!;
     public static Image BraidRight = null!;
     public static Material LitHud = null!;
@@ -25,7 +26,7 @@ public static class Assets
     {
         TrophiesFrame = Utils.FindChild(InventoryGui.instance.transform, "TrophiesFrame");
         Transform CloseButton = Utils.FindChild(TrophiesFrame, "Closebutton");
-        Transform Border = Utils.FindChild(TrophiesFrame, "border (1)");
+        Transform Border = InventoryGui.m_instance.transform.Find("root/Trophies/TrophiesFrame/border (1)");
         Transform Topic = Utils.FindChild(TrophiesFrame, "topic");
         Transform Text = Utils.FindChild(TrophiesFrame, "Text");
         Transform IconBkg = Utils.FindChild(TrophiesFrame, "icon_bkg");
@@ -38,6 +39,7 @@ public static class Assets
         ButtonComponent = CloseButton.GetComponent<Button>();
         TrophyImage = IconBkg.GetComponent<Image>();
         WoodPanel = Border.GetComponent<Image>();
+        m_woodPanel = WoodPanel.sprite;
         LitHud = WoodPanel.material;
         BraidLeft = InventoryGui.instance.m_info.transform.Find("TitlePanel/BraidLineHorisontalMedium (1)").GetComponent<Image>();
         BraidRight = InventoryGui.instance.m_info.transform.Find("TitlePanel/BraidLineHorisontalMedium (2)").GetComponent<Image>();

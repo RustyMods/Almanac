@@ -182,13 +182,17 @@ Requires a goal and a defeat key to be set:
 - CustomKills
 ```
 #### Terminal Command
-version 3.1.5
-
-To generate default achievements you can now use the console command:
-
-- almanac_write_default_achievements
-
-This will write to your configuration folder all the default achievements I've personally created as examples.
+```
+almanac help                                      - List of available almanac commands
+almanac keys                                      - Prints current global keys and private player keys
+almanac size                                      - Prints size of almanac data saved to player file
+almanac write                                     - Writes to file all the default achievements
+almanac pickable [prefabName<string>]             - Prints recorded almanac picked prefab data, use all to print entire list
+almanac reload                                    - Reloads graphic assets
+almanac kd [prefabName<string>]                   - Prints almanac kill / death tracked data
+almanac achievement [type<string>] [key?<string>] - List of prefabs included in the completion count, only list achievements
+almanac reset                                     - Clears almanac data from player save file and removes active effects
+```
 
 #### Achievement Groups
 version 3.1.5 introduces achievement groups

@@ -70,8 +70,7 @@ public static class Leaderboard
                 }
                 else
                 {
-                    LeaderboardData[receivedData.player_name].completed_achievements =
-                        receivedData.data.completed_achievements;
+                    LeaderboardData[receivedData.player_name].completed_achievements = receivedData.data.completed_achievements;
                     LeaderboardData[receivedData.player_name].total_deaths = receivedData.data.total_deaths;
                     LeaderboardData[receivedData.player_name].total_kills = receivedData.data.total_kills;
                 }

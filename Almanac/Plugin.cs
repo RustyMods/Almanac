@@ -1,9 +1,7 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using System.Reflection;
 using Almanac.Achievements;
-using Almanac.API;
 using Almanac.Bounties;
 using Almanac.FileSystem;
 using Almanac.UI;
@@ -15,7 +13,6 @@ using BepInEx.Logging;
 using HarmonyLib;
 using ServerSync;
 using UnityEngine;
-using UnityEngine.Rendering;
 using YamlDotNet.Serialization;
 
 namespace Almanac
@@ -28,7 +25,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.4.0";
+        internal const string ModVersion = "3.4.2";
         internal const string Author = "RustyMods";
         public const string ModGUID = Author + "." + ModName;
         private static readonly string ConfigFileName = ModGUID + ".cfg";
@@ -160,7 +157,7 @@ namespace Almanac
         public static ConfigEntry<Toggle> _TreasureEnabled = null!;
         public static ConfigEntry<Toggle> _BountyEnabled = null!;
         public static ConfigEntry<Toggle> _AchievementsEnabled = null!;
-        public static ConfigEntry<Toggle> _showLore = null!;
+        public static ConfigEntry<Toggle> _Transparent = null!;
         private void InitConfigs()
         {
             _serverConfigLocked = config("1 - General", "0 - Lock Configuration", Toggle.On,
@@ -175,17 +172,15 @@ namespace Almanac
             _AchievementPowers = config("Achievements", "Bonuses Enabled", Toggle.On, "If on, achievements are interactable and reward players with bonuses");
             _AchievementPowers.SettingChanged += AchievementManager.OnAchievementConfigChanged;
             _AchievementThreshold = config("Achievements", "Threshold", 3, "Total amount of achievement effects allowed at the same time");
-            _OutlineColor = config("1 - General", "6 - Outline Color", Color.yellow, "Set the color of the outline for selected items");
+            _OutlineColor = config("1 - General", "6 - Outline Color", new Color(1f, 1f, 1f, 0.1f), "Set the color of the outline for selected items");
             _AlmanacHotKey = config("1 - General", "7 - Almanac HotKey", KeyCode.F6, "Set the hotkey to open almanac", false);
-            _LoadDefaultAchievements = config("1 - General", "8 - Load Default Achievements", Toggle.Off,
-                "If on, Almanac will write any missing default achievements to file", false);
-            _TreasureCooldown = config("Cooldown", "Treasure Hunt", 30,
-                "Set cooldown between treasure hunts, in minutes");
+            _LoadDefaultAchievements = config("1 - General", "8 - Load Default Achievements", Toggle.Off, "If on, Almanac will write any missing default achievements to file", false);
+            _TreasureCooldown = config("Cooldown", "Treasure Hunt", 30, "Set cooldown between treasure hunts, in minutes");
             _BountyCooldown = config("Cooldown", "Bounties", 30, "Set cooldown between bounty hunts, in minutes");
             _BountyEnabled = config("2 - Settings", "Bounties", Toggle.On, "If on, bounty feature is enabled");
             _TreasureEnabled = config("2 - Settings", "Treasures", Toggle.On, "If on, treasure feature is enabled");
             _AchievementsEnabled = config("3 - Achievements", "Enabled", Toggle.On, "If on, achievements is enabled");
-            _showLore = config("3 - Achievements", "Always Show Lore", Toggle.On, "If on, achievements lore is always displayed");
+            _Transparent = config("2 - Settings", "Transparent Panels", Toggle.Off, "If on, panels are transparent");
         }
         #endregion
 

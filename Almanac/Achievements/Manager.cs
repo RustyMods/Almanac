@@ -419,7 +419,7 @@ public static class AchievementManager
             Entries.EntryBuilder builder = new();
             if (m_isGrouped && m_groupAchievements.TryGetValue(GetAchievementGroupName(), out Group group))
             {
-                builder.Add("$title_groupAchievement");
+                builder.Add("$title_groupachievement");
                 foreach (var achievement in group.GetAchievementsIndexed())
                 {
                     builder.Add($"#{achievement.GetGroupIndex()} - {achievement.GetDisplayName()}", achievement.IsComplete());
@@ -517,7 +517,7 @@ public static class AchievementManager
                         if (mod.Key is EffectMan.Modifier.MaxCarryWeight)
                         {
                             if (mod.Value == 0) continue;
-                            builder.Add(mod.Key, mod.Value);
+                            builder.Add(mod.Key, mod.Value, Entries.EntryBuilder.Option.Add);
                         }
                         else
                         {

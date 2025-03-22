@@ -44,6 +44,11 @@ public class AlmanacUI : MonoBehaviour
     public Image m_dropdownImg = null!;
     public Image m_templateImg = null!;
     public Image m_searchFieldImg = null!;
+    public GameObject m_craftingPanel = null!;
+    public GameObject m_inventoryPanel = null!;
+    public GameObject m_containerPanel = null!;
+    public GameObject m_infoPanel = null!;
+    
     public void Update()
     {
         if (!Player.m_localPlayer || !m_instance) return;
@@ -61,6 +66,11 @@ public class AlmanacUI : MonoBehaviour
 
     public void Init()
     {
+        m_craftingPanel = transform.Find("root/Crafting").gameObject;
+        m_inventoryPanel = transform.Find("root/Player").gameObject;
+        m_containerPanel = transform.Find("root/Container").gameObject;
+        m_infoPanel = transform.Find("root/Info").gameObject;
+        
         InventoryGui.instance.m_trophiesPanel.SetActive(true);
         transform.Find("root/Trophies/TrophiesFrame").GetComponent<RectTransform>().anchoredPosition = m_panelPos;
         CreateDropdown();
@@ -85,12 +95,17 @@ public class AlmanacUI : MonoBehaviour
         m_instance = this;
         InventoryGui.instance.m_trophiesPanel.SetActive(false);
         CreatureLists.Init();
+        SetTransparent(AlmanacPlugin._Transparent.Value is AlmanacPlugin.Toggle.On);
+        AlmanacPlugin._Transparent.SettingChanged += (_, _) =>
+        {
+            SetTransparent(AlmanacPlugin._Transparent.Value is AlmanacPlugin.Toggle.On);
+        };
     }
 
-    public void SetBackground(Color color)
+    public void SetTransparent(bool enable)
     {
-        m_background.color = color;
-        SidePanel.m_instance.m_background.color = color;
+        m_background.color = enable ? Color.clear : Color.white;
+        SidePanel.m_instance.m_background.color = enable ? Color.clear : Color.white;
     }
 
     public void ReloadAssets()
@@ -373,6 +388,7 @@ public class AlmanacUI : MonoBehaviour
 
     public void UpdateList()
     {
+        // Prefix bool to InventoryGui.instance.UpdateTrophyList()
         if (Player.m_localPlayer == null || !m_options.TryGetValue(m_selectedTab, out Func<List<ElementData>> func)) return;
         Clear();
         SetToggleWithoutNotify(false);
@@ -447,12 +463,20 @@ public class AlmanacUI : MonoBehaviour
 
     public void OnOpen()
     {
+        // Postfix to InventoryGui.instance.Show()
         SidePanel.m_instance.OnOpen();
+        m_infoPanel.SetActive(false);
+        m_craftingPanel.SetActive(false);
+        m_inventoryPanel.SetActive(false);
     }
     public void OnClose()
     {
+        // Postfix to InventoryGui.instance.Hide()
         SidePanel.m_instance.OnClose();
         m_searchField.text = "";
+        m_infoPanel.SetActive(true);
+        m_craftingPanel.SetActive(true);
+        m_inventoryPanel.SetActive(true);
     }
     public class Element
     {

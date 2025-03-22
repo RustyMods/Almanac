@@ -187,7 +187,7 @@ public static class Items
         {
             Entries.EntryBuilder builder = new();
             builder.Add(m_shared.m_description, "lore");
-            builder.Add("$label_prefabname", m_item.name);
+            if (AlmanacPlugin._ShowAllData.Value is AlmanacPlugin.Toggle.On) builder.Add("$label_prefabname", m_item.name);
             builder.Add("$label_teleportable", m_shared.m_teleportable);
             builder.Add("$item_value", m_shared.m_value);
             builder.Add("$item_weight", m_shared.m_weight);

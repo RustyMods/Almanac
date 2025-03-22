@@ -68,7 +68,7 @@ public class SidePanel : MonoBehaviour, IBeginDragHandler, IDragHandler
         m_contentFrame.sprite = Assets.InputFieldBkg;
         m_contentFrame.type = Image.Type.Sliced;
         m_contentFrame.fillCenter = true;
-        m_contentFrame.color = new Color32(0, 0, 0, 100);
+        m_contentFrame.color = new Color32(0, 0, 0, 150);
         m_contentRoot = transform.Find("ContentFrame/ScrollRect/Viewport/ListRoot").GetComponent<RectTransform>();
         m_button = transform.Find("Button").GetComponent<Button>();
         m_button.gameObject.AddComponent<ButtonSfx>().m_sfxPrefab = Assets.ButtonSFX.m_sfxPrefab;

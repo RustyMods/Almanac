@@ -1,9 +1,6 @@
 # Almanac
 The Valheim Almanac plugin is a comprehensive tool that meticulously indexes creatures, items, equipment, and player achievements, providing a detailed record of the Viking's journey. It seamlessly weaves together a rich tapestry of the player's accomplishments, transforming their adventures into a living achievement system within the expansive world of Valheim.
 
-**NEW FEATURE 3.1.7:** Almanac Bounties
-
-**NEW FEATURE 3.1.9:** Almanac Treasure Hunt
 ### Features
 - Creature data
 - Item data
@@ -22,6 +19,7 @@ The Valheim Almanac plugin is a comprehensive tool that meticulously indexes cre
 <details>
 <summary><b>Changelog</b></summary>
 
+```
 | `Version` | `Update Notes`                                                                                                      |
 |-----------|---------------------------------------------------------------------------------------------------------------------|
 | 1.0.0     | - Initial Release                                                                                                   |
@@ -71,7 +69,36 @@ The Valheim Almanac plugin is a comprehensive tool that meticulously indexes cre
 | 3.1.8     | - Fixed achievement button                                                                                          |
 | 3.1.9     | - Improved Bounty UI, Added Treasure Hunt                                                                           |
 | 3.2.0     | - Fixed logout issues and patched eating food metric                                                                |
-| 3.2.1     | - Added cost to treasure hunts                                                                                      |
+| 3.2.1     | - Added ability to add cost to bounties and treasure hunts                                                          |
+| 3.2.2     | - Minor tweak to player patches
+| 3.2.3     | - Attempt to fix bounties not registering correctly
+| 3.2.4     | - Bounties and achievements can reward almanac class experience
+| 3.2.5     | - Fixed a minor issue of trying to send leaderboard data while on menu rather than in-game
+| 3.2.6     | - Resolved bug when trying to create custom runetexts with other mods
+| 3.2.7     | - Ashland update
+| 3.2.8     | - removed player data directory
+| 3.2.9     | - removed cost return for treasure hunts exploit
+| 3.3.0     | - Added cooldown to treasure and bounty hunts
+| 3.3.1     | - fixed trophies
+| 3.3.2     | - Added config to disable achievements, bounties or treasure hunts
+| 3.3.3     | - Added Health, Stamina, Eitr, LifeSteal, Armor as achievement effect bonuses
+| 3.3.4     | - Fixed achievement effect resistances weakening player, added more data to the metrics: resistances, total achievement effects
+| 3.3.5     | - Added checks on files to avoid user errors, send data to server the first time user checks their completed achievements
+| 3.3.6     | - Fixed kills not being recorded when monster was not killed by zone owner - added auto-graphics change if using MinimalUI
+| 3.3.7     | - Fixed missing outline gameobject on achievements
+| 3.3.8     | - Fixed achievement not being able to see progress due to button not being interactable
+| 3.3.9     | - Config to show lore regardless of completion of achievement, on by default
+| 3.4.0     | - Improved bounty system
+| 3.4.1     | - Fixed for recent update
+| 3.4.2     | - Overhaul! 
+                Improved search/filter, 
+                right-click achievements to disable/enable effects
+                localization overhaul (sorry!)
+                fixed achievements applying even if not complete
+                Changed buttons to a drop-down
+                Re-built side panel
+                New commands to help test
+```
 </details>
 
 

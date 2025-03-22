@@ -9,6 +9,7 @@ using Almanac.FileSystem;
 using Almanac.UI;
 using BepInEx;
 using HarmonyLib;
+using UnityEngine;
 
 namespace Almanac.Utilities;
 
@@ -30,18 +31,18 @@ public static class CommandsManager
                         return command.Run(args);
                     }), optionsFetcher: () => m_commands.Keys.ToList());
 
-            var keys = new AlmanacCommand("keys", "Similar to listkeys, almanac keys prints all the current global keys and private keys the player current holds", _ =>
-            {
-                List<string> globalKeys = ZoneSystem.instance.GetGlobalKeys();
-                AlmanacPlugin.AlmanacLogger.LogInfo("Global keys: ");
-                foreach (string key in globalKeys) AlmanacPlugin.AlmanacLogger.LogInfo(key);
-                AlmanacPlugin.AlmanacLogger.LogInfo("Private Keys: ");
-                foreach (string key in Creatures.m_defeatKeys)
-                {
-                    if (ZoneSystem.instance.GetGlobalKey(key)) AlmanacPlugin.AlmanacLogger.LogInfo(key);
-                }
-                return true;
-            });
+            // var keys = new AlmanacCommand("keys", "Similar to listkeys, almanac keys prints all the current global keys and private keys the player current holds", _ =>
+            // {
+            //     List<string> globalKeys = ZoneSystem.instance.GetGlobalKeys();
+            //     AlmanacPlugin.AlmanacLogger.LogInfo("Global keys: ");
+            //     foreach (string key in globalKeys) AlmanacPlugin.AlmanacLogger.LogInfo(key);
+            //     AlmanacPlugin.AlmanacLogger.LogInfo("Private Keys: ");
+            //     foreach (string key in Creatures.m_defeatKeys)
+            //     {
+            //         if (ZoneSystem.instance.GetGlobalKey(key)) AlmanacPlugin.AlmanacLogger.LogInfo(key);
+            //     }
+            //     return true;
+            // });
 
             var size = new AlmanacCommand("size", "Prints the kilobyte size of almanac custom data saved in player save file", _ =>
             {
@@ -57,19 +58,19 @@ public static class CommandsManager
                 return true;
             });
 
-            var write = new AlmanacCommand("write", "Writes to file all the default achievements for the almanac", args =>
-            {
-                if (args.Length < 3) return false;
-                if (args[2] == "achievements")
-                {
-                    AlmanacPlugin.AlmanacLogger.LogInfo("Almanac writing default achievements to file");
-                    AlmanacPlugin.AlmanacLogger.LogInfo(AlmanacPaths.AchievementFolderPath);
-                    AchievementYML.InitDefaultAchievements(true);
-                    return true;
-                }
-
-                return false;
-            }, optionsFetcher: () => new List<string>(){"achievements"});
+            // var write = new AlmanacCommand("write", "Writes to file all the default achievements for the almanac", args =>
+            // {
+            //     if (args.Length < 3) return false;
+            //     if (args[2] == "achievements")
+            //     {
+            //         AlmanacPlugin.AlmanacLogger.LogInfo("Almanac writing default achievements to file");
+            //         AlmanacPlugin.AlmanacLogger.LogInfo(AlmanacPaths.AchievementFolderPath);
+            //         AchievementYML.InitDefaultAchievements(true);
+            //         return true;
+            //     }
+            //
+            //     return false;
+            // }, optionsFetcher: () => new List<string>(){"achievements"});
 
             var pickable = new AlmanacCommand("pickable", "[prefabName] - Prints total amount of picked item, you can use 'all' to print a list of entire pickable data", args =>
             {
@@ -81,24 +82,24 @@ public static class CommandsManager
 
                 if (args[2] == "all")
                 {
-                    foreach (KeyValuePair<string, int> kvp in PlayerStats.LocalPlayerData.Player_Pickable_Data)
+                    foreach (KeyValuePair<string, int> kvp in PlayerStats.m_records.m_picked)
                     {
                         AlmanacPlugin.AlmanacLogger.LogInfo(kvp.Key + " : " + kvp.Value);
                     }
                     return true;
                 }
 
-                if (!PlayerStats.GetPlayerPickableValue(args[2], out int pickableValue))
+                if (!PlayerStats.m_records.m_picked.TryGetValue(args[2], out int value))
                 {
                     AlmanacPlugin.AlmanacLogger.LogInfo("Failed to get pickable value");
                     return false;
                 };
-                AlmanacPlugin.AlmanacLogger.LogInfo(Player.m_localPlayer.GetHoverName() + " has picked " + pickableValue + " " + args[2]);
+                AlmanacPlugin.AlmanacLogger.LogInfo(Player.m_localPlayer.GetHoverName() + " has picked " + value + " " + args[2]);
                 return true;
             }, optionsFetcher: () =>
             {
                 List<string> output = new();
-                output.AddRange(PlayerStats.LocalPlayerData.Player_Pickable_Data.Keys);
+                output.AddRange(PlayerStats.m_records.m_picked.Keys);
                 output.Add("all");
                 output.Sort();
                 return output;
@@ -114,11 +115,12 @@ public static class CommandsManager
             var kd = new AlmanacCommand("kd", "[prefabName] - local kill / death tracked almanac data", args =>
             {
                 if (args.Length < 3) return false;
-                if (!Creatures.m_creatures.TryGetValue(args[2], out Creatures.Data data)) return false;
-                if (!PlayerStats.LocalPlayerData.Player_Kill_Deaths.TryGetValue(data.m_defeatKey, out KillDeaths value)) return false;
-                AlmanacPlugin.AlmanacLogger.LogInfo($"Key: {args[1]} , kills: {value.kills} , deaths: {value.deaths}");
+                if (!Creatures.m_creatures.TryGetValue(args[2].ToLower(), out Creatures.Data data)) return false;
+                var deaths = PlayerStats.m_records.m_deaths.GetValueOrDefault(data.m_defeatKey, 0);
+                var kills = PlayerStats.m_records.m_kills.GetValueOrDefault(data.m_defeatKey, 0);
+                AlmanacPlugin.AlmanacLogger.LogInfo($"Key: {args[1]} , kills: {kills} , deaths: {deaths}");
                 return true;
-            }, optionsFetcher: () => Creatures.m_creatures.Keys.ToList());
+            }, optionsFetcher: () => Creatures.m_creatures.Values.Select(x=>x.m_prefabName).ToList());
 
             var achievement = new AlmanacCommand("achievement",
                 "[type] [key?]- list of prefabs included in the completion count, only list achievements",
@@ -210,11 +212,40 @@ public static class CommandsManager
             var clear = new AlmanacCommand("reset", "clears almanac data from player save file", _ =>
             {
                 if (!Player.m_localPlayer) return false;
+                PlayerStats.m_records.m_picked.Clear();
+                PlayerStats.m_records.m_kills.Clear();
+                PlayerStats.m_records.m_deaths.Clear();
                 Player.m_localPlayer.m_customData.Remove(PlayerStats.AlmanacStatsKey);
                 Player.m_localPlayer.m_customData.Remove(AchievementManager.CollectedRewardKey);
                 Player.m_localPlayer.m_customData.Remove(EffectMan.PlayerEffectKey);
+                Player.m_localPlayer.m_customData.Remove(PlayerStats.NEWKEY);
                 EffectMan.Clear();
                 AlmanacPlugin.AlmanacLogger.LogInfo("Cleared Almanac Records from Player Save");
+                return true;
+            });
+
+            var reset = new AlmanacCommand("wipe", "clears player save file of recorded player stats", _ =>
+            {
+                if (!Game.instance || Game.instance.m_playerProfile == null) return false;
+                Game.instance.m_playerProfile.m_playerStats.m_stats.Clear();
+                return true;
+            });
+
+            var log = new AlmanacCommand("current", "prints current session enemy stats and item craft stats", _ =>
+            {
+                if (!Game.instance || Game.instance.m_playerProfile == null) return false;
+
+                AlmanacPlugin.AlmanacLogger.LogInfo("Enemy Stats");
+                foreach (var stat in Game.instance.m_playerProfile.m_enemyStats)
+                {
+                    Debug.Log($"{stat.Key}: {stat.Value}");
+                }
+
+                AlmanacPlugin.AlmanacLogger.LogInfo("Item Craft Stats");
+                foreach (var stat in Game.instance.m_playerProfile.m_itemCraftStats)
+                {
+                    Debug.Log($"{stat.Key}: {stat.Value}");
+                }
                 return true;
             });
 

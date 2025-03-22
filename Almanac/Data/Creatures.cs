@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using Almanac.Utilities;
 using BepInEx;
 using HarmonyLib;
 using UnityEngine;
 using static Almanac.UI.Entries;
-using static Almanac.Utilities.Helpers;
 
 namespace Almanac.Data;
 
@@ -15,7 +13,6 @@ public static class Creatures
 {
     public static readonly Dictionary<string, Data> m_creatures = new();
     public static readonly Dictionary<string, Data> m_defeatKeyCreatures = new();
-    public static readonly List<string> m_defeatKeys = new();
 
     private static readonly Dictionary<string, string> m_specialNames = new Dictionary<string, string>()
     {
@@ -111,15 +108,6 @@ public static class Creatures
             m_weakspots = character.m_weakSpots.Select(x => x.gameObject.name).ToList();
             m_staggerWhenBlocked = character.m_staggerWhenBlocked;
             m_staggerDamageFactor = character.m_staggerDamageFactor;
-            if (m_defeatKeys.Contains(character.m_defeatSetGlobalKey))
-            {
-                var newKey = $"defeated_{m_prefabName.ToLower()}";
-                character.m_defeatSetGlobalKey = newKey;
-            }
-            if (character.m_defeatSetGlobalKey.IsNullOrWhiteSpace())
-            {
-                character.m_defeatSetGlobalKey = $"defeated_{m_prefabName.ToLower()}";
-            }
             m_defeatKey = character.m_defeatSetGlobalKey;
             if (prefab.TryGetComponent(out CharacterDrop characterDrop)) m_drops = characterDrop.m_drops;
             if (prefab.TryGetComponent(out BaseAI baseAI))
@@ -173,9 +161,11 @@ public static class Creatures
                 break;
             }
 
-            m_creatures[m_prefabName] = this;
-            m_defeatKeys.Add(m_defeatKey);
-            m_defeatKeyCreatures[m_defeatKey] = this;
+            m_creatures[m_prefabName.ToLower()] = this;
+            if (!m_defeatKey.IsNullOrWhiteSpace())
+            {
+                m_defeatKeyCreatures[m_defeatKey] = this;
+            }
         }
 
         public Sprite? GetIcon() => m_trophy?.GetIcon() ?? SpriteManager.AlmanacIcon;
@@ -197,15 +187,14 @@ public static class Creatures
             builder.Add("$inventory_lightning", m_resistances.m_lightning);
             builder.Add("$inventory_poison", m_resistances.m_poison);
             builder.Add("$inventory_spirit", m_resistances.m_spirit);
-            if (PlayerStats.LocalPlayerData.Player_Kill_Deaths.TryGetValue(m_defeatKey, out KillDeaths kd))
+            int kills = PlayerStats.m_records.m_kills.GetValueOrDefault(m_defeatKey, 0);
+            int deaths = PlayerStats.m_records.m_deaths.GetValueOrDefault(m_defeatKey, 0);
+            if (kills + deaths != 0)
             {
-                if (kd.deaths + kd.kills != 0)
-                {
-                    builder.Add("$title_killdeaths");
-                    builder.Add("$label_kill", kd.kills);
-                    builder.Add("$label_death", kd.deaths);
-                    builder.Add("$label_ratio", kd.kills / Math.Max(kd.deaths, 1));
-                }
+                builder.Add("$title_killdeaths");
+                builder.Add("$label_kill", kills);
+                builder.Add("$label_death", deaths);
+                builder.Add("$label_ratio", kills / Math.Max(deaths, 1));
             }
             builder.Add("$title_creaturedata");
             builder.Add("$label_avoidfire", m_avoidFire);

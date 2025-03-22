@@ -219,8 +219,8 @@
         <Content Include="Libs\LocalizationManager.dll">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
-        <Content Include="Libs\ServerSync.dll" />
         <EmbeddedResource Include="translations\English.yml" />
+        <Content Include="Libs\ServerSync.dll" />
         <Content Include="Tutorials\Almanac_Readme.md" />
         <Content Include="Tutorials\README.md" />
         <Content Include="UpdateManifest.ps1" />

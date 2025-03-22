@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Almanac.FileSystem;
+using UnityEngine.Serialization;
 using YamlDotNet.Serialization;
 using static Almanac.Achievements.EffectMan;
 
@@ -11,7 +12,75 @@ namespace Almanac.Achievements;
 public static class AchievementYML
 {
     [Serializable]
-    public class AchievementData
+    public class Data
+    {
+        public string ID = string.Empty;
+        public string Name = string.Empty;
+        public string SpriteName = string.Empty;
+        public string Description = string.Empty;
+        public string Lore = string.Empty;
+        public GoalData Goal = new();
+        public GroupData Group = new();
+        public RewardData Reward = new();
+    }
+
+    [Serializable]
+    public class GoalData
+    {
+        public AchievementTypes.AchievementType Type = AchievementTypes.AchievementType.None;
+        public int Threshold;
+        public string CreatureGroup = string.Empty;
+        public string PickablePrefab = string.Empty;
+        public string CreatureName = string.Empty;
+    }
+
+    [Serializable]
+    public class StatusEffectData
+    {
+        public string StartMessage = string.Empty;
+        public string StopMessage = string.Empty;
+        public string Tooltip = string.Empty;
+        public float Duration = 0f;
+        public List<string> StartEffects = new();
+        public List<string> StopEffects = new();
+        public List<HitData.DamageModPair> Resistances = new();
+        public Dictionary<Modifier, float> Modifiers = new();
+        public Dictionary<string, float> Skills = new();
+    }
+
+    [Serializable]
+    public class RewardData
+    {
+        public AchievementTypes.AchievementRewardType RewardType = AchievementTypes.AchievementRewardType.None;
+        public StatusEffectData StatusEffect = new();
+        public ItemReward ItemReward = new();
+        public SkillReward SkillReward = new();
+        public int AlmanacClassEXP;
+    }
+
+    [Serializable]
+    public class SkillReward
+    {
+        public string SkillType = "None";
+        public float Amount;
+    }
+
+    [Serializable]
+    public class ItemReward
+    {
+        public string PrefabName = string.Empty;
+        public int Amount;
+    }
+
+    [Serializable]
+    public class GroupData
+    {
+        public string GroupID = string.Empty;
+        public int Index = 0;
+    }
+    
+    [Serializable]
+    public class OldData
     {
         public string unique_name = null!;
         public string display_name = "";
@@ -82,28 +151,81 @@ public static class AchievementYML
         public Dictionary<string, float> skill_bonus = new();
     }
 
-    public static void InitDefaultAchievements(bool overwrite = false)
+    public static List<Data> m_data = new();
+
+    public static void Init()
     {
-        ISerializer serializer = new SerializerBuilder().Build();
         AlmanacPaths.CreateFolderDirectories();
-        List<string> paths = Directory.GetFiles(AlmanacPaths.AchievementFolderPath, "*yml").ToList();
-        if (paths.Count > 0 && !overwrite && AlmanacPlugin._LoadDefaultAchievements.Value is AlmanacPlugin.Toggle.Off) return;
-        foreach (AchievementData achievement in GetDefaultAchievements())
+        var filePaths = Directory.GetFiles(AlmanacPaths.AchievementFolderPath, "*.yml", SearchOption.AllDirectories);
+        if (filePaths.Length <= 0) return;
+        var deserializer = new DeserializerBuilder().Build();
+        foreach (var filePath in filePaths)
         {
-            string path = AlmanacPaths.AchievementFolderPath + Path.DirectorySeparatorChar + achievement.unique_name + ".yml";
-            if (File.Exists(path) && !overwrite) continue;
-            string data = serializer.Serialize(achievement);
-            File.WriteAllText(path, data);
+            var fileName = Path.GetFileName(filePath);
+            var serial = File.ReadAllText(filePath);
+            try
+            {
+                var data = deserializer.Deserialize<OldData>(serial);
+                var newData = data.Convert();
+                m_data.Add(newData);
+                var serializer = new SerializerBuilder().Build();
+                File.WriteAllText(filePath, serializer.Serialize(newData));
+                AlmanacPlugin.AlmanacLogger.LogInfo("Converted achievement to new format: " + fileName);
+            }
+            catch
+            {
+                try
+                {
+                    var data = deserializer.Deserialize<Data>(serial);
+                    m_data.Add(data);
+                }
+                catch
+                {
+                    AlmanacPlugin.AlmanacLogger.LogWarning("Failed to deserialize: " + fileName);
+                }
+            }
         }
     }
 
-    private static List<AchievementData> GetDefaultAchievements()
+    private static Data Convert(this OldData data)
     {
-        List<AchievementData> output = new();
+        var newData = new Data();
+        newData.ID = data.unique_name;
+        newData.Name = data.display_name;
+        newData.SpriteName = data.sprite_name;
+        newData.Description = data.description;
+        newData.Lore = data.lore;
+        newData.Goal.Type = data.achievement_type;
+        newData.Goal.Threshold = data.goal;
+        newData.Goal.CreatureGroup = data.custom_group_key;
+        newData.Goal.PickablePrefab = data.custom_pickable_name;
+        newData.Goal.CreatureName = data.defeat_key;
+        newData.Group.GroupID = data.achievement_group;
+        newData.Group.Index = data.achievement_index;
+        newData.Reward.RewardType = data.reward_type;
+        newData.Reward.StatusEffect.StartEffects = data.start_effects;
+        newData.Reward.StatusEffect.StopEffects = data.stop_effects;
+        newData.Reward.StatusEffect.StartMessage = data.start_message;
+        newData.Reward.StatusEffect.StopMessage = data.stop_message;
+        newData.Reward.StatusEffect.Tooltip = data.tooltip;
+        newData.Reward.StatusEffect.Resistances = data.damage_modifiers;
+        newData.Reward.StatusEffect.Modifiers = data.modifiers;
+        newData.Reward.StatusEffect.Duration = data.duration;
+        newData.Reward.ItemReward.PrefabName = data.item;
+        newData.Reward.ItemReward.Amount = data.item_amount;
+        newData.Reward.SkillReward.SkillType = data.skill;
+        newData.Reward.SkillReward.Amount = data.skill_amount;
+        newData.Reward.StatusEffect.Skills = data.skill_bonus;
+        newData.Reward.AlmanacClassEXP = data.class_experience;
+        return newData;
+    }
+    private static List<OldData> GetDefaultAchievements()
+    {
+        List<OldData> output = new();
         #region Kill Achievements
-        List<AchievementData> KillAchievements = new()
+        List<OldData> KillAchievements = new()
         {
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "neck_kill",
                 display_name = "Neck Jab",
@@ -154,7 +276,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "boar_kill",
                 display_name = "Boar Hunt",
@@ -205,7 +327,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "deer_kill",
                 display_name = "Deer Season",
@@ -256,7 +378,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "greyling_kill",
                 display_name = "Greyling Massacre",
@@ -307,7 +429,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "eikthyr_kill",
                 display_name = "Stagbreaker",
@@ -358,7 +480,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "greydwarf_kill",
                 display_name = "Entman",
@@ -409,7 +531,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "greydwarf_shaman_kill",
                 display_name = "Shaman",
@@ -460,7 +582,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "greydwarf_elite_kill",
                 display_name = "Brute",
@@ -511,7 +633,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "troll_kill",
                 display_name = "Troller",
@@ -562,7 +684,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "skeleton_kill",
                 display_name = "Break A Leg",
@@ -613,7 +735,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "ghost_kill",
                 display_name = "Ghastly",
@@ -664,7 +786,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "gdking_1",
                 display_name = "Slenderman",
@@ -715,7 +837,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "blob_1",
                 display_name = "Yuck",
@@ -766,7 +888,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "oozer_1",
                 display_name = "Ooze",
@@ -817,7 +939,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "draugr_1",
                 display_name = "Walkers",
@@ -868,7 +990,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "draugr_2",
                 display_name = "Walkers II",
@@ -919,7 +1041,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "draugr_3",
                 display_name = "Walkers III",
@@ -970,7 +1092,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "wraith_1",
                 display_name = "Wrath",
@@ -1021,7 +1143,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "abomination_1",
                 display_name = "A-Bomb",
@@ -1072,7 +1194,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "leech_1",
                 display_name = "Blood Sucker",
@@ -1123,7 +1245,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "bonemass_1",
                 display_name = "Mass",
@@ -1174,7 +1296,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "wolf_1",
                 display_name = "Husky",
@@ -1225,7 +1347,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "fenring_1",
                 display_name = "Darkly",
@@ -1276,7 +1398,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "cultist_1",
                 display_name = "Cult",
@@ -1327,7 +1449,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1.1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "golem_1",
                 display_name = "Golem",
@@ -1378,7 +1500,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "hatchling_1",
                 display_name = "Glands",
@@ -1429,7 +1551,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "dragon_1",
                 display_name = "Dragon",
@@ -1480,7 +1602,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "goblin_1",
                 display_name = "Gubbers",
@@ -1531,7 +1653,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "goblin_2",
                 display_name = "Shamanistic",
@@ -1582,7 +1704,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1.1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "goblin_3",
                 display_name = "Brutish",
@@ -1633,7 +1755,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "lox_1",
                 display_name = "Loxen",
@@ -1684,7 +1806,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "deathsquito_1",
                 display_name = "Pistol",
@@ -1735,7 +1857,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "blobtar_1",
                 display_name = "Growth",
@@ -1786,7 +1908,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "yagluth_1",
                 display_name = "The King",
@@ -1837,7 +1959,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1.1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "serpent_1",
                 display_name = "Growl",
@@ -1888,7 +2010,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "seeker_1",
                 display_name = "Bug Off",
@@ -1939,7 +2061,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "seekerbrood_1",
                 display_name = "Broods",
@@ -1990,7 +2112,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "seeker_soldier_1",
                 display_name = "Soldier On",
@@ -2041,7 +2163,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "tick_1",
                 display_name = "Blood Suckers",
@@ -2092,7 +2214,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "gjall_1",
                 display_name = "Y'all",
@@ -2143,7 +2265,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1.1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "dverger_fire_1",
                 display_name = "Fireball",
@@ -2194,7 +2316,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1.2f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "dverger_ice_1",
                 display_name = "Freeze Shards",
@@ -2245,7 +2367,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1.2f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "dverger_support_1",
                 display_name = "Supporter",
@@ -2296,7 +2418,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1.2f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "dverger_fire_1",
                 display_name = "Rogue",
@@ -2347,7 +2469,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1.2f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "seeker_queen_1",
                 display_name = "Queen",
@@ -2402,9 +2524,9 @@ public static class AchievementYML
         output.AddRange(KillAchievements);
         #endregion
         #region Knowledge Achievements
-        List<AchievementData> knowledge = new()
+        List<OldData> knowledge = new()
         {
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "trophies_1",
                 display_name = "Decorator",
@@ -2455,7 +2577,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "potions_1",
                 display_name = "Addict",
@@ -2506,7 +2628,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1.1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "valuables_1",
                 display_name = "Wasp",
@@ -2557,7 +2679,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "bows_1",
                 display_name = "Ranger",
@@ -2609,7 +2731,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "staves_1",
                 display_name = "Blaster",
@@ -2661,7 +2783,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 2f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "shields_1",
                 display_name = "Defender",
@@ -2713,7 +2835,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "knives_1",
                 display_name = "Backstabber",
@@ -2765,7 +2887,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "maces_1",
                 display_name = "Bludgeon",
@@ -2817,7 +2939,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "spears_1",
                 display_name = "Poke",
@@ -2869,7 +2991,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "polearms_1",
                 display_name = "Dancer",
@@ -2921,7 +3043,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "axes_1",
                 display_name = "Chopper",
@@ -2973,7 +3095,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "swords_1",
                 display_name = "Slasher",
@@ -3025,7 +3147,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "weapon_1",
                 display_name = "Armory",
@@ -3077,7 +3199,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "consumable_1",
                 display_name = "Glutton",
@@ -3129,7 +3251,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "material_1",
                 display_name = "Hoarder",
@@ -3181,7 +3303,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "fish_1",
                 display_name = "Fisherman",
@@ -3233,7 +3355,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "arrow_1",
                 display_name = "Whittler",
@@ -3289,9 +3411,9 @@ public static class AchievementYML
         #endregion
         #region Player Stats
 
-        List<AchievementData> playerStats = new()
+        List<OldData> playerStats = new()
         {
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "enemy_kills_1",
                 display_name = "Enemy #1",
@@ -3341,7 +3463,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "base_time_1",
                 display_name = "Homely",
@@ -3391,7 +3513,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "out_time_1",
                 display_name = "Adventurer",
@@ -3441,7 +3563,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "shooter_1",
                 display_name = "Sharpshooter",
@@ -3491,7 +3613,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "runner_1",
                 display_name = "Runner",
@@ -3541,7 +3663,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "miner_1",
                 display_name = "Quarry",
@@ -3591,7 +3713,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "lumber_1",
                 display_name = "Lumberman",
@@ -3641,7 +3763,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "lore_1",
                 display_name = "Runic",
@@ -3695,9 +3817,9 @@ public static class AchievementYML
         output.AddRange(playerStats);
         #endregion
         #region Per Biome
-        List<AchievementData> biomes = new()
+        List<OldData> biomes = new()
         {
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "meadows_1",
                 display_name = "Meadows",
@@ -3747,7 +3869,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "blackforest_1",
                 display_name = "Black Forest",
@@ -3797,7 +3919,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "swamps_1",
                 display_name = "Swamps",
@@ -3847,7 +3969,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "mountains_1",
                 display_name = "Mountains",
@@ -3897,7 +4019,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "plains_1",
                 display_name = "Plains",
@@ -3947,7 +4069,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "mistlands_1",
                 display_name = "Mistlands",
@@ -3997,7 +4119,7 @@ public static class AchievementYML
                     { Modifier.EitrRegen, 1.05f }
                 }
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "ocean_1",
                 display_name = "Ocean",
@@ -4051,9 +4173,9 @@ public static class AchievementYML
         output.AddRange(biomes);
         #endregion
         #region Custom Creature Groups
-        List<AchievementData> CustomCreatureGroups = new()
+        List<OldData> CustomCreatureGroups = new()
         {
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "a_custom_brutes_1",
                 display_name = "Brutish",
@@ -4109,9 +4231,9 @@ public static class AchievementYML
         #endregion
         #region Item Rewards
         
-        List<AchievementData> ItemRewards = new()
+        List<OldData> ItemRewards = new()
         {
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "b_item_reward_1",
                 display_name = "Riches",
@@ -4170,9 +4292,9 @@ public static class AchievementYML
         #endregion
         #region Skill Rewards
         
-        List<AchievementData> SkillRewards = new()
+        List<OldData> SkillRewards = new()
         {
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "c_skill_reward_1",
                 display_name = "Lumberman",
@@ -4231,9 +4353,9 @@ public static class AchievementYML
         #endregion
         #region grouped achievements
 
-        List<AchievementData> GroupedAchievements = new()
+        List<OldData> GroupedAchievements = new()
         {
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "neck_group_1",
                 display_name = "Neck Hunter",
@@ -4250,7 +4372,7 @@ public static class AchievementYML
                 item = "Flint",
                 item_amount = 50,
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "neck_group_2",
                 display_name = "Neck Murderer",
@@ -4267,7 +4389,7 @@ public static class AchievementYML
                 item = "Flint",
                 item_amount = 50,
             },
-            new AchievementData()
+            new OldData()
             {
                 unique_name = "neck_group_3",
                 display_name = "Neck Craze",

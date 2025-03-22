@@ -20,14 +20,19 @@ public static class AchievementManager
     public static readonly Dictionary<string, Achievement> m_achievements = new();
     public static readonly Dictionary<string, Group> m_groupAchievements = new();
     public static readonly Dictionary<string, Achievement> m_achievementStatusEffects = new();
-    public static List<AchievementYML.AchievementData> AchievementData = new();
+    
+    public static void AddOrSet<T>(this Dictionary<T, Group> dict, T key, Achievement value)
+    {
+        if (dict.TryGetValue(key, out Group group)) group.Add(value);
+        else dict[key] = new Group(value);
+    }
 
     public class Group
     {
         private readonly Dictionary<int, Achievement> m_group = new();
         public Group(Achievement achievement)
         {
-            m_group[achievement.m_data.achievement_index] = achievement;
+            m_group[achievement.m_data.Group.Index] = achievement;
             achievement.m_isGrouped = true;
         }
 
@@ -47,7 +52,7 @@ public static class AchievementManager
 
         public void Add(Achievement achievement)
         {
-            m_group[achievement.m_data.achievement_index] = achievement;
+            m_group[achievement.m_data.Group.Index] = achievement;
             achievement.m_isGrouped = true;
         }
 
@@ -62,7 +67,7 @@ public static class AchievementManager
     }
     public class Achievement
     {
-        public readonly AchievementYML.AchievementData m_data;
+        public readonly AchievementYML.Data m_data;
         public bool m_isCompleted;
         public readonly StatusEffect? m_statusEffect;
         public bool m_collectedReward;
@@ -77,13 +82,13 @@ public static class AchievementManager
         public Sprite? GetIcon()
         {
             if (s_icon) return s_icon;
-            if (SpriteManager.GetSprite(m_data.sprite_name, out Sprite? sprite))
+            if (SpriteManager.GetSprite(m_data.SpriteName, out Sprite? sprite))
             {
                 s_icon = sprite;
                 return sprite;
             }
 
-            if (ObjectDB.instance && ObjectDB.instance.GetItemPrefab(m_data.sprite_name) is { } item &&
+            if (ObjectDB.instance && ObjectDB.instance.GetItemPrefab(m_data.SpriteName) is { } item &&
                 item.TryGetComponent(out ItemDrop component) && component.m_itemData.GetIcon() is { } icon)
             {
                 s_icon = icon;
@@ -91,35 +96,35 @@ public static class AchievementManager
             }
             return SpriteManager.AlmanacIcon;
         }
-        private Skills.SkillType GetSkillType()
+        private Skills.SkillType GetSkillRewardType()
         {
             if (m_skillReward is not Skills.SkillType.None) return m_skillReward;
-            if (m_data.skill.IsNullOrWhiteSpace()) return Skills.SkillType.None;
-            if (Enum.TryParse(m_data.skill, true, out Skills.SkillType skill))
+            if (m_data.Reward.SkillReward.SkillType.IsNullOrWhiteSpace()) return Skills.SkillType.None;
+            if (Enum.TryParse(m_data.Reward.SkillReward.SkillType, true, out Skills.SkillType skill))
             {
                 m_skillReward = skill;
                 return skill;
             }
-            skill = (Skills.SkillType)Math.Abs(m_data.skill.GetStableHashCode());
+            skill = (Skills.SkillType)Math.Abs(m_data.Reward.SkillReward.SkillType.GetStableHashCode());
             m_skillReward = Enum.IsDefined(typeof(Skills.SkillType), skill) ? skill : Skills.SkillType.None;
             return m_skillReward;
         }
-        public int GetGoal() => m_data.goal;
-        public string GetDefeatKey() => m_data.defeat_key;
-        public AchievementType GetAchievementType() => m_data.achievement_type;
-        public string GetUniqueName() => m_data.unique_name;
+        public int GetGoal() => m_data.Goal.Threshold;
+        public string GetCreatureName() => m_data.Goal.CreatureName;
+        public AchievementType GetAchievementType() => m_data.Goal.Type;
+        public string GetUniqueName() => m_data.ID;
         public string GetCustomPickableItemName()
         {
             if (!m_customPickableName.IsNullOrWhiteSpace()) return m_customPickableName;
-            if (m_data.custom_pickable_name.IsNullOrWhiteSpace()) return "";
-            if (ZNetScene.instance.GetPrefab(m_data.custom_pickable_name) is not { } prefab) return "";
+            if (m_data.Goal.PickablePrefab.IsNullOrWhiteSpace()) return "";
+            if (ZNetScene.instance.GetPrefab(m_data.Goal.PickablePrefab) is not { } prefab) return "";
             if (!prefab.TryGetComponent(out Pickable component)) return "";
             if (component.m_itemPrefab == null) return "";
             if (!component.m_itemPrefab.TryGetComponent(out ItemDrop item)) return "";
             m_customPickableName = item.m_itemData.m_shared.m_name;
             return m_customPickableName;
         }
-        public string GetDescription() => m_data.description;
+        public string GetDescription() => m_data.Description;
         public bool Collect()
         {
             if (!m_isCompleted)
@@ -147,7 +152,7 @@ public static class AchievementManager
                     return false;
                 }
             }
-            switch (m_data.reward_type)
+            switch (m_data.Reward.RewardType)
             {
                 case AchievementRewardType.Item:
                     if (m_collectedReward)
@@ -156,8 +161,8 @@ public static class AchievementManager
                         return false;
                     }
 
-                    if (m_itemReward is not {} item || m_data.item_amount <= 0) return false;
-                    if (!Player.m_localPlayer.GetInventory().CanAddItem(item.m_itemData, m_data.item_amount))
+                    if (m_itemReward is not {} item || m_data.Reward.ItemReward.Amount <= 0) return false;
+                    if (!Player.m_localPlayer.GetInventory().CanAddItem(item.m_itemData, m_data.Reward.ItemReward.Amount))
                     {
                         Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$msg_inventoryfull");
                         return false;
@@ -165,9 +170,9 @@ public static class AchievementManager
 
                     var clone = item.m_itemData.Clone();
                     clone.m_dropPrefab = item.gameObject;
-                    clone.m_stack = m_data.item_amount;
+                    clone.m_stack = m_data.Reward.ItemReward.Amount;
                     Player.m_localPlayer.GetInventory().AddItem(clone);
-                    Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"$msg_collecteditem: {clone.m_shared.m_name} x{m_data.item_amount}");
+                    Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"$msg_collecteditem: {clone.m_shared.m_name} x{m_data.Reward.ItemReward.Amount}");
                     m_collectedReward = true;
                     SaveCollectedRewards();
                     break;
@@ -178,13 +183,13 @@ public static class AchievementManager
                         return false;
                     }
 
-                    if (GetSkillType() is Skills.SkillType.None || m_data.skill_amount <= 0)
+                    if (GetSkillRewardType() is Skills.SkillType.None || m_data.Reward.SkillReward.Amount <= 0)
                     {
                         Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$msg_failedtofindskill");
                         return false;
                     }
 
-                    Player.m_localPlayer.RaiseSkill(GetSkillType(), m_data.skill_amount);
+                    Player.m_localPlayer.RaiseSkill(GetSkillRewardType(), m_data.Reward.SkillReward.Amount);
                     m_collectedReward = true;
                     SaveCollectedRewards();
                     break;
@@ -214,11 +219,11 @@ public static class AchievementManager
                     }
                     break;
                 case AchievementRewardType.AlmanacEXP:
-                    if (m_data.class_experience == 0) return false;
-                    API.ClassesAPI.AddEXP(m_data.class_experience);
+                    if (m_data.Reward.AlmanacClassEXP == 0) return false;
+                    API.ClassesAPI.AddEXP(m_data.Reward.AlmanacClassEXP);
                     break;
             }
-            switch (m_data.reward_type)
+            switch (m_data.Reward.RewardType)
             {
                 case AchievementRewardType.StatusEffect:
                     if (m_statusEffect == null) return false;
@@ -278,7 +283,7 @@ public static class AchievementManager
         }
         private Heightmap.Biome GetCreatureBiomeGroup()
         {
-            return m_data.achievement_type switch
+            return m_data.Goal.Type switch
             {
                 AchievementType.MeadowCreatures => Heightmap.Biome.Meadows,
                 AchievementType.BlackForestCreatures => Heightmap.Biome.BlackForest,
@@ -299,12 +304,12 @@ public static class AchievementManager
             if (Player.m_localPlayer.m_customData.TryGetValue(CollectedRewardKey, out string data))
             {
                 List<string> savedCollectedData = deserializer.Deserialize<List<string>>(data);
-                savedCollectedData.Add(m_data.unique_name);
+                savedCollectedData.Add(m_data.ID);
                 Player.m_localPlayer.m_customData[CollectedRewardKey] = serializer.Serialize(savedCollectedData);
             }
             else
             {
-                Player.m_localPlayer.m_customData[CollectedRewardKey] = serializer.Serialize(new List<string>() { m_data.unique_name });
+                Player.m_localPlayer.m_customData[CollectedRewardKey] = serializer.Serialize(new List<string>() { m_data.ID });
             }
         }
         private string GetProgress()
@@ -325,24 +330,20 @@ public static class AchievementManager
                 var list = CreatureLists.GetBiomeCreatures(biome);
                 foreach (var creature in list)
                 {
-                    if (ZoneSystem.instance.GetGlobalKey(creature.m_defeatKey) ||
-                        Player.m_localPlayer.HaveUniqueKey(creature.m_defeatKey)) ++count;
+                    var amount = PlayerStats.m_records.m_kills.GetValueOrDefault(creature.m_prefabName, 0);
+                    if (amount > 0) ++count;
                 }
                 return $"{count} / {list.Count}";
             }
 
             string CustomCreatureGroupFormat()
             {
-                if (!CreatureLists.CustomCreatureGroups.TryGetValue(m_data.custom_group_key,
+                if (!CreatureLists.CustomCreatureGroups.TryGetValue(m_data.Goal.CreatureGroup,
                         out List<Creatures.Data> list)) return "";
                 int progress = 0;
                 foreach (var creature in list)
                 {
-                    if (PlayerStats.LocalPlayerData.Player_Kill_Deaths.TryGetValue(creature.m_defeatKey,
-                            out KillDeaths kd))
-                    {
-                        if (kd.kills > 0) ++progress;
-                    }
+                    if (PlayerStats.m_records.m_kills.GetValueOrDefault(creature.m_name, 0) > 0) ++progress;
                 }
 
                 return $"{progress} / {list.Count}";
@@ -407,7 +408,7 @@ public static class AchievementManager
                 AchievementType.BeesHarvested => StatFormat(PlayerStatType.BeesHarvested),
                 AchievementType.SapHarvested => StatFormat(PlayerStatType.SapHarvested),
                 AchievementType.TrapsArmed => StatFormat(PlayerStatType.TrapArmed),
-                AchievementType.CustomKills => $"{(PlayerStats.LocalPlayerData.Player_Kill_Deaths.TryGetValue(GetDefeatKey(), out KillDeaths data) ? data.kills : 0)} / {GetGoal()}",
+                AchievementType.CustomKills => $"{PlayerStats.m_records.m_kills.GetValueOrDefault(GetCreatureName(), 0)} / {GetGoal()}",
                 AchievementType.RuneStones => $"{PlayerStats.GetKnownTextCount()} / {GetGoal()}",
                 AchievementType.Recipes => $"{PlayerStats.GetKnownRecipeCount()} / {GetGoal()}",
                 AchievementType.CustomCreatureGroups => CustomCreatureGroupFormat(),
@@ -425,18 +426,19 @@ public static class AchievementManager
                     builder.Add($"#{achievement.GetGroupIndex()} - {achievement.GetDisplayName()}", achievement.IsComplete());
                 }
             }
-            builder.Add(m_data.lore, "lore");
+            builder.Add(m_data.Lore, "lore");
             builder.Add("$title_goal");
-            if (m_data.achievement_type is AchievementType.CustomCreatureGroups)
+            if (m_data.Goal.Type is AchievementType.CustomCreatureGroups)
             {
-                if (CreatureLists.CustomCreatureGroups.TryGetValue(m_data.custom_group_key, out List<Creatures.Data> list))
+                if (CreatureLists.CustomCreatureGroups.TryGetValue(m_data.Goal.CreatureGroup, out List<Creatures.Data> list))
                 {
                     int progress = 0;
                     foreach (var creature in list)
                     {
-                        if (PlayerStats.LocalPlayerData.Player_Kill_Deaths.TryGetValue(creature.m_defeatKey, out KillDeaths kd) && kd.kills > 0)
+                        var kills = PlayerStats.m_records.m_kills.GetValueOrDefault(creature.m_prefabName, 0);
+                        if (kills > 0)
                         {
-                            builder.Add(creature.m_name, kd.kills, "/1");
+                            builder.Add(creature.m_name, kills, "/1");
                             ++progress;
                         }
                         else
@@ -447,14 +449,14 @@ public static class AchievementManager
                     builder.Add("$label_total", progress, list.Count, "/");
                 }
             }
-            else if (m_data.achievement_type is AchievementType.CustomKills)
+            else if (m_data.Goal.Type is AchievementType.CustomKills)
             {
-                if (Creatures.m_defeatKeyCreatures.TryGetValue(m_data.defeat_key, out Creatures.Data creature))
+                if (Creatures.m_creatures.TryGetValue(m_data.Goal.CreatureName.ToLower(), out Creatures.Data creature))
                 {
                     builder.Add(creature.m_name, GetProgress());
                 }
             }
-            else if (m_data.achievement_type is AchievementType.MeadowCreatures or AchievementType.BlackForestCreatures
+            else if (m_data.Goal.Type is AchievementType.MeadowCreatures or AchievementType.BlackForestCreatures
                      or AchievementType.SwampCreatures or AchievementType.MountainCreatures
                      or AchievementType.PlainsCreatures or AchievementType.MistLandCreatures
                      or AchievementType.AshLandCreatures or AchievementType.DeepNorthCreatures
@@ -465,11 +467,11 @@ public static class AchievementManager
                     int progress = 0;
                     foreach (var creature in list)
                     {
-                        if (PlayerStats.LocalPlayerData.Player_Kill_Deaths.TryGetValue(creature.m_defeatKey,
-                                out KillDeaths kd) && kd.kills > 0)
+                        int kills = PlayerStats.m_records.m_kills.GetValueOrDefault(creature.m_prefabName, 0);
+                        if (kills > 0)
                         {
+                            builder.Add(creature.m_name, kills, "/1");
                             ++progress;
-                            builder.Add(creature.m_name, kd.kills, "/1");
                         }
                         else
                         {
@@ -479,65 +481,71 @@ public static class AchievementManager
                     builder.Add("$label_total", progress, list.Count, "/");
                 }
             }
-            else if (m_data.achievement_type is AchievementType.CustomPickable)
+            else if (m_data.Goal.Type is AchievementType.CustomPickable)
             {
-                if (!m_data.custom_pickable_name.IsNullOrWhiteSpace())
+                if (!m_data.Goal.PickablePrefab.IsNullOrWhiteSpace())
                 {
-                    if (PlayerStats.LocalPlayerData.Player_Pickable_Data.TryGetValue(m_data.custom_pickable_name, out int pickedAmount))
-                    {
-                        builder.Add(GetCustomPickableItemName(), pickedAmount, GetGoal(), "/");
-                    }
+                    int count = PlayerStats.m_records.m_picked.GetValueOrDefault(m_data.Goal.PickablePrefab, 0);
+                    builder.Add(GetCustomPickableItemName(), count, GetGoal(), "/");
                 }
             }
             else
             {
                 builder.Add(GetAchievementType(), GetProgress());
             }
-            switch (m_data.reward_type)
+            switch (m_data.Reward.RewardType)
             {
                 case AchievementRewardType.Item:
                     if (m_itemReward is not { } item) break;
                     builder.Add("$title_itemreward");
-                    builder.Add(item.m_itemData.m_shared.m_name, m_data.item_amount);
+                    builder.Add(item.m_itemData.m_shared.m_name, m_data.Reward.ItemReward.Amount);
                     break;
                 case AchievementRewardType.Skill:
-                    var type = GetSkillType();
+                    var type = GetSkillRewardType();
                     if (type is Skills.SkillType.None) break;
                     builder.Add("$title_skillreward");
-                    builder.Add(type, m_data.skill_amount);
+                    builder.Add(type, m_data.Reward.SkillReward.Amount);
                     break;
                 case AchievementRewardType.StatusEffect:
                     builder.Add("$title_effectreward");
-                    builder.Add("$label_duration", m_data.duration, Entries.EntryBuilder.Option.Seconds);
-                    builder.Add("$title_resistances");
-                    foreach (var dmg in m_data.damage_modifiers) builder.Add(dmg);
-                    builder.Add("$title_modifiers");
-                    foreach (var mod in m_data.modifiers)
+                    builder.Add("$label_duration", m_data.Reward.StatusEffect.Duration, Entries.EntryBuilder.Option.Seconds);
+                    if (m_data.Reward.StatusEffect.Resistances.Any(x => x.m_modifier != HitData.DamageModifier.Normal))
                     {
-                        if (mod.Key is EffectMan.Modifier.MaxCarryWeight)
+                        builder.Add("$title_resistances");
+                        foreach (var dmg in m_data.Reward.StatusEffect.Resistances) builder.Add(dmg);
+                    }
+                    builder.Add("$title_modifiers");
+                    foreach (var mod in m_data.Reward.StatusEffect.Modifiers)
+                    {
+                        if (mod.Key is EffectMan.Modifier.MaxCarryWeight or EffectMan.Modifier.Health or EffectMan.Modifier.Stamina or EffectMan.Modifier.Eitr or EffectMan.Modifier.Armor)
                         {
-                            if (mod.Value == 0) continue;
+                            if (mod.Value == 0f) continue;
                             builder.Add(mod.Key, mod.Value, Entries.EntryBuilder.Option.Add);
+                        }
+                        else if (mod.Key is EffectMan.Modifier.DamageReduction)
+                        {
+                            if (mod.Value == 0f) continue;
+                            builder.Add(mod.Key, Mathf.Clamp01(1f - mod.Value), Entries.EntryBuilder.Option.Percentage);
                         }
                         else
                         {
+                            if (Math.Abs(mod.Value - 1f) < 0.01f) continue;
                             builder.Add(mod.Key, mod.Value - 1f, Entries.EntryBuilder.Option.Percentage);
                         }
                     }
                     break;
                 case AchievementRewardType.AlmanacEXP:
                     builder.Add("$title_almanac_class_exp");
-                    builder.Add("$label_amount", m_data.class_experience);
+                    builder.Add("$label_amount", m_data.Reward.AlmanacClassEXP);
                     break;
             }
 
             return builder.ToList();
         }
-        public AchievementRewardType GetRewardType() => m_data.reward_type;
-        public string GetDisplayName() => m_data.display_name;
-        public string GetAchievementGroupName() => m_data.achievement_group;
-        public int GetGroupIndex() => m_data.achievement_index;
-        
+        public AchievementRewardType GetRewardType() => m_data.Reward.RewardType;
+        public string GetDisplayName() => m_data.Name;
+        public string GetAchievementGroupName() => m_data.Group.GroupID;
+        public int GetGroupIndex() => m_data.Group.Index;
         public void Check()
         {
             if (m_isGrouped)
@@ -715,11 +723,8 @@ public static class AchievementManager
                     m_isCompleted = recipeCount >= GetGoal();
                     break;
                 case AchievementType.CustomKills:
-                    if (PlayerStats.LocalPlayerData.Player_Kill_Deaths.TryGetValue(GetDefeatKey(), out KillDeaths value))
-                    {
-                        int kills = value.kills;
-                        m_isCompleted = kills >= GetGoal();
-                    }
+                    int kills = PlayerStats.m_records.m_kills.GetValueOrDefault(GetCreatureName(), 0);
+                    m_isCompleted = kills >= GetGoal();
                     break;
                 case AchievementType.MeadowCreatures:
                     CheckCompletion(CreatureLists.GetBiomeCreatures(Heightmap.Biome.Meadows));
@@ -749,14 +754,12 @@ public static class AchievementManager
                     CheckCompletion(CreatureLists.GetBiomeCreatures(Heightmap.Biome.Ocean));
                     break;
                 case AchievementType.CustomCreatureGroups:
-                    CheckCompletion(CreatureLists.GetCustomCreatureGroup(m_data.custom_group_key));
+                    CheckCompletion(CreatureLists.GetCustomCreatureGroup(m_data.Goal.CreatureGroup));
                     break;
                 case AchievementType.CustomPickable:
-                    if (m_data.custom_pickable_name.IsNullOrWhiteSpace()) return;
-                    if (PlayerStats.LocalPlayerData.Player_Pickable_Data.TryGetValue(m_data.custom_pickable_name, out int pickedAmount))
-                    {
-                        m_isCompleted = pickedAmount > GetGoal();
-                    }
+                    if (m_data.Goal.PickablePrefab.IsNullOrWhiteSpace()) return;
+                    int count = PlayerStats.m_records.m_picked.GetValueOrDefault(m_data.Goal.PickablePrefab, 0);
+                    m_isCompleted = count > GetGoal();
                     break;
                 default:
                     m_isCompleted = false;
@@ -766,9 +769,12 @@ public static class AchievementManager
         
         private void CheckCompletion(List<Creatures.Data> list)
         {
-            if (!ZoneSystem.instance) return;
-            List<string> globalKeys = ZoneSystem.instance.GetGlobalKeys();
-            int count = list.Count(critter => globalKeys.Contains(critter.m_defeatKey) || ZoneSystem.instance.GetGlobalKey(critter.m_defeatKey));
+            int count = 0;
+            foreach (var creature in list)
+            {
+                int kills = PlayerStats.m_records.m_kills.GetValueOrDefault(creature.m_prefabName, 0);
+                if (kills > 0) ++count;
+            }
             m_isCompleted = count >= list.Count;
         }
         private void CheckCompletion(PlayerStatType type)
@@ -779,54 +785,85 @@ public static class AchievementManager
         {
             m_isCompleted =
                 list.FindAll(item => Player.m_localPlayer.IsKnownMaterial(item.m_itemData.m_shared.m_name) && !item.m_itemData.m_shared.m_dlc.IsNullOrWhiteSpace()).Count >=
-                list.Count(x => !x.m_itemData.m_shared.m_dlc.IsNullOrWhiteSpace());
+                list.Count(x => x.m_itemData.m_shared.m_dlc.IsNullOrWhiteSpace());
         }
-        
-        public Achievement(AchievementYML.AchievementData data)
+
+        public Achievement(AchievementYML.Data data)
         {
             m_data = data;
             if (!Validate()) return;
-            m_achievements[data.unique_name] = this;
-            if (!GetAchievementGroupName().IsNullOrWhiteSpace())
+            if (!m_data.Group.GroupID.IsNullOrWhiteSpace())
             {
-                if (m_groupAchievements.TryGetValue(GetAchievementGroupName(), out Group group)) group.Add(this);
-                else m_groupAchievements[GetAchievementGroupName()] = new Group(this);
+                m_groupAchievements.AddOrSet(m_data.Group.GroupID, this);
             }
-            if (m_data.reward_type is not AchievementRewardType.StatusEffect) return;
-            if (EffectMan.EffectData.Init(this) is { } statusEffect)
+
+            if (m_data.Reward.RewardType is AchievementRewardType.StatusEffect)
             {
-                m_achievementStatusEffects[statusEffect.name] = this;
-                m_statusEffect = statusEffect;
+                if (EffectMan.EffectData.Init(this) is { } statusEffect)
+                {
+                    m_achievementStatusEffects[statusEffect.name] = this;
+                    m_statusEffect = statusEffect;
+                }
             }
+            m_achievements[m_data.ID] = this;
         }
 
         private bool Validate()
         {
-            if (m_data.unique_name.IsNullOrWhiteSpace())
+            if (m_data.ID.IsNullOrWhiteSpace())
             {
                 AlmanacPlugin.AlmanacLogger.LogWarning("Achievement unique name is null or white space, skipping...");
                 return false;
             }
-            if (m_achievements.Keys.Contains(m_data.unique_name))
+            if (m_achievements.Keys.Contains(m_data.ID))
             {
-                AlmanacPlugin.AlmanacLogger.LogWarning($"Duplicate achievement unique key: {m_data.unique_name}");
+                AlmanacPlugin.AlmanacLogger.LogWarning($"Duplicate achievement unique key: {m_data.ID}");
                 return false;
             }
-
-            if (!m_data.custom_group_key.IsNullOrWhiteSpace())
+            
+            if (!m_data.Goal.CreatureName.IsNullOrWhiteSpace())
             {
-                if (!CreatureLists.CustomCreatureGroups.Keys.Contains(m_data.custom_group_key))
+                bool updateFile = false;
+                if (Creatures.m_defeatKeyCreatures.TryGetValue(m_data.Goal.CreatureName, out Creatures.Data creatureData))
                 {
-                    AlmanacPlugin.AlmanacLogger.LogWarning($"[{m_data.unique_name}]: Failed to find custom creature group: {m_data.custom_group_key}");
+                    m_data.Goal.CreatureName = creatureData.m_prefabName;
+                    updateFile = true;
+                }
+                else
+                {
+                    if (m_data.Goal.CreatureName.StartsWith("defeated_"))
+                    {
+                        var name = m_data.Goal.CreatureName.Replace("defeated_", string.Empty).ToLower();
+                        if (Creatures.m_creatures.TryGetValue(name, out creatureData))
+                        {
+                            m_data.Goal.CreatureName = creatureData.m_prefabName;
+                            updateFile = true;
+                        }
+                    }
+                }
+
+                if (updateFile)
+                {
+                    var filePath = AlmanacPaths.AchievementFolderPath + Path.DirectorySeparatorChar + m_data.ID + ".yml";
+                    var serializer = new SerializerBuilder().Build();
+                    File.WriteAllText(filePath, serializer.Serialize(m_data));
+                }
+            }
+
+            if (!m_data.Goal.CreatureGroup.IsNullOrWhiteSpace())
+            {
+                if (!CreatureLists.CustomCreatureGroups.Keys.Contains(m_data.Goal.CreatureGroup))
+                {
+                    AlmanacPlugin.AlmanacLogger.LogWarning($"[{m_data.ID}]: Failed to find custom creature group: {m_data.Goal.CreatureGroup}");
                     return false;
                 }
             }
 
-            if (!m_data.custom_pickable_name.IsNullOrWhiteSpace())
+            if (!m_data.Goal.PickablePrefab.IsNullOrWhiteSpace())
             {
-                if (ZNetScene.instance.GetPrefab(m_data.custom_pickable_name) is not { } prefab)
+                if (ZNetScene.instance.GetPrefab(m_data.Goal.PickablePrefab) is not { } prefab)
                 {
-                    AlmanacPlugin.AlmanacLogger.LogWarning($"[{m_data.unique_name}]: Failed to find custom pickable prefab: {m_data.custom_pickable_name}");
+                    AlmanacPlugin.AlmanacLogger.LogWarning($"[{m_data.ID}]: Failed to find custom pickable prefab: {m_data.Goal.PickablePrefab}");
                     return false;
                 }
 
@@ -837,33 +874,33 @@ public static class AchievementManager
                 }
             }
 
-            if (!m_data.item.IsNullOrWhiteSpace())
+            if (!m_data.Reward.ItemReward.PrefabName.IsNullOrWhiteSpace())
             {
-                if (ObjectDB.m_instance.GetItemPrefab(m_data.item) is not { } item)
+                if (ObjectDB.m_instance.GetItemPrefab(m_data.Reward.ItemReward.PrefabName) is not { } item)
                 {
-                    AlmanacPlugin.AlmanacLogger.LogWarning($"[{m_data.unique_name}]: Failed to find item reward: {m_data.item}");
+                    AlmanacPlugin.AlmanacLogger.LogWarning($"[{m_data.ID}]: Failed to find item reward: {m_data.Reward.ItemReward.PrefabName}");
                     return false;
                 }
 
                 if (!item.TryGetComponent(out ItemDrop itemDrop))
                 {
-                    AlmanacPlugin.AlmanacLogger.LogWarning($"[{m_data.unique_name}]: Item reward does not have <ItemDrop> component");
+                    AlmanacPlugin.AlmanacLogger.LogWarning($"[{m_data.ID}]: Item reward does not have <ItemDrop> component");
                     return false;
                 }
 
                 m_itemReward = itemDrop;
             }
 
-            if (!m_data.skill.IsNullOrWhiteSpace())
+            if (!m_data.Reward.SkillReward.SkillType.IsNullOrWhiteSpace())
             {
-                if (GetSkillType() is Skills.SkillType.None)
+                if (GetSkillRewardType() is Skills.SkillType.None)
                 {
-                    AlmanacPlugin.AlmanacLogger.LogWarning($"[{m_data.unique_name}]: Failed to find skill type: {m_data.skill}");
+                    AlmanacPlugin.AlmanacLogger.LogWarning($"[{m_data.ID}]: Failed to find skill type: {m_data.Reward.SkillReward.SkillType}");
                     return false;
                 }
             }
 
-            foreach (var kvp in m_data.skill_bonus)
+            foreach (var kvp in m_data.Reward.StatusEffect.Skills)
             {
                 if (kvp.Key.IsNullOrWhiteSpace()) continue;
                 if (Enum.TryParse(kvp.Key, true, out Skills.SkillType skill))
@@ -872,14 +909,14 @@ public static class AchievementManager
                 }
                 else
                 {
-                    skill = (Skills.SkillType)Math.Abs(m_data.skill.GetStableHashCode());
+                    skill = (Skills.SkillType)Math.Abs(kvp.Key.GetStableHashCode());
                     if (Enum.IsDefined(typeof(Skills.SkillType), skill))
                     {
                         m_skillBonus[skill] = kvp.Value;
                     }
                     else
                     {
-                        AlmanacPlugin.AlmanacLogger.LogWarning($"[{m_data.unique_name}]: Failed to find skill type for status effect: {kvp.Key}");
+                        AlmanacPlugin.AlmanacLogger.LogWarning($"[{m_data.ID}]: Failed to find skill type for status effect: {kvp.Key}");
                     }
                 }
             }
@@ -920,51 +957,17 @@ public static class AchievementManager
         }
     }
 
-    // private static void CheckCompletion(Achievement achievement, List<Creatures.Data> list)
-    // {
-    //     if (!ZoneSystem.instance) return;
-    //     List<string> globalKeys = ZoneSystem.instance.GetGlobalKeys();
-    //     int count = list.Count(critter => globalKeys.Contains(critter.m_defeatKey) || ZoneSystem.instance.GetGlobalKey(critter.m_defeatKey));
-    //     achievement.m_isCompleted = count >= list.Count;
-    // }
-    // private static void CheckCompletion(Achievement achievement, PlayerStatType type)
-    // {
-    //     achievement.m_isCompleted = PlayerStats.GetPlayerStat(type) >= achievement.GetGoal();
-    // }
-    // private static void CheckCompletion(Achievement achievement, List<ItemDrop> list)
-    // {
-    //     achievement.m_isCompleted =
-    //         list.FindAll(item => Player.m_localPlayer.IsKnownMaterial(item.m_itemData.m_shared.m_name) && !item.m_itemData.m_shared.m_dlc.IsNullOrWhiteSpace()).Count >=
-    //         list.Count(x => !x.m_itemData.m_shared.m_dlc.IsNullOrWhiteSpace());
-    // }
-    
     public static void Read()
     {
-        AchievementData.Clear();
-        string[] filePaths = Directory.GetFiles(AlmanacPaths.AchievementFolderPath, "*.yml");
-
-        IDeserializer deserializer = new DeserializerBuilder().Build();
-        
-        foreach (string path in filePaths)
-        {
-            try
-            {
-                string data = File.ReadAllText(path);
-                AchievementYML.AchievementData YmlData = deserializer.Deserialize<AchievementYML.AchievementData>(data);
-                AchievementData.Add(YmlData);
-            }
-            catch (Exception)
-            {
-                AlmanacPlugin.AlmanacLogger.LogWarning("Failed to load yml data: " + path);
-            }
-        }
+        AchievementYML.m_data.Clear();
+        AchievementYML.Init();
     }
 
     public static void Setup()
     {
         m_achievements.Clear();
         m_groupAchievements.Clear();
-        foreach (var data in AchievementData)
+        foreach (var data in AchievementYML.m_data)
         {
             var _ = new Achievement(data);
         }

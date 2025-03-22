@@ -73,6 +73,6 @@ public static class AchievementTypes
 
     public enum AchievementRewardType
     {
-        StatusEffect, Item, Skill, AlmanacEXP
+        None, StatusEffect, Item, Skill, AlmanacEXP
     }
 }

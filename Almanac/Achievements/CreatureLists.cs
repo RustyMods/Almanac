@@ -116,7 +116,7 @@ public static class CreatureLists
         foreach (string name in input)
         {
             if (name.StartsWith("#")) continue;
-            if (Creatures.m_creatures.TryGetValue(name, out Creatures.Data creature))
+            if (Creatures.m_creatures.TryGetValue(name.ToLower(), out Creatures.Data creature))
             {
                 output.Add(creature);
             }

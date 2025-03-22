@@ -25,7 +25,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.4.2";
+        internal const string ModVersion = "3.4.4";
         internal const string Author = "RustyMods";
         public const string ModGUID = Author + "." + ModName;
         private static readonly string ConfigFileName = ModGUID + ".cfg";
@@ -61,13 +61,12 @@ namespace Almanac
             InitConfigs();
             CheckChainLoader();
             AlmanacPaths.CreateFolderDirectories();
-            AchievementYML.InitDefaultAchievements();
+            AchievementYML.Init();
             Filters.InitFilters();
             FileWatcher.InitFileSystemWatch();
             Assembly assembly = Assembly.GetExecutingAssembly();
             _harmony.PatchAll(assembly);
             SetupWatcher();
-            // TrackMinimalUI.SetupWatcher();
         }
 
         public void Update()

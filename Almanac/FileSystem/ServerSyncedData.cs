@@ -2,7 +2,6 @@
 using System.Linq;
 using Almanac.Achievements;
 using Almanac.Bounties;
-using Almanac.Data;
 using Almanac.TreasureHunt;
 using BepInEx;
 using ServerSync;
@@ -35,7 +34,7 @@ public static class ServerSyncedData
 
     {
         ISerializer serializer = new SerializerBuilder().Build();
-        string data = serializer.Serialize(AchievementManager.AchievementData);
+        string data = serializer.Serialize(AchievementYML.m_data);
         if (data.IsNullOrWhiteSpace()) return;
 
         ServerAchievements.Value = data;
@@ -46,10 +45,15 @@ public static class ServerSyncedData
         if (ServerAchievements.Value.IsNullOrWhiteSpace()) return;
         AlmanacPlugin.AlmanacLogger.LogDebug("Client: Received new achievements");
         IDeserializer deserializer = new DeserializerBuilder().Build();
-        List<AchievementYML.AchievementData> data = deserializer.Deserialize<List<AchievementYML.AchievementData>>(ServerAchievements.Value);
-        AchievementManager.AchievementData = data;
-        AchievementManager.InitAchievements();
-        InitiatedServerAchievements = true;
+        try
+        {
+            AchievementYML.m_data = deserializer.Deserialize<List<AchievementYML.Data>>(ServerAchievements.Value);
+            InitiatedServerAchievements = true;
+        }
+        catch
+        {
+            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to deserialize server achievements");
+        }
     }
     
     #endregion

@@ -2,110 +2,41 @@
 using System.Collections.Generic;
 using System.Linq;
 using Almanac.Achievements;
-using Almanac.FileSystem;
 using Almanac.UI;
 using Almanac.Utilities;
 using BepInEx;
 using HarmonyLib;
 using UnityEngine;
 using YamlDotNet.Serialization;
-using Patches = Almanac.FileSystem.Patches;
 
 namespace Almanac.Data;
 
 public static class PlayerStats
 {
+    public const string NEWKEY = "AlmanacRecords";
     public const string AlmanacStatsKey = "AlmanacStats";
-    public static CustomData LocalPlayerData = new();
+    public static Records m_records = new Records();
+
+    public static J GetValueOrDefault<T, J>(this Dictionary<T, J> dict, T key, J defaultValue)
+    {
+        return dict.TryGetValue(key, out J value) ? value : defaultValue;
+    }
+
+    [Serializable]
+    public class Records
+    {
+        public Dictionary<string, int> m_deaths = new();
+        public Dictionary<string, int> m_kills = new();
+        public Dictionary<string, int> m_picked = new();
+        public List<string> m_status = new();
+    }
+
 
     public static float GetPlayerStat(PlayerStatType type)
     {
         if (!Game.instance) return 0;
         if (Game.instance.m_playerProfile == null) return 0;
         return Game.instance.m_playerProfile.m_playerStats.m_stats.TryGetValue(type, out float value) ? value : 0;
-    }
-    private static void InitPlayerTracker()
-    {
-        if (!Player.m_localPlayer) return;
-        AlmanacPlugin.AlmanacLogger.LogDebug("Client: Initializing Player Kill Death Tracker");
-
-        if (Player.m_localPlayer.m_customData.TryGetValue(AlmanacStatsKey, out string CurrentData))
-        {
-            ReadCustomTrackerData(CurrentData, false);
-        }
-        else
-        {
-            AlmanacPlugin.AlmanacLogger.LogDebug("Client: Generating kill death custom data");
-            foreach (string key in Creatures.m_defeatKeys)
-            {
-                LocalPlayerData.Player_Kill_Deaths[key] = new KillDeaths();
-            }
-        }
-        WriteCurrentCustomData();
-    }
-    private static void ReadCustomTrackerData(string CurrentData, bool hasFile, bool hasCustomData = true)
-    {
-        IDeserializer deserializer = new DeserializerBuilder().Build();
-        if (hasCustomData) AlmanacPlugin.AlmanacLogger.LogDebug("Client: Player has custom data kill death values" 
-                                             + (hasFile ? ", ignoring file" : ""));
-        CustomData data = deserializer.Deserialize<CustomData>(CurrentData);
-        LocalPlayerData = data;
-        
-        if (data.Player_Kill_Deaths.Count == Creatures.m_defeatKeys.Count) return;
-        AlmanacPlugin.AlmanacLogger.LogDebug("Client: Creature count changed, adding missing values");
-        foreach (string key in Creatures.m_defeatKeys)
-        {
-            if (data.Player_Kill_Deaths.ContainsKey(key)) continue;
-            AlmanacPlugin.AlmanacLogger.LogDebug("Client: Player data missing: " + key + " , adding value");
-            data.Player_Kill_Deaths[key] = new KillDeaths();
-        }
-    }
-    private static void WriteCurrentCustomData()
-    {
-        if (!Player.m_localPlayer) return;
-        try
-        {
-            ISerializer serializer = new SerializerBuilder().Build();
-            string data = serializer.Serialize(LocalPlayerData);
-            var names = EffectMan.ActiveAchievementEffects.Select(x => x.name).ToList();
-            Player.m_localPlayer.m_customData[EffectMan.PlayerEffectKey] = serializer.Serialize(names);
-            Player.m_localPlayer.m_customData[AlmanacStatsKey] = data;
-            AlmanacPlugin.AlmanacLogger.LogDebug("Client: Saving almanac custom data");
-        }
-        catch
-        {
-            AlmanacPlugin.AlmanacLogger.LogDebug("Client: Failed to save player data");
-        }
-    }
-    private static void UpdatePlayerDeaths(Player instance)
-    {
-        if (!instance) return;
-        if (instance != Player.m_localPlayer) return;
-
-        HitData? lastHit = instance.m_lastHit;
-        if (lastHit == null) return;
-        Character? killer = lastHit.GetAttacker();
-        if (!killer) return;
-
-        string key = killer.m_defeatSetGlobalKey;
-        if (!LocalPlayerData.Player_Kill_Deaths.ContainsKey(key)) return;
-        
-        ++LocalPlayerData.Player_Kill_Deaths[key].deaths;
-    }
-    private static void UpdatePlayerKills(Character instance)
-    {
-        if (!instance || !Player.m_localPlayer) return;
-
-        HitData? lastHit = instance.m_lastHit;
-        if (lastHit == null) return;
-        Character? killer = instance.m_lastHit.GetAttacker();
-        if (!killer) return;
-        if (killer.GetHoverName() != Player.m_localPlayer.GetHoverName()) return;
-            
-        string key = instance.m_defeatSetGlobalKey;
-        if (!LocalPlayerData.Player_Kill_Deaths.ContainsKey(key)) return;
-        
-        ++LocalPlayerData.Player_Kill_Deaths[key].kills;
     }
     public static int GetKnownTextCount() => !Player.m_localPlayer ? 0 : Player.m_localPlayer.m_knownTexts.Count;
     public static int GetKnownRecipeCount() => !Player.m_localPlayer ? 0 : Player.m_localPlayer.m_knownRecipes.Count;
@@ -151,49 +82,92 @@ public static class PlayerStats
         }
     }
 
-    [HarmonyPatch(typeof(Player), nameof(Player.OnDeath))]
-    private static class PlayerOnDeathPatch
-    {
-        private static void Prefix(Player __instance)
-        {
-            if (!__instance) return;
-            if (!Player.m_localPlayer) return;
-            if (__instance != Player.m_localPlayer) return;
-            UpdatePlayerDeaths(__instance);
-            ISerializer serializer = new SerializerBuilder().Build();
-            var names = EffectMan.ActiveAchievementEffects.Select(x => x.name).ToList();
-            Player.m_localPlayer.m_customData[EffectMan.PlayerEffectKey] = serializer.Serialize(names);
-        }
-    }
-
     [HarmonyPatch(typeof(Character), nameof(Character.OnDeath))]
     private static class CharacterOnDeathPatch
     {
         private static void Prefix(Character __instance)
         {
-            if (!__instance) return;
-            UpdatePlayerKills(__instance);
-        }
-    }
-    
-    [HarmonyPatch(typeof(Player), nameof(Player.Save))]
-    private static class PlayerSavePatch
-    {
-        private static void Prefix(Player __instance)
-        {
-            if (!__instance) return;
-            WriteCurrentCustomData();
+            if (!__instance || !Player.m_localPlayer) return;
+            if (__instance.m_lastHit?.GetAttacker() is not { } attacker) return;
+            if (attacker == Player.m_localPlayer)
+            {
+                m_records.m_kills.IncrementOrSet(__instance.name.Replace("(Clone)", string.Empty));
+            }
+            else if (__instance == Player.m_localPlayer)
+            {
+                m_records.m_deaths.IncrementOrSet(attacker.name.Replace("(Clone)", string.Empty));
+            }
         }
     }
 
-    [HarmonyPatch(typeof(Player), nameof(Player.Start))]
-    private static class PlayerLoadCustomData
+    [HarmonyPatch(typeof(PlayerProfile), nameof(PlayerProfile.SavePlayerData))]
+    private static class PlayerProfile_SavePlayerData_Patch
     {
-        private static void Postfix(Player __instance)
+        private static void Prefix(Player player)
         {
-            if (!__instance || !Player.m_localPlayer) return;
-            if (__instance != Player.m_localPlayer) return;
-            LoadPlayerData();
+            m_records.m_status = EffectMan.ActiveAchievementEffects.Select(x => x.name).ToList();
+            var serializer = new SerializerBuilder().Build();
+            var data = serializer.Serialize(m_records);
+            player.m_customData[NEWKEY] = data;
+        }
+    }
+
+    [HarmonyPatch(typeof(PlayerProfile), nameof(PlayerProfile.LoadPlayerData))]
+    private static class PlayerProfile_LoadPlayerData_Patch
+    {
+        private static void Postfix(Player player)
+        {
+            var deserializer = new DeserializerBuilder().Build();
+            if (player.m_customData.TryGetValue(NEWKEY, out string newData))
+            {
+                try
+                {
+                    var records = deserializer.Deserialize<Records>(newData);
+                    m_records = records;
+                }
+                catch
+                {
+                    AlmanacPlugin.AlmanacLogger.LogWarning("Failed to deserialize almanac records");
+                }
+            }
+            if (player.m_customData.TryGetValue(AlmanacStatsKey, out string oldData))
+            {
+                AlmanacPlugin.AlmanacLogger.LogInfo("Found old almanac data, converting...");
+                try
+                {
+                    var customData = deserializer.Deserialize<CustomData>(oldData);
+                    foreach (var kvp in customData.Player_Kill_Deaths)
+                    {
+                        var defeatKey = kvp.Key;
+                        var kd = kvp.Value;
+                        if (Creatures.m_defeatKeyCreatures.TryGetValue(defeatKey, out Creatures.Data data))
+                        {
+                            m_records.m_kills.IncrementOrSet(data.m_prefabName, kd.kills);
+                            m_records.m_deaths.IncrementOrSet(data.m_prefabName, kd.deaths);
+                        }
+                        else
+                        {
+                            if (!defeatKey.Contains("defeated_")) return;
+                            var name = defeatKey.Replace("defeated_", string.Empty);
+                            if (name.IsNullOrWhiteSpace()) return;
+                            name = char.ToUpper(name[0]) + name.Substring(1);
+                            m_records.m_kills.IncrementOrSet(name, kd.kills);
+                            m_records.m_deaths.IncrementOrSet(name, kd.deaths);
+                        }
+                    }
+
+                    foreach (var kvp in customData.Player_Pickable_Data)
+                    {
+                        m_records.m_picked.IncrementOrSet(kvp.Key, kvp.Value);
+                    }
+
+                    player.m_customData.Remove(AlmanacStatsKey);
+                }
+                catch
+                {
+                    AlmanacPlugin.AlmanacLogger.LogWarning("Failed to deserialize old data");
+                }
+            }
         }
     }
 
@@ -212,37 +186,11 @@ public static class PlayerStats
         private static void Postfix(Pickable __instance, Humanoid character, ref bool __result)
         {
             if (!__instance || !character || !__result) return;
-            
-            Player? player = character as Player;
-            if (player == null) return;
-
+            if (character is not Player player || player != Player.m_localPlayer) return;
             string itemName = __instance.name.Replace("(Clone)", string.Empty).Replace("Pickable_",string.Empty);
-            
-            if (LocalPlayerData.Player_Pickable_Data.ContainsKey(itemName))
-            {
-                ++LocalPlayerData.Player_Pickable_Data[itemName];
-            }
-            else
-            {
-                LocalPlayerData.Player_Pickable_Data[itemName] = 1;
-            }
+            m_records.m_picked.IncrementOrSet(itemName);
         }
     }
-    public static bool GetPlayerPickableValue(string key, out int value)
-    {
-        value = 0;
-        if (!LocalPlayerData.Player_Pickable_Data.TryGetValue(key, out int pickableValue)) return false;
-        value = pickableValue;
-        return true;
-    }
-    private static void LoadPlayerData()
-    {
-        if (!Player.m_localPlayer) return;
-        if (Player.m_localPlayer.GetHoverName().Replace(" ", "_").IsNullOrWhiteSpace()) return;
-        
-        InitPlayerTracker();
-    }
-
     public static List<Entries.Entry> GetEntries()
     {
         Entries.EntryBuilder builder = new();
@@ -259,14 +207,14 @@ public static class PlayerStats
             {
                 if (statusEffect is not EffectMan.AchievementEffect achievementEffect) continue;
                 ++count;
-                foreach (KeyValuePair<EffectMan.Modifier, float> kvp in achievementEffect.m_achievement.m_data.modifiers)
+                foreach (KeyValuePair<EffectMan.Modifier, float> kvp in achievementEffect.m_data.Modifiers)
                 {
-                    modifiers[kvp.Key] += kvp.Value;
+                    modifiers.IncrementOrSet(kvp.Key, kvp.Value);
                 }
-                mods.Apply(achievementEffect.m_achievement.m_data.damage_modifiers);
+                mods.Apply(achievementEffect.m_data.Resistances);
                 foreach (var kvp in achievementEffect.m_achievement.m_skillBonus)
                 {
-                    skills[kvp.Key] += kvp.Value;
+                    skills.IncrementOrSet(kvp.Key, kvp.Value);
                 }
             }
 
@@ -287,8 +235,12 @@ public static class PlayerStats
                             if (kvp.Value == 0f) break;
                             builder.Add(Helpers.ConvertEffectModifiers(kvp.Key), kvp.Value, Entries.EntryBuilder.Option.Add);
                             break;
-                        default:
+                        case EffectMan.Modifier.DamageReduction:
                             if (kvp.Value == 0f) break;
+                            builder.Add(Helpers.ConvertEffectModifiers(kvp.Key), 1f - Mathf.Clamp01(kvp.Value), Entries.EntryBuilder.Option.Percentage);
+                            break;
+                        default:
+                            if (Math.Abs(kvp.Value - 1f) < 0.01f) break;
                             builder.Add(Helpers.ConvertEffectModifiers(kvp.Key), kvp.Value, Entries.EntryBuilder.Option.Percentage);
                             break;
                     }
@@ -434,6 +386,8 @@ public static class PlayerStats
         return builder.ToList();
     }
 }
+
+
 
 [Serializable]
 public class CustomData

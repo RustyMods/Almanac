@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Almanac.Data;
 using Almanac.Utilities;
 using HarmonyLib;
 using UnityEngine;
-using YamlDotNet.Serialization;
 
 namespace Almanac.Achievements;
 
@@ -37,7 +37,7 @@ public static class EffectMan
     public static void Clear(bool save = true)
     {
         if (!Player.m_localPlayer) return;
-        var effects = Player.m_localPlayer.GetSEMan().GetStatusEffects().Where(x => x is AchievementEffect);
+        var effects = Player.m_localPlayer.GetSEMan().GetStatusEffects().Where(x => x is AchievementEffect).ToList();
         foreach (var effect in effects) Player.m_localPlayer.GetSEMan().RemoveStatusEffect(effect);
         ActiveAchievementEffects.Clear();
         if (save) OnChange();
@@ -45,31 +45,39 @@ public static class EffectMan
 
     public static void Load()
     {
-        if (!Player.m_localPlayer) return;
-        if (!Player.m_localPlayer.m_customData.TryGetValue(PlayerEffectKey, out string data)) return;
-        var deserializer = new DeserializerBuilder().Build();
-        try
+        Clear(false);
+        foreach (var name in PlayerStats.m_records.m_status)
         {
-            var names = deserializer.Deserialize<List<string>>(data);
-            Clear(false);
-            foreach (var name in names)
-            {
-                if (!m_allEffects.TryGetValue(name, out AchievementEffect statusEffect)) continue;
-                Add(statusEffect, false);
-            }
-            OnChange();
+            if (!m_allEffects.TryGetValue(name, out AchievementEffect status)) continue;
+            Add(status, false);
         }
-        catch
-        {
-            AlmanacPlugin.AlmanacLogger.LogDebug("Failed to get saved achievement effects from player profile");
-        }
+        OnChange();
+        // if (!Player.m_localPlayer) return;
+        // if (!Player.m_localPlayer.m_customData.TryGetValue(PlayerEffectKey, out string data)) return;
+        // var deserializer = new DeserializerBuilder().Build();
+        // try
+        // {
+        //     var names = deserializer.Deserialize<List<string>>(data);
+        //     Clear(false);
+        //     foreach (var name in names)
+        //     {
+        //         if (!m_allEffects.TryGetValue(name, out AchievementEffect statusEffect)) continue;
+        //         Add(statusEffect, false);
+        //     }
+        //     OnChange();
+        // }
+        // catch
+        // {
+        //     AlmanacPlugin.AlmanacLogger.LogDebug("Failed to get saved achievement effects from player profile");
+        // }
     }
 
     private static void OnChange()
     {
-        var serializer = new SerializerBuilder().Build();
-        List<string> names = ActiveAchievementEffects.Select(x => x.name).ToList();
-        Player.m_localPlayer.m_customData[PlayerEffectKey] = serializer.Serialize(names);
+        PlayerStats.m_records.m_status = ActiveAchievementEffects.Select(x => x.name).ToList();
+        // var serializer = new SerializerBuilder().Build();
+        // List<string> names = ActiveAchievementEffects.Select(x => x.name).ToList();
+        // Player.m_localPlayer.m_customData[PlayerEffectKey] = serializer.Serialize(names);
     }
 
     public static bool DeleteAll()
@@ -126,34 +134,34 @@ public static class EffectMan
     {
         public static StatusEffect? Init(AchievementManager.Achievement achievement)
         {
-            if (ObjectDB.instance.m_StatusEffects.Find(effect => effect.name == achievement.m_data.unique_name))
-                return null;
-            achievement.m_data.damage_modifiers.RemoveAll(d => d.m_modifier is HitData.DamageModifier.Normal);
+            if (ObjectDB.instance.m_StatusEffects.Find(effect => effect.name == achievement.m_data.ID)) return null;
+            achievement.m_data.Reward.StatusEffect.Resistances.RemoveAll(d => d.m_modifier is HitData.DamageModifier.Normal);
             AchievementEffect Effect = ScriptableObject.CreateInstance<AchievementEffect>();
             Effect.m_achievement = achievement;
-            Effect.name = achievement.m_data.unique_name.Replace(" ", "");
+            Effect.m_data = achievement.m_data.Reward.StatusEffect;
+            Effect.name = achievement.m_data.ID.Replace(" ", "");
             Effect.m_nameHash = Effect.name.GetStableHashCode();
             Effect.m_icon = AlmanacPlugin._AchievementIcons.Value is AlmanacPlugin.Toggle.On ? achievement.GetIcon() : null;
             Effect.m_name = achievement.GetDisplayName();
-            Effect.m_cooldown = achievement.m_data.duration * 1.3f; // guardian power cool down
-            Effect.m_ttl = achievement.m_data.duration; // status effect cool down
-            Effect.m_tooltip = AlmanacPlugin._AchievementPowers.Value is AlmanacPlugin.Toggle.On ? achievement.m_data.tooltip : "";
+            Effect.m_cooldown = achievement.m_data.Reward.StatusEffect.Duration * 1.3f; // guardian power cool down
+            Effect.m_ttl = achievement.m_data.Reward.StatusEffect.Duration; // status effect cool down
+            Effect.m_tooltip = AlmanacPlugin._AchievementPowers.Value is AlmanacPlugin.Toggle.On ? achievement.m_data.Reward.StatusEffect.Tooltip : "";
             Effect.m_startMessageType = MessageHud.MessageType.TopLeft;
             Effect.m_stopMessageType = MessageHud.MessageType.TopLeft;
-            Effect.m_startMessage = achievement.m_data.start_message;
-            Effect.m_stopMessage = achievement.m_data.stop_message;
+            Effect.m_startMessage = achievement.m_data.Reward.StatusEffect.StartMessage;
+            Effect.m_stopMessage = achievement.m_data.Reward.StatusEffect.StopMessage;
             Effect.m_activationAnimation = "gpower";
-            Effect.m_category = achievement.m_data.achievement_group;
-            if (achievement.m_data.start_effects.Count > 0)
+            Effect.m_category = achievement.m_data.Group.GroupID;
+            if (achievement.m_data.Reward.StatusEffect.StartEffects.Count > 0)
             {
                 Effect.m_startEffects =
-                    CreateEffectList(achievement.m_data.start_effects, achievement.m_data.unique_name);
+                    CreateEffectList(achievement.m_data.Reward.StatusEffect.StartEffects, achievement.m_data.ID);
             }
 
-            if (achievement.m_data.stop_effects.Count > 0)
+            if (achievement.m_data.Reward.StatusEffect.StopEffects.Count > 0)
             {
                 Effect.m_stopEffects =
-                    CreateEffectList(achievement.m_data.stop_effects, achievement.m_data.unique_name);
+                    CreateEffectList(achievement.m_data.Reward.StatusEffect.StopEffects, achievement.m_data.ID);
             }
 
             // Add base effect to ObjectDB
@@ -204,75 +212,76 @@ public static class EffectMan
     public class AchievementEffect : StatusEffect
     {
         public AchievementManager.Achievement m_achievement = null!;
+        public AchievementYML.StatusEffectData m_data = null!;
 
         public override void ModifyAttack(Skills.SkillType skill, ref HitData hitData)
         {
-            if (!m_achievement.m_data.modifiers.TryGetValue(Modifier.Attack, out float modifier)) return;
-            hitData.ApplyModifier(modifier);
+            var mod = m_data.Modifiers.GetValueOrDefault(Modifier.Attack, 1f);
+            hitData.ApplyModifier(mod);
         }
 
         public override void ModifyHealthRegen(ref float regenMultiplier)
         {
-            if (!m_achievement.m_data.modifiers.TryGetValue(Modifier.HealthRegen, out float modifier)) return;
-            regenMultiplier *= modifier;
+            var mod = m_data.Modifiers.GetValueOrDefault(Modifier.HealthRegen, 1f);
+            regenMultiplier *= mod;
         }
 
         public override void ModifyStaminaRegen(ref float staminaRegen)
         {
-            if (!m_achievement.m_data.modifiers.TryGetValue(Modifier.StaminaRegen, out float modifier)) return;
-            staminaRegen *= modifier;
+            var mod = m_achievement.m_data.Reward.StatusEffect.Modifiers.GetValueOrDefault(Modifier.StaminaRegen, 1f);
+            staminaRegen *= mod;
         }
 
         public override void ModifyRaiseSkill(Skills.SkillType skill, ref float value)
         {
-            if (!m_achievement.m_data.modifiers.TryGetValue(Modifier.RaiseSkills, out float raiseSkill)) return;
-            value *= raiseSkill;
+            var mod = m_data.Modifiers.GetValueOrDefault(Modifier.RaiseSkills, 1f);
+            value *= mod;
         }
         public override void ModifySpeed(float baseSpeed, ref float speed, Character character, Vector3 dir)
         {
-            if (!m_achievement.m_data.modifiers.TryGetValue(Modifier.Speed, out float modifier)) return;
-            speed *= modifier;
+            var mod = m_data.Modifiers.GetValueOrDefault(Modifier.Speed, 1f);
+            speed *= mod;
         }
 
         public override void ModifyNoise(float baseNoise, ref float noise)
         {
-            if (!m_achievement.m_data.modifiers.TryGetValue(Modifier.Noise, out float modifier)) return;
-            noise *= modifier;
+            var mod = m_data.Modifiers.GetValueOrDefault(Modifier.Noise, 1f);
+            noise *= mod;
         }
 
         public override void ModifyStealth(float baseStealth, ref float stealth)
         {
-            if (!m_achievement.m_data.modifiers.TryGetValue(Modifier.Stealth, out float modifier)) return;
-            stealth *= modifier;
+            var mod = m_data.Modifiers.GetValueOrDefault(Modifier.Stealth, 1f);
+            stealth *= mod;
         }
 
         public override void ModifyMaxCarryWeight(float baseLimit, ref float limit)
         {
-            if (!m_achievement.m_data.modifiers.TryGetValue(Modifier.MaxCarryWeight, out float maxCarry)) return;
-            limit += maxCarry;
+            var mod = m_data.Modifiers.GetValueOrDefault(Modifier.MaxCarryWeight, 0f);
+            limit += mod;
         }
 
         public override void ModifyRunStaminaDrain(float baseDrain, ref float drain, Vector3 dir)
         {
-            if (!m_achievement.m_data.modifiers.TryGetValue(Modifier.RunStaminaDrain, out float runStaminaDrain)) return;
-            drain *= runStaminaDrain;
+            var mod = m_data.Modifiers.GetValueOrDefault(Modifier.RunStaminaDrain, 1f);
+            drain *= mod;
         }
 
         public override void OnDamaged(HitData hit, Character attacker)
         {
-            if (!m_achievement.m_data.modifiers.TryGetValue(Modifier.DamageReduction, out float damageReduction)) return;
-            hit.ApplyModifier(Mathf.Clamp01(1f - damageReduction));
+            var mod = m_data.Modifiers.GetValueOrDefault(Modifier.DamageReduction, 0f);
+            hit.ApplyModifier(Mathf.Clamp01(1f - mod));
         }
-        public override void ModifyDamageMods(ref HitData.DamageModifiers modifiers) => modifiers.Apply(m_achievement.m_data.damage_modifiers);
+        public override void ModifyDamageMods(ref HitData.DamageModifiers modifiers) => modifiers.Apply(m_data.Resistances);
         public override void ModifyFallDamage(float baseDamage, ref float damage)
         {
             if (m_character.GetSEMan().HaveStatusEffect("SlowFall".GetStableHashCode())) return;
-            if (!m_achievement.m_data.modifiers.TryGetValue(Modifier.FallDamage, out float fallDamage)) return;
-            damage = baseDamage * fallDamage;
+            var mod = m_data.Modifiers.GetValueOrDefault(Modifier.FallDamage, 1f);
+            damage = baseDamage * mod;
             if (damage >= 0.0) return;
             damage = 0.0f;
         }
-        public override void ModifyEitrRegen(ref float eitrRegen) => eitrRegen *= m_achievement.m_data.modifiers[Modifier.EitrRegen];
+        public override void ModifyEitrRegen(ref float eitrRegen) => eitrRegen *= m_data.Modifiers.GetValueOrDefault(Modifier.EitrRegen, 1f);
         public override void ModifySkillLevel(Skills.SkillType skill, ref float level)
         {
             if (m_achievement.m_skillBonus.TryGetValue(Skills.SkillType.All, out float allModifier))
@@ -290,7 +299,7 @@ public static class EffectMan
         {
             StringBuilder stringBuilder = new StringBuilder();
             if (!string.IsNullOrWhiteSpace(m_tooltip)) stringBuilder.AppendFormat("{0}\n", m_tooltip);
-            foreach (var kvp in m_achievement.m_data.modifiers)
+            foreach (var kvp in m_data.Modifiers)
             {
                 string key = Helpers.ConvertEffectModifiers(kvp.Key);
                 switch (kvp.Key)
@@ -316,7 +325,7 @@ public static class EffectMan
                 stringBuilder.AppendFormat("{0}: <color=orange>{1:+0;-0}</color>\n", "$skill_" + kvp.Key.ToString().ToLower(), kvp.Value);
             }
 
-            stringBuilder.AppendFormat("{0}\n", SE_Stats.GetDamageModifiersTooltipString(m_achievement.m_data.damage_modifiers));
+            stringBuilder.AppendFormat("{0}\n", SE_Stats.GetDamageModifiersTooltipString(m_data.Resistances));
 
             return Localization.instance.Localize(stringBuilder.ToString());
         }
@@ -333,10 +342,8 @@ public static class EffectMan
                 foreach (StatusEffect? effect in player.GetSEMan().GetStatusEffects())
                 {
                     if (effect is not AchievementEffect achievementEffect) continue;
-                    if (achievementEffect.m_achievement.m_data.modifiers.TryGetValue(Modifier.LifeSteal, out float amount))
-                    {
-                        leech += amount - 1f;
-                    }
+                    var mod = achievementEffect.m_data.Modifiers.GetValueOrDefault(Modifier.LifeSteal, 1f);
+                    leech += mod - 1f;
                 }
                 if (leech > 1f) leech = 1f;
                 if (leech > 0f)
@@ -355,10 +362,8 @@ public static class EffectMan
                 foreach (var effect in __instance.GetSEMan().GetStatusEffects())
                 {
                     if (effect is not AchievementEffect achievementEffect) continue;
-                    if (achievementEffect.m_achievement.m_data.modifiers.TryGetValue(Modifier.Eitr, out float amount))
-                    {
-                        eitr += amount;
-                    }
+                    var mod = achievementEffect.m_data.Modifiers.GetValueOrDefault(Modifier.Eitr, 0f);
+                    eitr += mod;
                 }
             }
         }
@@ -372,10 +377,8 @@ public static class EffectMan
                 foreach (var effect in __instance.GetSEMan().GetStatusEffects())
                 {
                     if (effect is not AchievementEffect achievementEffect) continue;
-                    if (achievementEffect.m_achievement.m_data.modifiers.TryGetValue(Modifier.Stamina, out float amount))
-                    {
-                        stamina += amount;
-                    }
+                    var mod = achievementEffect.m_data.Modifiers.GetValueOrDefault(Modifier.Stamina, 0f);
+                    stamina += mod;
                 }
             }
         }
@@ -389,10 +392,8 @@ public static class EffectMan
                 foreach (var effect in __instance.GetSEMan().GetStatusEffects())
                 {
                     if (effect is not AchievementEffect achievementEffect) continue;
-                    if (achievementEffect.m_achievement.m_data.modifiers.TryGetValue(Modifier.Health, out float amount))
-                    {
-                        health += amount;
-                    }
+                    var mod = achievementEffect.m_data.Modifiers.GetValueOrDefault(Modifier.Health, 0f);
+                    health += mod;
                 }
             }
         }
@@ -406,10 +407,8 @@ public static class EffectMan
                 foreach (StatusEffect? effect in __instance.GetSEMan().GetStatusEffects())
                 {
                     if (effect is not AchievementEffect achievementEffect) continue;
-                    if (achievementEffect.m_achievement.m_data.modifiers.TryGetValue(Modifier.Armor, out float value))
-                    {
-                        amount += value;
-                    }
+                    var mod = achievementEffect.m_data.Modifiers.GetValueOrDefault(Modifier.Armor, 0f);
+                    amount += mod;
                 }
                 __result += amount;
             }

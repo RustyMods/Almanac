@@ -131,7 +131,7 @@ public static class BountyManager
             validatedData.m_skillAmount = data.skill_reward.amount;
         }
 
-        if (!Creatures.m_defeatKeys.Contains(data.defeat_key)) return false;
+        // if (!Creatures.m_defeatKeys.Contains(data.defeat_key)) return false;
 
         var currency = ObjectDB.instance.GetItemPrefab(data.currency);
         if (!currency) return false;

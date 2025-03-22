@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using Almanac.Achievements;
@@ -29,7 +30,7 @@ namespace Almanac
         internal const string ModName = "Almanac";
         internal const string ModVersion = "3.4.0";
         internal const string Author = "RustyMods";
-        private const string ModGUID = Author + "." + ModName;
+        public const string ModGUID = Author + "." + ModName;
         private static readonly string ConfigFileName = ModGUID + ".cfg";
         private static readonly string ConfigFileFullPath = Paths.ConfigPath + Path.DirectorySeparatorChar + ConfigFileName;
         internal static string ConnectionError = "";
@@ -37,9 +38,8 @@ namespace Almanac
         public static readonly ManualLogSource AlmanacLogger = BepInEx.Logging.Logger.CreateLogSource(ModName);
         public static readonly ConfigSync ConfigSync = new(ModGUID) { DisplayName = ModName, CurrentVersion = ModVersion, MinimumRequiredVersion = ModVersion };
         public static AlmanacPlugin _plugin = null!;
-        public static AssetBundle _assets = null!;
         public static GameObject _root = null!;
-        
+        public static readonly AssetBundle _UIAssets = GetAssetBundle("almanacui");
         public void SpawnBounty()
         {
             if (Bounty.ActiveBountyLocation is not { } bountyData) return;
@@ -47,9 +47,9 @@ namespace Almanac
 
             Bounty bounty = go.AddComponent<Bounty>();
             ISerializer serializer = new SerializerBuilder().Build();
-            string data = serializer.Serialize(bountyData.data);
+            string data = serializer.Serialize(bountyData.m_data);
             bounty._znv.GetZDO().Set(Bounty.bountyHash, data);
-            CachedEffects.DoneSpawnEffectList.Create(go.transform.position, Quaternion.identity);
+            CachedEffects.m_spawnEffects.Create(go.transform.position, Quaternion.identity);
         }
         
         public void Awake()
@@ -57,9 +57,6 @@ namespace Almanac
             Localizer.Load();
             
             _plugin = this;
-            WorkingAsType = SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null ? WorkingAs.Server : WorkingAs.Client;
-            _assets = GetAssetBundle("almanacbundle");
-
             _root = new GameObject("root");
             DontDestroyOnLoad(_root);
             _root.SetActive(false);
@@ -67,16 +64,22 @@ namespace Almanac
             InitConfigs();
             CheckChainLoader();
             AlmanacPaths.CreateFolderDirectories();
-            CacheAssets.LoadAssets();
             AchievementYML.InitDefaultAchievements();
             Filters.InitFilters();
             FileWatcher.InitFileSystemWatch();
             Assembly assembly = Assembly.GetExecutingAssembly();
             _harmony.PatchAll(assembly);
             SetupWatcher();
-            TrackMinimalUI.SetupWatcher();
+            // TrackMinimalUI.SetupWatcher();
         }
-        public void Update() => UpdateAlmanac.UpdateGUI();
+
+        public void Update()
+        {
+            if (!Player.m_localPlayer || !AlmanacUI.m_instance) return;
+            if (!Input.GetKeyDown(_AlmanacHotKey.Value)) return;
+            AlmanacUI.m_instance.Toggle();
+        }
+
         private void OnDestroy() => Config.Save();
         
         #region Chainloader
@@ -107,9 +110,6 @@ namespace Almanac
         
         #region Utililies
         public enum Toggle { On = 1, Off = 0 }
-        public enum WorkingAs { Client, Server, Both }
-        
-        public static WorkingAs WorkingAsType;
         private static AssetBundle GetAssetBundle(string fileName)
         {
             Assembly execAssembly = Assembly.GetExecutingAssembly();
@@ -152,8 +152,6 @@ namespace Almanac
         public static ConfigEntry<Toggle> _AchievementPowers = null!;
         public static ConfigEntry<int> _AchievementThreshold = null!;
         public static ConfigEntry<Toggle> _ShowAllData = null!;
-        public static ConfigEntry<DataPath> _RootPath = null!;
-        public static ConfigEntry<Toggle> _PanelImage = null!;
         public static ConfigEntry<Color> _OutlineColor = null!;
         public static ConfigEntry<KeyCode> _AlmanacHotKey = null!;
         public static ConfigEntry<Toggle> _LoadDefaultAchievements = null!;
@@ -163,7 +161,6 @@ namespace Almanac
         public static ConfigEntry<Toggle> _BountyEnabled = null!;
         public static ConfigEntry<Toggle> _AchievementsEnabled = null!;
         public static ConfigEntry<Toggle> _showLore = null!;
-        public enum DataPath { LocalLow, ConfigPath }
         private void InitConfigs()
         {
             _serverConfigLocked = config("1 - General", "0 - Lock Configuration", Toggle.On,
@@ -171,40 +168,20 @@ namespace Almanac
             _ = ConfigSync.AddLockingConfigEntry(_serverConfigLocked);
 
             _KnowledgeWall = config("1 - General", "1 - Knowledge Wall", Toggle.On, "If on, the plugin blacks out unknown items from the almanac");
-
             _UseIgnoreList = config("1 - General", "2 - Use Ignore List", Toggle.On, "If on, the plugin uses the IgnoreList.yml to filter almanac");
-
             _ShowAllData = config("1 - General", "3 - Show All Data", Toggle.Off, "If on, Almanac does not filter extra data, like prefab name and material name");
-            
             _AchievementIcons = config("Achievements", "HUD Icons", Toggle.Off, "If on, achievements icons appear alongside status effects on HUD");
-
             _AchievementIcons.SettingChanged += AchievementManager.OnAchievementConfigChanged;
-            
             _AchievementPowers = config("Achievements", "Bonuses Enabled", Toggle.On, "If on, achievements are interactable and reward players with bonuses");
-
             _AchievementPowers.SettingChanged += AchievementManager.OnAchievementConfigChanged;
-
-            _AchievementThreshold = config("Achievements", "Threshold", 3,
-                new ConfigDescription("Total amount of achievement effects allowed at the same time",
-                    new AcceptableValueRange<int>(1, 5)));
-            
-            _PanelImage = config("1 - General", "4 - Transparent", Toggle.Off, "Compatibility with minimalUI, set transparency of almanac panel", false);
-
-            _PanelImage.SettingChanged += CreateAlmanac.OnPanelTransparencyConfigChange;
-            
-            _RootPath = config("1 - General", "5 - Player Data", DataPath.ConfigPath, "Set the root path where to save player data");
-            
+            _AchievementThreshold = config("Achievements", "Threshold", 3, "Total amount of achievement effects allowed at the same time");
             _OutlineColor = config("1 - General", "6 - Outline Color", Color.yellow, "Set the color of the outline for selected items");
-
             _AlmanacHotKey = config("1 - General", "7 - Almanac HotKey", KeyCode.F6, "Set the hotkey to open almanac", false);
-
             _LoadDefaultAchievements = config("1 - General", "8 - Load Default Achievements", Toggle.Off,
                 "If on, Almanac will write any missing default achievements to file", false);
-
             _TreasureCooldown = config("Cooldown", "Treasure Hunt", 30,
                 "Set cooldown between treasure hunts, in minutes");
             _BountyCooldown = config("Cooldown", "Bounties", 30, "Set cooldown between bounty hunts, in minutes");
-
             _BountyEnabled = config("2 - Settings", "Bounties", Toggle.On, "If on, bounty feature is enabled");
             _TreasureEnabled = config("2 - Settings", "Treasures", Toggle.On, "If on, treasure feature is enabled");
             _AchievementsEnabled = config("3 - Achievements", "Enabled", Toggle.On, "If on, achievements is enabled");

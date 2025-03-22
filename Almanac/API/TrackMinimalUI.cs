@@ -15,6 +15,10 @@ public static class TrackMinimalUI
         watcher.EnableRaisingEvents = true;
     }
 
-    private static void OnFileChange(object sender, FileSystemEventArgs e) => CacheAssets.ReloadAssets();
+    private static void OnFileChange(object sender, FileSystemEventArgs e)
+    {
+        if (!AlmanacUI.m_instance || !SidePanel.m_instance) return;
+        AlmanacUI.m_instance.ReloadAssets();
+    }
 
 }

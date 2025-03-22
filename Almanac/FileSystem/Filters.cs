@@ -6,8 +6,11 @@ namespace Almanac.FileSystem;
 
 public static class Filters
 {
-    public static List<string> FilterList = new();
-    private static readonly List<string> defaultList = new()
+    public static bool Ignore(string name) =>
+        AlmanacPlugin._UseIgnoreList.Value is AlmanacPlugin.Toggle.On && m_filter.Contains(name);
+    
+    public static List<string> m_filter = new();
+    private static readonly List<string> m_default = new()
     {
         "#List out prefabs to ignore:",
         "StaminaUpgrade_Greydwarf",
@@ -34,20 +37,21 @@ public static class Filters
         "CapeOdin",
         "HelmetOdin",
         "TankardOdin",
-        "ShieldIronSquare"
+        "ShieldIronSquare",
+        "SwordIronFire",
+        "goblin_bed"
     };
     public static void InitFilters()
     {
-        ItemDataCollector.ClearCachedItemDrops();
         if (!File.Exists(AlmanacPaths.IgnorePath))
         {
-            File.WriteAllLines(AlmanacPaths.IgnorePath, defaultList);
+            File.WriteAllLines(AlmanacPaths.IgnorePath, m_default);
         }
-        FilterList.Clear();
+        m_filter.Clear();
         foreach (string line in File.ReadLines(AlmanacPaths.IgnorePath))
         {
             if (line.StartsWith("#")) continue;
-            FilterList.Add(line);
+            m_filter.Add(line);
         }
     }
 }

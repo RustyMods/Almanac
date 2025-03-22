@@ -10,7 +10,7 @@
         <AppDesignerFolder>Properties</AppDesignerFolder>
         <RootNamespace>Almanac</RootNamespace>
         <AssemblyName>Almanac</AssemblyName>
-        <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
+        <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
         <FileAlignment>512</FileAlignment>
         <LangVersion>10</LangVersion>
         <Nullable>enable</Nullable>
@@ -79,8 +79,14 @@
         <Reference Include="Groups">
           <HintPath>Libs\GroupsAPI.dll</HintPath>
         </Reference>
+        <Reference Include="gui_framework">
+          <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Valheim\valheim_Data\Managed\publicized_assemblies\gui_framework_publicized.dll</HintPath>
+        </Reference>
         <Reference Include="ServerSync">
             <HintPath>Libs\ServerSync.dll</HintPath>
+        </Reference>
+        <Reference Include="Splatform">
+          <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Valheim\valheim_Data\Managed\publicized_assemblies\Splatform_publicized.dll</HintPath>
         </Reference>
         <Reference Include="System" />
         <Reference Include="System.Core" />
@@ -127,8 +133,8 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="Achievements\AchievementEffect.cs" />
-        <Compile Include="Achievements\AchievementManager.cs" />
+        <Compile Include="Achievements\EffectMan.cs" />
+        <Compile Include="Achievements\Manager.cs" />
         <Compile Include="Achievements\AchievementTypes.cs" />
         <Compile Include="Achievements\AchievementYML.cs" />
         <Compile Include="Achievements\CreatureLists.cs" />
@@ -139,9 +145,9 @@
         <Compile Include="Bounties\BountyPatches.cs" />
         <Compile Include="Bounties\CachedEffects.cs" />
         <Compile Include="Bounties\Data.cs" />
-        <Compile Include="Data\CreatureDataCollector.cs" />
-        <Compile Include="Data\ItemDataCollector.cs" />
-        <Compile Include="Data\PieceDataCollector.cs" />
+        <Compile Include="Data\BuildPieces.cs" />
+        <Compile Include="Data\Creatures.cs" />
+        <Compile Include="Data\Items.cs" />
         <Compile Include="Data\PlayerStats.cs" />
         <Compile Include="FileSystem\AlmanacPaths.cs" />
         <Compile Include="FileSystem\FileWatcher.cs" />
@@ -154,26 +160,30 @@
         <Compile Include="TreasureHunt\Data.cs" />
         <Compile Include="TreasureHunt\TreasureHunt.cs" />
         <Compile Include="TreasureHunt\TreasureManager.cs" />
-        <Compile Include="UI\CacheAssets.cs" />
-        <Compile Include="UI\Categories.cs" />
-        <Compile Include="UI\CreateAlmanac.cs" />
+        <Compile Include="UI\AlmanacElement.cs" />
+        <Compile Include="UI\AlmanacUI.cs" />
         <Compile Include="UI\Entries.cs" />
-        <Compile Include="UI\UITools.cs" />
-        <Compile Include="UI\UpdateAlmanac.cs" />
+        <Compile Include="UI\PanelElements.cs" />
+        <Compile Include="UI\SidePanel.cs" />
+        <Compile Include="Utilities\AlmanacCommands.cs" />
+        <Compile Include="Utilities\Assets.cs" />
+        <Compile Include="Utilities\FontManager.cs" />
+        <Compile Include="Utilities\Helpers.cs" />
         <Compile Include="Utilities\LocalizationManager.cs" />
         <Compile Include="Utilities\SpriteManager.cs" />
-        <Compile Include="Utilities\TerminalCommands.cs" />
-        <Compile Include="Utilities\Utility.cs" />
         <Compile Include="VersionHandshake.cs" />
     </ItemGroup>
     <ItemGroup>
         <None Include="App.config" />
     </ItemGroup>
     <ItemGroup>
-        <EmbeddedResource Include="..\..\..\evennewerbundles\almanacbundle">
-          <Link>assets\almanacbundle</Link>
+        <EmbeddedResource Include="..\..\..\bundles_2024\almanacui">
+          <Link>assets\almanacui</Link>
         </EmbeddedResource>
         <Content Include=".gitignore" />
+        <EmbeddedResource Include="assets\arrowdrop.png" />
+        <EmbeddedResource Include="assets\toggleOff.png" />
+        <EmbeddedResource Include="assets\toggleOn.png" />
         <Content Include="environment.props" />
         <EmbeddedResource Include="icons\AlmanacIconButton.png" />
         <EmbeddedResource Include="icons\arrow_basic.png" />
@@ -211,32 +221,6 @@
         </Content>
         <Content Include="Libs\ServerSync.dll" />
         <EmbeddedResource Include="translations\English.yml" />
-        <EmbeddedResource Include="translations\Bulgarian.json" />
-        <EmbeddedResource Include="translations\Chinese.json" />
-        <EmbeddedResource Include="translations\Croatian.json" />
-        <EmbeddedResource Include="translations\Czech.json" />
-        <EmbeddedResource Include="translations\Danish.json" />
-        <EmbeddedResource Include="translations\Dutch.json" />
-        <EmbeddedResource Include="translations\Finnish.json" />
-        <EmbeddedResource Include="translations\French.json" />
-        <EmbeddedResource Include="translations\German.json" />
-        <EmbeddedResource Include="translations\Hungarian.json" />
-        <EmbeddedResource Include="translations\Icelandic.json" />
-        <EmbeddedResource Include="translations\Italian.json" />
-        <EmbeddedResource Include="translations\Japanese.json" />
-        <EmbeddedResource Include="translations\Korean.json" />
-        <EmbeddedResource Include="translations\Latvian.json" />
-        <EmbeddedResource Include="translations\Lithuanian.json" />
-        <EmbeddedResource Include="translations\Norwegian.json" />
-        <EmbeddedResource Include="translations\Polish.json" />
-        <EmbeddedResource Include="translations\Portuguese.json" />
-        <EmbeddedResource Include="translations\Romanian.json" />
-        <EmbeddedResource Include="translations\Russian.json" />
-        <EmbeddedResource Include="translations\Serbian.json" />
-        <EmbeddedResource Include="translations\Slovak.json" />
-        <EmbeddedResource Include="translations\Spanish.json" />
-        <EmbeddedResource Include="translations\Swedish.json" />
-        <EmbeddedResource Include="translations\Ukrainian.json" />
         <Content Include="Tutorials\Almanac_Readme.md" />
         <Content Include="Tutorials\README.md" />
         <Content Include="UpdateManifest.ps1" />

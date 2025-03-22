@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using Almanac.Data;
 using Almanac.FileSystem;
-using UnityEngine;
 
 namespace Almanac.Achievements;
 
@@ -34,20 +33,18 @@ public static class CreatureLists
     private static readonly List<string> CustomBrutes = new()
         { "Greydwarf_Elite", "GoblinBrute", "SeekerBrute" };
 
-    public static Dictionary<string, List<CreatureDataCollector.CreatureData>> CustomCreatureGroups = new();
+    public static Dictionary<string, List<Creatures.Data>> CustomCreatureGroups = new();
 
-    public static Dictionary<Heightmap.Biome, List<CreatureDataCollector.CreatureData>> BiomeCreatureMap = new();
+    public static Dictionary<Heightmap.Biome, List<Creatures.Data>> BiomeCreatureMap = new();
 
-    public static List<CreatureDataCollector.CreatureData> GetBiomeCreatures(Heightmap.Biome land) => BiomeCreatureMap[land];
+    public static List<Creatures.Data> GetBiomeCreatures(Heightmap.Biome land) => BiomeCreatureMap[land];
 
-    public static List<CreatureDataCollector.CreatureData> GetCustomCreatureGroup(string key)
+    public static List<Creatures.Data> GetCustomCreatureGroup(string key)
     {
-        if (!CustomCreatureGroups.TryGetValue(key, out List<CreatureDataCollector.CreatureData> data))
-            return new List<CreatureDataCollector.CreatureData>();
-        return data;
+        return !CustomCreatureGroups.TryGetValue(key, out List<Creatures.Data> data) ? new List<Creatures.Data>() : data;
     }
 
-    public static void InitCreatureLists()
+    public static void Init()
     {
         AlmanacPlugin.AlmanacLogger.LogDebug("Initializing creature list");
         AlmanacPaths.CreateFolderDirectories();
@@ -90,7 +87,7 @@ public static class CreatureLists
             try
             {
                 List<string> data = File.ReadAllLines(filePath).ToList();
-                BiomeCreatureMap[land] = ValidatedPrefabs(data);
+                BiomeCreatureMap[land] = ValidatedPrefabs(land.ToString(), data);
             }
             catch
             {
@@ -106,23 +103,27 @@ public static class CreatureLists
         string[] CustomCreaturePaths = Directory.GetFiles(AlmanacPaths.CustomCreatureGroupFolder, "*.yml");
         foreach (string path in CustomCreaturePaths)
         {
-            string fileName = path.Replace(AlmanacPaths.CustomCreatureGroupFolder, "").Replace("\\", "").Replace(".yml", "");
+            string fileName = Path.GetFileName(path).Replace(".yml", string.Empty);
             List<string> data = File.ReadAllLines(path).ToList();
-            List<CreatureDataCollector.CreatureData> CreatureData = ValidatedPrefabs(data);
+            List<Creatures.Data> CreatureData = ValidatedPrefabs(fileName, data);
             CustomCreatureGroups[fileName] = CreatureData;
         }
     }
 
-    public static List<CreatureDataCollector.CreatureData> ValidatedPrefabs(List<string> input)
+    public static List<Creatures.Data> ValidatedPrefabs(string key, List<string> input)
     {
-        List<CreatureDataCollector.CreatureData> output = new();
+        List<Creatures.Data> output = new();
         foreach (string name in input)
         {
             if (name.StartsWith("#")) continue;
-            CreatureDataCollector.CreatureData? creature = CreatureDataCollector.tempCreatureData.Find(creature => creature.name.ToLower() == name.ToLower());
-
-            if (creature == null) continue;
-            output.Add(creature);
+            if (Creatures.m_creatures.TryGetValue(name, out Creatures.Data creature))
+            {
+                output.Add(creature);
+            }
+            else
+            {
+                AlmanacPlugin.AlmanacLogger.LogWarning($"[{key}.yml]: Failed to find creature: {name}, skipping...");
+            }
         }
 
         return output;

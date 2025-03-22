@@ -1,12 +1,43 @@
-﻿using HarmonyLib;
+﻿using System.Collections.Generic;
+using System.Linq;
+using HarmonyLib;
 using UnityEngine;
 
 namespace Almanac.Bounties;
 
 public static class CachedEffects
 {
-    public static EffectList PreSpawnEffectList = null!;
-    public static EffectList DoneSpawnEffectList = null!;
+    private static readonly List<Effect> m_effects = new();
+    public static readonly Effect m_preSpawnEffects = new("vfx_prespawn", "sfx_prespawn");
+    public static readonly Effect m_spawnEffects = new("vfx_spawn", "sfx_spawn");
+
+    public class Effect
+    {
+        private readonly List<string> m_effectNames;
+        private readonly EffectList m_effectList = new();
+        public Effect(params string[] effectNames)
+        {
+            m_effectNames = effectNames.ToList();
+            m_effects.Add(this);
+        }
+
+        public GameObject[] Create(Vector3 basePos, Quaternion baseRot, Transform? baseParent = null, float scale = 1f, int variant = -1)
+            => m_effectList.Create(basePos, baseRot, baseParent, scale, variant);
+
+        public void Init()
+        {
+            if (!ZNetScene.instance) return;
+            List<EffectList.EffectData> data = new();
+            foreach (var effectName in m_effectNames)
+            {
+                if (ZNetScene.instance.GetPrefab(effectName) is not { } prefab) continue;
+                data.Add(new EffectList.EffectData(){m_prefab = prefab});
+            }
+
+            m_effectList.m_effectPrefabs = data.ToArray();
+        }
+        
+    }
 
     [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.Awake))]
     private static class ZNetScene_GetBountyAssets
@@ -14,65 +45,7 @@ public static class CachedEffects
         private static void Postfix(ZNetScene __instance)
         {
             if (!__instance) return;
-            GetEffects(__instance);
+            foreach(var effect in m_effects) effect.Init();
         }
-    }
-
-    private static void GetEffects(ZNetScene instance)
-    {
-        GetPreSpawnEffects(instance);
-        GetSpawnEffects(instance);
-    }
-
-    private static void GetPreSpawnEffects(ZNetScene instance)
-    {
-        GameObject? VFX_PreSpawn = instance.GetPrefab("vfx_prespawn");
-        GameObject? SFX_PreSpawn = instance.GetPrefab("sfx_prespawn");
-        if (!VFX_PreSpawn || !SFX_PreSpawn) return;
-        
-        PreSpawnEffectList = new EffectList()
-        {
-            m_effectPrefabs = new[]
-            {
-                new EffectList.EffectData()
-                {
-                    m_prefab = VFX_PreSpawn,
-                    m_enabled = true,
-                    m_variant = -1
-                },
-                new EffectList.EffectData()
-                {
-                    m_prefab = SFX_PreSpawn,
-                    m_enabled = true,
-                    m_variant = -1,
-                }
-            }
-        };
-    }
-
-    private static void GetSpawnEffects(ZNetScene instance)
-    {
-        GameObject? VFX_Spawn = instance.GetPrefab("vfx_spawn");
-        GameObject? SFX_Spawn = instance.GetPrefab("sfx_spawn");
-        if (!VFX_Spawn || !SFX_Spawn) return;
-
-        DoneSpawnEffectList = new EffectList()
-        {
-            m_effectPrefabs = new[]
-            {
-                new EffectList.EffectData()
-                {
-                    m_prefab = VFX_Spawn,
-                    m_enabled = true,
-                    m_variant = -1
-                },
-                new EffectList.EffectData()
-                {
-                    m_prefab = SFX_Spawn,
-                    m_enabled = true,
-                    m_variant = -1
-                }
-            }
-        };
     }
 }

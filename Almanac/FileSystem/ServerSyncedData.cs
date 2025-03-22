@@ -20,7 +20,7 @@ public static class ServerSyncedData
     
     public static void InitServerAchievements()
     {
-        if (AlmanacPlugin.WorkingAsType is AlmanacPlugin.WorkingAs.Client)
+        if (!ZNet.instance || !ZNet.instance.IsServer())
         {
             AlmanacPlugin.AlmanacLogger.LogDebug("Client: Initializing server achievements");
             ServerAchievements.ValueChanged += OnServerAchievementChanged;
@@ -31,8 +31,8 @@ public static class ServerSyncedData
             UpdateServerAchievements();
         }
     }
-
     public static void UpdateServerAchievements()
+
     {
         ISerializer serializer = new SerializerBuilder().Build();
         string data = serializer.Serialize(AchievementManager.AchievementData);
@@ -47,8 +47,8 @@ public static class ServerSyncedData
         AlmanacPlugin.AlmanacLogger.LogDebug("Client: Received new achievements");
         IDeserializer deserializer = new DeserializerBuilder().Build();
         List<AchievementYML.AchievementData> data = deserializer.Deserialize<List<AchievementYML.AchievementData>>(ServerAchievements.Value);
-        
-        AchievementManager.InitAchievements(AchievementManager.LoadAchievementData(data), false);
+        AchievementManager.AchievementData = data;
+        AchievementManager.InitAchievements();
         InitiatedServerAchievements = true;
     }
     
@@ -61,7 +61,7 @@ public static class ServerSyncedData
 
     public static void InitServerIgnoreList()
     {
-        if (AlmanacPlugin.WorkingAsType is AlmanacPlugin.WorkingAs.Client)
+        if (!ZNet.instance || !ZNet.instance.IsServer())
         {
             AlmanacPlugin.AlmanacLogger.LogDebug("Client: Awaiting server ignore list");
 
@@ -77,7 +77,7 @@ public static class ServerSyncedData
     public static void UpdateServerIgnoreList()
     {
         ISerializer serializer = new SerializerBuilder().Build();
-        string data = serializer.Serialize(Filters.FilterList);
+        string data = serializer.Serialize(Filters.m_filter);
         if (data.IsNullOrWhiteSpace()) return;
 
         ServerIgnoreList.Value = data;
@@ -90,8 +90,7 @@ public static class ServerSyncedData
         IDeserializer deserializer = new DeserializerBuilder().Build();
         List<string> data = deserializer.Deserialize<List<string>>(ServerIgnoreList.Value);
 
-        Filters.FilterList = data;
-        ItemDataCollector.ClearCachedItemDrops();
+        Filters.m_filter = data;
     }
     
     #endregion
@@ -103,7 +102,7 @@ public static class ServerSyncedData
     private static readonly CustomSyncedValue<string> ServerCustomCreatureList = new(AlmanacPlugin.ConfigSync, "CustomCreatureList", "");
     public static void InitServerCreatureList()
     {
-        if (AlmanacPlugin.WorkingAsType is AlmanacPlugin.WorkingAs.Client)
+        if (!ZNet.instance || !ZNet.instance.IsServer())
         {
             AlmanacPlugin.AlmanacLogger.LogDebug("Client: Awaiting server creature list");
 
@@ -122,7 +121,7 @@ public static class ServerSyncedData
     {
         return CreatureLists.BiomeCreatureMap.ToDictionary(
             kvp => kvp.Key,
-            kvp => kvp.Value.Select(creature => creature.name).ToList()
+            kvp => kvp.Value.Select(creature => creature.m_prefabName).ToList()
         );
     }
 
@@ -130,7 +129,7 @@ public static class ServerSyncedData
     {
         return CreatureLists.CustomCreatureGroups.ToDictionary(
             kvp => kvp.Key,
-            kvp => kvp.Value.Select(creature => creature.name).ToList()
+            kvp => kvp.Value.Select(creature => creature.m_prefabName).ToList()
             );
     }
 
@@ -149,12 +148,19 @@ public static class ServerSyncedData
         if (ServerCreatureList.Value.IsNullOrWhiteSpace()) return;
         AlmanacPlugin.AlmanacLogger.LogDebug("Client: Server Creature List changed, reloading");
         IDeserializer deserializer = new DeserializerBuilder().Build();
-        Dictionary<Heightmap.Biome, List<string>> data = deserializer.Deserialize<
-            Dictionary<Heightmap.Biome, List<string>>>(ServerCreatureList.Value);
+        try
+        {
+            Dictionary<Heightmap.Biome, List<string>> data =
+                deserializer.Deserialize<Dictionary<Heightmap.Biome, List<string>>>(ServerCreatureList.Value);
 
-        CreatureLists.BiomeCreatureMap = data.ToDictionary(
-            kvp => kvp.Key,
-            kvp => CreatureLists.ValidatedPrefabs(kvp.Value));
+            CreatureLists.BiomeCreatureMap = data.ToDictionary(
+                kvp => kvp.Key,
+                kvp => CreatureLists.ValidatedPrefabs(kvp.Key.ToString(), kvp.Value));
+        }
+        catch
+        {
+            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to deserialize server biome creatures");
+        }
     }
 
     private static void OnServerCustomCreatureListChanged()
@@ -162,11 +168,18 @@ public static class ServerSyncedData
         if (ServerCustomCreatureList.Value.IsNullOrWhiteSpace()) return;
         AlmanacPlugin.AlmanacLogger.LogDebug("Client: Server Custom Creature List changed, reloading");
         IDeserializer deserializer = new DeserializerBuilder().Build();
-        Dictionary<string, List<string>> data =
-            deserializer.Deserialize<Dictionary<string, List<string>>>(ServerCustomCreatureList.Value);
-        CreatureLists.CustomCreatureGroups = data.ToDictionary(
-            kvp => kvp.Key,
-            kvp => CreatureLists.ValidatedPrefabs(kvp.Value));
+        try
+        {
+            Dictionary<string, List<string>> data =
+                deserializer.Deserialize<Dictionary<string, List<string>>>(ServerCustomCreatureList.Value);
+            CreatureLists.CustomCreatureGroups = data.ToDictionary(
+                kvp => kvp.Key,
+                kvp => CreatureLists.ValidatedPrefabs(kvp.Key, kvp.Value));
+        }
+        catch
+        {
+            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to deserialize server custom creatures");
+        }
     }
 
     #endregion
@@ -178,7 +191,7 @@ public static class ServerSyncedData
 
     public static void InitServerBountyList()
     {
-        if (AlmanacPlugin.WorkingAsType is AlmanacPlugin.WorkingAs.Client)
+        if (!ZNet.instance || !ZNet.instance.IsServer())
         {
             AlmanacPlugin.AlmanacLogger.LogDebug("Client: Awaiting server bounties");
             ServerBountyList.ValueChanged += OnServerBountyListChange;
@@ -213,7 +226,7 @@ public static class ServerSyncedData
 
     public static void InitServerTreasureHunt()
     {
-        if (AlmanacPlugin.WorkingAsType is AlmanacPlugin.WorkingAs.Client)
+        if (!ZNet.instance || !ZNet.instance.IsServer())
         {
             AlmanacPlugin.AlmanacLogger.LogDebug("Client: Awaiting server treasure hunts");
             ServerTreasureList.ValueChanged += OnServerTreasureChange;

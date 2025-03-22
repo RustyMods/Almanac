@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using Almanac.FileSystem;
 using YamlDotNet.Serialization;
-using static Almanac.Achievements.AlmanacEffectManager;
+using static Almanac.Achievements.EffectMan;
 
 namespace Almanac.Achievements;
 

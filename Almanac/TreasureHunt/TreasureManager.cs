@@ -10,7 +10,7 @@ namespace Almanac.TreasureHunt;
 
 public static class TreasureManager
 {
-    public static readonly List<Data.ValidatedTreasure> RegisteredTreasure = new();
+    public static readonly List<Data.Treasure> RegisteredTreasure = new();
     public static readonly List<Data.TreasureYML> ValidatedYML = new();
 
     public static void InitTreasureManager(bool useServerData = false)
@@ -29,9 +29,7 @@ public static class TreasureManager
             List<Data.TreasureYML> list = deserializer.Deserialize<List<Data.TreasureYML>>(ServerSyncedData.ServerTreasureList.Value);
             foreach (Data.TreasureYML? treasure in list)
             {
-                if (!ValidateTreasure(treasure, out Data.ValidatedTreasure validatedTreasure)) continue;
-                RegisteredTreasure.Add(validatedTreasure);
-                ValidatedYML.Add(treasure);
+                var _ = new Data.Treasure(treasure);
             }
         }
         else
@@ -55,10 +53,7 @@ public static class TreasureManager
             
             foreach (Data.TreasureYML? treasure in GetDefaultTreasure())
             {
-                if (!ValidateTreasure(treasure, out Data.ValidatedTreasure validatedTreasure)) continue;
-                RegisteredTreasure.Add(validatedTreasure);
-                ValidatedYML.Add(treasure);
-                
+                var _ = new Data.Treasure(treasure);
                 string path = AlmanacPaths.TreasureHuntFolderPath + Path.DirectorySeparatorChar + treasure.name.Replace(" ", "_") + ".yml";
                 string data = serializer.Serialize(treasure);
                 File.WriteAllText(path, data);
@@ -71,9 +66,7 @@ public static class TreasureManager
             {
                 string data = File.ReadAllText(path);
                 Data.TreasureYML deserialized = deserializer.Deserialize<Data.TreasureYML>(data);
-                if (!ValidateTreasure(deserialized, out Data.ValidatedTreasure validatedTreasure)) continue;
-                RegisteredTreasure.Add(validatedTreasure);
-                ValidatedYML.Add(deserialized);
+                var _ = new Data.Treasure(deserialized);
             }
         }
     }
@@ -355,66 +348,5 @@ public static class TreasureManager
                 }
             },
         };
-    }
-    private static bool ValidateTreasure(Data.TreasureYML data, out Data.ValidatedTreasure output)
-    {
-        output = new();
-        if (data.name.IsNullOrWhiteSpace()) return false;
-        if (data.biome == Heightmap.Biome.None) return false;
-        List<DropTable.DropData> drops = new();
-        foreach (Data.LootData? loot in data.loot)
-        {
-            GameObject item = ObjectDB.instance.GetItemPrefab(loot.item_name);
-            if (!item) continue;
-            if (!item.GetComponent<ItemDrop>()) continue;
-            drops.Add(new DropTable.DropData()
-            {
-                m_item = item,
-                m_weight = loot.weight,
-                m_stackMax = loot.max_stack,
-                m_stackMin = loot.min_stack
-            });
-        }
-
-        if (data.sprite_name.IsNullOrWhiteSpace()) return false;
-        if (!SpriteManager.GetSprite(data.sprite_name, out Sprite? sprite))
-        {
-            GameObject? prefab = ObjectDB.instance.GetItemPrefab(data.sprite_name);
-            if (!prefab) return false;
-            if (!prefab.TryGetComponent(out ItemDrop itemDrop)) return false;
-            output.m_sprite = itemDrop.m_itemData.GetIcon();
-        }
-        else
-        {
-            if (sprite == null) return false;
-            output.m_sprite = sprite;
-        }
-        
-        output.m_name = data.name;
-        output.m_biome = data.biome;
-        output.m_currency = TryGetCurrency(data);
-        output.m_cost = data.cost;
-        output.m_dropTable = new()
-        {
-            m_drops = drops,
-            m_dropMax = drops.Count,
-            m_dropMin = drops.Count,
-            m_oneOfEach = true,
-            m_dropChance = 1f
-        };
-        return true;
-    }
-
-    private static ItemDrop TryGetCurrency(Data.TreasureYML data)
-    {
-        GameObject currency = ObjectDB.instance.GetItemPrefab(data.currency);
-        if (!currency) return GetDefaultCurrency();
-        return currency.TryGetComponent(out ItemDrop currencyItem) ? currencyItem : GetDefaultCurrency();
-    }
-
-    private static ItemDrop GetDefaultCurrency()
-    {
-        GameObject coins = ObjectDB.instance.GetItemPrefab("Coins");
-        return coins.GetComponent<ItemDrop>();
     }
 }

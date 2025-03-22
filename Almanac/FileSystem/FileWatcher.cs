@@ -89,15 +89,9 @@ public static class FileWatcher
                 AlmanacPlugin.AlmanacLogger.LogDebug(fileName + " deleted, reloading treasures");
                 break;
         }
-        
-        if (AlmanacPlugin.WorkingAsType is not AlmanacPlugin.WorkingAs.Client)
-        {
-            ServerSyncedData.UpdateServerTreasureList();
-        }
-        else
-        {
-            TreasureHunt.TreasureManager.InitTreasureManager(true);
-        }
+
+        if (ZNet.instance && ZNet.instance.IsServer()) ServerSyncedData.UpdateServerTreasureList();
+        else TreasureHunt.TreasureManager.InitTreasureManager(true);
     }
 
     private static void OnServerPlayerDataListChange(object sender, FileSystemEventArgs e)
@@ -127,11 +121,11 @@ public static class FileWatcher
                 break;
         }
         
-        AchievementManager.AchievementsRan = false;
-        AchievementManager.ReadAchievements();
-        AchievementManager.InitAchievements(AchievementManager.LoadAchievementData(AchievementManager.AchievementData));
-
-        if (AlmanacPlugin.WorkingAsType is not AlmanacPlugin.WorkingAs.Client)
+        EffectMan.Clear();
+        EffectMan.DeleteAll();
+        AchievementManager.Read();
+        AchievementManager.Setup();
+        if (ZNet.instance && ZNet.instance.IsServer())
         {
             ServerSyncedData.UpdateServerAchievements();
         }
@@ -144,11 +138,8 @@ public static class FileWatcher
         AlmanacPlugin.AlmanacLogger.LogDebug(fileName + " changed, reloading filters");
         
         Filters.InitFilters();
+        if (ZNet.instance && ZNet.instance.IsServer()) ServerSyncedData.UpdateServerIgnoreList();
 
-        if (AlmanacPlugin.WorkingAsType is not AlmanacPlugin.WorkingAs.Client)
-        {
-            ServerSyncedData.UpdateServerIgnoreList();
-        }
     }
 
     private static void OnFilterDelete(object sender, FileSystemEventArgs e)
@@ -157,7 +148,7 @@ public static class FileWatcher
         if (fileName != AlmanacPaths.IgnoreListFileName) return;
         AlmanacPlugin.AlmanacLogger.LogDebug(fileName + " deleted, removing filters");
         
-        Filters.FilterList.Clear();
+        Filters.m_filter.Clear();
     }
 
     private static void OnCreatureChange(object sender, FileSystemEventArgs e)
@@ -176,11 +167,8 @@ public static class FileWatcher
                 break;
         }
         
-        CreatureLists.InitCreatureLists();
-        if (AlmanacPlugin.WorkingAsType is not AlmanacPlugin.WorkingAs.Client)
-        {
-            ServerSyncedData.UpdateServerCreatureList();
-        }
+        CreatureLists.Init();
+        if (ZNet.instance && ZNet.instance.IsServer()) ServerSyncedData.UpdateServerCreatureList();
     }
 
     private static void OnBountyChange(object sender, FileSystemEventArgs e)
@@ -200,15 +188,11 @@ public static class FileWatcher
                 break;
         }
 
-        if (AlmanacPlugin.WorkingAsType is not AlmanacPlugin.WorkingAs.Client)
+        if (ZNet.instance && ZNet.instance.IsServer())
         {
             BountyManager.InitBounties(false);
             ServerSyncedData.UpdateServerBountyList();
         }
-        else
-        {
-            BountyManager.InitBounties(false);
-        }
-        
+        else BountyManager.InitBounties(false);
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Almanac.Achievements;
 using Almanac.Data;
 using HarmonyLib;
@@ -12,7 +13,7 @@ namespace Almanac.FileSystem;
 public static class Leaderboard
 {
     public static Dictionary<string, PlayerData> LeaderboardData = new();
-    
+
     private static void SaveLeaderboardToFile()
     {
         AlmanacPaths.CreateFolderDirectories();
@@ -41,7 +42,6 @@ public static class Leaderboard
         zPackage.Write(data);
         ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.instance.GetServerPeerID(), nameof(RPC_Leaderboard_Receive), zPackage);
     }
-
     public static void SendToClients(string data)
     {
         AlmanacPlugin.AlmanacLogger.LogDebug("Server: Sending updated leaderboard to clients");
@@ -52,7 +52,6 @@ public static class Leaderboard
             peer.m_rpc.Invoke(nameof(RPC_Leaderboard_Client), zPackage);
         }
     }
-
     public static void RPC_Leaderboard_Receive(long sender, ZPackage pkg)
     {
         try
@@ -89,14 +88,12 @@ public static class Leaderboard
             AlmanacPlugin.AlmanacLogger.LogDebug("Failed to save received leaderboard");
         }
     }
-
     public static void BothLeaderboardCoroutine()
     {
         AlmanacPlugin.AlmanacLogger.LogDebug("Server: Starting coroutine to update local leaderboard");
         AlmanacPlugin._plugin.StopCoroutine(UpdateLocalPlayerLeaderboard());
         AlmanacPlugin._plugin.StartCoroutine(UpdateLocalPlayerLeaderboard());
     }
-    
     private static IEnumerator UpdateLocalPlayerLeaderboard()
     {
         while (Player.m_localPlayer)
@@ -105,10 +102,9 @@ public static class Leaderboard
             yield return new WaitForSeconds(30f * 60f);
         }
     }
-
     private static void Leaderboard_Save_Local()
     {
-        if (AlmanacPlugin.WorkingAsType is not AlmanacPlugin.WorkingAs.Both) return;
+        if (!ZNet.instance || !ZNet.instance.IsServer()) return;
         AlmanacPlugin.AlmanacLogger.LogDebug("Server: Server is player, adding local data to leaderboard");
         ServerPlayerData LatestPlayerData = PlayerStats.GetServerPlayerData();
         if (LeaderboardData.TryGetValue(LatestPlayerData.player_name, out PlayerData data))
@@ -131,7 +127,6 @@ public static class Leaderboard
         }
         SaveLeaderboardToFile();
     }
-
     public static void RPC_Leaderboard_Client(ZRpc rpc, ZPackage pkg)
     {
         AlmanacPlugin.AlmanacLogger.LogDebug("Client: Received leaderboard data");
@@ -140,7 +135,6 @@ public static class Leaderboard
         Dictionary<string, PlayerData> list = deserializer.Deserialize<Dictionary<string, PlayerData>>(data);
         LeaderboardData = list;
     }
-    
     private static void ServerLeaderboardCoroutine()
     {
         AlmanacPlugin.AlmanacLogger.LogDebug("Server: Starting coroutine to send leaderboard data to clients");
@@ -149,14 +143,12 @@ public static class Leaderboard
         AlmanacPlugin._plugin.StopCoroutine(UpdateSendLeaderboardToClients());
         AlmanacPlugin._plugin.StartCoroutine(UpdateSendLeaderboardToClients());
     }
-
     public static void ClientLeaderboardCoroutine()
     {
         AlmanacPlugin.AlmanacLogger.LogDebug("Client: Starting coroutine to send leaderboard data to server");
         AlmanacPlugin._plugin.StopCoroutine(UpdateSendPlayerDataToServer());
         AlmanacPlugin._plugin.StartCoroutine(UpdateSendPlayerDataToServer());
     }
-    
     private static IEnumerator UpdateSendPlayerDataToServer()
     {
         while (Player.m_localPlayer)
@@ -165,7 +157,6 @@ public static class Leaderboard
             yield return new WaitForSeconds(30f * 60f);
         }
     }
-
     public static void SendPlayerData()
     {
         AlmanacPlugin.AlmanacLogger.LogDebug("Client: Sending leaderboard data to server");
@@ -173,7 +164,6 @@ public static class Leaderboard
         string data = serializer.Serialize(PlayerStats.GetServerPlayerData());
         SendToServer(data);
     }
-    
     private static IEnumerator UpdateSendLeaderboardToClients()
     {
         while (ZNet.instance)
@@ -182,7 +172,6 @@ public static class Leaderboard
             yield return new WaitForSeconds(30f * 60f);
         }
     }
-    
     private static void InitServerPlayerListData()
     {
         AlmanacPlugin.AlmanacLogger.LogDebug("Server: Initialize leaderboard");
@@ -207,10 +196,8 @@ public static class Leaderboard
         private static void Postfix()
         {
             ZRoutedRpc.instance.Register<ZPackage>(nameof(RPC_Leaderboard_Receive), RPC_Leaderboard_Receive);
-            if (AlmanacPlugin.WorkingAsType is not AlmanacPlugin.WorkingAs.Client)
-            {
-                ServerLeaderboardCoroutine();
-            }
+            if (!ZNet.instance || !ZNet.instance.IsServer()) return;
+            ServerLeaderboardCoroutine();
         }
     }
     
@@ -224,25 +211,23 @@ public static class Leaderboard
             ISerializer serializer = new SerializerBuilder().Build();
             string data = serializer.Serialize(PlayerStats.GetServerPlayerData());
             SendToServer(data);
-
-            Player.m_localPlayer.m_customData[AlmanacEffectManager.AchievementKey] = serializer.Serialize(AlmanacEffectManager.SavedAchievementEffectNames);
+            var names = EffectMan.ActiveAchievementEffects.Select(x => x.name).ToList();
+            Player.m_localPlayer.m_customData[EffectMan.PlayerEffectKey] = serializer.Serialize(names);
         }
     }
 
     [HarmonyPatch(typeof(ZNet), nameof(ZNet.OnNewConnection))]
     private static class OnNewConnectionPatch
     {
-        private static void Postfix(ZNetPeer peer)
+        private static void Postfix(ZNet __instance, ZNetPeer peer)
         {
-            AlmanacPlugin.AlmanacLogger.LogDebug("Client Connected : Registering Almanac RPC");
+            AlmanacPlugin.AlmanacLogger.LogDebug("New connection : Registering Almanac RPC");
             peer.m_rpc.Register<ZPackage>(nameof(RPC_Leaderboard_Client),RPC_Leaderboard_Client);
-            if (AlmanacPlugin.WorkingAsType is not AlmanacPlugin.WorkingAs.Client)
-            {
-                AlmanacPlugin.AlmanacLogger.LogDebug("Server: New connection, sending updated leaderboard");
-                ISerializer serializer = new SerializerBuilder().Build();
-                string data = serializer.Serialize(LeaderboardData);
-                SendToClients(data);
-            }
+            if (!__instance.IsServer()) return;
+            AlmanacPlugin.AlmanacLogger.LogDebug("Server: New connection, sending updated leaderboard");
+            ISerializer serializer = new SerializerBuilder().Build();
+            string data = serializer.Serialize(LeaderboardData);
+            SendToClients(data);
         }
     }
 }

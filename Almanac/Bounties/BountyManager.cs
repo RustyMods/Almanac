@@ -26,7 +26,7 @@ public static class BountyManager
         
         AlmanacPaths.CreateFolderDirectories();
 
-        if (ServerSyncedData.ServerBountyList.Value.IsNullOrWhiteSpace() || AlmanacPlugin.WorkingAsType is not AlmanacPlugin.WorkingAs.Client) AddLocalBounties();
+        if (ServerSyncedData.ServerBountyList.Value.IsNullOrWhiteSpace() || ZNet.instance.IsServer()) AddLocalBounties();
         else
         {
             try
@@ -131,7 +131,7 @@ public static class BountyManager
             validatedData.m_skillAmount = data.skill_reward.amount;
         }
 
-        if (!CreatureDataCollector.TempDefeatKeys.Contains(data.defeat_key)) return false;
+        if (!Creatures.m_defeatKeys.Contains(data.defeat_key)) return false;
 
         var currency = ObjectDB.instance.GetItemPrefab(data.currency);
         if (!currency) return false;

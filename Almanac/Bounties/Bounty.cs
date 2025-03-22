@@ -1,16 +1,11 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
 using Almanac.API;
-using Almanac.Data;
-using Almanac.FileSystem;
 using Almanac.UI;
+using Almanac.Utilities;
 using BepInEx;
 using UnityEngine;
 using YamlDotNet.Serialization;
 using Random = UnityEngine.Random;
-using Utility = Almanac.Utilities.Utility;
 
 namespace Almanac.Bounties;
 
@@ -45,7 +40,7 @@ public class Bounty : MonoBehaviour
         DestroyPin();
         if (!m_isDead)
         {
-            Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$almanac_bounty_escaped");
+            Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$msg_bountyescaped");
             ActiveBountyLocation = null;
         }
     }
@@ -89,12 +84,6 @@ public class Bounty : MonoBehaviour
     public void OnDeath()
     {
         if (!_character) return;
-        // if (_character.m_lastHit == null)
-        // {
-        //     ActiveBountyLocation = null;
-        //     return;
-        // }
-
         if (_character.m_lastHit?.GetAttacker() is Player player && GetData() is {} bountyData)
         {
             var killerID = player.GetPlayerID();
@@ -114,7 +103,7 @@ public class Bounty : MonoBehaviour
                         if (Enum.TryParse(bountyData.m_skillType, out Skills.SkillType skillType))
                         {
                             Player.m_localPlayer.RaiseSkill(skillType, bountyData.m_skillAmount);
-                            Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, $"$almanac_raised {Utility.ConvertSkills(skillType)} $almanac_by {bountyData.m_skillAmount} $almanac_xp");
+                            Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, $"$msg_raised {Helpers.ConvertSkills(skillType)} $msg_by {bountyData.m_skillAmount} $label_xp");
                         }
                         break;
                 }
@@ -123,7 +112,7 @@ public class Bounty : MonoBehaviour
             }
             else
             {
-                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Bounty stolen by: " + player.GetPlayerName());
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$msg_bountystolenby: " + player.GetPlayerName());
             }
             
         }
@@ -159,41 +148,71 @@ public class Bounty : MonoBehaviour
         return value.IsNullOrWhiteSpace() ? null : deserializer.Deserialize<Data.BountyData>(value);
     }
 
-    private static bool AcceptBounty(Data.BountyLocation bountyLocation)
+    public static bool CancelBounty(Data.ValidatedBounty data)
     {
-        if (ActiveBountyLocation != null)
+        if (ActiveBountyLocation == null) return false;
+        Minimap.instance.RemovePin(ActiveBountyLocation.m_pin);
+        ActiveBountyLocation = null;
+        Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$msg_canceledbounty");
+        var component = Instantiate(AlmanacUI.m_buttonElement, SidePanel.m_instance.m_contentRoot).GetComponent<AlmanacButton>();
+        component.Setup("$label_acceptbounty", () =>
         {
-            if (ActiveBountyLocation.m_critter == bountyLocation.m_critter)
+            if (AcceptBounty(data))
             {
-                Minimap.instance.RemovePin(ActiveBountyLocation.m_pin);
-                ActiveBountyLocation = null;
-                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$msg_canceled_bounty");
-                UpdateAlmanac.UpdateBountyPanel();
+                Destroy(component.gameObject);
             }
-            else
+        }, true);
+        return true;
+    }
+
+    public static bool AcceptBounty(Data.ValidatedBounty data)
+    {
+        if (m_dateTime != DateTime.MaxValue)
+        {
+            DateTime lastBounty = m_dateTime + TimeSpan.FromMinutes(AlmanacPlugin._BountyCooldown.Value);
+            if (lastBounty > DateTime.Now)
             {
-                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$almanac_already_have_active_bounty");
+                int difference = (lastBounty - DateTime.Now).Minutes;
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"$msg_bountyavailablein {difference} $msg_minutes");
+                return false;
             }
-            return false;
         }
+
+        if (data.m_cost > 0 && !Player.m_localPlayer.NoCostCheat())
+        {
+            if (!Player.m_localPlayer.GetInventory().HaveItem(data.m_currency.m_itemData.m_shared.m_name))
+            {
+                                            
+                return false;
+            }
+
+            if (Player.m_localPlayer.GetInventory().CountItems(data.m_currency.m_itemData.m_shared.m_name) < data.m_cost)
+            {
+
+                return false;
+            }
+
+            Player.m_localPlayer.GetInventory().RemoveItem(data.m_currency.m_itemData.m_shared.m_name, data.m_cost);
+        }
+        var bountyLocation = new Data.BountyLocation(data);
         if (!FindSpawnLocation(bountyLocation.m_biome, out Vector3 pos)) return false;
-        
         bountyLocation.m_position = pos;
-
-        Minimap.PinData BountyPin = Minimap.instance.AddPin(pos, Minimap.PinType.Boss, bountyLocation.data.m_name, false, false);
-        BountyPin.m_icon = UpdateAlmanac.SelectedBounty.m_icon;
-
+        Minimap.PinData BountyPin = Minimap.instance.AddPin(pos, Minimap.PinType.Boss, bountyLocation.m_data.m_name, false, false);
+        BountyPin.m_icon = data.m_icon;
         bountyLocation.m_pin = BountyPin;
-
         ActiveBountyLocation = bountyLocation;
-        
-        Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$almanac_hunt " + bountyLocation.data.m_name);
-        
+        Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$msg_hunt " + bountyLocation.m_data.m_name);
         m_dateTime = DateTime.Now;
-
-        AlmanacPlugin.AlmanacLogger.LogDebug("Successfully added bounty: " + bountyLocation.data.m_name);
+        AlmanacPlugin.AlmanacLogger.LogDebug("Successfully added bounty: " + bountyLocation.m_data.m_name);
         AlmanacPlugin.AlmanacLogger.LogDebug("Location: " + pos.x + " " + pos.z);
-        
+        var component = Instantiate(AlmanacUI.m_buttonElement, SidePanel.m_instance.m_contentRoot).GetComponent<AlmanacButton>();
+        component.Setup("$label_cancelbounty", () =>
+        {
+            if (CancelBounty(data))
+            {
+                Destroy(component.gameObject);
+            }
+        }, true);
         return true;
     }
 
@@ -263,7 +282,8 @@ public class Bounty : MonoBehaviour
                     continue;
                 }
             }
-            CachedEffects.PreSpawnEffectList.Create(vector3, Quaternion.identity);
+
+            CachedEffects.m_preSpawnEffects.Create(vector3, Quaternion.identity);
 
             if (ActiveBountyLocation != null)
             {
@@ -272,71 +292,6 @@ public class Bounty : MonoBehaviour
             AlmanacPlugin._plugin.Invoke(nameof(AlmanacPlugin.SpawnBounty), 10f);
             return true;
         }
-        return false;
-    }
-
-    public static void OnClickBounty()
-    {
-        if (!HasRequirements()) return;
-        Data.BountyLocation bountyLocation = new Data.BountyLocation()
-        {
-            data = new Data.BountyData()
-            {
-                m_name = UpdateAlmanac.SelectedBounty.m_creatureName,
-                m_damageMultiplier = UpdateAlmanac.SelectedBounty.m_damageMultiplier,
-                m_health = UpdateAlmanac.SelectedBounty.m_health,
-                m_hunter = Player.m_localPlayer.GetPlayerID(),
-                m_rewardType = UpdateAlmanac.SelectedBounty.m_rewardType,
-                m_rewardAmount = UpdateAlmanac.SelectedBounty.m_itemAmount,
-                m_rewardItem = "",
-                m_damages = UpdateAlmanac.SelectedBounty.m_damages,
-                m_level = UpdateAlmanac.SelectedBounty.m_level,
-                m_skillType = UpdateAlmanac.SelectedBounty.m_skill.ToString(),
-                m_skillAmount = UpdateAlmanac.SelectedBounty.m_skillAmount,
-                m_experience = UpdateAlmanac.SelectedBounty.m_experience
-            },
-            m_biome = UpdateAlmanac.SelectedBounty.m_biome,
-            m_critter = UpdateAlmanac.SelectedBounty.m_critter,
-        };
-        if (UpdateAlmanac.SelectedBounty.m_itemReward is { } itemDrop)
-        {
-            bountyLocation.data.m_rewardItem = itemDrop.name;
-        }
-        if (AcceptBounty(bountyLocation)) UpdateAlmanac.UpdateBountyPanel();
-    }
-
-    private static bool HasRequirements()
-    {
-        if (m_dateTime != DateTime.MaxValue)
-        {
-            DateTime lastBounty = m_dateTime + TimeSpan.FromMinutes(AlmanacPlugin._BountyCooldown.Value);
-            if (lastBounty > DateTime.Now)
-            {
-                int difference = (lastBounty - DateTime.Now).Minutes;
-                Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"$msg_bounty_available {difference} $info_minutes");
-                return false;
-            }
-        }
-        if (UpdateAlmanac.SelectedBounty.m_cost <= 0) return true;
-        Inventory? inventory = Player.m_localPlayer.GetInventory();
-        if (!inventory.HaveItem(UpdateAlmanac.SelectedBounty.m_currency.m_itemData.m_shared.m_name)) return false;
-        if (inventory.GetItem(UpdateAlmanac.SelectedBounty.m_currency.m_itemData.m_shared.m_name) is not {} item)
-        {
-            AlmanacPlugin.AlmanacLogger.LogDebug("Failed to get currency item from inventory");
-            return false;
-        }
-        if (item.m_stack > UpdateAlmanac.SelectedBounty.m_cost)
-        {
-            item.m_stack -= UpdateAlmanac.SelectedBounty.m_cost;
-            return true;
-        }
-        if (item.m_stack == UpdateAlmanac.SelectedBounty.m_cost)
-        {
-            inventory.RemoveItem(item);
-            return true;
-        }
-        Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$info_not_enough " + UpdateAlmanac.SelectedBounty.m_currency.m_itemData.m_shared.m_name);
-        AlmanacPlugin.AlmanacLogger.LogDebug("Not enough currency to buy bounty");
         return false;
     }
 }

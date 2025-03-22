@@ -26,21 +26,19 @@ public static class BountyPatches
     private static void CheckTreasureLocation(Player instance)
     {
         if (TreasureHunt.TreasureHunt.ActiveTreasureLocation == null) return;
-        if (TreasureHunt.TreasureHunt.ActiveTreasureLocation.m_spawned) return;
+        if (TreasureHunt.TreasureHunt.ActiveTreasureLocation.m_spawned)
+        {
+            TreasureHunt.TreasureHunt.ActiveTreasureLocation = null;
+            return;
+        }
         if (IsWithinQuestLocation(TreasureHunt.TreasureHunt.ActiveTreasureLocation.m_pos, instance.transform.position, 100f))
         {
-            Minimap.instance.RemovePin(TreasureHunt.TreasureHunt.ActiveTreasureLocation.m_pin);
-            GameObject barrel = ZNetScene.instance.GetPrefab("barrell");
-            if (!barrel) return;
-            if (TreasureHunt.TreasureHunt.SpawnTreasure(barrel, TreasureHunt.TreasureHunt.ActiveTreasureLocation.m_pos, 50f, TreasureHunt.TreasureHunt.ActiveTreasureLocation.m_data))
-            {
-                TreasureHunt.TreasureHunt.ActiveTreasureLocation.m_spawned = true;
-            }
-            else
+            TreasureHunt.TreasureHunt.ActiveTreasureLocation.RemovePin();
+            if (!TreasureHunt.TreasureHunt.ActiveTreasureLocation.Spawn())
             {
                 instance.Message(MessageHud.MessageType.Center, "Failed to spawn treasure loot, returning cost");
+                TreasureHunt.TreasureHunt.ActiveTreasureLocation.ReturnCost();
                 TreasureHunt.TreasureHunt.ActiveTreasureLocation = null;
-                TreasureHunt.TreasureHunt.ReturnCost(true);
             }
         }
     }
@@ -56,7 +54,7 @@ public static class BountyPatches
             Minimap.instance.RemovePin(Bounty.ActiveBountyLocation.m_pin);
                 
             if (Bounty.SpawnCreature(Bounty.ActiveBountyLocation.m_critter,
-                    instance.transform.position, 10f, Bounty.ActiveBountyLocation.data))
+                    instance.transform.position, 10f, Bounty.ActiveBountyLocation.m_data))
             {
                 Bounty.ActiveBountyLocation.m_spawned = true;
             }

@@ -1,753 +1,463 @@
-# Categories
-almanac_creature_button: "Creatures"
-almanac_trophies_button: "Trophies"
-almanac_material_button: "Materials"
-almanac_consumable_button: "Consumables"
-almanac_gear_button: "Equipment"
-almanac_weapon_button: "Weapons"
-almanac_ammo_button: "Projectiles"
-almanac_fish_button: "Fishes"
-almanac_other_button: "Other"
-almanac_furniturePieces_button: "Furniture"
-almanac_comfortPieces_button: "Comfort"
-almanac_buildPieces_button: "Build"
-almanac_craftingPieces_button: "Crafting"
-almanac_miscPieces_button: "Miscellaneous"
-almanac_plantPieces_button: "Plants"
-almanac_modPieces_button: "Extra"
-almanac_jewel_button: "Jewels"
-almanac_scroll_button: "Scrolls"
-almanac_achievements_button: "Achievements"
-almanac_stats_button: "Metrics"
-
-almanac_leaderboard_title: "Leaderboard"
-almanac_leaderboard_button: "Leaderboard"
-almanac_rank_title: "Ranking"
-almanac_achievement_title: "Completed Achievements"
-almanac_kd_title: "K/D"
-almanac_kills: "k"
-almanac_deaths: "d"
-
-almanac_door_title: "Doors"
-almanac_can_not_be_closed: "Can't Be Closed"
-almanac_weak_spot: "Weak Spot"
-# Creature Data
-almanac_health: "Health Points"
-almanac_faction: "Faction"
-almanac_kill_death_title: "Almanac Tracked Data"
-almanac_kill_count: "Killed"
-almanac_death_count: "Died By"
-almanac_kill_death_ratio: "K/D Ratio"
-# Almanac Taming
-almanac_taming_food_items: "Taming Food Items"
-almanac_creature_not_tamable: "Creature not tameable"
-# Almanac AI
-almanac_avoid_fire: "Avoid Fire"
-almanac_afraid_of_fire: "Afraid of Fire"
-almanac_avoid_water: "Avoid Water"
-almanac_tolerate_water: "Tolerate Water"
-almanac_tolerate_smoke: "Tolerate Smoke"
-almanac_tolerate_tar: "Tolerate Tar"
-# Almanac Creature Titles
-almanac_creature_resistances: "Creature Resistances"
-almanac_creature_drops: "Creature Drops"
-almanac_creature_attacks: "Creature Attacks"
-almanac_creature_intelligence: "Creature Intelligence"
-almanac_attack_name: "Attack Name"
-almanac_attack_force: "Attack Force"
-almanac_dodgeable: "Dodgeable"
-almanac_status_effect: "Status Effect"
-almanac_status_effect_tooltip: "Tooltip"
-almanac_back_stab_bonus: "Backstab Bonus"
-almanac_blockable: "Blockable"
-# Almanac Damage Modifiers
-almanac_unknown: "Unknown"
-almanac_normal: "Normal"
-almanac_weak: "Weak"
-almanac_very_weak: "Very Weak"
-almanac_resistant: "Resistant"
-almanac_very_resistant: "Very Resistant"
-almanac_ignore: "Ignore"
-almanac_immune: "Immune"
-# Almanac Damage Types
-almanac_damage: "Damage"
-almanac_force: "Force"
-almanac_blunt: "Blunt"
-almanac_slash: "Slash"
-almanac_pierce: "Pierce"
-almanac_chop: "Chop"
-almanac_pickaxe: "Pickaxe"
-almanac_fire: "Fire"
-almanac_frost: "Frost"
-almanac_lightning: "Lightning"
-almanac_poison: "Poison"
-almanac_spirit: "Spirit"
-# Almanac Miscellaneous
-almanac_stagger_when_blocked: "Stagger when Blocked"
-almanac_stagger_damage_factor: "Stagger Damage Factor"
-almanac_false: "False"
-almanac_true: "True"
-# Creature Renames
-enemy_leech_cave: "Cave Leech"
-enemy_dverger_mage_fire: "Fire Mage Dverger"
-enemy_dverger_mage_ice: "Ice Mage Dverger"
-enemy_dverger_mage_support: "Support Mage Dverger"
-
-# Food Data
-almanac_food_title: "Food Data"
-almanac_food_health: "Health"
-almanac_food_stamina: "Stamina"
-almanac_food_eitr: "Eitr"
-almanac_food_burn_time: "Burn Time"
-almanac_food_health_regen: "Health Regen"
-almanac_consume_effect: "Consume Effect"
-almanac_consume_category: "Category"
-almanac_consume_tooltip: "Tooltip"
-almanac_consume_attributes: "Attributes"
-almanac_consume_message: "Start Message"
-almanac_consume_duration: "Duration"
-almanac_consume_health_regen: "Health Regen"
-almanac_consume_stamina_regen: "Stamina Regen"
-almanac_consume_eitr_regen: "Eitr Regen"
-
-# Almanac Items
-almanac_recipe_title: "Crafting"
-almanac_equipment_title: "Equipment"
-almanac_armor_title: "Armor Data"
-almanac_set_title: "Set Data"
-almanac_to: "to"
-almanac_equip_effects: "Equip Effects"
-almanac_equip_status_effect: "Effect"
-almanac_prefab_name: "Prefab Name"
-almanac_teleportable: "Teleportable"
-almanac_floating: "Floats On Water"
-almanac_locked: "???"
-almanac_quest_item_label: "Quest Item"
-almanac_stack_size_label: "Stack"
-almanac_max_stack_size_label: "Max Stack Size"
-almanac_auto_stack_label: "Auto Stack"
-almanac_value_label: "Value Price"
-almanac_quality_label: "Max Quality"
-almanac_scale_by_quality: "Scale By Quality"
-almanac_weight_label: "Weight"
-almanac_scale_by_weight: "Scale By Weight"
-almanac_durability_label: "Durability"
-almanac_variant_label: "Variant"
-almanac_world_level_label: "World Level"
-almanac_item_type_label: "Item Type"
-almanac_comfort_object: "Comfort Placement Rule"
-almanac_defeat_key: "Defeat Key"
-
-# Equipment Modifiers
-almanac_stat_modifiers_title: "Modifiers"
-almanac_movement_modifier_label: "Movement Modifier"
-almanac_eitr_regen_label: "Eitr Regen Modifier"
-almanac_base_items_stamina_modifier_label: "Stamina Modifier"
-# Armor Data
-almanac_armor_label: "Armor"
-almanac_armor_material: "Armor Material"
-almanac_helmet_hide_hair: "Helmet Hide Hair"
-almanac_helmet_hide_beard: "Helmet Hide Beard"
-almanac_attack_stamina_label: "Use Stamina"
-almanac_attack_eitr_label: "Use Eitr"
-almanac_attack_health_label: "Use Health"
-almanac_attack_health_percentage_label: "Use Health"
-almanac_attack_speed_factor_label: "Speed Factor"
-almanac_speed_factor_rotation_label: "Speed Factor Rotation"
-almanac_attack_start_noise_label: "Start Noise"
-almanac_attack_hit_noise_label: "Hit Noise"
-almanac_damage_multiplier_label: "Damage Multiplier"
-almanac_force_multiplier_label: "Force Multiplier"
-almanac_stagger_multiplier_label: "Stagger Multiplier"
-almanac_recoil_pushback_label: "Recoil Pushback"
-almanac_self_damage_label: "Self Damage"
-almanac_attack_label: "Attack"
-almanac_secondary_attack_label: "Secondary"
-# Set Data
-almanac_set_name: "Set Name"
-almanac_set_size: "Set Size"
-almanac_set_status_effect: "Set Effect"
-almanac_set_tooltip: "Set Tooltip"
-# Equip Effect
-almanac_too_many_achievements: "Too many achievements active"
-almanac_removed_effect: "Removing achievement: "
-# Shield Data
-almanac_shield_title: "Shield Data"
-almanac_shield_block_power: "Block Power"
-almanac_shield_block_power_per_level: "Block Power Per Level"
-almanac_shield_deflection_force: "Deflection Force"
-almanac_shield_deflection_force_per_level: "Deflection Force Per Level"
-almanac_timed_block_bonus: "Timed Block Bonus"
-# Weapon Data
-almanac_weapon_title: "Weapon Data"
-almanac_weapon_animation_state: "Animation State"
-almanac_weapon_skill_type: "Skill Type"
-almanac_tool_tier: "Tool Tier"
-almanac_tame_only: "Tame Only"
-almanac_equip_duration: "Equip Duration"
-almanac_always_rotate: "Always Rotate"
-almanac_attack_effect: "Attack Effect"
-almanac_spawn_on_hit: "Spawn On Hit"
-almanac_spawn_on_hit_terrain: "Spawn On Hit Terrain"
-almanac_projectile_tooltip: "Projectile Tooltip"
-almanac_ammo_type: "Ammo Type"
-almanac_attack_type: "Attack Type"
-almanac_attack_animation: "Attack Animation"
-almanac_attack_random_animations: "Random Animation"
-almanac_attack_chain_levels: "Chain Levels"
-almanac_attack_looping: "Looping Attack"
-almanac_consume_item: "Consume Item"
-almanac_hit_terrain: "Hit Terrain"
-almanac_is_home_item: "Home Item"
-almanac_attack_stamina: "Stamina Cost"
-almanac_attack_eitr: "Eitr Cost"
-almanac_attack_health: "Health Cost" 
-almanac_health_percentage: "Health Percentage"
-almanac_speed_factor: "Speed Factor"
-almanac_speed_factor_rotation: "Speed Factor Rotation"
-almanac_attack_start_noise: "Start Noise"
-# Build Pieces
-almanac_close: "Close"
-almanac_name: "Almanac"
-almanac_enabled: "Enabled"
-almanac_piece_category: "Category"
-almanac_is_upgrade: "Is Upgrade"
-almanac_comfort: "Comfort Value"
-almanac_comfort_group: "Comfort Group"
-almanac_ground_piece: "Ground Piece"
-almanac_allow_alt_ground: "Allow Alt Ground"
-almanac_ground_only: "Only Ground"
-almanac_cultivated_only: "Only Cultivated"
-almanac_water_piece: "Water Piece"
-almanac_clip_ground: "Clip Ground"
-almanac_clip_everything: "Clip Everything"
-almanac_no_in_water: "Not Allowed In Water"
-almanac_no_on_wood: "Not Allowed On Wood"
-almanac_no_on_tilt: "Not Allowed On Tilting Surface"
-almanac_ceiling_only: "Only Ceiling"
-almanac_no_on_floor: "Not Allowed On Floor"
-almanac_no_clipping: "No Clipping"
-almanac_only_in_teleport_area: "Only In Teleport Area"
-almanac_allow_dungeon: "Allowed In Dungeons"
-almanac_space_req: "Space Requirement"
-almanac_repair_piece: "Repair Piece"
-almanac_can_rotate: "Can Rotate"
-almanac_random_rotate: "Random Initial Rotation"
-almanac_allow_rotate_overlap: "Allow Rotate Overlap"
-almanac_vegetation_ground_only: "Only Vegetation Ground"
-almanac_must_be_above: "Must Be Above Parent Piece"
-almanac_craft_station: "Crafting Station"
-almanac_block_piece: "Blocking Piece"
-# Wear N Tear
-almanac_wear_tear_title: "Wear N Tear"
-almanac_no_roof_wear: "No Roof Wear"
-almanac_no_support_wear: "No Support Wear"
-almanac_material_type: "Material Type"
-almanac_piece_supports: "Supports"
-almanac_support_value: "Support Value"
-almanac_piece_health: "Piece Health"
-almanac_trigger_private_area: "Trigger Private Area"
-almanac_spawn_force: "Spawn Force"
-almanac_overcooked_item: "Overcooked Item"
-almanac_check_radius: "Check Radius"
-almanac_use_fuel: "Use Fuel"
-# Fireplace
-almanac_fireplace_title: "Fire Place"
-almanac_start_fuel: "Start Fuel"
-almanac_sec_per_fuel: "Sec Per Fuel"
-almanac_infinite_fuel: "Infinite Fuel"
-almanac_firework: "Firework Item"
-# Turret
-almanac_turret_title: "Turret"
-almanac_turn_rate: "Turn Rate"
-almanac_horizontal_angle: "Horizontal Angle"
-almanac_vertical_angle: "Vertical Angle"
-almanac_view_distance: "View Distance"
-almanac_no_target_scan_rate: "No Target Scan Rate"
-almanac_look_acceleration: "Look Acceleration"
-almanac_look_deacceleration: "Look De-acceleration"
-almanac_look_min_degrees_delta: "Look Min Degrees Delta"
-almanac_attack_cooldown: "Cooldown"
-almanac_attack_warmup: "Warmup"
-almanac_hit_noise: "Hit Noise"
-almanac_shoot_when_aim_diff: "Shoot Aim Difference"
-almanac_prediction_modifier: "Prediction modifier"
-almanac_update_target_interval_far: "Far Update Target Interval"
-almanac_update_target_interval_near: "Near Update Target Interval"
-almanac_max_ammo: "Max Ammunition"
-almanac_return_ammo_on_destroy: "Return Missile On Destroy"
-almanac_hold_repeat_interval: "Hold Repeat Interval"
-almanac_target_players: "Target Players"
-almanac_target_tamed: "Target Tamed"
-almanac_ammo: "Projectile"
-# Container
-almanac_container_title: "Container"
-almanac_container_size: "Size"
-almanac_container_privacy: "Privacy"
-almanac_check_guard: "Check Guard Stone"
-almanac_auto_destroy_empty: "Auto Destroy On Empty"
-almanac_container_drop: "Default Items Amount"
-almanac_container_drop_chance: "Default Items Chance"
-almanac_container_one_of_each: "One Of Each"
-# Crafting Station
-almanac_crafting_station_title: "Crafting Station"
-almanac_discover_range: "Discover Range"
-almanac_range_build: "Building Range"
-almanac_extra_range_per_level: "Extra Range Per Level"
-almanac_require_roof: "Require Roof To Craft"
-almanac_require_fire: "Require Fire To Craft"
-almanac_show_basic_recipes: "Show Basic Recipes"
-almanac_use_distance: "Use Distance"
-almanac_use_animation: "Use Animation Index"
-# Smelter
-almanac_smelter_title: "Smelter"
-almanac_max_ore: "Max Ore"
-almanac_sec_per_product: "Sec Per Product"
-almanac_spawn_stack: "Spawn Stack"
-almanac_fuel_item: "Fuel Item"
-almanac_max_fuel: "Max Fuel"
-almanac_fuel_per_product: "Fuel Per Product"
-almanac_add_ore_duration: "Add Ore Duration"
-almanac_conversion_title: "Conversions"
-# Extension
-almanac_extension_title: "Station Extension"
-almanac_piece_extends: "Extends"
-almanac_extension_distance: "Distance"
-almanac_extension_stack: "Can Stack"
-almanac_continuous_connection: "Continuous Connection"
-# Beehive
-almanac_beehive_title: "Bee Hive"
-almanac_effect_only_day: "Only Day"
-almanac_max_cover: "Max Cover"
-almanac_biomes: "Biomes"
-almanac_sec_per_unit: "Sec Per Unit"
-almanac_max_honey: "Max Product"
-almanac_honey_item: "Product"
-# Portal
-almanac_portal_title: "Portal"
-almanac_activation_range: "Activation Range"
-almanac_exit_distance: "Exit Distance"
-# Ship
-almanac_ship_title: "Ship"
-almanac_water_level_offset: "Water Level Offset"
-almanac_force_distance: "Force Distance"
-almanac_damping: "Damping"
-almanac_damping_sideway: "Sideway Damping"
-almanac_damping_forward: "Forward Damping"
-almanac_angular_damping: "Angular Damping"
-almanac_disable_level: "Disable Level"
-almanac_sail_force_offset: "Sail Force Offset"
-almanac_sail_force_factor: "Sail Force Factor"
-almanac_rudder_speed: "Rudder Speed"
-almanac_stear_force_offset: "Stear Force Offset"
-almanac_stear_force: "Stear Force"
-almanac_stear_velocity_force_factor: "Stear Velocity Force Factor"
-almanac_backward_force: "Backward Force"
-almanac_rudder_rotation_max: "Max Rudder Rotation"
-almanac_min_water_impact_force: "Min Water Impact Force"
-almanac_min_water_impact_interval: "Min Water Impact Interval"
-almanac_upside_down_damage_interval: "Upside Down Damage Interval"
-almanac_upside_down_damage: "Upside Down Damage"
-# Fermenter
-almanac_fermenter_title: "Fermenter"
-almanac_duration: "Duration"
-almanac_tap_delay: "Tap Delay"
-# Trap
-almanac_trap_title: "Trap"
-almanac_rearm_cooldown: "Cool Down"
-almanac_triggered_by_enemies: "Triggered By Enemies"
-almanac_triggered_by_players: "Triggered By Players"
-almanac_force_stagger: "Force Stagger"
-almanac_starts_armed: "Starts Armed"
-# Wisp Spawner
-almanac_wisp_spawner_title: "Wisp Spawner"
-almanac_spawn_interval: "Spawn Interval"
-almanac_spawn_chance: "Spawn Chance"
-almanac_max_spawned: "Max Spawned"
-almanac_only_spawn_night: "Only Night Spawn"
-almanac_no_spawn_cover: "No Spawn Cover"
-almanac_wisp_prefab: "Product"
-almanac_nearby_threshold: "Nearby Threshold"
-almanac_spawn_distance: "Spawn Distance"
-almanac_max_spawned_area: "Area Max Spawned"
-# Almanac Factions
-almanac_players: "Players"
-almanac_forest_monsters: "Forest Monsters"
-almanac_undead: "Undead"
-almanac_mountain_monsters: "Mountain Monsters"
-almanac_plains_monsters: "Plains Monsters"
-almanac_mistlands_monsters: "Mistland Monsters"
-almanac_animals_veg: "Animals Veg"
-almanac_sea_monsters: "Sea Monsters"
-almanac_boss: "Boss"
-almanac_dverger: "Dverger"
-almanac_demon: "Demon"
-#Compatibility renames
-almanac_summoned: "Summoned"
-almanac_spawned: "Spawned"
-almanac_ranged: "Ranged"
-almanac_boat: "Boat"
-almanac_meadows: "Meadows"
-almanac_blackforest: "BlackForest"
-almanac_swamps: "Swamps"
-almanac_mountains: "Mountains"
-almanac_plains: "Plains"
-almanac_mistlands: "Mistlands"
-almanac_renegade_sorcerer: "Renegade Sorcerer"
-almanac_land: "Land"
-almanac_bomber: "Bomber"
-almanac_warrior: "Warrior"
-almanac_dummy: "Dummy"
-almanac_passive: "Passive"
-almanac_rider: "Rider"
-almanac_shaman: "Shaman"
-almanac_blue: "Blue"
-almanac_red: "Red"
-almanac_melee: "Melee"
-almanac_neutral: "Neutral"
-almanac_nochest: "No Chest"
-item_larva: "Larva"
-piece_armorstand_male: "Male Armor stand"
-# Monsterlabz missing names
-enemy_chaosskeleton: "Chaos Skeleton"
-enemy_evilshadow: "Evil Shadow"
-enemy_forestspider: "Forest Spider"
-enemy_frigidspider: "Frigid Spider"
-enemy_frostspider: "Frost Spider"
-enemy_greydwarfelite: "Rooted Greydwarf"
-enemy_iceskeletont6: "Frost Skeleton T6"
-enemy_mushroomgreydwarfelite: "Shroomed Greydwarf"
-enemy_nofxchaosskeleton: "Chaos Skeleton noFx"
-enemy_nofxiceskeleton: "Frost Skeleton noFx"
-enemy_nofxpoisonskeleton: "Poison Skeleton noFx"
-enemy_npc_female0: "ML Female 0"
-enemy_npc_female1: "ML Female 1"
-enemy_npc_male0: "ML Male 0"
-enemy_npc_male1: "ML Male 1"
-enemy_npc_male2: "ML Male 2"
-enemy_npc_male3: "ML Male 3"
-enemy_skeleton_spawn: "Spawned Skeleton Warrior"
-enemy_tanspider: "Tan Spider"
-ML_HailStorm: "Hail Storm"
-ML_LightningStorm: "Lightning Storm"
-ML_MeteorShower: "Meteor Shower"
-enemy_molluscanland: "Molluscan"
-
-
-
-almanac_kill_title: "General Metrics"
-almanac_misc_title: "Miscellaneous"
-almanac_craft_or_upgrades: "Crafts or Upgrades"
-almanac_distance_title: "Distances"
-almanac_base_title: "Home Sweet Home"
-almanac_stands_title: "Decorator"
-almanac_trees_title: "Lumber"
-almanac_ore_title: "Industry"
-almanac_raven_title: "Hugin & Munin"
-almanac_tombstone_title: "Tombstone"
-almanac_guardian_power_title: "Forsaken Powers"
-almanac_death_title: "Death Metrics"
-
-almanac_total_kills: "Total Kills"
-almanac_enemy_kills: "Enemy Kills"
-almanac_player_kills: "Player Kills"
-almanac_hits_taken_enemies: "Hits Taken"
-almanac_total_deaths: "Total Deaths"
-almanac_enemy_hits: "Enemy Hits"
-almanac_enemy_last_hit: "Enemy Last Hit"
-almanac_player_hits: "Player Hits"
-
-almanac_craft_or_upgrade_count: "Count"
-almanac_builds: "Build Count"
-almanac_crafts: "Total Crafts"
-almanac_upgrades: "Upgrades"
-
-almanac_item_picked_up: "Items Picked Up"
-almanac_jumps: "Total Jumps"
-almanac_portal_used: "Portal Used"
-almanac_cheats: "Total Cheats Used"
-almanac_world_loads: "World Loaded"
-almanac_creature_tame: "Creature Tamed"
-almanac_arrows_shot: "Arrows Shot"
-almanac_doors_opened: "Doors Opened"
-almanac_doors_closed: "Doors Closed"
-almanac_bees_harvested: "Bees Harvested"
-almanac_sap_harvested: "Sap Harvested"
-almanac_turret_ammo_added: "Turret Loaded"
-almanac_turret_trophy_set: "Turret Trophy Set"
-almanac_trap_armed: "Traps Armed"
-almanac_trap_triggered: "Traps Triggered"
-almanac_place_stacks: "Stacks Placed"
-almanac_portal_dungeon_in: "Dungeon Entered"
-almanac_portal_dungeon_out: "Dungeon Exited"
-almanac_total_boss_kills: "Boss Kills"
-almanac_boss_last_hits: "Boss Last Hit"
-
-almanac_distanced_traveled: "Distance Traveled"
-almanac_distance_walked: "Distance Walked"
-
-almanac_distance_traveled: "Distance Travelled"
-almanac_distance_walk: "Distance Walked"
-almanac_distance_ran: "Distance Ran"
-almanac_distance_sailed: "Distance Sailed"
-almanac_distance_air: "Distance in Air"
-
-almanac_time_in_base: "Time in Base"
-almanac_time_out_base: "Time out of Base"
-almanac_sleep: "Times Slept"
-
-almanac_item_stand_used: "Item Stand Used"
-almanac_armor_stand_used: "Armor Stand Used"
-
-almanac_tree_chopped: "Trees Chopped"
-almanac_tree: "Total Trees"
-almanac_tree_tier_0: "Tier 0 Trees"
-almanac_tree_tier_1: "Tier 1 Trees"
-almanac_tree_tier_2: "Tier 2 Trees"
-almanac_tree_tier_3: "Tier 3 Trees"
-almanac_tree_tier_4: "Tier 4 Trees"
-almanac_tree_tier_5: "Tier 5 Trees"
-almanac_log_chopped: "Logs Chopped"
-almanac_logs: "Chopped Logs"
-
-almanac_mine_hits: "Mine Rocks Hit"
-almanac_mines: "Total Mined"
-almanac_mine_tier_0: "Tier 0 Mines"
-almanac_mine_tier_1: "Tier 1 Mines"
-almanac_mine_tier_2: "Tier 2 Mines"
-almanac_mine_tier_3: "Tier 3 Mines"
-almanac_mine_tier_4: "Tier 4 Mines"
-almanac_mine_tier_5: "Tier 5 Mines"
-
-almanac_raven_hits: "Raven Hits"
-almanac_raven_talk: "Raven Talked"
-almanac_raven_appear: "Raven Appeared"
-almanac_food_eaten: "Food Eaten"
-almanac_skeleton_summoned: "Skeleton Summoned"
-
-almanac_tombstones_opened_own: "Player Tombstone Opened"
-almanac_tombstones_open_other: "Other Tombstone Opened"
-almanac_tombstones_fit: "Tombstone Fit"
-
-almanac_death_by_undefined: "Death by Undefined"
-almanac_death_by_enemy_hit: "Death by Enemy Hits"
-almanac_death_by_player_hit: "Death by Player Hits"
-almanac_death_by_fall: "Death by Fall"
-almanac_death_by_drowning: "Death by Drowning"
-almanac_death_by_burning: "Death by Burning"
-almanac_death_by_freezing: "Death by Freezing"
-almanac_death_by_poisoned: "Death by Poisoned"
-almanac_death_by_smoke: "Death by Smoke"
-almanac_death_by_water: "Death by Water"
-almanac_death_by_edge_of_world: "Death by Edge of World"
-almanac_death_by_impact: "Death by Impact"
-almanac_death_by_cart: "Death by Cart"
-almanac_death_by_tree: "Death by Tree"
-almanac_death_by_self: "Death by Self"
-almanac_death_by_structural: "Death by Structure"
-almanac_death_by_turret: "Death by Turret"
-almanac_death_by_boat: "Death by Boat"
-almanac_death_by_stalagtite: "Death by Stalagtite"
-
-almanac_set_guardian_power: "Total Activations"
-almanac_set_power_eikthyr: "Set Eikthyr Power"
-almanac_set_power_elder: "Set Elder Power"
-almanac_set_power_bonemass: "Set Bonemass Power"
-almanac_set_power_moder: "Set Moder Power"
-almanac_set_power_yagluth: "Set Yagluth Power"
-almanac_set_power_queen: "Set Queen Power"
-almanac_set_power_ashlands: "Set Ashlands Power"
-almanac_set_power_deepNorth: "Set DeepNorth Power"
-almanac_use_guardian_power: "Use Guardian Powers"
-almanac_use_power_eikthyr: "Use Eikthyr Power"
-almanac_use_power_elder: "Use Elder Power"
-almanac_use_power_bonemass: "Use Bonemass Power"
-almanac_use_power_moder: "Use Moder Power"
-almanac_use_power_yagluth: "Use Yagluth Power"
-almanac_use_power_queen: "Use Queen Power"
-almanac_use_power_ashlands: "Use Ashlands Power"
-almanac_use_power_deepNorth: "Use DeepNorth Power"
-almanac_count: "Some Count"
-almanac_tombstones_open_own: "Opened Own Tomb"
-almanac_tombstone_open_other: "Opened Other Tomb"
-almanac_tombstone_fit: "Fit Tomb"
-
-# RuneStone Labels
-lore_meadows_random01_label: "Lore: Meadows"
-lore_meadows_random02_label: "Lore: Meadows"
-lore_meadows_random03_label: "Lore: Meadows"
-lore_meadows_random04_label: "Lore: Meadows"
-lore_meadows_random05_label: "Lore: Meadows"
-lore_meadows_random06_label: "Lore: Meadows"
-lore_meadows_random07_label: "Lore: Meadows"
-lore_meadows_random08_label: "Lore: Meadows"
-lore_meadows_random09_label: "Lore: Meadows"
-lore_meadows_random10_label: "Lore: Meadows"
-lore_meadows_random11_label: "Lore: Meadows"
-
-lore_blackforest_random01_label: "Lore: Black Forest"
-lore_blackforest_random02_label: "Lore: Black Forest"
-lore_blackforest_random03_label: "Lore: Black Forest"
-lore_blackforest_random04_label: "Lore: Black Forest"
-lore_blackforest_random05_label: "Lore: Black Forest"
-lore_blackforest_random06_label: "Lore: Black Forest"
-lore_blackforest_random07_label: "Lore: Black Forest"
-lore_blackforest_random08_label: "Lore: Black Forest"
-lore_blackforest_random09_label: "Lore: Black Forest"
-lore_blackforest_random10_label: "Lore: Black Forest"
-lore_blackforest_random11_label: "Lore: Black Forest"
-lore_blackforest_random12_label: "Lore: Black Forest"
-lore_blackforest_random13_label: "Lore: Black Forest"
-
-lore_plains_random01_label: "Lore: Plains"
-lore_plains_random02_label: "Lore: Plains"
-lore_plains_random03_label: "Lore: Plains"
-lore_plains_random04_label: "Lore: Plains"
-lore_plains_random05_label: "Lore: Plains"
-lore_plains_random06_label: "Lore: Plains"
-lore_plains_random07_label: "Lore: Plains"
-lore_plains_random08_label: "Lore: Plains"
-lore_plains_random09_label: "Lore: Plains"
-lore_plains_random10_label: "Lore: Plains"
-lore_plains_random11_label: "Lore: Plains"
-lore_plains_random12_label: "Lore: Plains"
-lore_plains_random13_label: "Lore: Plains"
-
-lore_swamp_random01_label: "Lore: Swamps"
-lore_swamp_random02_label: "Lore: Swamps"
-lore_swamp_random03_label: "Lore: Swamps"
-lore_swamp_random04_label: "Lore: Swamps"
-lore_swamp_random05_label: "Lore: Swamps"
-lore_swamp_random06_label: "Lore: Swamps"
-lore_swamp_random07_label: "Lore: Swamps"
-lore_swamp_random08_label: "Lore: Swamps"
-lore_swamp_random09_label: "Lore: Swamps"
-lore_swamp_random10_label: "Lore: Swamps"
-lore_swamp_random11_label: "Lore: Swamps"
-lore_swamp_random12_label: "Lore: Swamps"
-
-lore_mountains_random01_label: "Lore: Mountains"
-lore_mountains_random02_label: "Lore: Mountains"
-lore_mountains_random03_label: "Lore: Mountains"
-lore_mountains_random04_label: "Lore: Mountains"
-lore_mountains_random05_label: "Lore: Mountains"
-lore_mountains_random06_label: "Lore: Mountains"
-lore_mountains_random07_label: "Lore: Mountains"
-lore_mountains_random08_label: "Lore: Mountains"
-lore_mountains_random09_label: "Lore: Mountains"
-lore_mountains_random10_label: "Lore: Mountains"
-lore_mountains_random11_label: "Lore: Mountains"
-lore_mountains_random12_label: "Lore: Mountains"
-
-lore_mistlands_random01_label: "Lore: Mistlands"
-lore_mistlands_random02_label: "Lore: Mistlands"
-lore_mistlands_random03_label: "Lore: Mistlands"
-lore_mistlands_random04_label: "Lore: Mistlands"
-lore_mistlands_random05_label: "Lore: Mistlands"
-lore_mistlands_random06_label: "Lore: Mistlands"
-lore_mistlands_random07_label: "Lore: Mistlands"
-
-almanac_horizontal: "Horizonal"
-almanac_vertical: "Vertical"
-almanac_none: "None"
-almanac_area: "Area"
-almanac_trigger_projectile: "Trigger Projectile"
-almanac_tool: "Tool"
-almanac_left: "Left"
-almanac_shoulder: "Shoulder"
-almanac_legs: "Legs"
-almanac_chest: "Chest"
-almanac_helmet: "Helmet"
-almanac_utility: "Utility"
-almanac_raise_skill: "Raise Skill"
-almanac_speed: "Speed"
-almanac_noise: "Noise"
-almanac_max_carry_weight: "Max Carry Weight"
-almanac_stealth: "Stealth"
-almanac_run_stamina_drain: "Run Stamina Drain"
-almanac_damage_reduction: "Damage Reduction"
-almanac_fall_damage: "Fall Damage"
-almanac_eitr_regen: "Eitr Regen"
-almanac_attack: "Attack"
-
-almanac_resources: "Resources"
-almanac_taming_items: "Taming Items"
-
-almanac_fish_title: "Fishes"
-almanac_fish_swim_range: "Swim Range"
-almanac_fish_min_depth: "Minimum Depth"
-almanac_fish_speed: "Speed"
-almanac_fish_acceleration: "Acceleration"
-almanac_fish_turn_rate: "Turn Rate"
-almanac_fish_avoid_range: "Avoid Range"
-almanac_fish_height: "Height"
-almanac_fish_hook_force: "Hook Force"
-almanac_fish_stamina_use: "Stamina Use"
-almanac_escape_stamina_use: "Escape Stamina Use"
-almanac_escape_min: "Escape Minimum"
-almanac_escape_max: "Escape Maximum"
-almanac_base_hook_chance: "Base Hook Chance"
-almanac_fish_escape_time: "Escape Time"
-almanac_fish_jump_speed: "Jump Speed"
-almanac_fish_jump_height: "Jump Height"
-almanac_fish_jump_on_land_chance: "Jump On Land Chance"
-almanac_fish_jump_on_land_decay: "On Land Decay"
-almanac_fish_jump_frequency: "Jump Frequency"
-almanac_fish_fast: "Fast Fish"
-almanac_fish_bait_name: "Bait Name"
-almanac_fish_bait_chance: "Bait Hook Chance"
-
-almanac_block_radius: "Block Radius"
-almanac_connect_radius: "Connection Radius"
-almanac_ammo_non_equip: "Non-Equip Ammo"
-
-almanac_collected_reward_already: "Already collected reward"
-almanac_inventory_full: "Inventory is full"
-almanac_collected_item: "Collected"
-almanac_failed_to_find_skill: "Failed to find skill"
-almanac_raised_skill: "Raised skill"
-almanac_by: "by"
-
-almanac_quests_button: "Bounties"
-almanac_failed_to_spawn_bounty: "Failed to spawn bounty"
-almanac_bounty_how_to: "Press icon to accept bounty"
-almanac_reward: "Reward"
-almanac_xp: "EXP"
-almanac_bounty: "Bounty"
-almanac_biome: "Biome"
-almanac_level: "Level"
-almanac_hunt: "Hunt"
-almanac_already_have_active_bounty: "Already have active bounty"
-almanac_bounty_escaped: "Bounty escaped"
-almanac_raised: "Raised"
-
-almanac_treasure_how_to: "Press icon to accept treasure hunt"
-almanac_treasure_hunt_button: "Treasure Hunt"
-
-almanac_item: "Item"
-almanac_amount: "Amount"
-almanac_skill_type: "Skill Type"
-almanac_bounty_info: "Bounty Information"
-almanac_creature_prefab: "Creature Prefab"
-almanac_damage_multiplier: "Damage Multiplier"
-almanac_damages: "Damages"
-almanac_cancel_bounty: "Cancel Bounty"
-almanac_accept_bounty: "Accept Bounty"
-almanac_treasure_info: "Treasure Information"
-almanac_cancel_treasure: "Cancel Treasure Hunt"
-almanac_accept_treasure: "Accept Treasure Hunt"
-
-msg_treasure_available: "Next treasure available in"
-info_minutes: "minutes"
-msg_canceled_treasure: "Canceled Treasure Hunt"
-msg_active_treasure: "Already have active treasure hunt"
-info_not_enough: "Not enough"
-msg_bounty_available: "Next bounty available in"
-msg_canceled_bounty: "Canceled bounty"
-se_lifesteal: 'Life steal'
-se_armor: 'Armor'
-skill_all: 'All Skills'
-
-almanac_player_resistances: 'Player Resistances'
-almanac_statuseffects: 'Achievement Effects'
-almanac_total_effects: 'Effect Count'
+item: ''
+label_metrics: 'Metrics'
+label_leaderboard: 'Leaderboard'
+label_item: 'Item Name'
+label_amount: 'Amount'
+label_skilltype: 'Skill Type'
+label_level: 'Level'
+label_damagemultiplier: 'Damage Multiplier'
+label_purchasecurrency: 'Purchase Currency'
+label_classexperience: 'Almanac Experience'
+label_prefabname: 'Prefab Name'
+label_purchasecost: 'Purchase Cost'
+label_acceptbounty: 'Accept Bounty'
+label_cancelbounty: 'Cancel Bounty'
+title_damages: 'Damages'
+title_creaturedrops: 'Creature Drops'
+title_tamingitems: 'Taming Items'
+title_recipe: 'Recipe'
+title_reward: 'Reward'
+title_bountyinfo: 'Bounty Information'
+label_dropchance: 'Drop Chance'
+label_oneofeach: 'One of Each'
+label_minmax: 'Min Max'
+title_treasureinfo: 'Treasure Information'
+label_biome: 'Biome'
+label_canceltreasure: 'Cancel Treasure'
+label_accepttreasure: 'Accept Treasure'
+msg_alreadycollectedreward: 'Already collected reward'
+label_alreadycollected: 'Already Collected'
+label_collectreward: 'Collect Reward'
+title_trophies: 'Trophies'
+title_projectiles: 'Projectiles'
+title_fish: 'Fish'
+title_materials: 'Materials'
+title_weapons: 'Weapons'
+title_equipment: 'Equipment'
+title_consumables: 'Consumables'
+title_creatures: 'Creatures'
+title_miscpieces: 'Misc Pieces'
+title_plant: 'Plant'
+title_buildpieces: 'Building'
+title_craftingpieces: 'Crafting'
+title_furniturepieces: 'Furniture'
+title_otherpieces: 'Other Pieces'
+title_achievements: 'Achievements'
+msg_bountyescaped: 'Bounty escaped'
+msg_raised: 'Raised'
+msg_by: 'by'
+label_xp: 'xp'
+msg_bountystolenby: 'Bounty stolen by'
+msg_canceledbounty: 'Canceled Bounty'
+msg_bountyavailable: 'Bounty available in'
+msg_minutes: 'minutes'
+msg_hunt: 'Hunt'
+msg_inventoryfull: 'Inventory full'
+msg_collecteditem: 'Collected item'
+msg_failedtofindskill: 'Failed to find skill'
+msg_toomanyachievements: 'Too many almanac effects active'
+label_removeeffect: 'Remove Effect'
+label_addeffect: 'Add Effect'
+msg_removedeffect: 'Removed effect'
+label_total: 'Total'
+title_itemreward: 'Item Reward'
+title_skilreward: 'Skill Reward'
+title_effectreward: 'Status Effect Reward'
+label_duration: 'Duration'
+title_resistsances: 'Resistances'
+title_modifiers: 'Modifiers'
+label_enabled: "Enabled"
+label_piececategory: 'Piece Category'
+label_isupgrade: 'Is Upgrade'
+label_comfort: 'Comfort Value'
+label_comfortgroup: 'Comfort Group'
+label_groundpiece: 'Ground Piece'
+label_allowaltground: 'Allow Alt Ground'
+label_groundonly: 'Ground Only'
+label_cultivatedgroundonly: 'Only Cultivated Ground'
+label_waterpiece: 'Water Piece'
+label_clipground: 'Clip Ground'
+label_clipeverything: 'Clip Everything'
+label_noinwater: 'Not in Water'
+label_noonwood: 'Not on Wood'
+label_noontile: 'Not on Tilting Surface'
+label_inceilingonly: 'Ceiling Only'
+label_noonfloor: 'Not on Floor'
+label_noclipping: 'No Clipping'
+label_onlyinteleportarea: 'Only Teleport Area'
+label_allowedindungeon: 'Allowed in Dungeons'
+label_spacerequirement: 'Space Requirement'
+label_repairpiece: 'Repair Piece'
+label_canrotate: 'Can Rotate'
+label_randominitbuildrotation: 'Random Build Rotation'
+label_allowrotateoverlap: 'Allow Rotate Overlap'
+label_vegetationgroundonly: 'Vegetation Ground Only'
+title_blockingpieces: 'Blocking Pieces'
+label_piecename: 'Piece Name'
+label_blockradius: 'Block Radius'
+label_connectradius: 'Connect Radius'
+label_mustbeaboveconnected: 'Must be Above Connected'
+label_onlyinbiome: 'Only in Biome'
+label_dlc: 'DLC'
+title_craftingstation: 'Crafting Station'
+label_discoverrange: 'Discover Range'
+label_rangebuild: 'Build Range'
+label_requireroof: 'Roof Required'
+label_requirefire: 'Fire Required'
+label_showbasicrecipes: 'Show Basic Recipes'
+label_usedistance: 'Use Distance'
+label_useanimation: 'Animation Index'
+title_stationextension: 'Station Extension'
+label_maxstationdistance: 'Max Station Distance'
+label_continuousconnection: 'Continuous connection'
+title_wearntear: 'Wear N Tear'
+label_noroofwear: 'No Roof Wear'
+label_materialtype: 'Material Type'
+label_supports: 'Supports'
+label_hitnoise: 'Hit noise Level'
+label_destroynoise: 'Destroy noise Level'
+label_triggerprivatearea: 'Trigger Private Area'
+title_conversion: 'Conversion'
+title_beehive: 'Beehive'
+label_effectonlyday: 'Effects Only Day'
+label_maxcover: 'Max Cover'
+label_secperunit: "Seconds per Unit"
+label_maxstorage: 'Max Storage'
+title_container: 'Container'
+label_size: 'Size'
+label_privacy: 'Privacy'
+label_checkguardstone: 'Check Guardstone'
+label_autodestroyempty: 'Auto-Destroy if Empty'
+label_dropminmax: 'Drop min max'
+title_cookingstation: 'Cooking Station'
+label_spawnforce: 'Spawn Force'
+label_overcookeditem: 'Overcooked Item'
+label_firecheckradius: 'Fire Check Radius'
+label_usefuel: 'Use Fuel'
+label_fuelitem: 'Fuel Item'
+label_secperfuel: 'Seconds per Fuel'
+title_portal: 'Portal'
+label_activationrange: 'Activation Range'
+label_exitdistance: 'Exit Distance'
+label_ship: 'Ship'
+label_waterleveloffset: 'Water Level Offset'
+label_forcedistance: 'Force Distance'
+label_force: 'Force'
+label_damping: 'Damping'
+label_dampingsideway: 'Sideway Damping'
+label_dampingforward: 'Forward Damping'
+label_angulardamping: 'Angular Damping'
+label_disablelevel: 'Disable Level'
+label_sailforceoffset: 'Sail Force Offset'
+label_rudderspeed: 'Rudder Speed'
+label_stearforceoffset: 'Stear Force Offset'
+label_stearforce: 'Stear Force'
+label_stearvelforcefactor: 'Stear Force Velocity Factor'
+label_backwardforce: 'Backward Force'
+label_rudderrotationmax: 'Max Rudder Rotation'
+label_minwaterimpactforce: 'Min Water Impact Force'
+label_minwaterimpactinterval: 'Min Water Imapct Interval'
+label_upsidedowndmginterval: 'Upside down Damage Interval'
+label_upsidedowndmg: 'Upside down Damage'
+title_wisspawner: 'Wisp Spawner'
+label_spawninternval: 'Spawn Interval'
+label_spawnchance: 'Spawn Chance'
+label_maxspawned: 'Max Spawned'
+label_onlyspawnatnight: 'Only Spawn Night'
+label_dontspawnincover: "Don't Spawn in Cover"
+label_spawndistance: 'Spawn Distance'
+label_maxspawnedarea: 'Max Spawned Area'
+title_trap: 'Trap'
+label_rearmcooldown: 'Re-Arm Cooldown'
+label_triggeredbyenemies: 'Enemy Triggers'
+label_triggeredbyplayers: 'Player Triggers'
+label_forcestagger: 'Stagger Force'
+label_startsarmed: 'Starts Armed'
+title_fireplace: 'Fireplace'
+label_startfuel: 'Start Fuel'
+label_maxfuel: 'Max Fuel'
+label_infinitefuel: 'Infinite Fuel'
+title_fireworks: 'Fireworks'
+title_door: 'Door'
+label_keyitem: 'Key'
+label_cannotbeclosed: 'Cannot be Closed'
+title_turret: 'Turret'
+label_turnrate: 'Turn Rate'
+label_horizontalangle: 'Horizontal Angle'
+label_vertical Angle: 'Vertical Angle'
+label_viewdistance: 'View Distance'
+label_notargetscanrate: 'No Target Scan Rate'
+label_lookacceleration: 'Look Acceleration'
+label_lookdeacceleration: 'Look De-Acceleration'
+label_lookmindegreedelta: 'Look Min Degree Delta'
+label_defaultammo: 'Default Ammo'
+label_attackcooldown: 'Attack Cooldown'
+label_attackwarmup: 'Attack Warm-up'
+label_shootwhenaimdiff: 'Shoot When Aim Difference'
+label_predictmodifier: 'Predict Modifier'
+label_updatetargetintervalfar: 'Far Update Interval'
+label_updatetargetintervalnear: 'Near Update Interval'
+label_maxammo: 'Max Ammo'
+label_returnammoondestroy: 'Return Ammo on Destroy'
+label_ammotype: 'Ammo Type'
+label_holdrepeatinterval: 'Hold Repeat Interval'
+label_targetplayers: 'Target Players'
+label_targettamed: 'Target Tames'
+title_allowedammo: 'Allowed Ammo'
+title_fermenter: 'Fermenter'
+label_tapdelay: 'Tap Delay'
+label_growtime: 'Grow Time'
+label_growtimemax: 'Grow Time Max'
+label_minscale: 'Min Scale'
+label_maxscale: 'Max Scale'
+label_growradius: 'Grow Radius'
+label_destroyifcantgrow: "Destroy if can't Grow"
+title_grownprefabs: 'Grown Prefabs'
+treasure_blackforest: 'Blackforest Treasure'
+treasure_ashland_stone: 'Ashland Stone Treasure'
+treasure_charred_fortress: 'Charred Fortress Treasure'
+treasure_dvergr_loose_stone: 'Dverger Loose Treasure'
+treasure_dvergr_tower: 'Dverger Tower Treasure'
+treasure_dvergr_town: 'Dverger Town Treasure'
+treasure_forest_crypt: 'Forest Crypt Treasure'
+treasure_forest_crypt_hildir: 'Hildir Forest Crypt Treasure'
+treasure_plains: 'Plains Treasure'
+treasure_plains_hildir: 'Hildir Plains Treasure'
+teasure_meadows: 'Meadows Treasure'
+treasure_meadows_buried: 'Buried Meadows Treasure'
+treasure_mountain_cave: 'Mountain Cave Treasure'
+treasure_mountains: 'Mountain Treasure'
+treasure_plains_stone: 'Plains Stone Treasure'
+treasure_plains_fortress_hildir: 'Hildir Plains Fortress Treasure'
+treasure_swamp_crypt: 'Swamp Crypt Treasure'
+treasure_swamp: 'Swamp Treasure'
+treasure_troll_cave: 'Troll Cave Treasure'
+treasure_chest_stone: 'Stone Chest Treasure'
+treasure_chest_wood: 'Wood Chest Treasure'
+label_faction: 'Faction'
+title_killdeaths: 'Kills / Deaths'
+label_kills: 'Kills'
+label_deaths: 'Deaths'
+label_ratio: 'Ratio'
+title_creaturedata: 'Creature Data'
+label_avoidfire: 'Avoid Fire'
+label_afraidoffire: 'Afraid of Fire'
+label_avoidwater: 'Avoid Water'
+label_weakspot: 'Weak spot'
+label_staggerwhenblocked: 'Stagger when Blocked'
+label_damagefactor: 'Damage Factor'
+label_toleratewater: 'Tolerate Water'
+label_toleratesmoke: 'Tolerate Smoke'
+label_toleratetar: 'Tolerate Tar'
+label_defeatkey: 'Defeat Key'
+title_attacks: 'Attacks'
+label_dodgeable: 'Dodgeable'
+label_blockable: 'Blockable'
+title_attackeffect: 'Attack Effects'
+label_canberepaired: 'Can Be Repaired'
+label_teleportable: 'Telerportable'
+label_maxstacksize: 'Max Stack Size'
+label_variant: 'Variant Count'
+label_questitem: 'Quest Item'
+label_equipduration: 'Equip Duration'
+label_floating: 'Floating'
+label_swimrange: 'Swim Range'
+label_mindepth: 'Min Depth'
+label_speed: 'Speed'
+label_acceleration: 'Acceleration'
+label_avoidrange: 'Avoid Range'
+label_height: 'Height'
+label_hookforce: 'Hook Force'
+label_staminause: 'Stamina Use'
+label_escapestaminause: 'Escape Stamina Use'
+label_escape: 'Escape Min Max'
+label_basehookchance: 'Base Hook Chance'
+label_jumpspeed: 'Jump Speed'
+label_jumponlandchance: 'Jump on Land Chance'
+label_jumpfrequency: 'Jump Frequency'
+label_fishfast: 'Fast Speed'
+title_baits: 'Baits'
+label_material: 'Material Name'
+label_hidehelmet: 'Hide Helmet'
+label_hidebeard: 'Hide Beard'
+item_equipeffect: 'Equip Effect'
+title_statmodifier: 'Stat Modifiers'
+title_set: 'Set'
+title_food: 'Food'
+title_shield: 'Shield'
+title_weapon: 'Weapon'
+label_animationstate: 'Animation State'
+label_tooltier: 'Tool Tier'
+label_attackforce: 'Stagger Force'
+label_tameonly: 'Tame Only'
+label_alwaysrotate: 'Always Rotate'
+label_attackeffect: 'Attack Effect'
+label_spawnonhit: 'Spawn on Hit'
+label_spawnonhitterrain: 'Spawn on Hit Terrain'
+label_projectiletooltip: 'Projectile Tooltip'
+title_attack: 'Attack'
+label_attackanimation: 'Attack Animation'
+label_attackrandomanimations: 'Random Animations'
+label_attackchainlevels: 'Chain Levels'
+label_loopingattack: 'Looping'
+label_consumeitem: 'Consume Item'
+label_hitterain: 'Hit Terrain'
+label_ishomeitem: 'Is Home Item'
+label_attackstamina: 'Attack Stamina'
+label_speedfactor: 'Speed Factor'
+label_speedfactorration: 'Rotation Speed Factor'
+label_attackstartnoise: 'Attack Start Noise'
+title_attacksecondary: 'Secondary Attack'
+title_combat: 'Combat'
+title_forsaken: 'Forsaken'
+title_mortality: 'Mortality'
+title_misc: 'Misc'
+title_husbandry: 'Husbandry'
+title_harvest: 'Harvest'
+title_build: 'Build'
+title_defense: 'Defense'
+title_dungeon: 'Dungeon'
+title_travel: 'Travel'
+title_base: 'Base'
+title_trees: 'Trees'
+title_mining: 'Mining'
+title_raven: 'Raven'
+playerstat_enemykills: 'Enemy Kills'
+playerstat_playerkills: 'Player Kills'
+playerstat_hitstakenenemies: 'Hits Taken from Enemies'
+playerstat_deaths: 'Deaths'
+playerstat_enemyhits: 'Enemy Hits'
+playerstat_enemykillslasthits: 'Enemy Last Hits'
+playerstat_bosskills: 'Boss Kills'
+playerstat_bosslasthits: 'Boss Last Hits'
+playerstat_arrowsshot: 'Arrows Shot'
+playerstat_setguardianpower: 'Set Guardian Power'
+playerstat_setpowereikthyr: 'Set Power: Eikthyr'
+playerstat_setpowerelder: 'Set Power: Elder'
+playerstat_setpowerbonemass: 'Set Power: Bonemass'
+playerstat_setpowermoder: 'Set Power: Moder'
+playerstat_setpoweryagluth: 'Set Power: Yagluth'
+playerstat_setpowerqueen: 'Set Power: Queen'
+playerstat_setpowerashlands: 'Set Power: Ashlands'
+playerstat_setpowerdeepnorth: 'Set Power: Deep North'
+playerstat_usepowereikthyr: 'Use Power: Eikthyr'
+playerstat_usepowerelder: 'Use Power: Elder'
+playerstat_usepowerbonemass: 'Use Power: Bonemass'
+playerstat_usepowermoder: 'Use Power: Moder'
+playerstat_usepoweryagluth: 'Use Power: Yagluth'
+playerstat_usepowerqueen: 'Use Power: Queen'
+playerstat_usepowerashlands: 'Use Power: Ashlands'
+playerstat_usepowerdeepnorth: 'Use Power: Deep North'
+playerstat_deathbyboat: 'Death by Boat'
+playerstat_deathbyburning: 'Death by Burning'
+playerstat_deathbycart: 'Death by Cart'
+playerstat_deathbydrowning: 'Death by Drowning'
+playerstat_deathbyfall: 'Death by Fall'
+playerstat_deathbyfreezing: 'Death by Freezing'
+playerstat_deathbyimpact: 'Death by Impact'
+playerstat_deathbypoisoned: 'Death by Poison'
+playerstat_deathbyself: 'Death by Self'
+playerstat_deathbysmoke: 'Death by Smoke'
+playerstat_deathbystalagtite: 'Death by Stalactite'
+playerstat_deathbystructural: 'Death by Structural Collapse'
+playerstat_deathbytree: 'Death by Falling Tree'
+playerstat_deathbyturret: 'Death by Turret'
+playerstat_deathbywater: 'Death by Water'
+playerstat_deathbyplayerhit: 'Death by Player Hit'
+playerstat_deathbyedgeofworld: 'Death by Edge of the World'
+playerstat_deathbyundefined: 'Death by Unknown Cause'
+playerstat_cheats: 'Cheats Used'
+playerstat_worldloads: 'World Loads'
+playerstat_tombstonesfit: 'Tombstones Placed'
+playerstat_tombstonesopenedother: 'Tombstones Opened (Other)'
+playerstat_tombstonesopenedown: 'Tombstones Opened (Own)'
+playerstat_skeletonsummons: 'Skeletons Summoned'
+playerstat_creaturetamed: 'Creatures Tamed'
+playerstat_itemspickedup: 'Items Picked Up'
+playerstat_beesharvested: 'Bees Harvested'
+playerstat_sapharvested: 'Sap Harvested'
+playerstat_foodeaten: 'Food Eaten'
+playerstat_placestacks: 'Stacks Placed'
+playerstat_craftsorupgrades: 'Crafts or Upgrades'
+playerstat_builds: 'Buildings Constructed'
+playerstat_upgrades: 'Upgrades Performed'
+playerstat_crafts: 'Items Crafted'
+playerstat_turretammoadded: 'Turret Ammo Added'
+playerstat_turreltrophyset: 'Turret Trophy Set'
+playerstat_traparmed: 'Traps Armed'
+playerstat_traptriggered: 'Traps Triggered'
+playerstat_portaldungeonin: 'Dungeon Portals Entered'
+playerstat_portaldungeonout: 'Dungeon Portals Exited'
+playerstat_distancetraveled: 'Distance Traveled'
+playerstat_distancewalk: 'Distance Walked'
+playerstat_distancerun: 'Distance Run'
+playerstat_distancesail: 'Distance Sailed'
+playerstat_distanceair: 'Distance Traveled in Air'
+playerstat_jumps: 'Jumps'
+playerstat_portalsused: 'Portals Used'
+playerstat_doorsopened: 'Doors Opened'
+playerstat_doorsclosed: 'Doors Closed'
+playerstat_timeinbase: 'Time Spent in Base'
+playerstat_timeoutofbase: 'Time Spent Outside Base'
+playerstat_sleep: 'Times Slept'
+playerstat_itemstanduses: 'Item Stand Uses'
+playerstat_armorstanduses: 'Armor Stand Uses'
+playerstat_treechops: 'Tree Chops'
+playerstat_tree: 'Trees Chopped'
+playerstat_treetier0: 'Tier 0 Trees Chopped'
+playerstat_treetier1: 'Tier 1 Trees Chopped'
+playerstat_treetier2: 'Tier 2 Trees Chopped'
+playerstat_treetier3: 'Tier 3 Trees Chopped'
+playerstat_treetier4: 'Tier 4 Trees Chopped'
+playerstat_treetier5: 'Tier 5 Trees Chopped'
+playerstat_logs: 'Logs Collected'
+playerstat_logchops: 'Log Chops'
+playerstat_minehits: 'Mine Hits'
+playerstat_mines: 'Mines Excavated'
+playerstat_minetier0: 'Tier 0 Mines Excavated'
+playerstat_minetier1: 'Tier 1 Mines Excavated'
+playerstat_minetier2: 'Tier 2 Mines Excavated'
+playerstat_minetier3: 'Tier 3 Mines Excavated'
+playerstat_minetier4: 'Tier 4 Mines Excavated'
+playerstat_minetier5: 'Tier 5 Mines Excavated'
+playerstat_ravenappear: 'Raven Appearances'
+playerstat_ravenhits: 'Raven Hits'
+playerstat_raventalk: 'Raven Interactions'
+label_none: 'None'
+title_resistances: 'Resistances'
+text_true: 'True'
+text_false: 'False'
+title_treasure: 'Treasure'
+title_bounty: 'Bounty'
+title_comfortpieces: 'Comfort Pieces'
+inventory_normal: 'Normal'
+inventory_ignore: 'Ignore'
+faction_players: 'Players'
+faction_animalsveg: 'Animals & Vegetation'
+faction_forestmonsters: 'Forest Monsters'
+faction_undead: 'Undead'
+faction_demon: 'Demon'
+faction_mountainmonsters: 'Mountains Monsters'
+faction_seamonsters: 'Sea Monsters'
+faction_plainsmonsters: 'Plains Monsters'
+faction_boss: 'Boss'
+faction_mistlandsmonsters: 'Mistland Monsters'
+faction_dverger: 'Dverger'
+faction_playerspawned: 'Player Spawned'
+inventory_physical: 'Physical'
+inventory_elemental: 'Elemental'
+title_scroll: 'Scrolls'
+title_jewel: 'Jewel'
+label_itemtype: 'Item Type'
+title_goal: 'Goal'
+label_completed: 'Completed'
+label_incompleted: 'Incompleted'
+label_showall: 'Show All'
+label_showcompleted: 'Show Completed'
+label_showknown: 'Show Known'
+msg_mustcompleteprevious: 'Must complete previous achievement'
+msg_incomplete: 'Incomplete'
+se_attack: 'Damage Multiplier'
+se_damagereduction: 'Damage Reduction'
+msg_groupeffectactive: 'Only one group achievement effect allowed at a time'
+title_almanac: 'Almanac'

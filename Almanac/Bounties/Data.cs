@@ -30,12 +30,35 @@ public static class Data
 
     public class BountyLocation
     {
-        public BountyData data = null!;
-        public GameObject m_critter = null!;
-        public Heightmap.Biome m_biome = Heightmap.Biome.Meadows;
+        public BountyData m_data;
+        public GameObject m_critter;
+        public Heightmap.Biome m_biome;
         public Vector3 m_position = Vector3.zero;
         public bool m_spawned = false;
         public Minimap.PinData m_pin = null!;
+
+        public BountyLocation(ValidatedBounty data)
+        {
+            m_data = new BountyData()
+            {
+                m_name = data.m_creatureName,
+                m_damageMultiplier = data.m_damageMultiplier,
+                m_health = data.m_health,
+                m_rewardType = data.m_rewardType,
+                m_rewardAmount = data.m_itemAmount,
+                m_damages = data.m_damages,
+                m_level = data.m_level,
+                m_skillType = data.m_skill.ToString(),
+                m_skillAmount = data.m_skillAmount,
+                m_experience = data.m_experience
+            };
+            m_critter = data.m_critter;
+            m_biome = data.m_biome;
+            if (data.m_itemReward is { } itemDrop)
+            {
+                m_data.m_rewardItem = itemDrop.name;
+            }
+        }
     }
 
     [Serializable]

@@ -9,12 +9,7 @@ public class TreasureHunt : MonoBehaviour
 {
     public static Data.TreasureLocation? ActiveTreasureLocation;
     private static DateTime m_dateTime = DateTime.MaxValue;
-    
     private const float maxRadius = 9500f;
-    private const float minSpawnDistance = 2f;
-    private const float maxYDistance = 20f;
-    private const int solidHeightMargin = 1000;
-    private const float spawnOffset = 10f;
 
     public DropTable DropTable = null!;
     public DropOnDestroyed _DropOnDestroyed = null!;
@@ -52,52 +47,53 @@ public class TreasureHunt : MonoBehaviour
 
     public void DestroyPin() => Minimap.instance.RemovePin(pin);
 
-    private static bool AcceptTreasureHunt(Data.TreasureLocation treasureLocation)
+    public static bool CancelTreasure(Data.Treasure data)
     {
-        if (!FindSpawnLocation(treasureLocation.m_biome, out Vector3 pos)) return false;
-        treasureLocation.m_pos = pos;
-        Minimap.PinData treasurePin = Minimap.instance.AddPin(pos, Minimap.PinType.Boss, treasureLocation.m_data.m_name, false, false);
-        treasurePin.m_icon = UpdateAlmanac.SelectedTreasure.m_sprite;
-        treasurePin.m_worldSize = 100f;
-        treasurePin.m_animate = true;
-        
-        Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Search for " + treasureLocation.m_data.m_name);
-
-        treasureLocation.m_pin = treasurePin;
-        ActiveTreasureLocation = treasureLocation;
-        m_dateTime = DateTime.Now;
-        
-        AlmanacPlugin.AlmanacLogger.LogDebug("Successfully added treasure hunt: " + treasureLocation.m_data.m_name);
-        AlmanacPlugin.AlmanacLogger.LogDebug("Location: " + pos.x + " " + pos.z);
+        if (ActiveTreasureLocation == null) return false;
+        ActiveTreasureLocation.Cancel();
+        var component = Instantiate(AlmanacUI.m_buttonElement, SidePanel.m_instance.m_contentRoot).GetComponent<AlmanacButton>();
+        component.Setup("Accept", () => { if (AcceptTreasure(data)) { Destroy(component.gameObject); }}, true);
         return true;
     }
 
-    public static bool SpawnTreasure(GameObject prefab, Vector3 point, float maxDistance, Data.TreasureData data)
+    public static bool AcceptTreasure(Data.Treasure data)
     {
-        Vector3 vector3 = GetRandomVectorWithin(point, maxDistance);
-        if (WorldGenerator.instance.GetBiome(vector3) == Heightmap.Biome.Ocean)
+        if (m_dateTime != DateTime.MaxValue)
         {
-            vector3.y = ZoneSystem.instance.m_waterLevel;
+            DateTime lastTreasure = m_dateTime + TimeSpan.FromMinutes(AlmanacPlugin._TreasureCooldown.Value);
+            if (lastTreasure > DateTime.Now)
+            {
+                int difference = (lastTreasure - DateTime.Now).Minutes;
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Treasure Available in: " + difference + "min");
+                return false;
+            }
         }
-        else
+        if (data.m_cost > 0 && !Player.m_localPlayer.NoCostCheat())
         {
-            ZoneSystem.instance.GetSolidHeight(vector3, out float height, solidHeightMargin);
-            if (height >= 0.0 && Mathf.Abs(height - point.y) <= maxYDistance &&
-                Vector3.Distance(vector3, point) >= minSpawnDistance)
+            if (!Player.m_localPlayer.GetInventory().HaveItem(data.m_currency.m_itemData.m_shared.m_name))
             {
-                vector3.y = height + spawnOffset;
+
+                return false;
             }
-            else
+
+            if (Player.m_localPlayer.GetInventory().CountItems(data.m_currency.m_itemData.m_shared.m_name) <
+                data.m_cost)
             {
-                vector3.y = Player.m_localPlayer.transform.position.y + spawnOffset;
+                AlmanacPlugin.AlmanacLogger.LogDebug("Not enough currency to buy treasure");
+                return false;
             }
+
+            Player.m_localPlayer.GetInventory().RemoveItem(data.m_currency.m_itemData.m_shared.m_name, data.m_cost);
         }
 
-        GameObject go = Instantiate(prefab, vector3, Quaternion.identity);
-        if (!go) return false;
-        go.AddComponent<TreasureHunt>().DropTable = data.m_drops;
-        go.AddComponent<HoverText>().m_text = data.m_name;
-        go.AddComponent<Beacon>().m_range = 50f;
+        if (!FindSpawnLocation(data.m_biome, out Vector3 pos)) return false;
+        var treasureLocation = new Data.TreasureLocation(data, pos);
+        Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Search for " + treasureLocation.m_data.m_name);
+        m_dateTime = DateTime.Now;
+        AlmanacPlugin.AlmanacLogger.LogDebug("Successfully added treasure hunt: " + treasureLocation.m_data.m_name);
+        AlmanacPlugin.AlmanacLogger.LogDebug("Location: " + pos.x + " " + pos.z);
+        var component = Instantiate(AlmanacUI.m_buttonElement, SidePanel.m_instance.m_contentRoot).GetComponent<AlmanacButton>();
+        component.Setup("Cancel", () => { if (CancelTreasure(data)) Destroy(component.gameObject); }, true);
         return true;
     }
     
@@ -127,7 +123,6 @@ public class TreasureHunt : MonoBehaviour
         }
         return false;
     }
-
     private static Vector3 GetRandomVectorWithin(Vector3 point, float margin)
     {
         Vector2 vector2 = Random.insideUnitCircle * margin;
@@ -141,101 +136,5 @@ public class TreasureHunt : MonoBehaviour
         float y = Random.Range(0f, 5000f);
         float z = Random.Range(-maxRadius, maxRadius);
         return new Vector3(x, y, z);
-    }
-    
-    public static void OnClickTreasure()
-    {
-        if (!CheckForActiveTreasureHunt()) return;
-        if (!CheckForTreasureCost()) return;
-        
-        if (AcceptTreasureHunt(new Data.TreasureLocation()
-        {
-            m_data = new Data.TreasureData()
-            {
-                m_name = UpdateAlmanac.SelectedTreasure.m_name,
-                m_drops = UpdateAlmanac.SelectedTreasure.m_dropTable,
-            },
-            m_biome = UpdateAlmanac.SelectedTreasure.m_biome
-        }))
-        {
-            UpdateAlmanac.UpdateTreasurePanel();
-        }
-        else
-        {
-            // Return cost of treasure hunt
-            if (UpdateAlmanac.SelectedTreasure.m_cost > 0)
-            {
-                ReturnCost();
-            }
-        }
-    }
-
-    private static bool CheckForActiveTreasureHunt()
-    {
-        if (m_dateTime != DateTime.MaxValue)
-        {
-            DateTime lastAccept = m_dateTime + TimeSpan.FromMinutes(AlmanacPlugin._TreasureCooldown.Value);
-            if (lastAccept > DateTime.Now)
-            {
-                int difference = (lastAccept - DateTime.Now).Minutes;
-                Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"$msg_treasure_available {difference} $info_minutes");
-                return false;
-            }
-        }
-        if (ActiveTreasureLocation == null) return true;
-        if (ActiveTreasureLocation.m_data.m_name == UpdateAlmanac.SelectedTreasure.m_name)
-        {
-            Minimap.instance.RemovePin(ActiveTreasureLocation.m_pin);
-            ActiveTreasureLocation = null;
-            Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$msg_canceled_treasure");
-            UpdateAlmanac.UpdateTreasurePanel();
-            if (UpdateAlmanac.SelectedTreasure.m_cost > 0)
-            {
-                ReturnCost();
-            }
-        }
-        else
-        {
-            Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$msg_active_treasure");
-        }
-
-        return false;
-    }
-
-    public static void ReturnCost(bool enabled = false)
-    {
-        if (!enabled) return;
-        Inventory? inventory = Player.m_localPlayer.GetInventory();
-        if (!inventory.CanAddItem(UpdateAlmanac.SelectedTreasure.m_currency.m_itemData, UpdateAlmanac.SelectedTreasure.m_cost)) return;
-        ItemDrop.ItemData? item = UpdateAlmanac.SelectedTreasure.m_currency.m_itemData.Clone();
-        item.m_stack = UpdateAlmanac.SelectedTreasure.m_cost;
-        inventory.AddItem(item);
-    }
-
-    private static bool CheckForTreasureCost()
-    {
-        if (UpdateAlmanac.SelectedTreasure.m_cost <= 0) return true;
-        Inventory? inventory = Player.m_localPlayer.GetInventory();
-        if (!inventory.HaveItem(UpdateAlmanac.SelectedTreasure.m_currency.m_itemData.m_shared.m_name)) return false;
-        ItemDrop.ItemData? item = inventory.GetItem(UpdateAlmanac.SelectedTreasure.m_currency.m_itemData.m_shared.m_name);
-        if (item == null)
-        {
-            AlmanacPlugin.AlmanacLogger.LogDebug("Failed to get currency item from inventory");
-            return false;
-        }
-
-        if (item.m_stack > UpdateAlmanac.SelectedTreasure.m_cost)
-        {
-            item.m_stack -= UpdateAlmanac.SelectedTreasure.m_cost;
-            return true;
-        }
-        if (item.m_stack == UpdateAlmanac.SelectedTreasure.m_cost)
-        {
-            inventory.RemoveItem(item);
-            return true;
-        }
-        Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$info_not_enough " + UpdateAlmanac.SelectedTreasure.m_currency.m_itemData.m_shared.m_name);
-        AlmanacPlugin.AlmanacLogger.LogDebug("Not enough currency to buy treasure");
-        return false;
     }
 }

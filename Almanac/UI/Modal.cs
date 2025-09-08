@@ -14,14 +14,11 @@ using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
-using Toggle = Almanac.Managers.Toggle;
 
 namespace Almanac.UI;
-
 public static class ModalExtensions
 {
     private static List<string> _prefabNames = new();
-
     public static List<string> PrefabNames
     {
         get
@@ -47,12 +44,11 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
     private Text topic = null!;
     public Background background = null!;
     public Scrollbar scrollbar = null!;
-
     public VerticalLayoutGroup group = null!;
+    
     public float minHeight;
     public float padding;
     public float buffer = 5f;
-
     public static Modal? instance;
     private readonly List<ModalElement> elements = new();
     private Vector3 mouseDifference = Vector3.zero;
@@ -81,56 +77,44 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
     {
         background.SetBackground(Configs.bkgOption);
     }
-    
     public void SetTopic(string text) => topic.text = Localization.instance.Localize(text);
-    
     public void SetActive(bool enable) => gameObject.SetActive(enable);
-    
     public static bool IsVisible() => instance?.gameObject.activeInHierarchy ?? false;
-
     public void Update()
     {
         float dt = Time.deltaTime;
         OnUpdate?.Invoke(dt);
         foreach (ModalElement? element in elements) element.Update(dt);
     }
-
     public void SetButtonText(string text) => mainButtonText.text = Localization.instance.Localize(text);
-
     public static bool IsFocused() => instance?.elements.Any(x => x.IsTyping()) ?? false;
-
     private Title CreateTitle()
     {
         Title element = _title.Create(root);
         elements.Add(element);
         return element;
     }
-
     private TextArea CreateTextArea()
     {
         TextArea element = _area.Create(root);
         elements.Add(element);
         return element;
     }
-
     private Field CreateField()
     {
         Field element = _input.Create(root);
         elements.Add(element);
         return element;
     }
-
     public void OnDestroy()
     {
         instance = null;
     }
-    
     public void Clear()
     {
         foreach(ModalElement? element in elements) element.Destroy();
         elements.Clear();
     }
-    
     public void Resize()
     {
         float height = elements.Sum(element => element.height);
@@ -138,19 +122,16 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         float extra = buffer * elements.Count;
         root.sizeDelta = new Vector2(root.sizeDelta.x, Mathf.Max(minHeight, height + spacing + padding + extra));
     }
-    
     public void OnDrag(PointerEventData eventData)
     {
         if (!Input.GetKey(KeyCode.LeftAlt)) return;
         transform.position = Input.mousePosition + mouseDifference;
     }
-
     public void OnBeginDrag(PointerEventData eventData)
     {
         Vector2 pos = eventData.position;
         mouseDifference = transform.position - new Vector3(pos.x, pos.y, 0);
     }
-    
     public class Field : ModalElement
     {
         private readonly InputField field;
@@ -160,7 +141,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         private readonly Image glow;
         private bool isGlowing => glow.gameObject.activeInHierarchy;
         private float glowTimer;
-
         public override void Update(float dt)
         {
             glowTimer += dt;
@@ -177,7 +157,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     break;
             }
         }
-        
         public Field(Transform transform) : base(transform)
         {
             rect = transform.GetComponent<RectTransform>();
@@ -188,14 +167,12 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             SetGlow(false);   
             SetBackgroundColor(new Color(0f, 0f, 0f, 0.5f));
         }
-        
         public Field Create(Transform parent)
         {
             GameObject? go = Instantiate(prefab, parent);
             go.SetActive(true);
             return new Field(go.transform);
         }
-
         private void SetBackgroundColor(Color color) => bkg.color = color;
         private void SetGlow(bool enable) => glow.gameObject.SetActive(enable);
         public void SetWithoutNotify(string input) => field.SetTextWithoutNotify(input);
@@ -210,81 +187,65 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
     {
         private readonly Text area;
         private readonly RectTransform rect;
-
         public TextArea(Transform transform) : base(transform)
         {
             area = transform.GetComponent<Text>();
             rect = transform.GetComponent<RectTransform>();
             SetTextColor(new Color(1f, 1f, 1f, 0.5f));
         }
-        
         public TextArea Create(Transform parent)
         {
             GameObject? go = Instantiate(prefab, parent);
             go.SetActive(true);
             return new TextArea(go.transform);
         }
-        
         public void SetText(string text)
         {
             area.text = Localization.instance.Localize(text);
             Resize();
         }
-        
         public void SetTextColor(Color color) => area.color = color;
-        
         public override bool Contains(string query) => area.text.Contains(query);
-        
         private void Resize()
         {
             float newHeight = GetTextPreferredHeight(area, rect);
             rect.sizeDelta = new Vector2(rect.sizeDelta.x, Mathf.Max(newHeight,height));
             height = newHeight;
         }
-            
         private static float GetTextPreferredHeight(Text text, RectTransform rect)
         {
             if (string.IsNullOrEmpty(text.text)) return 0f;
-        
             TextGenerator textGen = text.cachedTextGenerator;
-        
             var settings = text.GetGenerationSettings(rect.rect.size);
             float preferredHeight = textGen.GetPreferredHeight(text.text, settings);
-        
             return preferredHeight;
         }
     }
     public class Title : ModalElement
     {
         private readonly Text title;
-        
         public Title(Transform transform) : base(transform)
         {
             title = transform.Find("Text").GetComponent<Text>();
         }
-        
         public void SetTitle(string text) =>  title.text = Localization.instance.Localize(text);
-        
         public Title Create(Transform parent)
         {
             GameObject? go = Instantiate(prefab, parent);
             go.SetActive(true);
             return new Title(go.transform);
         }
-        
         public override bool Contains(string query) => title.text.Contains(query);
     }
     public class ButtonElement : ModalElement
     {
         private readonly Text label;
         private readonly Button button;
-        
         public ButtonElement(Transform transform) : base(transform)
         {
             label = transform.Find("Text").GetComponent<Text>();
             button = transform.GetComponent<Button>();
         }
-
         public ButtonElement Create(Transform parent, int indexOf)
         {
             GameObject? go = Instantiate(prefab, parent);
@@ -300,7 +261,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         protected readonly GameObject prefab;
         public float height;
         protected readonly float _minHeight;
-
         protected ModalElement(Transform transform)
         {
             prefab = transform.gameObject;
@@ -310,7 +270,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         public virtual void Update(float dt){}
         public void SetActive(bool active) => prefab.SetActive(active);
         public virtual bool IsTyping() => false;
-
         public void Destroy() => Object.Destroy(prefab);
         public virtual bool Contains(string query) => false;
     }
@@ -318,13 +277,11 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
     {
         private readonly Image background;
         private readonly Image darken;
-
         public Background(Transform transform)
         {
             background = transform.Find("bkg").GetComponent<Image>();
             darken = transform.Find("darken").GetComponent<Image>();
         }
-
         public void SetBackground(AlmanacPanel.Background.BackgroundOption option)
         {
             switch (option)
@@ -346,7 +303,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         private readonly Modal _modal;
         private readonly AlmanacPanel.ElementView _view;
         public enum FormType {Achievement, StoreItem, Bounty, Treasure, StatusEffect}
-        
         private void Setup(FormData form)
         {
             _modal.Clear();
@@ -369,7 +325,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             _modal.SetButtonText(form.cancelText);
             _modal.OnMainButton = Close;
         }
-
         private void Close()
         {
             _modal.OnUpdate = null;
@@ -383,7 +338,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             FormData form = new MarketPlaceForm(item);
             Setup(form);
         }
-
         public void Build(FormType type)
         {
             FormData form = type switch
@@ -402,20 +356,17 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             element.Interactable(true);
             element.OnClick(() => Setup(form));
         }
-
         public ModalBuilder(Modal modal, AlmanacPanel.ElementView view)
         {
             _modal = modal;
             _view = view;
         }
     }
-
     private class MarketPlaceForm : FormData
     {
         private readonly ItemDrop.ItemData Item;
         private int Cost;
         private int Stack;
-        
         public MarketPlaceForm(ItemDrop.ItemData item)
         {
             Item = item;
@@ -454,7 +405,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                 }
             });
         }
-
         protected override void Create()
         {
             if (Marketplace.MarketManager.AddMarketItem(Item, Cost, Stack, Player.m_localPlayer.GetPlayerName()))
@@ -479,7 +429,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         private readonly Dictionary<string, float> Modifiers = new();
         private string StartMsg = string.Empty;
         private string StopMsg = string.Empty;
-
         public StatusEffectForm()
         {
             SetButtonText(Keys.Create);
@@ -574,7 +523,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                             data.isValid = false;
                             return;
                         }
-
                         Modifiers[name] = duration;
                     }
                     data.isValid = true;
@@ -589,7 +537,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                 StopMsg = s;
             }, startsValid: true);
         }
-
         protected override void Create()
         {
             CustomEffect.Data se = new();
@@ -608,7 +555,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"Created '{se.Name} custom status effect successfully!'");
         }
     }
-
     private class BountyForm : FormData
     {
         private string UniqueID = string.Empty;
@@ -622,7 +568,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         private float DamageMultiplier = 1f;
         private int TokenReward;
         private readonly List<CostForm> Cost = new();
-
         public BountyForm()
         {
             SetButtonText("Create Bounty Ledger");
@@ -802,7 +747,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                 },
                 InputField.ContentType.IntegerNumber);
         }
-
         protected override void Create()
         {
             BountyManager.BountyData bounty = new BountyManager.BountyData();
@@ -827,7 +771,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"Bounty '{bounty.UniqueID}' created successfully!");
         }
     }
-
     private class TreasureForm : FormData
     {
         private string Name = string.Empty;
@@ -836,7 +779,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         private string Biome = string.Empty;
         private readonly List<CostForm> Costs = new();
         private readonly List<LootForm> Loot = new();
-
         public TreasureForm()
         {
             SetButtonText("Create Treasure Hunt");
@@ -911,7 +853,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                         data.isValid = false;
                         return;
                     }
-
                     string id = parts[0].Trim();
                     if (!int.TryParse(parts[1].Trim(), out int amount))
                     {
@@ -919,7 +860,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                         data.isValid = false;
                         return;
                     }
-
                     if (id == StoreManager.STORE_TOKEN)
                     {
                         validated.Add(new CostForm(id, amount));
@@ -938,7 +878,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                         data.isValid = true;
                     }
                 }
-
                 if (data.isValid)
                 {
                     Costs.AddRange(validated);
@@ -998,7 +937,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                 }
             });
         }
-
         protected override void Create()
         {
             TreasureManager.TreasureData treasure = new();
@@ -1020,13 +958,11 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             File.WriteAllText(path, data);
             Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"Treasure '{treasure.Name}' created successfully!");
         }
-        
         protected override bool IsValid()
         {
             if (!base.IsValid()) return false;
             return Costs.Count != 0 && Loot.Count != 0;
         }
-
     }
 
     private class LootForm
@@ -1035,7 +971,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         public readonly int Min;
         public readonly int Max;
         public readonly float Weight;
-
         public LootForm(string itemID, int min, int max, float weight)
         {
             ItemID = itemID;
@@ -1044,26 +979,22 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             Weight = weight;
         }
     }
-
     private class CostForm
     {
         public readonly string PrefabID;
         public readonly int Amount;
-
         public CostForm(string prefabID, int amount)
         {
             PrefabID = prefabID;
             Amount = amount;
         }
     }
-
     private class ItemForm
     {
         public readonly string PrefabID;
         public readonly int Amount;
         public readonly int Quality;
         public readonly int Variant;
-
         public ItemForm(string prefabID, int amount, int quality, int variant)
         {
             PrefabID = prefabID;
@@ -1072,7 +1003,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             Variant = variant;
         }
     }
-    
     private class StoreForm : FormData
     {
         private string Name = string.Empty;
@@ -1083,7 +1013,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         private readonly List<CostForm> Costs = new List<CostForm>();
         private readonly List<ItemForm> Items = new List<ItemForm>();
         private string RequiredKey = string.Empty;
-        
         public StoreForm()
         {
             SetButtonText("Create Store Item");
@@ -1185,7 +1114,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     data.isValid = true;
                     return;
                 }
-
                 if (!Enum.TryParse(s, true, out GlobalKeys key))
                 {
                     field.SetTextColor(Color.red);
@@ -1206,7 +1134,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     field.SetTextColor(Color.white);
                     return;
                 }
-
                 string[] parts = s.Trim().Split(',');
                 if (parts.Length != 2)
                 {
@@ -1219,13 +1146,11 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     field.SetTextColor(Color.red);
                     return;
                 }
-
                 if (!float.TryParse(parts[1].Trim(), out float duration))
                 {
                     field.SetTextColor(Color.red);
                     return;
                 }
-
                 StatusEffectID = id;
                 StatusEffectDuration = duration;
                 field.SetTextColor(Color.white);
@@ -1253,19 +1178,16 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                         field.SetTextColor(Color.red);
                         return;
                     }
-
                     if (!int.TryParse(parts[1].Trim(), out int amount))
                     {
                         field.SetTextColor(Color.red);
                         return;
                     }
-
                     if (!int.TryParse(parts[2].Trim(), out int quality))
                     {
                         field.SetTextColor(Color.red);
                         return;
                     }
-
                     if (!int.TryParse(parts[3].Trim(), out int variant))
                     {
                         field.SetTextColor(Color.red);
@@ -1276,14 +1198,12 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                 }
             }, startsValid: true);
         }
-
         protected override bool IsValid()
         {
             if (!base.IsValid()) return false;
             if (Costs.Count == 0) return false;
             return !string.IsNullOrEmpty(StatusEffectID) || Items.Count != 0;
         }
-
         protected override void Create()
         {
             StoreManager.StoreItem storeItem = new();
@@ -1326,7 +1246,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
 
         private readonly FormField PREFAB;
         private readonly FormField GROUP;
-        
         public AchievementForm()
         {
             SetButtonText("Create Achievement");
@@ -1415,7 +1334,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                         case AchievementType.Kill:
                             if (string.IsNullOrEmpty(PrefabID) 
                                 || !ModalExtensions.PrefabNames.Contains(PrefabID) 
-                                || !CritterHelper.namedCritters.TryGetValue(PrefabID, out var critter)) 
+                                || !CritterHelper.namedCritters.TryGetValue(PrefabID, out var _)) 
                                 data.isValid = false;
                             else
                             {
@@ -1426,7 +1345,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                         case AchievementType.Pickable:
                             if (string.IsNullOrEmpty(PrefabID) 
                                 || !ModalExtensions.PrefabNames.Contains(PrefabID) 
-                                || !ItemHelper.pickableItems.TryGetValue(PrefabID,  out var item)) 
+                                || !ItemHelper.pickableItems.TryGetValue(PrefabID,  out var _)) 
                                 data.isValid = false;
                             else
                             {
@@ -1459,7 +1378,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     {
                         if (string.IsNullOrEmpty(PrefabID) 
                             || !ModalExtensions.PrefabNames.Contains(PrefabID) 
-                            || !CritterHelper.namedCritters.TryGetValue(PrefabID, out var critter)) 
+                            || !CritterHelper.namedCritters.TryGetValue(PrefabID, out var _)) 
                             data.isValid = false;
                         else
                         {
@@ -1471,7 +1390,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     case AchievementType.Pickable:
                         if (string.IsNullOrEmpty(PrefabID) 
                             || !ModalExtensions.PrefabNames.Contains(PrefabID) 
-                            || !ItemHelper.pickableItems.TryGetValue(PrefabID,  out var item)) 
+                            || !ItemHelper.pickableItems.TryGetValue(PrefabID,  out var _)) 
                             data.isValid = false;
                         else
                         {
@@ -1485,7 +1404,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                 }
                 field.SetTextColor(!data.isValid ? Color.red : Color.white);
             }, startsValid: true);
-            
             GROUP = AddField(Keys.CreatureGroup, "Must be a registered group", "...", (s, field, data) =>
             {
                 Group = s.Trim();
@@ -1541,14 +1459,12 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         public readonly List<FormField> fields = new List<FormField>();
         private bool isValid => IsValid();
         private bool wasValid = false;
-
         protected void SetButtonText(string text) => buttonText = text;
         protected void SetCancelText(string text) => cancelText = text;
         protected void SetTopic(string text) => topic = text;
         protected void SetTitle(string text) => title = text;
         protected void SetDescription(string text) => description = text;
         protected void SetElementIcon(Sprite sprite) => elementIcon = sprite;
-        
         protected FormField AddField(string label, string tooltip, string placeholder, Action<string, Field, FormField> callback,
             InputField.ContentType type = InputField.ContentType.Standard, bool startsValid = false)
         {
@@ -1557,12 +1473,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             fields.Add(field);
             return field;
         }
-
-        protected virtual bool IsValid()
-        {
-            return fields.All(f => f.isValid);
-        }
-
+        protected virtual bool IsValid() => fields.All(f => f.isValid);
         public virtual void Update(Modal _modal, Action close)
         {
             if (isValid == wasValid) return;
@@ -1582,7 +1493,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             }
             wasValid = isValid;
         }
-
         protected virtual void Create(){}
         public class FormField
         {
@@ -1593,7 +1503,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             public readonly InputField.ContentType contentType;
             public readonly Action<string, Field, FormField> validationCallback;
             public bool isValid;
-
             public FormField(string label, string tooltip, string placeholder, Action<string, Field, FormField> validation, bool required, InputField.ContentType contentType =  InputField.ContentType.Standard)
             {
                 this.label = label;

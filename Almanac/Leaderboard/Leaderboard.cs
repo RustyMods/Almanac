@@ -22,7 +22,6 @@ public static class Leaderboard
     private static readonly Dictionary<string, LeaderboardInfo> players = new();
     private static readonly ISerializer serializer = new SerializerBuilder().Build();
     private static readonly IDeserializer deserializer = new DeserializerBuilder().Build();
-    
     public static void Setup()
     {
         AlmanacPlugin.OnZNetAwake += Initialize;
@@ -31,7 +30,6 @@ public static class Leaderboard
         AlmanacPlugin.OnPlayerProfileLoadPlayerData += _ => SendLocalPlayerInfo();
         AlmanacPlugin.OnPlayerProfileSavePlayerDataPostfix += SendLocalPlayerInfo;
     }
-
     private static void Initialize()
     {
         LeaderboardFilePath = AlmanacPaths.LeaderboardFolderPath + Path.DirectorySeparatorChar + ZNet.instance.GetWorldName() + ".Leaderboard.dat";
@@ -39,15 +37,12 @@ public static class Leaderboard
         Read();
         UpdateServerLeaderboard();
     }
-    
-
     private static void UpdateServerLeaderboard()
     {
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
         string data = serializer.Serialize(players);
         SyncedLeaderboard.Value = data;
     }
-
     private static void OnSyncedLeaderboardChange()
     {
         if (!ZNet.instance || ZNet.instance.IsServer()) return;
@@ -63,12 +58,10 @@ public static class Leaderboard
             AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server leaderboard");
         }
     }
-
     public static List<LeaderboardInfo> GetLeaderboard()
     {
         return players.Values.ToList().OrderBy(player => player.GetRank()).ToList();
     }
-
     private static void SendLocalPlayerInfo()
     {
         if (!ZNet.instance || !Player.m_localPlayer || !Player.m_localPlayer.m_nview.IsValid()) return;
@@ -91,7 +84,6 @@ public static class Leaderboard
             ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.instance.GetServerPeerID(), nameof(RPC_Leaderboard), pkg);
         }
     }
-
     public static void RPC_Leaderboard(long sender, ZPackage pkg)
     {
         string playerName = pkg.ReadString();
@@ -101,7 +93,6 @@ public static class Leaderboard
         players[playerName] = new (playerName, collectedAchievement, kills, deaths);
         UpdateServerLeaderboard();
     }
-
     private static void Save()
     {
         if (!ZNet.instance || !ZNet.instance.IsServer() || LeaderboardFilePath == null) return;
@@ -110,7 +101,6 @@ public static class Leaderboard
         byte[] compressedData = CompressAndEncode(data);
         File.WriteAllBytes(LeaderboardFilePath, compressedData);
     }
-
     private static void Read()
     {
         if (!ZNet.instance || !ZNet.instance.IsServer()  || LeaderboardFilePath == null) return;
@@ -130,7 +120,6 @@ public static class Leaderboard
             AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server leaderboard: " + Path.GetFileName(LeaderboardFilePath));
         }
     }
-
     private static byte[] CompressAndEncode(string text)
     {
         byte[] data = Encoding.UTF8.GetBytes(text);
@@ -141,7 +130,6 @@ public static class Leaderboard
         gzip.Close();
         return output.ToArray();
     }
-
     private static string DecompressAndDecode(byte[] compressedData)
     {
         using var input = new MemoryStream(compressedData);
@@ -150,7 +138,6 @@ public static class Leaderboard
         gzip.CopyTo(output);
         return Encoding.UTF8.GetString(output.ToArray());
     }
-
     [Serializable]
     public class LeaderboardInfo
     {

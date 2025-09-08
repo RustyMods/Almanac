@@ -56,7 +56,6 @@ public static class PlayerExtensions
     public static int GetKnownChests(this Player player) =>  ItemHelper.chests.FindAll(c => player.IsKnownMaterial(c.shared.m_name)).Count;
     public static int GetKnownLegs(this Player player) => ItemHelper.legs.FindAll(l => player.IsKnownMaterial(l.shared.m_name)).Count;
     public static int GetKnownValuables(this Player player) => ItemHelper.valuables.FindAll(v => player.IsKnownMaterial(v.shared.m_name)).Count;
-
     public static void ClearRecords(this Player player)
     {
         player.m_customData.Remove(PlayerInfo.ALMANAC_PLAYER_RECORDS);
@@ -76,12 +75,7 @@ public static class PlayerInfo
 {
     public static readonly string ALMANAC_PLAYER_RECORDS = "AlmanacPlayerRecords";
     private static PlayerRecords? _cachedRecords;
-
-    public static void ClearRecords()
-    {
-        _cachedRecords = new();
-    }
-
+    public static void ClearRecords() => _cachedRecords = new();
     private static PlayerRecords? Records
     {
         get
@@ -90,7 +84,6 @@ public static class PlayerInfo
             return _cachedRecords;
         }
     }
-    
     [Serializable]
     public class PlayerRecords
     {
@@ -99,19 +92,16 @@ public static class PlayerInfo
         public Dictionary<string, int> itemsPicked = new();
         public List<int> knownStatusEffects = new();
     }
-
     public enum RecordType
     {
         Kill,
         Death,
         Pickable,
-    };
-    
+    }
     public static J GetValueOrDefault<T, J>(this Dictionary<T, J> dict, T key, J defaultValue)
     {
         return dict.TryGetValue(key, out J value) ? value : defaultValue;
     }
-    
     public static bool IsStatusEffectKnown(int hash) => Records?.knownStatusEffects.Contains(hash) ?? false;
     
     public static float GetPlayerStat(PlayerStatType type)
@@ -120,7 +110,6 @@ public static class PlayerInfo
         if (Game.instance.m_playerProfile == null) return 0;
         return Game.instance.m_playerProfile.m_playerStats.m_stats.TryGetValue(type, out float value) ? value : 0;
     }
-
     public static int GetPlayerStat(RecordType type, string name)
     {
         if (!Player.m_localPlayer || string.IsNullOrEmpty(name)) return 0;
@@ -203,7 +192,6 @@ public static class PlayerInfo
             Records?.knownStatusEffects.Add(statusEffect.NameHash());
         }
     }
-
     public static void Setup()
     {
         AlmanacPlugin.OnPlayerProfileLoadPlayerData += player =>
@@ -215,7 +203,6 @@ public static class PlayerInfo
             Records?.Save(player);
         };
     }
-    
     public static List<Entries.Entry> GetEntries()
     {
         Entries.EntryBuilder builder = new();
@@ -345,7 +332,6 @@ public static class PlayerInfo
         builder.Add(PlayerStatType.RavenTalk);
         return builder.ToList();
     }
-
     private static List<MetricInfo> PickableMetrics()
     {
         List<MetricInfo> _metrics = new List<MetricInfo>();
@@ -356,8 +342,6 @@ public static class PlayerInfo
         }
         return _metrics;
     }
-    
-
     public static List<MetricInfo> GetMetrics()
     {
         if (!Player.m_localPlayer) return new();
@@ -387,7 +371,6 @@ public static class PlayerInfo
         };
         return _metrics;
     }
-
     public readonly struct MetricInfo
     {
         public readonly string Name;

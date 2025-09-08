@@ -13,7 +13,6 @@ namespace Almanac.Achievements;
 public static class GroupExtensions
 {
     public static void Add<T>(this List<T> list, params T[] values) => list.AddRange(values);
-
     public static void AddRange<T, V>(this Dictionary<T, V> dict, Dictionary<T, V> other)
     {
         foreach (KeyValuePair<T, V> kvp in other)
@@ -22,15 +21,12 @@ public static class GroupExtensions
         }
     }
 }
-
 public static class CreatureGroup
 {
     private static readonly ISerializer serializer = new SerializerBuilder().Build();
     private static readonly IDeserializer deserializer = new DeserializerBuilder().Build();
-
     private static readonly CustomSyncedValue<string> SyncedCreatureGroups = new(AlmanacPlugin.ConfigSync, "Almanac_Synced_Creature_Groups", "");
     private static readonly Dictionary<string, List<string>> groups = new();
-    
     public static int GetProgress(string group, int threshold)
     {
         if (!groups.TryGetValue(group, out List<string> list)) return 0;
@@ -43,10 +39,8 @@ public static class CreatureGroup
         }
         return count;
     }
-    
     public static bool Exists(string name) => groups.ContainsKey(name);
     public static bool TryGetGroup(string name, out List<string> group) => groups.TryGetValue(name, out group);
-
     public static void Setup()
     {
         AlmanacPlugin.OnZNetAwake += UpdateSyncedGroups;
@@ -79,7 +73,6 @@ public static class CreatureGroup
         watcher.Created += OnCreated;
         watcher.Deleted += OnDeleted;
     }
-
     private static void OnChanged(object sender, FileSystemEventArgs e)
     {
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
@@ -87,7 +80,6 @@ public static class CreatureGroup
         groups.AddRange(data);
         UpdateSyncedGroups();
     }
-
     private static void OnDeleted(object sender, FileSystemEventArgs e)
     {
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
@@ -95,7 +87,6 @@ public static class CreatureGroup
         foreach(string key in data.Keys) groups.Remove(key);
         UpdateSyncedGroups();
     }
-
     private static void OnCreated(object sender, FileSystemEventArgs e)
     {
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
@@ -103,13 +94,11 @@ public static class CreatureGroup
         groups.AddRange(data);
         UpdateSyncedGroups();
     }
-
     private static void UpdateSyncedGroups()
     {
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
         SyncedCreatureGroups.Value = serializer.Serialize(groups);
     }
-
     private static void OnSyncedGroupsChange()
     {
         if (!ZNet.instance || ZNet.instance.IsServer()) return;
@@ -117,7 +106,6 @@ public static class CreatureGroup
         groups.Clear();
         groups.AddRange(deserializer.Deserialize<Dictionary<string, List<string>>>(SyncedCreatureGroups.Value));
     }
-
     private static void LoadDefaults()
     {
         groups["Meadows"] = new() { "Neck", "Greyling", "Boar", "Deer", "Eikthyr" };

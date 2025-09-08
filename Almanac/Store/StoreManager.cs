@@ -19,17 +19,14 @@ namespace Almanac.Store;
 
 public static class StoreManager
 {
-    public static readonly Dictionary<string, StoreItem> items = new();
+    private static readonly Dictionary<string, StoreItem> items = new();
     private static readonly Dictionary<string, StoreItem> fileItems = new();
     public static readonly ISerializer serializer = new SerializerBuilder().ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitNull).Build();
     private static readonly IDeserializer deserializer = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
     private static readonly CustomSyncedValue<string> SyncedStore = new (AlmanacPlugin.ConfigSync, "ServerSynced_Almanac_Store", "");
     public const string STORE_TOKEN = "AlmanacToken";
-    
     public static bool Exists(string name) => items.ContainsKey(name);
-
     public static List<StoreItem> GetStoreItems() => items.Values.ToList();
-
     public static void Setup()
     {
         AlmanacPlugin.OnPlayerProfileSavePlayerDataPrefix += player => player.SaveTokens();
@@ -68,7 +65,6 @@ public static class StoreManager
         watcher.Changed += OnChanged;
         watcher.Deleted += OnDeleted;
     }
-
     private static void OnServerStoreChanged()
     {
         if (!ZNet.instance || ZNet.instance.IsServer()) return;
@@ -85,13 +81,11 @@ public static class StoreManager
             AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server store");
         }
     }
-
     private static void UpdateServerStore()
     {
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
         SyncedStore.Value = serializer.Serialize(items);
     }
-
     private static void ReloadPage()
     {
         if (AlmanacPanel.instance?.Tabs[AlmanacPanel.Tab.TabOption.Store].IsSelected ?? false)
@@ -99,7 +93,6 @@ public static class StoreManager
             AlmanacPanel.instance.OnStoreTab();
         }
     }
-
     private static void OnCreated(object sender, FileSystemEventArgs e)
     {
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
@@ -115,7 +108,6 @@ public static class StoreManager
             AlmanacPlugin.AlmanacLogger.LogWarning("Failed create store item: " + Path.GetFileName(e.FullPath));
         }
     }
-
     private static void OnChanged(object sender, FileSystemEventArgs e)
     {
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
@@ -131,7 +123,6 @@ public static class StoreManager
             AlmanacPlugin.AlmanacLogger.LogWarning("Failed to change store item: " + Path.GetFileName(e.FullPath));
         }
     }
-
     private static void OnDeleted(object sender, FileSystemEventArgs e)
     {
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
@@ -141,7 +132,6 @@ public static class StoreManager
         UpdateServerStore();
         ReloadPage();
     }
-    
     private static void LoadDefaults()
     {
         StoreItem rested = new StoreItem();
@@ -290,9 +280,7 @@ public static class StoreManager
         ConversionItem ten = new  ConversionItem(10, SpriteManager.IconOption.SilverCoins);
         ConversionItem hundred = new ConversionItem(100, SpriteManager.IconOption.SilverBar);
     }
-
     public static readonly List<ConversionItem> conversions = new();
-    
     public class ConversionItem
     {
         private static readonly Entries.EntryBuilder builder = new();
@@ -306,25 +294,21 @@ public static class StoreManager
         public Sprite? icon => SpriteManager.GetSprite(Icon);
         public string name => $"{Keys.AlmanacToken} x{TokenAmount}";
         public string description => $"{Keys.Convert} {item.m_itemData.m_shared.m_name} x{Amount}";
-
         public bool HasRequirements(Player player)
         {
             return player.GetInventory().CountItems(item.m_itemData.m_shared.m_name) >= Amount;
         }
-
         public void Purchase(Player player)
         {
             player.GetInventory().RemoveItem(item.m_itemData.m_shared.m_name, Amount);
             player.AddTokens(TokenAmount);
         }
-
         public ConversionItem(int amount, SpriteManager.IconOption icon)
         {
             Icon = icon;
             TokenAmount = amount;
             conversions.Add(this);
         }
-
         public List<Entries.Entry> ToEntries()
         {
             builder.Clear();
@@ -346,14 +330,11 @@ public static class StoreManager
         public List<ItemInfo> Items = new();
         public string Lore = string.Empty;
         public string RequiredDefeated = string.Empty;
-        
         public StoreItem(){}
-
         [YamlIgnore] public Sprite? sprite => SpriteManager.GetSprite(Icon);
 
         public bool HasRequirements(Player player) =>
              player.NoCostCheat() || (Items.All(item => player.IsKnownMaterial(item.item?.m_itemData.m_shared.m_name)) && HasRequiredKey(out string _));
-
         public bool HasRequiredKey(out string sharedName)
         {
             sharedName = string.Empty;
@@ -362,7 +343,6 @@ public static class StoreManager
             sharedName = critter.character.m_name;
             return PlayerInfo.GetPlayerStat(PlayerInfo.RecordType.Kill, sharedName) > 0;
         }
-
         public List<Entries.Entry> ToEntries()
         {
             builder.Clear();
@@ -372,33 +352,26 @@ public static class StoreManager
                 HasRequiredKey(out string sharedName);
                 builder.Add(Keys.RequiredDefeated, sharedName);
             }
-
             if (StatusEffect != null)
             {
                 builder.Add(Keys.Duration, global::StatusEffect.GetTimeString(StatusEffect.GetDuration(StatusEffect.effect?.m_ttl ?? StatusEffect.Duration)));
                 builder.Add(StatusEffect.effect?.m_name ?? "<color=red>Invalid Status Effect</color>");
                 builder.Add((StatusEffect.effect?.GetTooltipString() ?? string.Empty) + "\n", "lore");
             }
-            
             return builder.ToList();
         }
-        
-
         [Serializable]
         public class StatusEffectData
         {
             public string ID = string.Empty;
             public float Duration;
-
             [YamlIgnore] public StatusEffect? effect => ObjectDB.instance?.GetStatusEffect(ID.GetStableHashCode());
-            
             public StatusEffectData(){}
             public StatusEffectData(string name, float duration = 0f)
             {
                 ID = name;
                 Duration = duration;
             }
-            
             public float GetDuration(float defaultValue) => Duration <= 0f ? defaultValue : Duration;
 
             public bool Add(Player player)
@@ -416,11 +389,8 @@ public static class StoreManager
             public int Amount;
             public int Quality;
             public int Variant;
-
             [YamlIgnore] public ItemDrop? item => ObjectDB.instance?.GetItemPrefab(PrefabName)?.GetComponent<ItemDrop>();
-            
             public ItemInfo(){}
-
             public ItemInfo(string name, int amount, int quality = 1, int variant = 0)
             {
                 PrefabName = name;
@@ -435,13 +405,10 @@ public static class StoreManager
     public class StoreCost
     {
         public List<Cost> Items = new();
-        
         public StoreCost(){}
-        
         public void Add(Cost cost) => Items.Add(cost);
         public void Add(string name, int amount) => Add(new Cost(name, amount));
         public void Set(int amount) => Add(new Cost(STORE_TOKEN, amount));
-
         public bool CanPurchase(Player player)
         {
             foreach (Cost cost in Items)
@@ -456,7 +423,6 @@ public static class StoreManager
                     if (count < cost.Amount) return false;
                 }
             }
-
             return true;
         }
 
@@ -465,23 +431,18 @@ public static class StoreManager
         {
             public string PrefabName = string.Empty;
             public int Amount;
-            
             public Cost(){}
-            
             [YamlIgnore] public bool isToken => PrefabName == STORE_TOKEN;
             [YamlIgnore] public Sprite? tokenIcon => SpriteManager.GetSprite("coins_silver");
-
             public Cost(string item, int amount)
             {
                 PrefabName = item;
                 Amount = amount;
             }
-
             [YamlIgnore] public ItemDrop? item => ObjectDB.instance.GetItemPrefab(PrefabName)?.GetComponent<ItemDrop>() ?? null;
         }
     }
 }
-
 public static class StoreHelpers
 {
     public static void Add(this List<StoreManager.StoreItem.ItemInfo> list, string name, int amount, int quality = 1, int variant = 0) => list.Add(new StoreManager.StoreItem.ItemInfo(name, amount, quality, variant));

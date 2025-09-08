@@ -13,7 +13,6 @@ public static class PieceHelper
     {
         AlmanacPlugin.OnZNetScenePrefabs += OnZNetScenePrefabs;
     }
-
     private static void OnZNetScenePrefabs(GameObject prefab)
     {
         if (prefab == null || !prefab.TryGetComponent(out Piece component)) return;
@@ -21,18 +20,15 @@ public static class PieceHelper
         if (!component.IsValid()) return;
         _ = new PieceInfo(prefab);
     }
-
     private static bool IsValid(this Piece piece)
     {
         if (!piece.m_name.StartsWith("$")) return false;
         if (Localization.instance.Localize(piece.m_name).StartsWith("[")) return false;
         return true;
     }
-
     private static readonly List<PieceInfo> pieces = new();
     public static List<PieceInfo> GetPieces() => pieces.FindAll(x => !Filters.Ignore(x.prefab.name));
     public static List<PieceInfo> plants => GetPieces().Where(p => p.plant != null).ToList();
-    
     public readonly struct PieceInfo
     {
         private static readonly EntryBuilder builder = new();
@@ -55,7 +51,6 @@ public static class PieceHelper
         private readonly Turret? turret;
         private readonly Fermenter? fermenter;
         public readonly Plant? plant;
-
         public bool isKnown(Player player) => piece.m_resources.All(item => player.IsKnownMaterial(item.m_resItem.m_itemData.m_shared.m_name));
 
         public readonly bool isFeast;
@@ -89,7 +84,6 @@ public static class PieceHelper
             isPlant = plant != null;
             pieces.Add(this);
         }
-
         public List<Entry> ToEntries()
         {
             builder.Clear();
@@ -153,7 +147,7 @@ public static class PieceHelper
                 if (smelter.m_conversion.Count > 0)
                 {
                     builder.Add(Keys.Conversion);
-                    foreach (var conversion in smelter.m_conversion)
+                    foreach (Smelter.ItemConversion conversion in smelter.m_conversion)
                     {
                         builder.Add(conversion.m_from.m_itemData.m_shared.m_name, conversion.m_to.m_itemData.m_shared.m_name);
                     }

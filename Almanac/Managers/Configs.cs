@@ -57,7 +57,7 @@ public static class Configs
     public static int LotteryCost =>  _lotteryCost.Value;
     public static bool ShowMarketplace => _marketplaceEnabled.Value is Toggle.On;
     public static int MinFullHouse => _minFullHouse.Value;
-    public static bool AllowConversion => _marketplaceEnabled.Value is Toggle.On;
+    public static bool AllowConversion => _allowConversion.Value is Toggle.On;
     public static int ConversionRate => _conversionRate.Value;
     public static string ConversionItem => _conversionItem.Value;
 

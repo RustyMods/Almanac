@@ -5,7 +5,6 @@ namespace Almanac.Bounties;
 public static class NameGenerator
 {
     private static readonly Random rng = new Random();
-
     private static readonly string[] Prefixes =
     {
         "Ancient", "Cursed", "Savage", "Elder", "Feral", "Dark", "Wild",
@@ -13,7 +12,6 @@ public static class NameGenerator
         "Sacred", "Shadowed", "Brutal", "Dread", "Primeval", "Ghostly", "Ashen",
         "Blighted", "Stonefang", "Venomous", "Frostbound"
     };
-
     private static readonly string[] Postfixes =
     {
         "the Wretched", "the Cunning", "the Fierce", "the Eternal", 
@@ -24,7 +22,6 @@ public static class NameGenerator
         "the Undying", "the Banished", "the Desecrator", "the Hunter",
         "the Defiler", "the Harbinger", "the Reborn", "the Conqueror"
     };
-
     public static string GenerateName(string baseName)
     {
         bool usePrefix = rng.NextDouble() < 0.5;

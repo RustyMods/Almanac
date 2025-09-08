@@ -200,7 +200,6 @@ public class BountyManager : MonoBehaviour
         watcher.Changed += OnChange;
         watcher.Deleted += OnDeleted;
     }
-
     private static void OnServerBountyChanged()
     {
         if (!ZNet.instance || ZNet.instance.IsServer()) return;
@@ -222,7 +221,6 @@ public class BountyManager : MonoBehaviour
             AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server bounties");
         }
     }
-
     private static void OnChange(object sender, FileSystemEventArgs e)
     {
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
@@ -242,7 +240,6 @@ public class BountyManager : MonoBehaviour
             AlmanacPlugin.AlmanacLogger.LogWarning("Failed to change bounty: " + Path.GetFileName(e.FullPath));
         }
     }
-
     private static void OnCreated(object sender, FileSystemEventArgs e)
     {
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
@@ -255,7 +252,6 @@ public class BountyManager : MonoBehaviour
             AlmanacPanel.instance.OnBountyTab();
         }
     }
-
     private static void OnDeleted(object sender, FileSystemEventArgs e)
     {
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
@@ -268,20 +264,17 @@ public class BountyManager : MonoBehaviour
             AlmanacPanel.instance.OnBountyTab();
         }
     }
-
     private static void OnZNetSceneAwake()
     {
-        foreach(Effect? effect in Effects) effect.Init();
+        foreach (Effect? effect in Effects) effect.Init();
         instance?.Initialize();
     }
-
     private static void UpdateServerBounties()
     {
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
         string data = serializer.Serialize(fileBounties);
         SyncedBounties.Value = data;
     }
-    
     public static bool Exists(string name) => bounties.ContainsKey(name);
     private static void LoadDefaults()
     {
@@ -408,12 +401,10 @@ public class BountyManager : MonoBehaviour
         public Vector3 position;
         public bool isSpawned;
         public Minimap.PinData? pin;
-
         public BountyLocation(BountyData data)
         {
             this.data = data;
         }
-
         public bool IsWithin()
         {
             if (!Player.m_localPlayer) return false;
@@ -422,20 +413,17 @@ public class BountyManager : MonoBehaviour
 
             return Math.Sqrt(num1 * num1 + num2 * num2) <= 100f;
         }
-
         public void AddPin()
         {
             RemovePin();
             pin = Minimap.instance.AddPin(position, Minimap.PinType.Boss, data.Name, false, false);
             pin.m_icon = data.icon ?? SpriteManager.GetSprite(SpriteManager.IconOption.Map);
         }
-
         public void RemovePin()
         {
             if (pin == null || !Minimap.instance) return;
             Minimap.instance.RemovePin(pin);
         }
-
         public bool Spawn()
         {
             Vector3 vector3 = GetRandomVectorWithin(position, 10f);
@@ -477,7 +465,6 @@ public class BountyManager : MonoBehaviour
             return RandomLocationFinder.FindSpawnLocation(data.biome, out position);
         }
     }
-    
     [Serializable]
     public class BountyData
     {
@@ -505,9 +492,7 @@ public class BountyManager : MonoBehaviour
             Cost = data.Cost;
             _prefab = null;
         }
-
         private static Entries.EntryBuilder builder = new();
-
         public List<Entries.Entry> ToEntries()
         {
             builder.Clear();
@@ -524,10 +509,8 @@ public class BountyManager : MonoBehaviour
             }
             return builder.ToList();
         }
-
         public bool HasRequirements() =>
             PlayerInfo.GetPlayerStat(PlayerInfo.RecordType.Kill, character?.m_name ?? string.Empty) > 0;
-        
         [NonSerialized, YamlIgnore] public bool completed;
         [YamlIgnore] public Heightmap.Biome biome => Enum.TryParse(Biome, true, out Heightmap.Biome land) ? land : Heightmap.Biome.None;
         [YamlIgnore] private GameObject? _prefab;
@@ -543,14 +526,12 @@ public class BountyManager : MonoBehaviour
         [YamlIgnore] public Character? character => Prefab?.GetComponent<Character>();
         [YamlIgnore] public MonsterAI? monsterAI => Prefab?.GetComponent<MonsterAI>();
         [YamlIgnore] public Sprite? icon => SpriteManager.GetSprite(Icon);
-        
         public string DamageModString()
         {
             return DamageMultiplier < 1f
                 ? $"-{(1f - DamageMultiplier) * 100f:0.0}%"
                 : $"+{(DamageMultiplier - 1f) * 100f:0.0}%";
         }
-
         public string GetNameOverride()
         {
             if (!ZNetScene.instance) return string.Empty;
@@ -558,7 +539,6 @@ public class BountyManager : MonoBehaviour
             Name = NameGenerator.GenerateName(character?.m_name ?? Creature);
             return Name;
         }
-
         public void ReturnCost(Player player)
         {
             foreach (StoreManager.StoreCost.Cost? cost in Cost.Items)
@@ -578,10 +558,8 @@ public class BountyManager : MonoBehaviour
             m_effectNames = effectNames.ToList();
             Effects.Add(this);
         }
-
         public GameObject[] Create(Vector3 basePos, Quaternion baseRot, Transform? baseParent = null, float scale = 1f, int variant = -1)
             => m_effectList.Create(basePos, baseRot, baseParent, scale, variant);
-
         public void Init()
         {
             if (!ZNetScene.instance) return;

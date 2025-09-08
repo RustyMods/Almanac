@@ -214,12 +214,11 @@
         <Content Include="Thunderstore\CHANGELOG.md" />
         <Content Include="Thunderstore\manifest.json" />
         <Content Include="Thunderstore\README.md" />
-        <Content Include="Thunderstore\RustyMods-Almanac-3.5.0.zip" />
-        <Content Include="translations\English.yml" />
         <Content Include="Libs\ServerSync.dll" />
         <Content Include="Thunderstore\icon.png" />
         <EmbeddedResource Include="Tutorials\Achievements.md" />
         <EmbeddedResource Include="Tutorials\Intro.md" />
+        <Content Include="Thunderstore\RustyMods-Almanac-3.5.1.zip" />
         <Content Include="UpdateManifest.ps1" />
         <EmbeddedResource Include="Tutorials\Bounties.md" />
         <EmbeddedResource Include="Tutorials\Leaderboard.md" />

@@ -1,3 +1,8 @@
+# 3.5.1
+- Updated filters list, delete old file
+- Fixed conversion toggle targeting wrong config
+- Fixed arrow keys allowing to see unknown entries
+
 # 3.5.0
 - Complete Overhaul ! Delete old files
 - Added Lottery and store

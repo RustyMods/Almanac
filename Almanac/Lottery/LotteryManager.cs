@@ -12,11 +12,8 @@ namespace Almanac.Lottery;
 public static class LotteryManager
 {
     private static string? LotteryFilePath;
-
     private static readonly CustomSyncedValue<string> SyncedLottery = new(AlmanacPlugin.ConfigSync, "Almanac_Server_Synced_Lottery", "");
-
     public static int LotteryTotal = 10;
-
     public static void Setup()
     {
         AlmanacPlugin.OnZNetAwake += Initialize;
@@ -76,13 +73,11 @@ public static class LotteryManager
         gzip.CopyTo(output);
         return Encoding.UTF8.GetString(output.ToArray());
     }
-
     private static void UpdateServerLottery()
     {
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
         SyncedLottery.Value = LotteryTotal.ToString();
     }
-
     private static void OnSyncedLotteryChange()
     {
         if (!ZNet.instance || ZNet.instance.IsServer()) return;
@@ -96,7 +91,6 @@ public static class LotteryManager
             AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server lottery");
         }
     }
-
     public static void SendToServer(int count)
     {
         if (!ZNet.instance) return;
@@ -109,13 +103,11 @@ public static class LotteryManager
             ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.instance.GetServerPeerID(), nameof(RPC_Lottery), count);
         }
     }
-
     private static void SetLottery(int count)
     {
         if (count == 0) LotteryTotal = Configs.MinFullHouse;
         else LotteryTotal += count;
         UpdateServerLottery();
     }
-
     public static void RPC_Lottery(long sender, int count) => SetLottery(count);
 }

@@ -14,12 +14,10 @@ public static class SpriteManager
     {
         icons[se.name] = se.m_icon;
     }
-
     public static void OnPieceHelperPiece(Piece piece)
     {
         icons[piece.name] = piece.m_icon;
     }
-
     public static void OnItemHelperItem(ItemDrop item)
     {
         if (!item.m_itemData.HasIcons()) return;

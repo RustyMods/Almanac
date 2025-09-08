@@ -32,7 +32,6 @@ public static class AchievementManager
     private static readonly CustomSyncedValue<string> SyncedServerAchievements = new(AlmanacPlugin.ConfigSync, "Almanac_Server_Synced_Achievements", "");
     public static readonly Dictionary<string, Achievement> achievements = new();
     private static readonly Dictionary<string, Achievement> fileAchievements = new();
-    
     public static void Setup()
     {
         LoadDefaults();
@@ -66,7 +65,6 @@ public static class AchievementManager
                 }
             }            
         }
-
         SyncedServerAchievements.ValueChanged += OnServerAchievementsChanged;
         
         FileSystemWatcher watcher = new FileSystemWatcher(AlmanacPaths.AchievementFolderPath, "*.yml");
@@ -78,7 +76,6 @@ public static class AchievementManager
         watcher.Created += OnCreated;
         watcher.Deleted += OnDeleted;
     }
-
     private static void OnChanged(object sender, FileSystemEventArgs e)
     {
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
@@ -99,7 +96,6 @@ public static class AchievementManager
             AlmanacPlugin.AlmanacLogger.LogWarning("Failed to change achievement: " + Path.GetFileName(e.FullPath));
         }
     }
-
     private static void OnCreated(object sender, FileSystemEventArgs e)
     {
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
@@ -120,7 +116,6 @@ public static class AchievementManager
             AlmanacPlugin.AlmanacLogger.LogWarning("Failed to create achievement: " + Path.GetFileName(e.FullPath));
         }
     }
-
     private static void OnDeleted(object sender, FileSystemEventArgs e)
     {
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
@@ -146,7 +141,6 @@ public static class AchievementManager
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
         SyncedServerAchievements.Value = serializer.Serialize(achievements);
     }
-
     private static void OnServerAchievementsChanged()
     {
         if (!ZNet.instance || ZNet.instance.IsServer()) return;
@@ -162,9 +156,7 @@ public static class AchievementManager
             AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server achievements");
         }
     }
-    
     public static bool Exists(string id) => achievements.ContainsKey(id);
-
     private static void LoadDefaults()
     {
         Achievement harvester = new Achievement();
@@ -591,9 +583,7 @@ public static class AchievementManager
         public string Icon = string.Empty;
         public int TokenReward;
         public AchievementRequirement Requirement = new();
-        
         [YamlIgnore] public Sprite? icon => SpriteManager.GetSprite(Icon);
-
         public void CopyFrom(Achievement other)
         {
             UniqueID = other.UniqueID;
@@ -606,7 +596,6 @@ public static class AchievementManager
             Requirement.PrefabName = other.Requirement.PrefabName;
             Requirement._sharedName = null;
         }
-
         public List<Entries.Entry> ToEntries()
         {
             Entries.EntryBuilder builder = new();
@@ -766,7 +755,6 @@ public static class AchievementManager
             }
             return builder.ToList();
         }
-
         [Serializable]
         public class AchievementRequirement
         {
@@ -774,10 +762,8 @@ public static class AchievementManager
             public string Group = string.Empty;
             public string PrefabName = string.Empty;
             public int Threshold;
-
             [NonSerialized, YamlIgnore] public string? _sharedName;
             [YamlIgnore] public GameObject? prefab => ZNetScene.instance.GetPrefab(PrefabName);
-
             public int GetThreshold()
             {
                 return Type switch
@@ -803,7 +789,6 @@ public static class AchievementManager
                     _ => Threshold,
                 };
             }
-            
             public int GetProgress(Player player)
             {
                 return Type switch
@@ -856,12 +841,10 @@ public static class AchievementManager
 public static class AchievementHelpers
 {
     public static bool IsCompleted(this AchievementManager.Achievement achievement, Player player) => achievement.Requirement.GetProgress(player) >= achievement.Requirement.GetThreshold();
-
     public static bool IsCollected(this AchievementManager.Achievement achievement, Player player)
     {
         return player.GetCollectedAchievements().Contains(achievement.Name.GetStableHashCode());
     }
-
     public static void ResetAchievementCollected(this Player player, AchievementManager.Achievement achievement)
     {
         List<int> list = player.GetCollectedAchievements();
@@ -869,7 +852,6 @@ public static class AchievementHelpers
         string data = AchievementManager.serializer.Serialize(list);
         player.m_customData[AchievementManager.ACHIEVEMENT_KEY] = data;
     }
-
     public static void SetAchievementCollected(this Player player, AchievementManager.Achievement achievement)
     {
         List<int> list = player.GetCollectedAchievements();
@@ -877,14 +859,12 @@ public static class AchievementHelpers
         string data = AchievementManager.serializer.Serialize(list);
         player.m_customData[AchievementManager.ACHIEVEMENT_KEY] = data;
     }
-
     public static List<int> GetCollectedAchievements(this Player player)
     {
         return !player.m_customData.TryGetValue(AchievementManager.ACHIEVEMENT_KEY, out var achievements) 
             ? new() 
             : AchievementManager.deserializer.Deserialize<List<int>>(achievements);
     }
-
     public static string GetSharedName(this AchievementManager.Achievement.AchievementRequirement requirement)
     {
         if (!string.IsNullOrEmpty(requirement._sharedName)) return requirement._sharedName!;
@@ -907,7 +887,6 @@ public static class AchievementHelpers
         };
         return requirement._sharedName;
     }
-
     public static int Floor(this float value) => Mathf.FloorToInt(value);
 }
 

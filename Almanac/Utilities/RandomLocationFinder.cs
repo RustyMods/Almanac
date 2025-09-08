@@ -8,13 +8,11 @@ public static class RandomLocationFinder
     private const float minSpawnDistance = 2f;
     private const float maxYDistance = 10f;
     private const int solidHeightMargin = 1000;
-    
     private static Vector3 GetRandomVectorWithin(Vector3 point, float margin)
     {
         Vector2 vector2 = UnityEngine.Random.insideUnitCircle * margin;
         return point + new Vector3(vector2.x, 0.0f, vector2.y);
     }
-
     public static bool FindSpawnLocation(Heightmap.Biome biome, out Vector3 position)
     {
         position = Vector3.zero;
@@ -29,7 +27,6 @@ public static class RandomLocationFinder
                 return true;
             }
         }
-        
         // Then try entire world
         for (int index = 0; index < 1000; ++index)
         {
@@ -41,7 +38,6 @@ public static class RandomLocationFinder
                 return true;
             }
         }
-        
         return false;
     }
 
@@ -69,12 +65,10 @@ public static class RandomLocationFinder
         if (IsMarkedAsWater(position)) return true;
         return false;
     }
-
     private static bool IsMarkedAsWater(Vector3 position)
     {
         return IsSurroundedByWater(position);
     }
-
     private static bool IsSurroundedByWater(Vector3 position, int samples = 8, float radius = 50f)
     {
         int waterSamples = 0;
@@ -96,7 +90,6 @@ public static class RandomLocationFinder
         }
         return waterSamples > (samples / 2);
     }
-
     private static Vector3 GetRandomVector()
     {
         float x = UnityEngine.Random.Range(-maxRadius, maxRadius);

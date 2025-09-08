@@ -25,7 +25,6 @@ public static class CustomEffectManager
     private static Dictionary<string, CustomEffect.Data> effects = new();
     private static readonly Dictionary<string, CustomEffect.Data> fileEffects = new();
     private static readonly Dictionary<CustomEffect.Data, CustomEffect> registeredEffects = new();
-    
     private static void Initialize()
     {
         foreach (CustomEffect.Data? data in effects.Values)
@@ -39,7 +38,6 @@ public static class CustomEffectManager
             registeredEffects[data] = se;
         }
     }
-    
     public static void Setup()
     {
         AlmanacPlugin.OnObjectDBAwake += Initialize;
@@ -83,7 +81,6 @@ public static class CustomEffectManager
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
         SyncedEffectData.Value = serializer.Serialize(effects);
     }
-
     private static void OnServerEffectsChanged()
     {
         if (!ZNet.instance || ZNet.instance.IsServer()) return;
@@ -91,7 +88,6 @@ public static class CustomEffectManager
         Dictionary<string, CustomEffect.Data> data = deserializer.Deserialize<Dictionary<string, CustomEffect.Data>>(SyncedEffectData.Value);
         effects = data;
     }
-
     private static void ReloadPage()
     {
         if (AlmanacPanel.instance?.Tabs[AlmanacPanel.Tab.TabOption.StatusEffects].IsSelected ?? false)
@@ -99,7 +95,6 @@ public static class CustomEffectManager
             AlmanacPanel.instance.OnStatusEffectTab();
         }
     }
-
     private static void OnChanged(object sender, FileSystemEventArgs e)
     {
         try
@@ -119,7 +114,6 @@ public static class CustomEffectManager
             AlmanacPlugin.AlmanacLogger.LogWarning("Failed to change custom effect: " + Path.GetFileName(e.FullPath));
         }
     }
-
     private static void OnDeleted(object sender, FileSystemEventArgs e)
     {
         if (!fileEffects.TryGetValue(e.FullPath, out CustomEffect.Data? effect)) return;
@@ -129,7 +123,6 @@ public static class CustomEffectManager
         fileEffects.Remove(e.FullPath);
         ReloadPage();
     }
-
     private static void OnCreated(object sender, FileSystemEventArgs e)
     {
         try
@@ -151,7 +144,6 @@ public static class CustomEffectManager
             AlmanacPlugin.AlmanacLogger.LogWarning("Failed to create custom effect: " + Path.GetFileName(e.FullPath));
         }
     }
-
     private static void LoadDefaults()
     {
         CustomEffect.Data MinorHealth = new CustomEffect.Data();
@@ -334,16 +326,13 @@ public class CustomEffect : SE_Stats
         m_sneakStaminaUseModifier = data.GetValue(CEVars.SneakStaminaModifier, 0f);
         m_runStaminaDrainModifier = data.GetValue(CEVars.RunStaminaModifier, 0f);
     }
-
     public override void ModifySkillLevel(Skills.SkillType skill, ref float level)
     {
         if (data == null) return;
         if (data.Skills.TryGetValue("All", out var all)) level += all;
         if (data.Skills.TryGetValue(skill.ToString(), out var amount)) level += amount;
     }
-
     public override void OnDamaged(HitData hit, Character character) => hit.ApplyModifier(Mathf.Clamp01(1f - m_damageReduction));
-
     public void ModifyDamages(ref HitData hit)
     {
         hit.m_damage.m_blunt *= 1f - m_bluntResistance;
@@ -368,7 +357,6 @@ public class CustomEffect : SE_Stats
         if (hit.m_damage.m_poison < 0f) hit.m_damage.m_poison = 0f;
         if (hit.m_damage.m_spirit < 0f) hit.m_damage.m_spirit = 0f;
     }
-
     public void LifeSteal(HitData hit, Character character)
     {
         float leech = m_lifeSteal - 1f;
@@ -379,7 +367,6 @@ public class CustomEffect : SE_Stats
             character.Heal(total);
         }
     }
-    
     public override string GetTooltipString()
     {
         if (data == null) return base.GetTooltipString();
@@ -462,7 +449,6 @@ public class CustomEffect : SE_Stats
         }
         return sb.ToString();
     }
-
     [Serializable]
     public class Data
     {
@@ -477,9 +463,7 @@ public class CustomEffect : SE_Stats
         public List<string> StopEffects = new();
         public Dictionary<string, float> Modifiers = new();
         public Dictionary<string, float> Skills = new();
-
         [YamlIgnore] public Sprite? icon => SpriteManager.GetSprite(Icon);
-
         public void CopyFrom(Data other)
         {
             UniqueID = other.UniqueID;

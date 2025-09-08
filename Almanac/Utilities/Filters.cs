@@ -14,7 +14,6 @@ public static class Filters
     }
 
     private static readonly List<string> filters = new();
-    
     private static readonly List<string> m_default = new()
     {
         "#List out prefabs to ignore:",
@@ -56,6 +55,13 @@ public static class Filters
         "TheHive",
         "portal",
         "raise",
+        "mud_road",
+        "cultivate",
+        "path",
+        "paved_road",
+        "fire_pit_haldor",
+        "fire_pit_hildir",
+        "ShieldKnight",
         "*_nochest"
     };
 

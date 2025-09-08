@@ -25,7 +25,6 @@ public static class MarketManager
 
     private static readonly Dictionary<string, Market> marketItems = new();
     private static readonly Dictionary<string, int> revenues = new();
-    
     public static void Setup()
     {
         AlmanacPlugin.OnZNetAwake += Initialize;
@@ -33,7 +32,6 @@ public static class MarketManager
         SyncedRevenue.ValueChanged += OnServerRevenueChange;
         AlmanacPlugin.OnZNetSave += Save;
     }
-
     private static void Save()
     {
         if (!ZNet.instance || !ZNet.instance.IsServer() || MarketFilePath == null || RevenueFilePath == null) return;
@@ -46,9 +44,7 @@ public static class MarketManager
         string revenueData = serializer.Serialize(revenues);
         byte[] compressedRevenueData = CompressAndEncode(revenueData);
         File.WriteAllBytes(RevenueFilePath, compressedRevenueData);
-
     }
-
     private static void Read()
     {
         if (!ZNet.instance || !ZNet.instance.IsServer()  || MarketFilePath == null || RevenueFilePath == null) return;
@@ -85,7 +81,6 @@ public static class MarketManager
             }
         }
     }
-    
     private static byte[] CompressAndEncode(string text)
     {
         byte[] data = Encoding.UTF8.GetBytes(text);
@@ -96,7 +91,6 @@ public static class MarketManager
         gzip.Close();
         return output.ToArray();
     }
-
     private static string DecompressAndDecode(byte[] compressedData)
     {
         using var input = new MemoryStream(compressedData);
@@ -105,7 +99,6 @@ public static class MarketManager
         gzip.CopyTo(output);
         return Encoding.UTF8.GetString(output.ToArray());
     }
-
     private static void OnServerMarketChange()
     {
         if (!ZNet.instance || ZNet.instance.IsServer()) return;
@@ -122,7 +115,6 @@ public static class MarketManager
             AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server marketplace");
         }
     }
-
     private static void Initialize()
     {
         MarketFilePath = AlmanacPaths.MarketplaceFolderPath + Path.DirectorySeparatorChar + ZNet.instance.GetWorldName() + ".Marketplace.dat";
@@ -133,14 +125,12 @@ public static class MarketManager
         Read();
         UpdateServerMarketplace();
     }
-
     private static void UpdateServerMarketplace()
     {
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
         string data = serializer.Serialize(marketItems);
         SyncedMarket.Value = data;
     }
-
     private static void OnServerRevenueChange()
     {
         if (!ZNet.instance || ZNet.instance.IsServer()) return;
@@ -165,7 +155,6 @@ public static class MarketManager
         string data = serializer.Serialize(revenues);
         SyncedRevenue.Value = data;
     }
-    
     public static List<MarketItem> GetMarketItems()
     {
         List<MarketItem> list = new List<MarketItem>();
@@ -180,7 +169,6 @@ public static class MarketManager
         }
         return list;
     }
-    
     public static int GetRevenue(Player player) => revenues.TryGetValue(player.GetPlayerName(), out int revenue) ? revenue : 0;
 
     public static void CollectRevenue(Player player)
@@ -189,7 +177,6 @@ public static class MarketManager
         player.AddTokens(revenue);
         RemoveRevenue(player.GetPlayerName());
     }
-    
     public static bool HasRevenue(Player player) => revenues.ContainsKey(player.GetPlayerName());
 
     private static void RPC_RemoveMarketItem(long sender, string pkg)
@@ -210,13 +197,11 @@ public static class MarketManager
         if (!dict.TryGetValue(key, out Market? market)) market = new Market(key);
         return market;
     }
-
     private static void AddOrSet(this Dictionary<string, int> dict, string key, int value)
     {
         if (dict.ContainsKey(key)) dict[key] += value;
         else dict[key] = value;
     }
-    
     public static void RPC_AddMarketItem(long sender, string pkg)
     {
         try
@@ -229,7 +214,6 @@ public static class MarketManager
             AlmanacPlugin.AlmanacLogger.LogWarning("Failed to add market item");
         }
     }
-
     public static void RPC_RemoveRevenue(long sender, string playerName) => RemoveRevenue(playerName);
 
     private static void RemoveRevenue(string playerName)
@@ -245,13 +229,11 @@ public static class MarketManager
             ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.instance.GetServerPeerID(), nameof(RPC_RemoveRevenue), playerName);
         }
     }
-
     private static void AddRevenue(string playerName, int amount)
     {
         revenues.AddOrSet(playerName, amount);
         UpdateServerRevenue();
     }
-
     private static void AddMarketItem(MarketItem marketItem)
     {
         if (!ItemHelper.TryGetItemBySharedName(marketItem.itemData.m_shared.m_name, out ItemDrop component)) return;
@@ -261,7 +243,6 @@ public static class MarketManager
         if (!AlmanacPanel.IsVisible()) return;
         if (AlmanacPanel.instance?.Tabs[AlmanacPanel.Tab.TabOption.Store].IsSelected ?? false) AlmanacPanel.instance.OnStoreTab();
     }
-
     private static void RemoveMarketItem(MarketItem marketItem)
     {
         marketItem.market?.Remove(marketItem);
@@ -271,7 +252,6 @@ public static class MarketManager
         if (!AlmanacPanel.IsVisible()) return;
         if (AlmanacPanel.instance?.Tabs[AlmanacPanel.Tab.TabOption.Store].IsSelected ?? false) AlmanacPanel.instance.OnStoreTab();
     }
-
     public static bool AddMarketItem(ItemDrop.ItemData item, int cost, int stack, string playerName)
     {
         if (!ZNet.instance) return false;
@@ -302,28 +282,21 @@ public static class MarketManager
             string pkg = serializer.Serialize(marketItem);
             ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.instance.GetServerPeerID(), nameof(RPC_AddMarketItem), pkg);
         }
-        
         return true;
     }
-
-
     [Serializable]
     public class Market
     {
         public string ItemID = string.Empty;
         public Dictionary<string, MarketItem> items = new();
-        
         [YamlIgnore] public bool isEquipable => item?.m_itemData.IsEquipable() ?? false;
         [YamlIgnore] public ItemDrop? item => ObjectDB.instance?.GetItemPrefab(ItemID).GetComponent<ItemDrop>();
-
         public Market(string itemID)
         {
             ItemID = itemID;
             marketItems[itemID] = this; 
         }
-        
         public Market(){}
-        
         public MarketItem? GetCheapest()
         {
             MarketItem? cheapest = null;
@@ -338,7 +311,6 @@ public static class MarketManager
         }
 
         public void Add(MarketItem marketItem) => items[marketItem.GUID] = marketItem;
-
         public void Remove(MarketItem marketItem)
         {
             items.Remove(marketItem.GUID);
@@ -367,16 +339,11 @@ public static class MarketManager
         public DateTime DatePosted;
         public string PostedBy = string.Empty;
         public string GUID = string.Empty;
-        
         public MarketItem() {}
-
         [YamlIgnore] public Market? market => marketItems.TryGetValue(ItemID, out Market? Market) ? Market : null;
         [YamlIgnore] public ItemDrop.ItemData itemData => ObjectDB.instance.GetItemPrefab(ItemID).GetComponent<ItemDrop>().m_itemData;
-
         public bool HasRequirements(Player player) => player.GetTokens() >= TokenCost;
-        
         public float GetCostPerUnit() => TokenCost / (float)Stack;
-        
         public ItemDrop.ItemData GetPreview()
         {
             ItemDrop.ItemData item = ObjectDB.instance.GetItemPrefab(ItemID).GetComponent<ItemDrop>().m_itemData.Clone();
@@ -389,7 +356,6 @@ public static class MarketManager
             item.m_customData.AddRange(CustomData);
             return item;
         }
-
         public List<Entries.Entry> ToEntries()
         {
             builder.Clear();
@@ -400,7 +366,6 @@ public static class MarketManager
             builder.Add(Keys.DatePosted, DatePosted.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"));
             return builder.ToList();
         }
-
         public bool Purchase(Player player)
         {
             if (!player.GetInventory().HaveEmptySlot()) return false;

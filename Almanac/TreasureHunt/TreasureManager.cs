@@ -41,14 +41,11 @@ public class TreasureManager : MonoBehaviour
     {
         InvokeRepeating(nameof(CheckTreasureLocation), 10f, 10f);
     }
-
     public void OnDestroy()
     {
         instance = null;
     }
-
     public static bool Exists(string name) => treasures.ContainsKey(name);
-    
     private void CheckTreasureLocation()
     {
         if (!Player.m_localPlayer || !ZNetScene.instance || !Minimap.instance) return;
@@ -63,7 +60,6 @@ public class TreasureManager : MonoBehaviour
         }
         Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Spawned Treasure loot!");
     }
-
     public static void Setup()
     {
         AlmanacPlugin.instance.gameObject.AddComponent<TreasureManager>();
@@ -116,7 +112,6 @@ public class TreasureManager : MonoBehaviour
         ActiveTreasureLocation = null;
         treasures = data;
     }
-
     private static void OnCreated(object? sender, FileSystemEventArgs e)
     {
         try
@@ -134,7 +129,6 @@ public class TreasureManager : MonoBehaviour
             AlmanacPlugin.AlmanacLogger.LogWarning("Failed to create treasure: " + Path.GetFileName(e.FullPath));
         }
     }
-
     private static void OnChange(object? sender, FileSystemEventArgs e)
     {
         try
@@ -153,7 +147,6 @@ public class TreasureManager : MonoBehaviour
             AlmanacPlugin.AlmanacLogger.LogWarning("Failed to change treasure: " + Path.GetFileName(e.FullPath));
         }
     }
-
     private static void OnDeleted(object? sender, FileSystemEventArgs e)
     {
         try
@@ -172,7 +165,6 @@ public class TreasureManager : MonoBehaviour
             AlmanacPlugin.AlmanacLogger.LogWarning("Failed to delete treasure: " + Path.GetFileName(e.FullPath));
         }
     }
-
     private static void LoadDefaults()
     {
         TreasureData meadow = new TreasureData();
@@ -269,7 +261,6 @@ public class TreasureManager : MonoBehaviour
         }
         ActiveTreasureLocation = null;
     }
-
     public static bool AcceptTreasure(TreasureData data)
     {
         if (datetime != DateTime.MaxValue)
@@ -297,7 +288,6 @@ public class TreasureManager : MonoBehaviour
         AlmanacPlugin.AlmanacLogger.LogDebug("Location: " + treasureLocation.position.x + " " + treasureLocation.position.z);
         return true;
     }
-
     public class TreasureLocation
     {
         public readonly TreasureData data;
@@ -337,8 +327,7 @@ public class TreasureManager : MonoBehaviour
                 {
                     for (int index = 0; index < 1000; ++index)
                     {
-                        var possible = GetRandomVectorWithin(vector3, 10f * index + 1);
-                        
+                        Vector3 possible = GetRandomVectorWithin(vector3, 10f * index + 1);
                         if (ZoneSystem.instance.IsLava(possible))
                         {
                             continue;
@@ -430,10 +419,8 @@ public class TreasureManager : MonoBehaviour
             Cost = data.Cost;
             Loot = data.Loot;
         }
-        
         [YamlIgnore] public Heightmap.Biome biome => Enum.TryParse(Biome, true, out Heightmap.Biome land) ? land : Heightmap.Biome.None;
         [YamlIgnore] public Sprite? icon => SpriteManager.GetSprite(Icon);
-
         public List<AlmanacPanel.InfoView.Icons.DropInfo> ToDropInfo()
         {
             List<AlmanacPanel.InfoView.Icons.DropInfo> info = new();
@@ -446,7 +433,6 @@ public class TreasureManager : MonoBehaviour
         }
 
         private static Entries.EntryBuilder builder = new();
-
         public List<Entries.Entry> ToEntries()
         {
             builder.Clear();
@@ -464,9 +450,7 @@ public class TreasureManager : MonoBehaviour
         public int Min;
         public int Max;
         public float Weight;
-        
         public LootInfo(){}
-
         public LootInfo(string item, int min, int max, float weight)
         {
             Item = item;
@@ -474,10 +458,8 @@ public class TreasureManager : MonoBehaviour
             Max = max;
             Weight = weight;
         }
-
         [YamlIgnore] public GameObject? prefab => ObjectDB.instance.GetItemPrefab(Item);
         [YamlIgnore] public bool isValid => prefab is not null;
-
         public DropTable.DropData ToDropTableData()
         {
             DropTable.DropData data = new()
@@ -489,7 +471,6 @@ public class TreasureManager : MonoBehaviour
             };
             return data;
         }
-
         public AlmanacPanel.InfoView.Icons.DropInfo? ToDropInfo()
         {
             if (prefab?.GetComponent<ItemDrop>().m_itemData is not { } itemData) return null;

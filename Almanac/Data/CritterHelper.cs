@@ -6,8 +6,6 @@ using UnityEngine;
 using static Almanac.Utilities.Entries;
 
 namespace Almanac.Data;
-
-
 public static class CritterHelper
 {
     private static ItemDrop.ItemData? FindTrophy(this List<CharacterDrop.Drop> list)
@@ -20,7 +18,6 @@ public static class CritterHelper
 
         return null;
     }
-
     public static AlmanacPanel.InfoView.Icons.DropInfo[] ToDropInfos(this List<CharacterDrop.Drop> drops)
     {
         List<AlmanacPanel.InfoView.Icons.DropInfo> infos = new();
@@ -32,19 +29,16 @@ public static class CritterHelper
 
         return infos.ToArray();
     }
-
     public static void Setup()
     {
         AlmanacPlugin.OnZNetScenePrefabs += OnZNetScenePrefabs;
     }
-
     private static void OnZNetScenePrefabs(GameObject prefab)
     {
         if (prefab == null || !prefab.TryGetComponent(out Character character)) return;
         if (character is Player) return;
         _ = new CritterInfo(prefab);
     }
-
     private static readonly Dictionary<string, Heightmap.Biome> creatureBiomes = new()
     {
         ["Boar"] = Heightmap.Biome.Meadows,
@@ -123,16 +117,12 @@ public static class CritterHelper
         ["Dragon"] = Heightmap.Biome.Mountain,
         
     };
-
     private static Heightmap.Biome GetBiome(string name) => creatureBiomes.TryGetValue(name, out var biome) ? biome : Heightmap.Biome.None;
-
     public static List<CritterInfo> GetCritters() => critters.FindAll(c => !Filters.Ignore(c.prefab.name));
     private static readonly List<CritterInfo> critters = new();
     public static readonly Dictionary<string, CritterInfo> namedCritters = new();
     private static readonly Dictionary<string, CritterInfo> sharedCritters = new();
-    
     public static bool Exists(string name) => namedCritters.ContainsKey(name) || sharedCritters.ContainsKey(name);
-    
     public struct CritterInfo
     {
         private static readonly EntryBuilder builder = new();
@@ -147,9 +137,7 @@ public static class CritterHelper
         public readonly Growup? growUp;
         public readonly ItemDrop.ItemData? trophy = null;
         public bool isTameable => tameable != null;
-
         public bool isKnown() => PlayerInfo.GetPlayerStat(PlayerInfo.RecordType.Kill, character.m_name) > 0;
-
         public CritterInfo(GameObject prefab)
         {
             this.prefab = prefab;

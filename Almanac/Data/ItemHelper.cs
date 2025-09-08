@@ -6,14 +6,12 @@ using UnityEngine;
 using static ItemDrop.ItemData;
 
 namespace Almanac.Data;
-
 public static class ItemHelper
 {
     public static bool HasIcons(this ItemDrop.ItemData item) => item.m_shared.m_icons.Length > 0;
     public static bool HasIcons(this ItemDrop itemDrop) => itemDrop.m_itemData.HasIcons();
     public static bool HasVariants(this ItemDrop.ItemData item) => item.m_shared.m_icons.Length > 1;
     public static bool HasVariants(this ItemDrop itemDrop) => itemDrop.m_itemData.HasVariants();
-
     public static HashSet<ItemDrop> GetSet(this ItemDrop.ItemData item)
     {
         HashSet<ItemDrop> set = new HashSet<ItemDrop>();
@@ -24,7 +22,6 @@ public static class ItemHelper
         }
         return set;
     }
-
     private static HashSet<Character> DroppedBy(this ItemDrop.ItemData item)
     {
         HashSet<Character> characters = new();
@@ -50,7 +47,6 @@ public static class ItemHelper
     }
     public static bool IsPartOfSet(this ItemDrop.ItemData item) => !string.IsNullOrEmpty(item.m_shared.m_setName);
     private static bool HasStatModifiers(this ItemDrop.ItemData item) => item.m_shared.HasStatModifiers();
-
     private static bool HasStatModifiers(this SharedData shared)
     {
         return shared.m_movementModifier 
@@ -66,31 +62,25 @@ public static class ItemHelper
                + shared.m_runStaminaModifier
                > 0f;
     }
-
     private static ItemInfo? GetInfo(string sharedName) => ItemInfos.TryGetValue(sharedName, out var info) ? info : null;
     public static ItemInfo? GetInfo(this ItemDrop.ItemData item) => GetInfo(item.m_shared.m_name);
-
     public static List<ItemInfo> GetItemsWhileIgnoring(params ItemType[] ignoreTypes)
     {
         HashSet<ItemType> typeSet = new HashSet<ItemType>(ignoreTypes);
         return GetItems().Where(item => !typeSet.Contains(item.shared.m_itemType)).ToList();
     }
-
     private static List<ItemInfo> GetItemByType(params ItemType[] types)
     {
         HashSet<ItemType> typeSet = new HashSet<ItemType>(types);
         return GetItems().Where(item => typeSet.Contains(item.shared.m_itemType)).ToList();
     }
-
     private static List<ItemInfo> GetItemsBySkill(params Skills.SkillType[] types)
     {
         HashSet<Skills.SkillType> typeSet = new HashSet<Skills.SkillType>(types);
         return weapons.Where(item => typeSet.Contains(item.shared.m_skillType)).ToList();
     }
     public static List<ItemInfo> scrolls => GetItems().Where(item => item.prefab.name.StartsWith("kg")).ToList();
-
     public static List<ItemInfo> jewels => GetItems().Where(item => item.IsJewel()).ToList();
-
     private static bool IsJewel(this ItemInfo info)
     {
          List<string> tables = new() { "Odins_Stone_Transmuter", "op_transmution_table", "Odins_Jewelry_Box", "JC_CrystalBall_Ext", "JC_Gemstone_Furnace" };
@@ -109,9 +99,7 @@ public static class ItemHelper
         if (item.m_itemData.m_shared.m_itemType is ItemType.Torch) return true;
         return toolNames.Contains(item.name);
     }
-
     private static Dictionary<string, ItemInfo>? _pickableItems;
-
     public static Dictionary<string, ItemInfo> pickableItems
     {
         get
@@ -130,7 +118,6 @@ public static class ItemHelper
         }
     }
     private static List<Pickable>? _pickables;
-
     public static List<Pickable> pickables
     {
         get
@@ -147,8 +134,6 @@ public static class ItemHelper
             return result;
         }
     }
-
-
     private static bool IsBait(this ItemDrop itemDrop) => itemDrop.name.ToLower().Contains("bait");
     public static List<ItemInfo> baits => GetItems().Where(item => item.itemDrop.IsBait()).ToList();
     public static List<ItemInfo> swords => GetItemsBySkill(Skills.SkillType.Swords);
@@ -173,7 +158,6 @@ public static class ItemHelper
     public static List<ItemInfo> weapons => GetItemsWhileIgnoring(ItemType.None, ItemType.Material, ItemType.Consumable, ItemType.Customization, ItemType.Legs, ItemType.Trophy, ItemType.Torch, ItemType.Misc, ItemType.Shoulder, ItemType.Utility, ItemType.Tool, ItemType.Attach_Atgeir, ItemType.Fish, ItemType.Ammo, ItemType.AmmoNonEquipable, ItemType.Helmet, ItemType.Chest);
     private static List<ItemInfo> items => ItemInfos.Values.ToList();
     private static List<ItemInfo> GetItems() => items.FindAll(x => !Filters.Ignore(x.prefab.name));
-    
     public static bool IsSword(this ItemInfo info) => swords.Contains(info);
     public static bool IsAxe(this ItemInfo info) => axes.Contains(info);
     public static bool IsPolearm(this ItemInfo info) => polearms.Contains(info);
@@ -193,9 +177,7 @@ public static class ItemHelper
     public static bool IsHelmet(this ItemInfo info) => helmets.Contains(info);
     public static bool IsChest(this ItemInfo info) => chests.Contains(info);
     public static bool IsLegs(this ItemInfo info) => legs.Contains(info);
-    
     public static ItemInfo? GetInfo(this ItemDrop item) => item.m_itemData.GetInfo();
-    
     private static readonly Dictionary<string, ItemInfo> ItemInfos = new();
     public readonly record struct ItemInfo
     {
@@ -526,16 +508,12 @@ public static class ItemHelper
             return builder.ToList();
         }
     }
-
     private static readonly Dictionary<string, ItemDrop> m_itemBySharedName = new();
-
     public static bool TryGetItemBySharedName(string sharedName, out ItemDrop itemDrop) => m_itemBySharedName.TryGetValue(sharedName, out itemDrop);
-
     public static void Setup()
     {
         AlmanacPlugin.OnObjectDBPrefabs += OnObjectDBPrefabs;
     }
-
     private static void OnObjectDBPrefabs(GameObject prefab)
     {
         if (prefab == null || !prefab.TryGetComponent(out ItemDrop component)) return;

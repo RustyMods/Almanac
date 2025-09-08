@@ -266,7 +266,6 @@ public static class InventoryGui_IsVisible_Patch
     }
 }
 
-
 public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler
 {
     public static ConfigEntry<Vector3> panelPos = null!;
@@ -418,7 +417,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         }
 
         if (nextElement == indexOf) return;
-        
+        if (!list[nextElement].IsKnown()) return;
         list[nextElement].Select();
     }
 
@@ -476,6 +475,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             bool isKnown = !Configs.UseKnowledgeWall || Player.m_localPlayer.IsKnownMaterial(data.shared.m_name) || Player.m_localPlayer.NoCostCheat();
             if (Configs.HideUnknownEntries && !isKnown) continue;
             ElementView.Element item = elementView.Create();
+            item.isKnown = isKnown;
             item.SetName(isKnown ? data.shared.m_name : "???");
             item.SetDescription(isKnown ? data.shared.m_name + "_lore" : string.Empty);
             item.SetIcon(data.GetIcon());
@@ -517,6 +517,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             bool isKnown = Player.m_localPlayer.IsPieceKnown(data.piece) || !Configs.UseKnowledgeWall || Player.m_localPlayer.NoCostCheat();
             if (Configs.HideUnknownEntries && !isKnown) continue;
             ElementView.Element item = elementView.Create();
+            item.isKnown = isKnown;
             item.SetPieceInfo(data);
             item.SetName(isKnown ? data.piece.m_name : "???");
             item.SetDescription(isKnown ? data.piece.m_description : string.Empty);
@@ -549,6 +550,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             bool isKnown = Player.m_localPlayer.NoCostCheat() || !Configs.UseKnowledgeWall || Player.m_localPlayer.IsKnownMaterial(data.shared.m_name);
             if (Configs.HideUnknownEntries && !isKnown) continue;
             ElementView.Element item = elementView.Create();
+            item.isKnown = isKnown;
             item.SetItemInfo(data);
             item.SetName(isKnown ? data.shared.m_name : "???");
             item.SetDescription(isKnown ? data.shared.m_description : string.Empty);
@@ -616,7 +618,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             bool isKnown = Player.m_localPlayer.NoCostCheat() || !Configs.UseKnowledgeWall || data.isKnown();
             if (Configs.HideUnknownEntries && !isKnown) continue;
             ButtonView.ElementButton item = buttonView.Create();
-
+            item.isKnown = isKnown;
             item.SetLabel(isKnown ? data.character.m_name : "???");
             item.Interactable(isKnown);
             item.OnClick(() =>
@@ -668,6 +670,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             bool isKnown = !Configs.UseKnowledgeWall || Player.m_localPlayer.NoCostCheat() || PlayerInfo.IsStatusEffectKnown(se.NameHash());
             if (Configs.HideUnknownEntries && !isKnown) continue;
             ElementView.Element item = elementView.Create();
+            item.isKnown = isKnown;
             item.SetName(isKnown ? se.m_name : "???");
             item.SetIcon(se.m_icon);
             item.SetIconColor(isKnown ? Color.white : Color.black);
@@ -754,6 +757,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         {
             ElementView.Element item = elementView.Create();
             bool isKnown = Player.m_localPlayer.NoCostCheat() || bounty.HasRequirements();
+            item.isKnown = isKnown;
             if (Configs.HideUnknownEntries && !isKnown) continue;
             item.SetName(isKnown ? bounty.character?.m_name ?? "<color=red>Invalid</color>" : "???");
             item.SetDescription(bounty.GetNameOverride());
@@ -819,6 +823,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         {
             ElementView.Element item = elementView.Create();
             bool isKnown = Player.m_localPlayer.NoCostCheat() || Player.m_localPlayer.IsBiomeKnown(treasure.biome);
+            item.isKnown = isKnown;
             if (Configs.HideUnknownEntries && !isKnown) continue;
             item.SetName(isKnown ? treasure.Name : "???");
             item.SetIcon(treasure.icon);
@@ -963,6 +968,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         {
             ElementView.Element item = elementView.Create();
             bool hasReqs = data.HasRequirements(Player.m_localPlayer);
+            item.isKnown = hasReqs;
             if (Configs.HideUnknownEntries && !hasReqs) continue;
             item.SetName(hasReqs ? data.Name : "???");
             item.SetDescription(hasReqs ? data.Lore : string.Empty);
@@ -1295,9 +1301,9 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             private readonly Button button;
             private readonly Image selected;
             private readonly Text label;
-            
             public string Name => label.text;
-
+            public bool isKnown;
+            public override bool IsKnown() => isKnown;
             public ElementButton(Transform transform) : base(transform)
             {
                 button = transform.GetComponent<Button>();
@@ -1305,7 +1311,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 label = transform.Find("Text").GetComponent<Text>();
                 SetSelected(false);
             }
-
             public override void Select() => button.onClick.Invoke();
             public void SetLabel(string text) => label.text = Localization.instance.Localize(text);
             public void OnClick(UnityAction action) => button.onClick.AddListener(action);
@@ -1313,7 +1318,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             public void SetSelectedColor(Color color) => selected.color = color;
             public void SetSelected(bool enable) => selected.gameObject.SetActive(enable);
             public void Interactable(bool enable) => button.interactable = enable;
-
             public ElementButton Create(Transform parent)
             {
                 GameObject? go = Instantiate(prefab, parent);
@@ -1321,8 +1325,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 ElementButton element = new ElementButton(go.transform);
                 return element;
             }
-            
-            public void Destroy() => Object.Destroy(prefab);
         }
     }
 
@@ -1332,22 +1334,18 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         private readonly List<Element> elements = new();
         public int Count => elements.Count;
         private Element? selectedElement;
-        
         public ElementView(Transform transform) : base(transform)
         {
             _element = new Element(transform.Find("Viewport/ListElement"));
         }
-        
         public Element Create()
         {
             Element temp = _element.Create(root);
             elements.Add(temp);
             return temp;
         }
-
         public override List<GridElement> GetElements() => elements.Select(GridElement (e) => e).ToList();
         public override GridElement? GetSelectedElement() => selectedElement;
-        
         public void SetSelected(Element element)
         {
             foreach (Element? item in elements)
@@ -1363,13 +1361,11 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 }
             }
         }
-
         public void SetSelectedColor(Color color)
         {
             _element.SetSelectedColor(color);
             foreach (Element? element in elements) element.SetSelectedColor(color);
         }
-
         public override void OnSearch(string query)
         {
             int count = 0;
@@ -1382,12 +1378,10 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             }
             Resize(count);
         }
-
         private static bool Override(string query, Element element)
         {
             return element.itemInfo is { } item && OverrideMatch(query, item) || element.pieceInfo is { } piece && OverrideMatch(query, piece);
         }
-
         private static bool OverrideMatch(string query, PieceHelper.PieceInfo info)
         {
             return query switch
@@ -1398,7 +1392,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 _ => false,
             };
         }
-
         private static bool OverrideMatch(string query, ItemHelper.ItemInfo info)
         {
             return query switch
@@ -1422,13 +1415,11 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 _ => false,
             };
         }
-
         public void Clear()
         {
             foreach (Element element in elements) element.Destroy();
             elements.Clear();
         }
-
         public class Element : GridElement
         {
             private readonly Image selected;
@@ -1439,9 +1430,10 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             private readonly Sprite defaultSprite;
             public ItemHelper.ItemInfo? itemInfo;
             public PieceHelper.PieceInfo? pieceInfo;
-            
-            public string Name => name.text;
+            public bool isKnown;
 
+            public override bool IsKnown() => isKnown;
+            public string Name => name.text;
             public Element(Transform transform) : base(transform)
             {
                 selected = transform.Find("Selected").GetComponent<Image>();
@@ -1451,7 +1443,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 name = transform.Find("Name").GetComponent<Text>();
                 description = transform.Find("Description").GetComponent<Text>();
             }
-
             public Element Create(Transform parent)
             {
                 GameObject? go = Instantiate(prefab, parent);
@@ -1459,9 +1450,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 Element element = new Element(go.transform);
                 return element;
             }
-            
             public override void Select() => button.onClick.Invoke();
-            
             public void OnClick(UnityAction action) => button.onClick.AddListener(action);
             public void SetIcon(Sprite? sprite) => icon.sprite = sprite ?? defaultSprite;
             public void SetName(string text) => name.text = Localization.instance.Localize(text);
@@ -1469,16 +1458,13 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             public void SetIconColor(Color color) => icon.color = color;
             public void SetActive(bool enable) => prefab.SetActive(enable);
             public void Interactable(bool enable) => button.interactable = enable;
-            public void Destroy() => Object.Destroy(prefab);
             public void SetSelected(bool enable) => selected.gameObject.SetActive(enable);
             public void SetSelectedColor(Color color) => selected.color = color;
-
             public void SetItemInfo(ItemHelper.ItemInfo info)
             {
                 itemInfo = info;
                 pieceInfo = null;
             }
-
             public void SetPieceInfo(PieceHelper.PieceInfo info)
             {
                 pieceInfo = info;
@@ -1490,15 +1476,15 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
     public class GridElement
     {
         protected readonly GameObject prefab;
-
         protected GridElement(Transform transform)
         {
             prefab = transform.gameObject;
         }
-
         public virtual void Select()
         {
         }
+        public virtual bool IsKnown() => false;
+        public void Destroy() => Object.Destroy(prefab);
     }
     public class GridView
     {
@@ -1509,7 +1495,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         public static readonly List<GridView> views = new List<GridView>();
         public static GridView? activeView;
         private readonly float height;
-
         protected GridView(Transform transform)
         {
             prefab = transform.gameObject;
@@ -1519,10 +1504,8 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             grid = root.GetComponent<GridLayoutGroup>();
             views.Add(this);
         }
-        
         public virtual List<GridElement> GetElements() => new();
         public virtual GridElement? GetSelectedElement() => null;
-
         public void SetActive(bool enable)
         {
             activeView = null;
@@ -1532,7 +1515,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             }
             activeView = this;
         }
-        
         public void Resize(int count)
         {
             float availableWidth = root.rect.width - grid.padding.left - grid.padding.right;
@@ -1542,10 +1524,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             root.sizeDelta = new Vector2(root.sizeDelta.x, Mathf.Max(totalHeight, height));
             scrollbar.value = 1f;
         }
-        public virtual void OnSearch(string query)
-        {
-            
-        }
+        public virtual void OnSearch(string query) { }
     }
     public class InfoView
     {
@@ -1553,7 +1532,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         private readonly TextArea _textArea;
         private readonly KeyValue _keyValue;
         private readonly Icons _icons;
-
+        
         private readonly GameObject prefab;
         private readonly RectTransform root;
         private readonly VerticalLayoutGroup group;
@@ -1562,7 +1541,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         private readonly float minHeight;
         private readonly float padding;
         private const float buffer = 2f; 
-
         public InfoView(Transform transform)
         {
             transform.GetComponent<Image>().enabled = false;
@@ -1577,7 +1555,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             _keyValue = new KeyValue(transform.Find("Viewport/KVP"));
             _icons = new Icons(transform.Find("Viewport/Icons"));
         }
-
         public void Resize()
         {
             float height = elements.Sum(element => element.height);
@@ -1586,7 +1563,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             root.sizeDelta = new Vector2(root.sizeDelta.x, Mathf.Max(minHeight, height + spacing + padding + extra));
             scrollbar.value = 1f;
         }
-
         public void OnSearch(string query)
         {
             foreach (InfoElement? element in elements)
@@ -1594,47 +1570,39 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 element.SetActive(element.Contains(query));
             }
         }
-
         public void Clear()
         {
             foreach(InfoElement? element in elements) element.Destroy();
             elements.Clear();
         }
-
         public Title CreateTitle()
         {
             Title element = _title.Create(root);
             elements.Add(element);
             return element;
         }
-
         public TextArea CreateTextArea()
         {
             TextArea element = _textArea.Create(root);
             elements.Add(element);
             return element;
         }
-
         public KeyValue CreateKeyValue()
         {
             KeyValue element = _keyValue.Create(root);
             elements.Add(element);
             return element;
         }
-
         public Icons CreateIcons()
         {
             Icons element = _icons.Create(root);
             elements.Add(element);
             return element;
         }
-        
         public void SetActive(bool enable) => prefab.SetActive(enable);
-
         public class Icons : InfoElement
         {
             private readonly List<IconElement> elements = new();
-            
             public Icons(Transform transform) : base(transform)
             {
                 elements.Add(new IconElement(transform.Find("1")));
@@ -1642,7 +1610,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 elements.Add(new IconElement(transform.Find("3")));
                 elements.Add(new IconElement(transform.Find("4")));
             }
-
             private class IconElement
             {
                 private readonly Image bkg;
@@ -1650,7 +1617,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 private readonly Text name;
                 private readonly Text amount;
                 private readonly Button button;
-
                 public IconElement(Transform transform)
                 {
                     bkg = transform.GetComponent<Image>();
@@ -1660,7 +1626,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                     button = transform.GetComponent<Button>();
                     Interactable(false);
                 }
-                
                 public void SetIcon(Sprite? sprite) => icon.sprite = sprite;
                 public void SetName(string text) => name.text = Localization.instance.Localize(text);
                 public void SetAmount(string value) => amount.text = Localization.instance.Localize(value);
@@ -1674,7 +1639,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                     name.text = string.Empty;
                     amount.text = string.Empty;
                 }
-                
                 public bool Contains(string query) => name.text.ToLower().Contains(query.ToLower());
             }
 
@@ -1703,7 +1667,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                     }
                 }
             }
-
             public void SetIcons(params Sprite[] sprites)
             {
                 for (int index = 0; index < elements.Count; ++index)
@@ -1718,7 +1681,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                     else element.Hide();
                 }
             }
-
             public void SetIcons(params DropInfo[] infos)
             {
                 for (int index = 0; index < elements.Count; index++)
@@ -1790,7 +1752,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                     }
                 }
             }
-
             public void SetIcons(params ItemDrop[] itemDrops)
             {
                 for (int index = 0; index < elements.Count; index++)
@@ -1847,7 +1808,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                                             break;
                                     }
                                 }
-
                                 if (info?.recipe is {} recipe)
                                 {
                                     instance.description.requirements.Set(recipe);
@@ -1863,7 +1823,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                     }
                 }
             }
-
             public void SetIcons(params StoreManager.StoreItem.ItemInfo[] infos)
             {
                 for (int index = 0; index < elements.Count; index++)
@@ -1887,7 +1846,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                     }
                 }
             }
-
             public Icons Create(Transform parent)
             {
                 GameObject? go = Instantiate(prefab, parent);
@@ -1895,14 +1853,12 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 Icons icons = new Icons(go.transform);
                 return icons;
             }
-
             public struct DropInfo
             {
                 public readonly ItemDrop.ItemData item;
                 public readonly float chance;
                 public readonly int min;
                 public readonly int max;
-
                 public DropInfo(ItemDrop.ItemData item, float chance, int min, int max)
                 {
                     this.item = item;
@@ -1911,7 +1867,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                     this.max = max;
                 }
             }
-
             public override bool Contains(string query) => elements.Any(element => element.Contains(query));
         }
 
@@ -1919,14 +1874,12 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         {
             private readonly Text key;
             private readonly Text value;
-            
             public KeyValue(Transform transform) : base(transform)
             {
                 key = transform.Find("Key").GetComponent<Text>();
                 value = transform.Find("Value").GetComponent<Text>();
                 SetValueColor(Helpers._OrangeColor);
             }
-
             public KeyValue Create(Transform parent)
             {
                 GameObject go = Instantiate(prefab, parent);
@@ -1934,16 +1887,13 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 KeyValue kvp = new KeyValue(go.transform);
                 return kvp;
             }
-
             public void SetText(string label, string text)
             {
                 key.text = Localization.instance.Localize(label);
                 value.text = Localization.instance.Localize(text);
             }
-            
             public void SetKeyColor(Color color) => key.color = color;
             public void SetValueColor(Color color) => value.color = color;
-
             public override bool Contains(string query) => key.text.ToLower().Contains(query.ToLower()) || value.text.ToLower().Contains(query.ToLower());
 
         }
@@ -1951,13 +1901,11 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         {
             private readonly Text area;
             private readonly RectTransform rect;
-
             public TextArea(Transform transform) : base(transform)
             {
                 area = transform.GetComponent<Text>();
                 rect = transform.GetComponent<RectTransform>();
             }
-
             public TextArea Create(Transform parent)
             {
                 GameObject? go = Instantiate(prefab, parent);
@@ -1965,20 +1913,17 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 TextArea element = new TextArea(go.transform);
                 return element;
             }
-
             public void SetText(string text)
             {
                 area.text = Localization.instance.Localize(text);
                 Resize();
             }
-
             private void Resize()
             {
                 float newHeight = GetTextPreferredHeight(area, rect);
                 rect.sizeDelta = new Vector2(rect.sizeDelta.x, Mathf.Max(newHeight,height));
                 height = newHeight;
             }
-            
             private static float GetTextPreferredHeight(Text text, RectTransform rect)
             {
                 if (string.IsNullOrEmpty(text.text)) return 0f;
@@ -1990,28 +1935,23 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         
                 return preferredHeight;
             }
-            
             public override bool Contains(string query) => area.text.ToLower().Contains(query.ToLower());
         }
         public class Title : InfoElement
         {
             private readonly Text title;
-
             public Title(Transform transform) : base(transform)
             {
                 title = transform.Find("Text").GetComponent<Text>();
             }
-            
             public void SetTitle(string text) =>  title.text = Localization.instance.Localize(text);
-
             public Title Create(Transform parent)
             {
                 GameObject? go = Instantiate(prefab, parent);
                 go.SetActive(true);
-                var element = new Title(go.transform);
+                Title element = new Title(go.transform);
                 return element;
             }
-            
             public override bool Contains(string query) => title.text.ToLower().Contains(query.ToLower());
         }
 
@@ -2019,13 +1959,11 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         {
             protected readonly GameObject prefab;
             public float height;
-
             protected InfoElement(Transform transform)
             {
                 prefab = transform.gameObject;
                 height = transform.GetComponent<RectTransform>().sizeDelta.y;
             }
-
             public virtual bool Contains(string query) => false;
             public void SetActive(bool active) => prefab.SetActive(active);
             public void Destroy() => Object.Destroy(prefab);
@@ -2038,7 +1976,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         private readonly Image starBkg;
         private readonly Image starIcon;
         private readonly Text starText;
-
         public RequirementView(Transform transform)
         {
             prefab = transform.gameObject;
@@ -2050,7 +1987,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             starIcon = transform.Find("Star/Icon").GetComponent<Image>();
             starText = transform.Find("Star/Icon/Text").GetComponent<Text>();
         }
-        
         public void SetTokens(int count)
         {
             int max = 999;
@@ -2095,7 +2031,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         }
 
         public void Set(Recipe recipe) => Set(recipe.m_resources);
-
         public void Set(Piece.Requirement[] requirements)
         {
             for (int index = 0; index < items.Count; ++index)
@@ -2111,10 +2046,8 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                     item.Hide();
                 }
             }
-
             SetActive(true);
         }
-
         public void Set(int cost, ItemDrop currency)
         {
             if (!currency.m_itemData.HasIcons()) return;
@@ -2131,25 +2064,21 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 cost -= amount;
                 item.Set(currency.m_itemData.GetIcon(), currency.m_itemData.m_shared.m_name, amount);
             }
-
             SetActive(true);
         }
 
         public void SetLevel(int level) => SetLevel(level.ToString());
         public void SetLevel(string level) => starText.text = Localization.instance.Localize(level);
         public void SetLevelIcon(Sprite sprite) => starIcon.sprite = sprite;
-        
         public void Clear()
         {
             foreach (RequirementItem? item in items) item.Hide();
         }
-
         public void SetActive(bool enable) => prefab.SetActive(enable);
         public void Update()
         {
             foreach(var item in items) item.Update(Player.m_localPlayer);
         }
-
         private class RequirementItem
         {
             private readonly Image icon;
@@ -2159,7 +2088,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             private readonly Sprite defaultIcon;
             private string? SharedName;
             private int Count;
-
             public RequirementItem(Transform transform)
             {
                 icon = transform.Find("Icon").GetComponent<Image>();
@@ -2167,7 +2095,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 name = transform.Find("Name").GetComponent<Text>();
                 amount = transform.Find("Amount").GetComponent<Text>();
             }
-            
             public void Set(Sprite? sprite, string sharedName, int value)
             {
                 SharedName = sharedName;
@@ -2177,7 +2104,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 name.text = Localization.instance.Localize(sharedName);
                 amount.text = value.ToString();
             }
-
             public void Hide()
             {
                 SharedName = null;
@@ -2185,7 +2111,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 name.text = string.Empty;
                 amount.text = string.Empty;
             }
-
             public void Update(Player player)
             {
                 if (SharedName == null) return;
@@ -2207,13 +2132,11 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
     {
         private readonly Image background;
         private readonly Image darken;
-
         public Background(Transform transform)
         {
             background = transform.Find("bkg").GetComponent<Image>();
             darken = transform.Find("darken").GetComponent<Image>();
         }
-
         public void SetBackground(BackgroundOption option)
         {
             switch (option)
@@ -2230,7 +2153,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         }
         public enum BackgroundOption {Opaque, Transparent}
     }
-
     public class Tab
     {
         private readonly GameObject prefab;
@@ -2238,9 +2160,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         private readonly Text label;
         private readonly GameObject selected;
         private readonly Text selectedLabel;
-        
         public bool IsSelected => selected.activeSelf;
-
         public Tab(Transform transform, UnityAction action)
         {
             prefab = transform.gameObject;
@@ -2250,17 +2170,13 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             selectedLabel = transform.Find("Selected/Text").GetComponent<Text>();
             OnClick(action);
         }
-        
         public void SetActive(bool active) => prefab.SetActive(active);
-
         private void OnClick(UnityAction action) => button.onClick.AddListener(action);
-
         public void SetLabel(string text)
         {
             label.text = Localization.instance.Localize(text);
             selectedLabel.text = Localization.instance.Localize(text);
         }
-
         public void SetSelected(bool enable)
         {
             if (instance == null) return;
@@ -2269,7 +2185,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 tab.selected.SetActive(tab == this && enable);
             }
         }
-        
         public enum TabOption {Trophies, Pieces, Items, Creatures, StatusEffects, Achievements, Bounties, Treasures, Store, Metrics, Leaderboard, Lottery}
     }
     public class Currency
@@ -2278,7 +2193,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         private readonly Image icon;
         private readonly Text field;
         private readonly Sprite defaultIcon;
-
         public Currency(Transform transform)
         {
             prefab = transform.gameObject;
@@ -2286,13 +2200,11 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             field = transform.Find("Text").GetComponent<Text>();
             defaultIcon = icon.sprite;
         }
-        
         public void SetIcon(Sprite? sprite) => icon.sprite = sprite ?? defaultIcon;
         private void SetText(string text) => field.text = Localization.instance.Localize(text);
         public void SetAmount(int amount) => SetText($"{Keys.AlmanacToken} <color=yellow>x{amount}</color>");
         public void SetActive(bool enable) => prefab.SetActive(enable);
     }
-
     private class Lottery : GridView
     {
         private readonly Dictionary<Scrollbar, float> _scrollbars = new();
@@ -2309,7 +2221,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         private bool isFullHouse;
         private int SlotCount => slots.Count;
         private static int IconCount => Slot.icons.Length;
-        
         private double _winChance;
         private double winChance
         {
@@ -2322,7 +2233,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 return _winChance;
             }
         }
-        
         private double _expectedWins;
         private double expectedWins
         {
@@ -2335,7 +2245,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 return _expectedWins;
             }
         }
-
         private int _possibleSequences;
         private int possibleSequences
         {
@@ -2348,7 +2257,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 return _possibleSequences;
             }
         }
-
         private double _sequenceProb;
         private double sequenceProb
         {
@@ -2375,7 +2283,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             }
             scrollbars = new List<Scrollbar>(_scrollbars.Keys);
         }
-
         public void RandomizeIcons()
         {
             isFullHouse = UnityEngine.Random.value > fullHouseChance;
@@ -2474,7 +2381,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                     previous = slot.option;
                 }
             }
-            
             if (!allFinished) return;
             if (isFullHouse)
             {
@@ -2507,7 +2413,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             isRolling = false;
             instance.OnUpdate = null;
         }
-
         public void UpdateGlow(float dt)
         {
             if (!instance?.Tabs[Tab.TabOption.Lottery].IsSelected ?? false) return;
@@ -2524,7 +2429,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 element.UpdateGlow(time, staggerDelay);
             }
         }
-
         public void Preview()
         {
             for (int index = 0; index < scrollbars.Count; index++)
@@ -2535,7 +2439,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 slot.GetFinalElement().SetGlow(true);
             }
         }
-
         public void Roll()
         {
             RandomizeIcons();
@@ -2551,7 +2454,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 accumulatedDelay += randomDelay;
                 scrollbar.value = 0f;
             }
-
             instance.OnUpdate = UpdateRoll;
         }
 
@@ -2565,7 +2467,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             double winProb = 1.0 - allFailProb;
             return winProb * 100.0; 
         }
-
         private static double CalculateExpectedWins(int slotCount, int iconCount, int matchLength)
         {
             if (slotCount < matchLength) return 0.0;
@@ -2573,7 +2474,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             int possibleSequences = slotCount - matchLength + 1;
             return possibleSequences * sequenceProb;
         }
-        
         public List<Entries.Entry> ToEntries()
         {
             Entries.EntryBuilder builder = new();
@@ -2592,7 +2492,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             builder.Add(Keys.AlmanacToken, COST_TO_ROLL);
             return builder.ToList();
         }
-        
         public class Slot
         {
             public static readonly SpriteManager.IconOption[] icons = 
@@ -2606,7 +2505,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             public readonly Scrollbar scrollbar;
             private readonly List<SlotElement> elements = new();
             public SpriteManager.IconOption? option;
-
             public Slot(Transform transform)
             {
                 prefab = transform.gameObject;
@@ -2615,7 +2513,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 template = new SlotElement(transform.Find("Port/Viewport/Element"));
                 scrollbar.interactable = false;
             }
-
             private void LoadElements()
             {
                 for (int index = 0; index < 12; ++index)
@@ -2623,9 +2520,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                     elements.Add(template.Create(root));
                 }
             }
-
             public SlotElement GetFinalElement() => elements.First();
-
             public void RandomizeIcons(SpriteManager.IconOption? fullHouseOption = null)
             {
                 foreach (SlotElement element in elements)
@@ -2645,7 +2540,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 }
                 else option = GetFinalElement().option;
             }
-
             public Slot Create(Transform parent)
             {
                 GameObject go = Instantiate(prefab, parent);
@@ -2655,7 +2549,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 slot.LoadElements();
                 return slot;
             }
-            
             public class SlotElement
             {
                 private readonly GameObject prefab;
@@ -2667,7 +2560,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 public bool isGlowing => glow.gameObject.activeInHierarchy;
                 private const float waveSpeed = 2f;
                 public SpriteManager.IconOption? option;
-                
                 public SlotElement(Transform transform)
                 {
                     prefab = transform.gameObject;
@@ -2679,7 +2571,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                     defaultSprite = icon.sprite;
                     SetBackgroundColor(Color.clear);
                 }
-
                 public SlotElement Create(Transform parent)
                 {
                     GameObject go = Instantiate(prefab, parent);
@@ -2688,12 +2579,9 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                     SlotElement element = new SlotElement(go.transform);
                     return element;
                 }
-
                 private void SetBackgroundColor(Color color) => bkg.color = color;
-
                 public void SetIcon(Sprite? sprite) => icon.sprite = sprite ?? defaultSprite;
                 public void SetGlow(bool enable) => glow.gameObject.SetActive(enable);
-
                 public void UpdateGlow(float t, float staggerOffset = 0f)
                 {
                     float time = t * waveSpeed + staggerOffset;
@@ -2703,7 +2591,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                     currentGlow.a = alpha;
                     glow.color = currentGlow;
                 }
-
                 public void ResetGlowAlpha()
                 {
                     glow.color = glowColor;

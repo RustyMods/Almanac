@@ -1,9 +1,15 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using Almanac.Achievements;
 using Almanac.Bounties;
-using Almanac.FileSystem;
+using Almanac.Data;
+using Almanac.Lottery;
+using Almanac.Managers;
+using Almanac.Marketplace;
+using Almanac.Store;
+using Almanac.TreasureHunt;
 using Almanac.UI;
 using Almanac.Utilities;
 using BepInEx;
@@ -11,9 +17,9 @@ using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
+using JetBrains.Annotations;
 using ServerSync;
 using UnityEngine;
-using YamlDotNet.Serialization;
 
 namespace Almanac
 {
@@ -25,186 +31,179 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.4.4";
+        internal const string ModVersion = "3.5.0";
         internal const string Author = "RustyMods";
-        public const string ModGUID = Author + "." + ModName;
-        private static readonly string ConfigFileName = ModGUID + ".cfg";
-        private static readonly string ConfigFileFullPath = Paths.ConfigPath + Path.DirectorySeparatorChar + ConfigFileName;
+        private const string ModGUID = Author + "." + ModName;
+        public const string ConfigFileName = ModGUID + ".cfg";
+        public static readonly string ConfigFileFullPath = Paths.ConfigPath + Path.DirectorySeparatorChar + ConfigFileName;
         internal static string ConnectionError = "";
         private readonly Harmony _harmony = new(ModGUID);
         public static readonly ManualLogSource AlmanacLogger = BepInEx.Logging.Logger.CreateLogSource(ModName);
         public static readonly ConfigSync ConfigSync = new(ModGUID) { DisplayName = ModName, CurrentVersion = ModVersion, MinimumRequiredVersion = ModVersion };
-        public static AlmanacPlugin _plugin = null!;
-        public static GameObject _root = null!;
-        public static readonly AssetBundle _UIAssets = GetAssetBundle("almanacui");
-        public void SpawnBounty()
-        {
-            if (Bounty.ActiveBountyLocation is not { } bountyData) return;
-            GameObject go = Instantiate(bountyData.m_critter, bountyData.m_position, Quaternion.identity);
-
-            Bounty bounty = go.AddComponent<Bounty>();
-            ISerializer serializer = new SerializerBuilder().Build();
-            string data = serializer.Serialize(bountyData.m_data);
-            bounty._znv.GetZDO().Set(Bounty.bountyHash, data);
-            CachedEffects.m_spawnEffects.Create(go.transform.position, Quaternion.identity);
-        }
+        public static AlmanacPlugin instance = null!;
+        public static event Action? OnZNetAwake;
+        public static event Action? OnZNetSceneAwake;
+        public static event Action? OnZNetSave;
+        public static event Action<Player>? OnPlayerProfileLoadPlayerData;
+        public static event Action? OnPlayerProfileSavePlayerDataPostfix;
+        public static event Action<Player>? OnPlayerProfileSavePlayerDataPrefix;
+        public static event Action? OnObjectDBAwake;
+        public static event Action<GameObject>? OnZNetScenePrefabs;
+        public static event Action<GameObject>? OnObjectDBPrefabs;
         
         public void Awake()
         {
-            Localizer.Load();
+            instance = this;
             
-            _plugin = this;
-            _root = new GameObject("root");
-            DontDestroyOnLoad(_root);
-            _root.SetActive(false);
-            
-            InitConfigs();
-            CheckChainLoader();
             AlmanacPaths.CreateFolderDirectories();
-            AchievementYML.Init();
-            Filters.InitFilters();
-            FileWatcher.InitFileSystemWatch();
+            Keys.Write();
+            Localizer.Load();
+            Configs.Load();
+            
+            StoreManager.Setup();
+            BountyManager.Setup();
+            TreasureManager.Setup();
+            AchievementManager.Setup();
+            CreatureGroup.Setup();
+            CustomEffectManager.Setup();
+            Filters.Setup();
+            LotteryManager.Setup();
+            MarketManager.Setup();
+            
+            Leaderboard.Setup();
+            CritterHelper.Setup();
+            ItemHelper.Setup();
+            PieceHelper.Setup();
+            PlayerInfo.Setup();
+            
+            SetupCommands();
+            
+            // Use to rebuild readmes 
+            
+            // AchievementReadMeBuilder.Write();
+            // StoreReadMeBuilder.Write();
+            // TreasureReadMeBuilder.Write();
+            // BountyReadMeBuilder.Write();
+            
             Assembly assembly = Assembly.GetExecutingAssembly();
             _harmony.PatchAll(assembly);
-            SetupWatcher();
-        }
-
-        public void Update()
-        {
-            if (!Player.m_localPlayer || !AlmanacUI.m_instance) return;
-            if (!Input.GetKeyDown(_AlmanacHotKey.Value)) return;
-            AlmanacUI.m_instance.Toggle();
         }
 
         private void OnDestroy() => Config.Save();
-        
-        #region Chainloader
-        public static bool KrumpacLoaded = false;
-        public static bool JewelCraftLoaded = false;
-        public static bool KGEnchantmentLoaded = false;
-        private static void CheckChainLoader()
+
+        private void SetupCommands()
         {
-            if (Chainloader.PluginInfos.ContainsKey("kg.ValheimEnchantmentSystem"))
+            Terminal.ConsoleCommand main = new(CommandData.m_startCommand, "Use help to find commands", args =>
             {
-                AlmanacLogger.LogInfo("KG Enchantment System Loaded");
-                KGEnchantmentLoaded = true;
-            }
+                if (args.Length < 2) return false;
+                if (!CommandData.m_commands.TryGetValue(args[1], out CommandData data)) return false;
+                return data.Run(args);
+            }, optionsFetcher: CommandData.m_commands.Where(x => !x.Value.IsSecret()).Select(x => x.Key).ToList);
+
+            CommandData reset = new CommandData("reset", "clears all almanac data off player file", _ =>
+            {
+                if (!Player.m_localPlayer) return false;
+                Player.m_localPlayer.ClearRecords();
+                Player.m_localPlayer.ClearTokens();
+                return true;
+            });
+
+            CommandData size = new CommandData("size", "prints the kilobyte size of almanac data on player file",
+                _ =>
+                {
+                    if (!Player.m_localPlayer) return false;
+                    int total = Player.m_localPlayer.GetTokensByteCount() + Player.m_localPlayer.GetRecordByteCount();
+                    double kilobytes = total / 1024.0;
+                    Logger.LogInfo($"Almanac Data Size: {kilobytes} kilobytes");
+                    return true;
+                });
+
+            CommandData fullReset = new CommandData("full_reset", "clears all almanac data as well as valheim data",
+                _ =>
+                {
+                    if (!Player.m_localPlayer) return false;
+                    Player.m_localPlayer.ClearRecords();
+                    Player.m_localPlayer.ClearTokens();
+                    Player.m_localPlayer.m_knownBiome.Clear();
+                    Player.m_localPlayer.m_knownMaterial.Clear();
+                    Player.m_localPlayer.m_knownRecipes.Clear();
+                    Player.m_localPlayer.m_knownStations.Clear();
+                    Player.m_localPlayer.m_knownTexts.Clear();
+                    Player.m_localPlayer.m_trophies.Clear();
+                    return true;
+                });
+
+            CommandData give = new CommandData("tokens", "give local player almanac tokens", args =>
+            {
+                if (!Player.m_localPlayer) return false;
+                if (args.Length < 3) return false;
+                if (!int.TryParse(args[2], out int amount)) return false;
+                Player.m_localPlayer.AddTokens(amount);
+                return true;
+            }, adminOnly: true);
+        }
+
+        [HarmonyPatch(typeof(PlayerProfile), nameof(PlayerProfile.SavePlayerData))]
+        private static class PlayerProfile_SavePlayerData_Patch
+        {
+            [UsedImplicitly]
+            private static void Prefix(Player player) => OnPlayerProfileSavePlayerDataPrefix?.Invoke(player);
             
-            if (Chainloader.PluginInfos.ContainsKey("Krumpac.Krumpac_Reforge_Core"))
-            {
-                AlmanacLogger.LogInfo("Krumpac Loaded");
-                KrumpacLoaded = true;
-            }
-
-            if (Chainloader.PluginInfos.ContainsKey("org.bepinex.plugins.jewelcrafting"))
-            {
-                AlmanacLogger.LogInfo("Jewel Crafting Loaded");
-                JewelCraftLoaded = true;
-            }
+            [UsedImplicitly]
+            private static void Postfix() => OnPlayerProfileSavePlayerDataPostfix?.Invoke();
         }
-        #endregion
+
+        [HarmonyPatch(typeof(PlayerProfile), nameof(PlayerProfile.LoadPlayerData))]
+        private static class PlayerProfile_LoadPlayerData_Patch
+        {
+            [UsedImplicitly]
+            private static void Postfix(Player player) => OnPlayerProfileLoadPlayerData?.Invoke(player);
+        }
+
+        [HarmonyPatch(typeof(ZNet), nameof(ZNet.Save))]
+        private static class ZNet_Save_Patch
+        {
+            [UsedImplicitly]
+            private static void Postfix() => OnZNetSave?.Invoke();
+        }
+
+        [HarmonyPatch(typeof(ZNet), nameof(ZNet.Awake))]
+        private static class ZNet_Awake_Patch
+        {
+            [UsedImplicitly]
+            private static void Postfix() => OnZNetAwake?.Invoke();
+        }
         
-        #region Utililies
-        public enum Toggle { On = 1, Off = 0 }
-        private static AssetBundle GetAssetBundle(string fileName)
+        [HarmonyPriority(Priority.Last)]
+        [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.Awake))]
+        public class ZNetScene_Awake_Patch
         {
-            Assembly execAssembly = Assembly.GetExecutingAssembly();
-            string resourceName = execAssembly.GetManifestResourceNames().Single(str => str.EndsWith(fileName));
-            using Stream? stream = execAssembly.GetManifestResourceStream(resourceName);
-            return AssetBundle.LoadFromStream(stream);
-        }
-        private void SetupWatcher()
-        {
-            FileSystemWatcher watcher = new(Paths.ConfigPath, ConfigFileName);
-            watcher.Changed += ReadConfigValues;
-            watcher.Created += ReadConfigValues;
-            watcher.Renamed += ReadConfigValues;
-            watcher.IncludeSubdirectories = true;
-            watcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
-            watcher.EnableRaisingEvents = true;
-        }
-        private void ReadConfigValues(object sender, FileSystemEventArgs e)
-        {
-            if (!File.Exists(ConfigFileFullPath)) return;
-            try
+            [UsedImplicitly]
+            public static void Postfix(ZNetScene __instance)
             {
-                AlmanacLogger.LogDebug("ReadConfigValues called");
-                Config.Reload();
-            }
-            catch
-            {
-                AlmanacLogger.LogError($"There was an issue loading your {ConfigFileName}");
-                AlmanacLogger.LogError("Please check your config entries for spelling and format!");
+                foreach (GameObject? prefab in __instance.m_prefabs) OnZNetScenePrefabs?.Invoke(prefab);
+                OnZNetSceneAwake?.Invoke();
             }
         }
-        #endregion
-        
-        # region Configurations
-        private static ConfigEntry<Toggle> _serverConfigLocked = null!;
 
-        public static ConfigEntry<Toggle> _KnowledgeWall = null!;
-        public static ConfigEntry<Toggle> _UseIgnoreList = null!;
-        public static ConfigEntry<Toggle> _AchievementIcons = null!;
-        public static ConfigEntry<Toggle> _AchievementPowers = null!;
-        public static ConfigEntry<int> _AchievementThreshold = null!;
-        public static ConfigEntry<Toggle> _ShowAllData = null!;
-        public static ConfigEntry<Color> _OutlineColor = null!;
-        public static ConfigEntry<KeyCode> _AlmanacHotKey = null!;
-        public static ConfigEntry<Toggle> _LoadDefaultAchievements = null!;
-        public static ConfigEntry<int> _TreasureCooldown = null!;
-        public static ConfigEntry<int> _BountyCooldown = null!;
-        public static ConfigEntry<Toggle> _TreasureEnabled = null!;
-        public static ConfigEntry<Toggle> _BountyEnabled = null!;
-        public static ConfigEntry<Toggle> _AchievementsEnabled = null!;
-        public static ConfigEntry<Toggle> _Transparent = null!;
-        private void InitConfigs()
+        [HarmonyPriority(Priority.Last)]
+        [HarmonyPatch(typeof(ObjectDB), nameof(ObjectDB.Awake))]
+        private static class ObjectDB_Awake_Patch
         {
-            _serverConfigLocked = config("1 - General", "0 - Lock Configuration", Toggle.On,
-                "If on, the configuration is locked and can be changed by server admins only.");
-            _ = ConfigSync.AddLockingConfigEntry(_serverConfigLocked);
-
-            _KnowledgeWall = config("1 - General", "1 - Knowledge Wall", Toggle.On, "If on, the plugin blacks out unknown items from the almanac");
-            _UseIgnoreList = config("1 - General", "2 - Use Ignore List", Toggle.On, "If on, the plugin uses the IgnoreList.yml to filter almanac");
-            _ShowAllData = config("1 - General", "3 - Show All Data", Toggle.Off, "If on, Almanac does not filter extra data, like prefab name and material name");
-            _AchievementIcons = config("Achievements", "HUD Icons", Toggle.Off, "If on, achievements icons appear alongside status effects on HUD");
-            _AchievementIcons.SettingChanged += AchievementManager.OnAchievementConfigChanged;
-            _AchievementPowers = config("Achievements", "Bonuses Enabled", Toggle.On, "If on, achievements are interactable and reward players with bonuses");
-            _AchievementPowers.SettingChanged += AchievementManager.OnAchievementConfigChanged;
-            _AchievementThreshold = config("Achievements", "Threshold", 3, "Total amount of achievement effects allowed at the same time");
-            _OutlineColor = config("1 - General", "6 - Outline Color", new Color(1f, 1f, 1f, 0.1f), "Set the color of the outline for selected items");
-            _AlmanacHotKey = config("1 - General", "7 - Almanac HotKey", KeyCode.F6, "Set the hotkey to open almanac", false);
-            _LoadDefaultAchievements = config("1 - General", "8 - Load Default Achievements", Toggle.Off, "If on, Almanac will write any missing default achievements to file", false);
-            _TreasureCooldown = config("Cooldown", "Treasure Hunt", 30, "Set cooldown between treasure hunts, in minutes");
-            _BountyCooldown = config("Cooldown", "Bounties", 30, "Set cooldown between bounty hunts, in minutes");
-            _BountyEnabled = config("2 - Settings", "Bounties", Toggle.On, "If on, bounty feature is enabled");
-            _TreasureEnabled = config("2 - Settings", "Treasures", Toggle.On, "If on, treasure feature is enabled");
-            _AchievementsEnabled = config("3 - Achievements", "Enabled", Toggle.On, "If on, achievements is enabled");
-            _Transparent = config("2 - Settings", "Transparent Panels", Toggle.Off, "If on, panels are transparent");
+            [UsedImplicitly]
+            private static void Postfix()
+            {
+                if (ZNetScene.instance == null) return;
+                foreach (GameObject? prefab in ObjectDB.instance.m_items)
+                {
+                    OnObjectDBPrefabs?.Invoke(prefab);
+                }
+                foreach (StatusEffect se in ObjectDB.instance.m_StatusEffects)
+                {
+                    SpriteManager.OnObjectDBStatusEffects(se);
+                }
+                OnObjectDBAwake?.Invoke();
+            }
         }
-        #endregion
-
-        #region ConfigOptions
-        private ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description,
-            bool synchronizedSetting = true)
-        {
-            ConfigDescription extendedDescription =
-                new(
-                    description.Description +
-                    (synchronizedSetting ? " [Synced with Server]" : " [Not Synced with Server]"),
-                    description.AcceptableValues, description.Tags);
-            ConfigEntry<T> configEntry = Config.Bind(group, name, value, extendedDescription);
-            //var configEntry = Config.Bind(group, name, value, description);
-
-            SyncedConfigEntry<T> syncedConfigEntry = ConfigSync.AddConfigEntry(configEntry);
-            syncedConfigEntry.SynchronizedConfig = synchronizedSetting;
-
-            return configEntry;
-        }
-        private ConfigEntry<T> config<T>(string group, string name, T value, string description,
-            bool synchronizedSetting = true)
-        {
-            return config(group, name, value, new ConfigDescription(description), synchronizedSetting);
-        }
-        #endregion
     }
 }

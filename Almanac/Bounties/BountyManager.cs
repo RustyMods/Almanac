@@ -1,847 +1,660 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
 using Almanac.Data;
-using Almanac.FileSystem;
+using Almanac.Managers;
+using Almanac.Store;
+using Almanac.UI;
 using Almanac.Utilities;
 using BepInEx;
+using HarmonyLib;
+using JetBrains.Annotations;
+using ServerSync;
 using UnityEngine;
 using YamlDotNet.Serialization;
 
 namespace Almanac.Bounties;
 
-public static class BountyManager
+public class BountyManager : MonoBehaviour
 {
-    public static List<Data.ValidatedBounty> RegisteredBounties = new();
-    public static readonly List<Data.BountyYML> ValidatedBounties = new();
-    
-    public static void InitBounties(bool first = true)
+    private static readonly List<Effect> Effects = new();
+    private static readonly Effect PreSpawnEffects = new("vfx_prespawn", "sfx_prespawn");
+    private static readonly Effect SpawnEffects = new("vfx_spawn", "sfx_spawn");
+    public static readonly ISerializer serializer = new SerializerBuilder().ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitNull).Build();
+    private static readonly IDeserializer deserializer = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
+    private static readonly CustomSyncedValue<string> SyncedBounties = new(AlmanacPlugin.ConfigSync, "ServerSynced_Almanac_Bounties", "");
+    public static readonly Dictionary<string, BountyData> bounties = new();
+    private static Dictionary<string, BountyData> fileBounties = new();
+    public static BountyLocation? ActiveBountyLocation;
+
+    private static BountyManager? instance;
+    private const float maxRadius = 9500f;
+    private const float minSpawnDistance = 2f;
+    private const float maxYDistance = 10f;
+    private const int solidHeightMargin = 1000;
+    private const float spawnOffset = 5f;
+    private static DateTime datetime = DateTime.MaxValue;
+    public void Awake()
     {
-        AlmanacPlugin.AlmanacLogger.LogDebug(first
-            ? "Client: Initializing Bounty Manager"
-            : "Client: Reloading bounties");
-
-        RegisteredBounties.Clear();
-        ValidatedBounties.Clear();
-        
-        AlmanacPaths.CreateFolderDirectories();
-
-        if (ServerSyncedData.ServerBountyList.Value.IsNullOrWhiteSpace() || ZNet.instance.IsServer()) AddLocalBounties();
-        else
-        {
-            try
-            {
-                IDeserializer deserializer = new DeserializerBuilder().Build();
-                List<Data.BountyYML> deserialized = deserializer.Deserialize<List<Data.BountyYML>>(ServerSyncedData.ServerBountyList.Value);
-                foreach (Data.BountyYML bountyYML in deserialized)
-                {
-                    if (!ValidateBounty(bountyYML, out Data.ValidatedBounty validatedBounty)) continue;
-                    RegisteredBounties.Add(validatedBounty);
-                    ValidatedBounties.Add(bountyYML);
-                }
-            }
-            catch
-            {
-                AlmanacPlugin.AlmanacLogger.LogDebug("Failed to parse server bounties");
-            }
-        }
+        instance = this;
     }
-
-    private static void AddLocalBounties()
+    public void Initialize()
     {
-        string[] paths = Directory.GetFiles(AlmanacPaths.BountyFolderPath, "*.yml");
-
-        if (paths.Length <= 0)
-        {
-            RegisteredBounties = GetDefaultBounties();
-        }
-        else
-        {
-            IDeserializer deserializer = new DeserializerBuilder().Build();
-            foreach (string path in paths)
-            {
-                try
-                {
-                    string data = File.ReadAllText(path);
-                    Data.BountyYML bountyData = deserializer.Deserialize<Data.BountyYML>(data);
-                    if (!ValidateBounty(bountyData, out Data.ValidatedBounty validatedBounty)) continue;
-                    RegisteredBounties.Add(validatedBounty);
-                    ValidatedBounties.Add(bountyData);
-                }
-                catch
-                {
-                    AlmanacPlugin.AlmanacLogger.LogDebug("Failed to parse file: " + Path.GetFileName(path));
-                }
-            }
-        }
+        if (IsInvoking(nameof(CheckBountyLocation))) return;
+        InvokeRepeating(nameof(CheckBountyLocation), 10f, 10f);
     }
-
-    private static bool ValidateBounty(Data.BountyYML data, out Data.ValidatedBounty validatedData)
+    public void OnDestroy()
     {
-        validatedData = new();
-        if (data.bounty_name.IsNullOrWhiteSpace()) return false;
+        instance = null;
+    }
+    private void CheckBountyLocation()
+    {
+        if (!Player.m_localPlayer || !ZNetScene.instance || !Minimap.instance) return;
+        if (ActiveBountyLocation == null) return;
+        if (ActiveBountyLocation.isSpawned) return;
+        if (!ActiveBountyLocation.IsWithin()) return;
+        ActiveBountyLocation.RemovePin();
+        if (ActiveBountyLocation.Spawn()) return;
+        Player.m_localPlayer.Message(MessageHud.MessageType.Center, Keys.FailedToSpawnBounty);
+    }
+    public void SpawnBounty()
+    {
+        if (ActiveBountyLocation == null) return;
+
+        ZDO? zdo = ZDOMan.instance.CreateNewZDO(ActiveBountyLocation.position, ActiveBountyLocation.data.Creature.GetStableHashCode());
+        zdo.Persistent = false;
+        zdo.Type = ZDO.ObjectType.Default;
+        zdo.Distant = false;
+        zdo.SetPrefab(ActiveBountyLocation.data.Creature.GetStableHashCode());
+        zdo.SetOwner(ZDOMan.GetSessionID());
+        if (ActiveBountyLocation.data.Level > 1) zdo.Set(ZDOVars.s_level, ActiveBountyLocation.data.Level);
+        zdo.Set(ZDOVars.s_tamedName, ActiveBountyLocation.data.GetNameOverride());
+        if (ActiveBountyLocation.data.Health > 0) zdo.Set(ZDOVars.s_maxHealth, ActiveBountyLocation.data.Health);
+        zdo.Set(BountyVars.BountyID, ActiveBountyLocation.data.UniqueID);
+        zdo.Set(BountyVars.DamageModifier, ActiveBountyLocation.data.DamageMultiplier);
+        zdo.Set(ZDOVars.s_creator, Player.m_localPlayer.GetPlayerID());
+        GameObject go = ZNetScene.instance.CreateObject(zdo);
+        go.AddComponent<Bounty>();
+        SpawnEffects.Create(go.transform.position, Quaternion.identity);
+    }
+    private static bool IsOnCooldown()
+    {
+        int cooldownDuration = Configs.BountyCooldown;
+        if (cooldownDuration <= 0f) return false;
+        if (datetime == DateTime.MaxValue) return false;
+        DateTime lastBounty = datetime + TimeSpan.FromMinutes(cooldownDuration);
+        if (lastBounty <= DateTime.Now) return false;
+        int difference = (lastBounty - DateTime.Now).Minutes;
+        Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"{Keys.BountyAvailableIn} {difference} {Keys.Minutes}");
+        return true;
+    }
+    public static bool AcceptBounty(BountyData data)
+    {
+        if (IsOnCooldown()) return false;
+        BountyLocation bountyLocation = new BountyLocation(data);
+        if (!bountyLocation.FindSpawnLocation()) return false;
+        Purchase(Player.m_localPlayer, data);
+        bountyLocation.AddPin();
+        ActiveBountyLocation = bountyLocation;
+        Player.m_localPlayer.Message(MessageHud.MessageType.Center, Keys.Hunt + " " + bountyLocation.data.Name);
+        datetime = DateTime.Now;
+        AlmanacPlugin.AlmanacLogger.LogDebug("Successfully added bounty: " + bountyLocation.data.GetNameOverride());
+        AlmanacPlugin.AlmanacLogger.LogDebug("Location: " + bountyLocation.position.x + " " + bountyLocation.position.z);
         
-        GameObject critter = ZNetScene.instance.GetPrefab(data.creature_prefab_name);
-        if (!critter)
+        return true;
+    }
+    public static bool CanPurchase(Player player, BountyData data)
+    {
+        if (player.NoCostCheat()) return true;
+        foreach (StoreManager.StoreCost.Cost? item in data.Cost.Items)
         {
-            AlmanacPlugin.AlmanacLogger.LogDebug("Failed to find bounty prefab: " + data.creature_prefab_name);
-            return false;
-        }
-
-        if (!critter.GetComponent<MonsterAI>())
-        {
-            AlmanacPlugin.AlmanacLogger.LogDebug("Invalid bounty prefab: " + data.creature_prefab_name);
-            return false;
-        }
-        if (data.sprite_name.IsNullOrWhiteSpace()) return false;
-        if (!SpriteManager.GetSprite(data.sprite_name, out Sprite? sprite))
-        {
-            GameObject? prefab = ObjectDB.instance.GetItemPrefab(data.sprite_name);
-            if (!prefab) return false;
-            if (!prefab.TryGetComponent(out ItemDrop itemDrop)) return false;
-            validatedData.m_icon = itemDrop.m_itemData.GetIcon();
-        }
-        else
-        {
-            if (sprite == null) return false;
-            validatedData.m_icon = sprite;
-        }
-
-        if (!Enum.TryParse(data.biome, out Heightmap.Biome biome)) return false;
-
-
-        if (data.reward_type == Data.QuestRewardType.Item)
-        {
-            GameObject item = ZNetScene.instance.GetPrefab(data.item_reward.item_name);
-            if (!item)
+            if (item.isToken)
             {
-                AlmanacPlugin.AlmanacLogger.LogDebug("Failed to find item: " + data.item_reward.item_name);
+                if (player.GetTokens() >= item.Amount) continue;
                 return false;
             }
-
-            if (!item.TryGetComponent(out ItemDrop itemDrop)) return false;
-            validatedData.m_itemReward = itemDrop;
-            validatedData.m_itemAmount = data.item_reward.amount;
+            if (player.GetInventory().CountItems(item.item?.m_itemData.m_shared.m_name ?? "$item_coins") >= item.Amount) continue;
+            return false;
         }
-
-        if (data.reward_type == Data.QuestRewardType.Skill)
-        {
-            if (!Enum.TryParse(data.skill_reward.type, out Skills.SkillType skillType)) return false;
-            validatedData.m_skill = skillType;
-            validatedData.m_skillAmount = data.skill_reward.amount;
-        }
-
-        // if (!Creatures.m_defeatKeys.Contains(data.defeat_key)) return false;
-
-        var currency = ObjectDB.instance.GetItemPrefab(data.currency);
-        if (!currency) return false;
-        if (!currency.TryGetComponent(out ItemDrop currencyData)) return false;
-
-        validatedData.m_critter = critter;
-        validatedData.m_creatureName = data.bounty_name;
-        validatedData.m_biome = biome;
-        validatedData.m_rewardType = data.reward_type;
-        validatedData.m_health = data.bounty_health;
-        validatedData.m_damageMultiplier = data.damage_multiplier;
-        validatedData.m_damages = data.damages;
-        validatedData.m_level = data.level;
-        validatedData.m_defeatKey = data.defeat_key;
-        validatedData.m_cost = data.cost;
-        validatedData.m_currency = currencyData;
-        validatedData.m_experience = data.experience_reward;
 
         return true;
     }
-
-    private static List<Data.ValidatedBounty> GetDefaultBounties()
+    private static void Purchase(Player player, BountyData data)
     {
-        List<Data.BountyYML> output = new()
+        if (player.NoCostCheat()) return;
+        foreach (StoreManager.StoreCost.Cost? item in data.Cost.Items)
         {
-            new Data.BountyYML()
+            if (item.isToken)
             {
-                creature_prefab_name = "Boar",
-                bounty_name = "Boar the Wretched",
-                sprite_name = "TrophyBoar",
-                biome = "Meadows",
-                reward_type = Data.QuestRewardType.Item,
-                item_reward = new Data.BountyReward()
-                {
-                    item_name = "Coins",
-                    amount = 50,
-                },
-                bounty_health = 500f,
-                damage_multiplier = 2f,
-                damages = new Data.BountyDamages()
-                {
-                    blunt = 10f,
-                    fire = 5f
-                },
-                level = 3,
-                defeat_key = "defeated_boar"
-            },
-            new Data.BountyYML()
+                player.RemoveTokens(item.Amount);
+            }
+            else
             {
-                creature_prefab_name = "Neck",
-                bounty_name = "Neck the Wretched",
-                sprite_name = "TrophyNeck",
-                biome = "Meadows",
-                reward_type = Data.QuestRewardType.Item,
-                item_reward = new Data.BountyReward()
-                {
-                    item_name = "Coins",
-                    amount = 50,
-                },
-                bounty_health = 500f,
-                damage_multiplier = 2f,
-                damages = new Data.BountyDamages()
-                {
-                    slash = 10f,
-                    frost = 5f
-                },
-                level = 3,
-                defeat_key = "defeated_neck"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Eikthyr",
-                bounty_name = "Eikthyr the Undead",
-                sprite_name = "TrophyEikthyr",
-                biome = "Meadows",
-                reward_type = Data.QuestRewardType.Item,
-                item_reward = new Data.BountyReward()
-                {
-                    item_name = "Coins",
-                    amount = 50,
-                },
-                bounty_health = 500f,
-                damage_multiplier = 2f,
-                damages = new Data.BountyDamages()
-                {
-                    slash = 10f,
-                    frost = 5f
-                },
-                level = 3,
-                defeat_key = "defeated_eikthyr"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Skeleton",
-                bounty_name = "Skeleton the Undead",
-                sprite_name = "TrophySkeleton",
-                biome = "BlackForest",
-                reward_type = Data.QuestRewardType.Item,
-                item_reward = new Data.BountyReward()
-                {
-                    item_name = "Coins",
-                    amount = 50,
-                },
-                bounty_health = 200f,
-                damage_multiplier = 2f,
-                level = 3,
-                defeat_key = "defeated_skeleton"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Greydwarf",
-                bounty_name = "Greydwarf the Burdened",
-                sprite_name = "TrophyGreydwarf",
-                biome = "BlackForest",
-                reward_type = Data.QuestRewardType.Item,
-                item_reward = new Data.BountyReward()
-                {
-                    item_name = "Coins",
-                    amount = 50,
-                },
-                bounty_health = 200f,
-                damage_multiplier = 2f,
-                level = 3,
-                defeat_key = "defeated_greydwarf"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Greydwarf_Elite",
-                bounty_name = "Greydwarf the Mad",
-                sprite_name = "TrophyGreydwarfBrute",
-                biome = "BlackForest",
-                reward_type = Data.QuestRewardType.Item,
-                item_reward = new Data.BountyReward()
-                {
-                    item_name = "Coins",
-                    amount = 50,
-                },
-                bounty_health = 200f,
-                damage_multiplier = 2f,
-                level = 3,
-                defeat_key = "defeated_greydwarf_elite"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Greydwarf_Shaman",
-                bounty_name = "Greydwarf the Mystic",
-                sprite_name = "TrophyGreydwarfShaman",
-                biome = "Swamp",
-                reward_type = Data.QuestRewardType.Item,
-                item_reward = new Data.BountyReward()
-                {
-                    item_name = "Amber",
-                    amount = 20
-                },
-                bounty_health = 100f,
-                damage_multiplier = 1.1f,
-                damages = new Data.BountyDamages() { blunt = 10f, frost = 5f },
-                level = 2,
-                defeat_key = "defeated_greydwarf_shaman"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Troll",
-                bounty_name = "Troll the Wretched",
-                sprite_name = "TrophyFrostTroll",
-                biome = "BlackForest",
-                reward_type = Data.QuestRewardType.Item,
-                item_reward = new()
-                {
-                    item_name = "SurtlingCore",
-                    amount = 10
-                },
-                bounty_health = 1000f,
-                damage_multiplier = 1.05f,
-                damages = new(){blunt = 10f, frost = 5f},
-                level = 3,
-                defeat_key = "KilledTroll"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Ghost",
-                bounty_name = "Ghost the Haunting",
-                sprite_name = "skull",
-                biome = "Mistlands",
-                reward_type = Data.QuestRewardType.Skill,
-                skill_reward = new Data.BountySkill()
-                {
-                    type = "Clubs",
-                    amount = 5000
-                },
-                bounty_health = 60f,
-                damage_multiplier = 1.0f,
-                damages = new Data.BountyDamages() { slash = 5f, frost = 10f },
-                level = 1,
-                defeat_key = "defeated_ghost"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "gd_king",
-                bounty_name = "Elder the Ancient",
-                sprite_name = "TrophyTheElder",
-                biome = "Swamp",
-                reward_type = Data.QuestRewardType.Skill,
-                skill_reward = new Data.BountySkill()
-                {
-                    type = "Polearms",
-                    amount = 15000
-                },
-                bounty_health = 2500f,
-                damage_multiplier = 1.8f,
-                damages = new Data.BountyDamages() { blunt = 50f, pierce = 20f },
-                level = 3,
-                defeat_key = "defeated_gdking"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Leech",
-                bounty_name = "Leech the Bloodsucker",
-                sprite_name = "TrophyLeech",
-                biome = "Swamp",
-                reward_type = Data.QuestRewardType.Item,
-                item_reward = new Data.BountyReward()
-                {
-                    item_name = "Bloodbag",
-                    amount = 50
-                },
-                bounty_health = 60f,
-                damage_multiplier = 1.1f,
-                damages = new Data.BountyDamages() { pierce = 10f, poison = 5f },
-                level = 2,
-                defeat_key = "defeated_leech"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Draugr",
-                bounty_name = "Draugr the Undead",
-                sprite_name = "TrophyDraugr",
-                biome = "BlackForest",
-                reward_type = Data.QuestRewardType.Item,
-                item_reward = new Data.BountyReward()
-                {
-                    item_name = "IronScrap",
-                    amount = 10
-                },
-                bounty_health = 100f,
-                damage_multiplier = 1.2f,
-                damages = new Data.BountyDamages() { slash = 15f, frost = 5f },
-                level = 2,
-                defeat_key = "defeated_draugr"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Draugr_Elite",
-                bounty_name = "Draugr the Warden",
-                sprite_name = "TrophyDraugrElite",
-                biome = "BlackForest",
-                reward_type = Data.QuestRewardType.Item,
-                item_reward = new Data.BountyReward()
-                {
-                    item_name = "CopperScrap",
-                    amount = 15
-                },
-                bounty_health = 200f,
-                damage_multiplier = 1.5f,
-                damages = new Data.BountyDamages() { slash = 20f, pierce = 10f },
-                level = 3,
-                defeat_key = "defeated_draugr_elite"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Draugr_Ranged",
-                bounty_name = "Draugr the Archer",
-                sprite_name = "TrophyDraugrFem",
-                biome = "BlackForest",
-                reward_type = Data.QuestRewardType.Item,
-                item_reward = new Data.BountyReward()
-                {
-                    item_name = "BronzeScrap",
-                    amount = 20
-                },
-                bounty_health = 100f,
-                damage_multiplier = 1.1f,
-                damages = new Data.BountyDamages() { pierce = 15f, frost = 5f },
-                level = 2,
-                defeat_key = "defeated_draugr_ranged"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Blob",
-                bounty_name = "Blob the Slime",
-                sprite_name = "TrophyBlob",
-                biome = "Swamp",
-                reward_type = Data.QuestRewardType.Item,
-                item_reward = new Data.BountyReward()
-                {
-                    item_name = "FineWood",
-                    amount = 30
-                },
-                bounty_health = 50f,
-                damage_multiplier = 1.0f,
-                damages = new Data.BountyDamages() { blunt = 10f, poison = 5f },
-                level = 1,
-                defeat_key = "defeated_blob"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "BlobElite",
-                bounty_name = "Blob the Corrupted",
-                sprite_name = "skull",
-                biome = "Swamp",
-                reward_type = Data.QuestRewardType.Item,
-                item_reward = new Data.BountyReward()
-                {
-                    item_name = "Coins",
-                    amount = 150
-                },
-                bounty_health = 150f,
-                damage_multiplier = 1.3f,
-                damages = new Data.BountyDamages() { blunt = 20f, poison = 10f },
-                level = 3,
-                defeat_key = "defeated_blobelite"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Wraith",
-                bounty_name = "Wraith the Specter",
-                sprite_name = "TrophyWraith",
-                biome = "BlackForest",
-                reward_type = Data.QuestRewardType.Item,
-                item_reward = new Data.BountyReward()
-                {
-                    item_name = "Crystal",
-                    amount = 30
-                },
-                bounty_health = 100f,
-                damage_multiplier = 1.2f,
-                damages = new Data.BountyDamages() { slash = 15f, frost = 10f },
-                level = 2,
-                defeat_key = "defeated_wraith"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Skeleton_Poison",
-                bounty_name = "Skeleton the Corrupted",
-                sprite_name = "TrophySkeletonPoison",
-                biome = "Plains",
-                reward_type = Data.QuestRewardType.Skill,
-                skill_reward = new Data.BountySkill()
-                {
-                    type = "Spears",
-                    amount = 5000
-                },
-                bounty_health = 100f,
-                damage_multiplier = 1.2f,
-                damages = new Data.BountyDamages() { slash = 15f, poison = 10f },
-                level = 2,
-                defeat_key = "defeated_skeleton_poison"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Bonemass",
-                bounty_name = "Bonemass the Decaying",
-                sprite_name = "TrophyBonemass",
-                biome = "BlackForest",
-                reward_type = Data.QuestRewardType.Skill,
-                skill_reward = new Data.BountySkill()
-                {
-                    type = "Clubs",
-                    amount = 20000
-                },
-                bounty_health = 5000f,
-                damage_multiplier = 2.0f,
-                damages = new Data.BountyDamages() { blunt = 60f, poison = 30f },
-                level = 3,
-                defeat_key = "defeated_bonemass"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Wolf",
-                bounty_name = "Wolf the Hunter",
-                sprite_name = "TrophyWolf",
-                biome = "Plains",
-                reward_type = Data.QuestRewardType.Skill,
-                skill_reward = new Data.BountySkill()
-                {
-                    type = "Clubs",
-                    amount = 8000
-                },
-                bounty_health = 80f,
-                damage_multiplier = 1.1f,
-                damages = new Data.BountyDamages() { slash = 10f, pierce = 5f },
-                level = 2,
-                defeat_key = "defeated_wolf"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Fenring",
-                bounty_name = "Fenring the Fierce",
-                sprite_name = "TrophyFenring",
-                biome = "Plains",
-                reward_type = Data.QuestRewardType.Skill,
-                skill_reward = new Data.BountySkill()
-                {
-                    type = "Axes",
-                    amount = 10000
-                },
-                bounty_health = 300f,
-                damage_multiplier = 1.3f,
-                damages = new Data.BountyDamages() { slash = 20f, pierce = 10f },
-                level = 3,
-                defeat_key = "defeated_fenring"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Fenring_Cultist",
-                bounty_name = "Fenring the Devoted",
-                sprite_name = "TrophyCultist",
-                biome = "Plains",
-                reward_type = Data.QuestRewardType.Skill,
-                skill_reward = new Data.BountySkill()
-                {
-                    type = "Blocking",
-                    amount = 8000
-                },
-                bounty_health = 200f,
-                damage_multiplier = 1.2f,
-                damages = new Data.BountyDamages() { slash = 15f, pierce = 5f },
-                level = 2,
-                defeat_key = "defeated_fenring_cultist"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Ulv",
-                bounty_name = "Ulv the Wild",
-                sprite_name = "TrophyUlv",
-                biome = "Mountain",
-                reward_type = Data.QuestRewardType.Skill,
-                skill_reward = new Data.BountySkill()
-                {
-                    type = "Polearms",
-                    amount = 12000
-                },
-                bounty_health = 50f,
-                damage_multiplier = 1.1f,
-                damages = new Data.BountyDamages() { slash = 10f, pierce = 5f },
-                level = 2,
-                defeat_key = "defeated_ulv"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "StoneGolem",
-                bounty_name = "Golem the Guardian",
-                sprite_name = "TrophySGolem",
-                biome = "Mountain",
-                reward_type = Data.QuestRewardType.Skill,
-                skill_reward = new Data.BountySkill()
-                {
-                    type = "Blocking",
-                    amount = 15000
-                },
-                bounty_health = 800f,
-                damage_multiplier = 1.5f,
-                damages = new Data.BountyDamages() { blunt = 30f, pierce = 10f },
-                level = 3,
-                defeat_key = "defeated_stonegolem"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Bat",
-                bounty_name = "Bat the Nocturnal",
-                sprite_name = "skull",
-                biome = "Mountain",
-                reward_type = Data.QuestRewardType.Skill,
-                skill_reward = new Data.BountySkill()
-                {
-                    type = "Bows",
-                    amount = 5000
-                },
-                bounty_health = 10f,
-                damage_multiplier = 1.0f,
-                damages = new Data.BountyDamages() { pierce = 5f, poison = 2f },
-                level = 3,
-                defeat_key = "KilledBat"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Hatchling",
-                bounty_name = "Drake the Youngling",
-                sprite_name = "TrophyHatchling",
-                biome = "Plains",
-                reward_type = Data.QuestRewardType.Skill,
-                skill_reward = new Data.BountySkill()
-                {
-                    type = "Knives",
-                    amount = 3000
-                },
-                bounty_health = 100f,
-                damage_multiplier = 1.1f,
-                damages = new Data.BountyDamages() { slash = 15f, pierce = 5f },
-                level = 2,
-                defeat_key = "defeated_hatchling"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Dragon",
-                bounty_name = "Dragon the Mighty",
-                sprite_name = "TrophyDragonQueen",
-                biome = "Mountain",
-                reward_type = Data.QuestRewardType.Skill,
-                skill_reward = new Data.BountySkill()
-                {
-                    type = "Axes",
-                    amount = 25000
-                },
-                bounty_health = 7500f,
-                damage_multiplier = 2.5f,
-                damages = new Data.BountyDamages() { slash = 80f, fire = 50f },
-                level = 3,
-                defeat_key = "defeated_dragon"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Serpent",
-                bounty_name = "Serpent the Wretched",
-                sprite_name = "TrophySerpent",
-                biome = "Ocean",
-                reward_type = Data.QuestRewardType.Item,
-                item_reward = new()
-                {
-                    item_name = "SerpentMeat",
-                    amount = 50
-                },
-                bounty_health = 1000f,
-                damage_multiplier = 2f,
-                damages = new(){blunt = 10f, lightning = 5f},
-                level = 3,
-                defeat_key = "defeated_serpent"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Goblin",
-                bounty_name = "Goblin the Menace",
-                sprite_name = "TrophyGoblin",
-                biome = "BlackForest",
-                reward_type = Data.QuestRewardType.Skill,
-                skill_reward = new Data.BountySkill()
-                {
-                    type = "Spears",
-                    amount = 5000
-                },
-                bounty_health = 175f,
-                damage_multiplier = 1.2f,
-                damages = new Data.BountyDamages() { slash = 20f, pierce = 10f },
-                level = 2,
-                defeat_key = "defeated_goblin"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "GoblinBrute",
-                bounty_name = "Goblin the Bulwark",
-                sprite_name = "TrophyGoblinBrute",
-                biome = "BlackForest",
-                reward_type = Data.QuestRewardType.Skill,
-                skill_reward = new Data.BountySkill()
-                {
-                    type = "Blocking",
-                    amount = 10000
-                },
-                bounty_health = 800f,
-                damage_multiplier = 1.5f,
-                damages = new Data.BountyDamages() { blunt = 30f, pierce = 20f },
-                level = 3,
-                defeat_key = "defeated_goblinbrute"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "GoblinShaman",
-                bounty_name = "Goblin the Hexer",
-                sprite_name = "TrophyGoblinShaman",
-                biome = "BlackForest",
-                reward_type = Data.QuestRewardType.Skill,
-                skill_reward = new Data.BountySkill()
-                {
-                    type = "Polearms",
-                    amount = 8000
-                },
-                bounty_health = 100f,
-                damage_multiplier = 1.1f,
-                damages = new Data.BountyDamages() { slash = 10f, pierce = 5f },
-                level = 2,
-                defeat_key = "defeated_goblinshaman"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Lox",
-                bounty_name = "Lox the Majestic",
-                sprite_name = "TrophyLox",
-                biome = "Plains",
-                reward_type = Data.QuestRewardType.Skill,
-                skill_reward = new Data.BountySkill()
-                {
-                    type = "Axes",
-                    amount = 10000
-                },
-                bounty_health = 1000f,
-                damage_multiplier = 1.5f,
-                damages = new Data.BountyDamages() { blunt = 30f, pierce = 20f },
-                level = 3,
-                defeat_key = "defeated_lox"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Seeker",
-                bounty_name = "Seeker the Elusive",
-                sprite_name = "TrophySeeker",
-                biome = "Mountain",
-                reward_type = Data.QuestRewardType.Skill,
-                skill_reward = new Data.BountySkill()
-                {
-                    type = "Spears",
-                    amount = 8000
-                },
-                bounty_health = 200f,
-                damage_multiplier = 1.2f,
-                damages = new Data.BountyDamages() { pierce = 20f, spirit = 10f },
-                level = 2,
-                defeat_key = "defeated_seeker"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "SeekerBrute",
-                bounty_name = "Seeker the Dominator",
-                sprite_name = "TrophySeekerBrute",
-                biome = "Mountain",
-                reward_type = Data.QuestRewardType.Skill,
-                skill_reward = new Data.BountySkill()
-                {
-                    type = "Polearms",
-                    amount = 12000
-                },
-                bounty_health = 1500f,
-                damage_multiplier = 1.8f,
-                damages = new Data.BountyDamages() { pierce = 40f, spirit = 20f, blunt = 20f },
-                level = 3,
-                defeat_key = "defeated_seekerbrute"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "SeekerQueen",
-                bounty_name = "Queen the Monarch",
-                sprite_name = "TrophySeekerQueen",
-                biome = "Mistlands",
-                reward_type = Data.QuestRewardType.Skill,
-                skill_reward = new Data.BountySkill()
-                {
-                    type = "Spears",
-                    amount = 20000
-                },
-                bounty_health = 12500f,
-                damage_multiplier = 2.0f,
-                damages = new Data.BountyDamages() { pierce = 60f, spirit = 30f, poison = 20f },
-                level = 3,
-                defeat_key = "defeated_seekerqueen"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Skeleton_Hildir_nochest",
-                bounty_name = "Brenna the Wicked",
-                sprite_name = "TrophySkeletonHildir",
-                biome = "AshLands",
-                reward_type = Data.QuestRewardType.Skill,
-                skill_reward = new Data.BountySkill()
-                {
-                    type = "Swords",
-                    amount = 10000
-                },
-                bounty_health = 2400,
-                damage_multiplier = 1.1f,
-                level = 3,
-                defeat_key = "BossHildir1"
-            },
-            new Data.BountyYML()
-            {
-                creature_prefab_name = "Troll",
-                bounty_name = "Troll the Frozen",
-                sprite_name = "TrophyFrostTroll",
-                biome = "DeepNorth",
-                reward_type = Data.QuestRewardType.Skill,
-                skill_reward = new Data.BountySkill()
-                {
-                    type = "Knives",
-                    amount = 20000
-                },
-                bounty_health = 3000f,
-                damage_multiplier = 1.5f,
-                damages = new(){blunt = 10f, frost = 50f},
-                level = 3,
-                defeat_key = "defeated_goblinking"
-            },
-        };
-        List<Data.ValidatedBounty> validated = new();
-        foreach (Data.BountyYML data in output)
+                player.GetInventory().RemoveItem(item.PrefabName, item.Amount);
+            }
+        }
+    }
+    private static void ReturnCost(Player player, BountyData data)
+    {
+        if (player.NoCostCheat()) return;
+        foreach (StoreManager.StoreCost.Cost? item in data.Cost.Items)
         {
-            if (!ValidateBounty(data, out Data.ValidatedBounty validate)) continue;
-            validated.Add(validate);
-            ISerializer serializer = new SerializerBuilder().Build();
-            string serialized = serializer.Serialize(data);
-            File.WriteAllText(AlmanacPaths.BountyFolderPath + Path.DirectorySeparatorChar + data.creature_prefab_name + "_bounty.yml", serialized);
+            if (item.isToken)
+            {
+                player.AddTokens(item.Amount);
+            }
+            else
+            {
+                player.GetInventory().AddItem(item.item?.m_itemData.m_shared.m_name ?? "$item_coins", item.Amount, 1, 0, 0L, string.Empty);
+            }
+        }
+    }
+    public static void CancelBounty()
+    {
+        if (ActiveBountyLocation == null) return;
+        ActiveBountyLocation.data.completed = false;
+        ReturnCost(Player.m_localPlayer, ActiveBountyLocation.data);
+        if (ActiveBountyLocation.pin != null) Minimap.instance.RemovePin(ActiveBountyLocation.pin);
+        ActiveBountyLocation = null;
+        Player.m_localPlayer.Message(MessageHud.MessageType.Center, Keys.BountyCanceled);
+    }
+    public static void Setup()
+    {
+        AlmanacPlugin.instance.gameObject.AddComponent<BountyManager>();
+        AlmanacPlugin.OnZNetAwake += UpdateServerBounties;
+        AlmanacPlugin.OnZNetSceneAwake += OnZNetSceneAwake;
+        LoadDefaults();
+        AlmanacPaths.CreateFolderDirectories();
+        string[] files = Directory.GetFiles(AlmanacPaths.BountyFolderPath, "*.yml");
+        if (files.Length <= 0)
+        {
+            foreach (BountyData? bounty in bounties.Values)
+            {
+                string data = serializer.Serialize(bounty);
+                string path = AlmanacPaths.BountyFolderPath + Path.DirectorySeparatorChar + bounty.UniqueID + ".yml";
+                File.WriteAllText(path, data);
+                fileBounties[path] = bounty;
+            }
+        }
+        else
+        {
+            bounties.Clear();
+            foreach (string file in files)
+            {
+                string data = File.ReadAllText(file);
+                BountyData bounty = deserializer.Deserialize<BountyData>(data);
+                bounties[bounty.UniqueID] = bounty;
+                fileBounties[file] = bounty;
+            }
         }
 
-        return validated;
+        SyncedBounties.ValueChanged += OnServerBountyChanged;
+        
+        FileSystemWatcher watcher = new  FileSystemWatcher(AlmanacPaths.BountyFolderPath, "*.yml");
+        watcher.EnableRaisingEvents = true;
+        watcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
+        watcher.NotifyFilter = NotifyFilters.LastWrite;
+        watcher.Created += OnCreated;
+        watcher.Changed += OnChange;
+        watcher.Deleted += OnDeleted;
+    }
+
+    private static void OnServerBountyChanged()
+    {
+        if (!ZNet.instance || ZNet.instance.IsServer()) return;
+        if (string.IsNullOrEmpty(SyncedBounties.Value)) return;
+        try
+        {
+            Dictionary<string, BountyData> data =
+                deserializer.Deserialize<Dictionary<string, BountyData>>(SyncedBounties.Value);
+            ActiveBountyLocation = null;
+            fileBounties = data;
+            bounties.Clear();
+            foreach (BountyData bounty in fileBounties.Values)
+            {
+                bounties[bounty.UniqueID] = bounty;
+            }
+        }
+        catch
+        {
+            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server bounties");
+        }
+    }
+
+    private static void OnChange(object sender, FileSystemEventArgs e)
+    {
+        if (!ZNet.instance || !ZNet.instance.IsServer()) return;
+        try
+        {
+            BountyData data = deserializer.Deserialize<BountyData>(File.ReadAllText(e.FullPath));
+            if (!fileBounties.TryGetValue(e.FullPath, out BountyData? bounty)) return;
+            bounty.CopyFrom(data);
+            UpdateServerBounties();
+            if (AlmanacPanel.instance?.Tabs[AlmanacPanel.Tab.TabOption.Bounties].IsSelected ?? false)
+            {
+                AlmanacPanel.instance.OnBountyTab();
+            }
+        }
+        catch
+        {
+            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to change bounty: " + Path.GetFileName(e.FullPath));
+        }
+    }
+
+    private static void OnCreated(object sender, FileSystemEventArgs e)
+    {
+        if (!ZNet.instance || !ZNet.instance.IsServer()) return;
+        BountyData data = deserializer.Deserialize<BountyData>(File.ReadAllText(e.FullPath));
+        bounties[data.UniqueID] = data;
+        fileBounties[e.FullPath] = data;
+        UpdateServerBounties();
+        if (AlmanacPanel.instance?.Tabs[AlmanacPanel.Tab.TabOption.Bounties].IsSelected ?? false)
+        {
+            AlmanacPanel.instance.OnBountyTab();
+        }
+    }
+
+    private static void OnDeleted(object sender, FileSystemEventArgs e)
+    {
+        if (!ZNet.instance || !ZNet.instance.IsServer()) return;
+        if (!fileBounties.TryGetValue(e.FullPath, out BountyData? bounty)) return;
+        bounties.Remove(bounty.UniqueID);
+        fileBounties.Remove(e.FullPath);
+        UpdateServerBounties();
+        if (AlmanacPanel.instance?.Tabs[AlmanacPanel.Tab.TabOption.Bounties].IsSelected ?? false)
+        {
+            AlmanacPanel.instance.OnBountyTab();
+        }
+    }
+
+    private static void OnZNetSceneAwake()
+    {
+        foreach(Effect? effect in Effects) effect.Init();
+        instance?.Initialize();
+    }
+
+    private static void UpdateServerBounties()
+    {
+        if (!ZNet.instance || !ZNet.instance.IsServer()) return;
+        string data = serializer.Serialize(fileBounties);
+        SyncedBounties.Value = data;
+    }
+    
+    public static bool Exists(string name) => bounties.ContainsKey(name);
+    private static void LoadDefaults()
+    {
+        BountyData boar = new BountyData();
+        boar.UniqueID = "Boar.001";
+        boar.Creature = "Boar";
+        boar.Lore = "The meadows have been wicked to the boars, hunted endlessly by ruthless vikings - it breeds true beasts";
+        boar.Icon = "TrophyBoar";
+        boar.Biome = "Meadows";
+        boar.Health = 1000f;
+        boar.DamageMultiplier = 1.5f;
+        boar.AlmanacTokenReward = 1;
+        boar.Level = 3;
+        boar.Cost.Add("Coins", 10);
+        bounties[boar.UniqueID] = boar;
+        
+        BountyData neck = new BountyData();
+        neck.UniqueID = "Neck.001";
+        neck.Creature = "Neck";
+        neck.Lore = "The meadows may seem calm, but when the rains fall, the Neck emerges to claim the unwary.";
+        neck.Icon = "TrophyNeck";
+        neck.Biome = "Meadows";
+        neck.Health = 1000f;
+        neck.DamageMultiplier = 1.5f;
+        neck.AlmanacTokenReward = 1;
+        neck.Level = 3;
+        neck.Cost.Add("Coins", 10);
+        bounties[neck.UniqueID] = neck;
+
+        BountyData troll = new BountyData();
+        troll.UniqueID = "Troll.001";
+        troll.Creature = "Troll";
+        troll.Lore = "Lumbering through the Black Forest, the troll’s steps shake the earth as it smashes all in its path.";
+        troll.Icon = "TrophyFrostTroll";
+        troll.Biome = "BlackForest";
+        troll.Health = 1200f;
+        troll.DamageMultiplier = 1.5f;
+        troll.AlmanacTokenReward = 5;
+        troll.Level = 3;
+        troll.Cost.Add("Coins", 10);
+        bounties[troll.UniqueID] = troll;
+
+        BountyData serpent = new BountyData();
+        serpent.UniqueID = "Serpent.001";
+        serpent.Creature = "Serpent";
+        serpent.Lore = "Sailors whisper of a serpent that drags ships beneath the waves, leaving only foam and silence.";
+        serpent.Icon = "TrophySerpent";
+        serpent.Biome = "Ocean";
+        serpent.Health = 1000f;
+        serpent.DamageMultiplier = 1.5f;
+        serpent.AlmanacTokenReward = 5;
+        serpent.Level = 3;
+        serpent.Cost.Add("Coins", 10);
+        bounties[serpent.UniqueID] = serpent;
+
+        BountyData abomination = new BountyData();
+        abomination.UniqueID = "Abomination.001";
+        abomination.Creature = "Abomination";
+        abomination.Lore = "From the mire it rises, a tangle of roots and hate, the swamp itself given monstrous form.";
+        abomination.Icon = "TrophyAbomination";
+        abomination.Biome = "Swamp";
+        abomination.Health = 1600f;
+        abomination.DamageMultiplier = 1.5f;
+        abomination.AlmanacTokenReward = 5;
+        abomination.Level = 3;
+        abomination.Cost.Add("Coins", 10);
+        bounties[abomination.UniqueID] = abomination;
+        
+        BountyData wraith = new BountyData();
+        wraith.UniqueID = "Wraith.001";
+        wraith.Creature = "Wraith";
+        wraith.Lore = "When the mists thicken and the air grows cold, the Wraith glides forth to claim the living.";
+        wraith.Icon = "TrophyWraith";
+        wraith.Biome = "Swamp";
+        wraith.Health = 1000f;
+        wraith.DamageMultiplier = 1.5f;
+        wraith.AlmanacTokenReward = 5;
+        wraith.Level = 3;
+        wraith.Cost.Add("Coins", 10);
+        bounties[wraith.UniqueID] = wraith;
+        
+        BountyData lox = new BountyData();
+        lox.UniqueID = "Lox.001";
+        lox.Creature = "Lox";
+        lox.Lore = "The ground trembles beneath its hooves, for the Lox knows no predator but death itself.";
+        lox.Icon = "TrophyLox";
+        lox.Biome = "Plains";
+        lox.Health = 2000f;
+        lox.DamageMultiplier = 1.5f;
+        lox.AlmanacTokenReward = 5;
+        lox.Level = 3;
+        lox.Cost.Add("Coins", 10);
+        bounties[lox.UniqueID] = lox;
+        
+        BountyData seekerSoldier = new BountyData();
+        seekerSoldier.UniqueID = "SeekerSoldier.001";
+        seekerSoldier.Creature = "SeekerBrute";
+        seekerSoldier.Lore = "Forged in the mists, this armored brute marches with the strength of many men and the hunger of a swarm.";
+        seekerSoldier.Icon = "TrophySeekerBrute";
+        seekerSoldier.Biome = "Mistlands";
+        seekerSoldier.Health = 3000f;
+        seekerSoldier.DamageMultiplier = 1.5f;
+        seekerSoldier.AlmanacTokenReward = 10;
+        seekerSoldier.Level = 3;
+        seekerSoldier.Cost.Add("Coins", 10);
+        bounties[seekerSoldier.UniqueID] = seekerSoldier;
+        
+        BountyData fallenValkyrie = new BountyData();
+        fallenValkyrie.UniqueID = "FallenValkyrie.001";
+        fallenValkyrie.Creature = "FallenValkyrie";
+        fallenValkyrie.Lore = "Once a chooser of the slain, now cursed in flame, the Fallen Valkyrie haunts the Ashlands with broken wings.";
+        fallenValkyrie.Icon = "TrophyFallenValkyrie";
+        fallenValkyrie.Biome = "AshLands";
+        fallenValkyrie.Health = 3000f;
+        fallenValkyrie.DamageMultiplier = 1.5f;
+        fallenValkyrie.AlmanacTokenReward = 20;
+        fallenValkyrie.Level = 3;
+        fallenValkyrie.Cost.Add("Coins", 10);
+        bounties[fallenValkyrie.UniqueID] = fallenValkyrie;
+    }
+    public class BountyLocation
+    {
+        public readonly BountyData data;
+        public Vector3 position;
+        public bool isSpawned;
+        public Minimap.PinData? pin;
+
+        public BountyLocation(BountyData data)
+        {
+            this.data = data;
+        }
+
+        public bool IsWithin()
+        {
+            if (!Player.m_localPlayer) return false;
+            float num1 = position.x - Player.m_localPlayer.transform.position.x;
+            float num2 = position.z - Player.m_localPlayer.transform.position.z;
+
+            return Math.Sqrt(num1 * num1 + num2 * num2) <= 100f;
+        }
+
+        public void AddPin()
+        {
+            RemovePin();
+            pin = Minimap.instance.AddPin(position, Minimap.PinType.Boss, data.Name, false, false);
+            pin.m_icon = data.icon ?? SpriteManager.GetSprite(SpriteManager.IconOption.Map);
+        }
+
+        public void RemovePin()
+        {
+            if (pin == null || !Minimap.instance) return;
+            Minimap.instance.RemovePin(pin);
+        }
+
+        public bool Spawn()
+        {
+            Vector3 vector3 = GetRandomVectorWithin(position, 10f);
+
+            if (WorldGenerator.instance.GetBiome(vector3) == Heightmap.Biome.Ocean)
+            {
+                vector3.y = ZoneSystem.instance.m_waterLevel - 0.3f;
+            }
+            else
+            {
+                ZoneSystem.instance.GetSolidHeight(vector3, out float height);
+                if (height >= 0.0 && Mathf.Abs(height - position.y) <= maxYDistance &&
+                    Vector3.Distance(vector3, position) >= minSpawnDistance)
+                {
+                    vector3.y = height + spawnOffset;
+                }
+                else
+                {
+                    vector3.y = Player.m_localPlayer.transform.position.y + spawnOffset;
+                }
+            }
+
+            PreSpawnEffects.Create(vector3, Quaternion.identity);
+
+            position = vector3;
+            instance?.Invoke(nameof(SpawnBounty), 10f);
+            isSpawned = true;
+            return true;
+        }
+        
+        private static Vector3 GetRandomVectorWithin(Vector3 point, float margin)
+        {
+            Vector2 vector2 = UnityEngine.Random.insideUnitCircle * margin;
+            return point + new Vector3(vector2.x, 0.0f, vector2.y);
+        }
+        
+        public bool FindSpawnLocation()
+        {
+            return RandomLocationFinder.FindSpawnLocation(data.biome, out position);
+        }
+    }
+    
+    [Serializable]
+    public class BountyData
+    {
+        public string UniqueID = string.Empty;
+        public string Creature = string.Empty;
+        public string Name = string.Empty;
+        public string Icon = string.Empty;
+        public string Biome = string.Empty;
+        public float Health;
+        public int Level = 1;
+        public float DamageMultiplier;
+        public int AlmanacTokenReward;
+        public string Lore = string.Empty;
+        public StoreManager.StoreCost Cost = new();
+        public BountyData(){}
+        public void CopyFrom(BountyData data)
+        {
+            UniqueID = data.UniqueID;
+            Creature = data.Creature;
+            Name = data.Name;
+            Icon = data.Icon;
+            Health = data.Health;
+            DamageMultiplier = data.DamageMultiplier;
+            AlmanacTokenReward = data.AlmanacTokenReward;
+            Cost = data.Cost;
+            _prefab = null;
+        }
+
+        private static Entries.EntryBuilder builder = new();
+
+        public List<Entries.Entry> ToEntries()
+        {
+            builder.Clear();
+            builder.Add(Lore + "\n", "lore");
+            builder.Add(Keys.Biome, biome);
+            builder.Add(Keys.Health, Health);
+            builder.Add(Keys.Level, Level);
+            builder.Add(Keys.DamageModifier, DamageModString());
+            builder.Add(Keys.Reward);
+            builder.Add(Keys.AlmanacToken, AlmanacTokenReward);
+            if (monsterAI is null)
+            {
+                builder.Add("<color=red>Invalid, missing MonsterAI component!</color>", "lore");
+            }
+            return builder.ToList();
+        }
+
+        public bool HasRequirements() =>
+            PlayerInfo.GetPlayerStat(PlayerInfo.RecordType.Kill, character?.m_name ?? string.Empty) > 0;
+        
+        [NonSerialized, YamlIgnore] public bool completed;
+        [YamlIgnore] public Heightmap.Biome biome => Enum.TryParse(Biome, true, out Heightmap.Biome land) ? land : Heightmap.Biome.None;
+        [YamlIgnore] private GameObject? _prefab;
+        [YamlIgnore] public GameObject? Prefab
+        {
+            get
+            {
+                if (_prefab != null) return _prefab;
+                _prefab = ZNetScene.instance.GetPrefab(Creature);
+                return _prefab;
+            }
+        }
+        [YamlIgnore] public Character? character => Prefab?.GetComponent<Character>();
+        [YamlIgnore] public MonsterAI? monsterAI => Prefab?.GetComponent<MonsterAI>();
+        [YamlIgnore] public Sprite? icon => SpriteManager.GetSprite(Icon);
+        
+        public string DamageModString()
+        {
+            return DamageMultiplier < 1f
+                ? $"-{(1f - DamageMultiplier) * 100f:0.0}%"
+                : $"+{(DamageMultiplier - 1f) * 100f:0.0}%";
+        }
+
+        public string GetNameOverride()
+        {
+            if (!ZNetScene.instance) return string.Empty;
+            if (!string.IsNullOrEmpty(Name)) return Name;
+            Name = NameGenerator.GenerateName(character?.m_name ?? Creature);
+            return Name;
+        }
+
+        public void ReturnCost(Player player)
+        {
+            foreach (StoreManager.StoreCost.Cost? cost in Cost.Items)
+            {
+                if (cost.isToken) player.AddTokens(cost.Amount);
+                else player.GetInventory().AddItem(cost.PrefabName, cost.Amount, 1, 0, 0L, string.Empty);
+            }
+        }
+    }
+
+    private class Effect
+    {
+        private readonly List<string> m_effectNames;
+        private readonly EffectList m_effectList = new();
+        public Effect(params string[] effectNames)
+        {
+            m_effectNames = effectNames.ToList();
+            Effects.Add(this);
+        }
+
+        public GameObject[] Create(Vector3 basePos, Quaternion baseRot, Transform? baseParent = null, float scale = 1f, int variant = -1)
+            => m_effectList.Create(basePos, baseRot, baseParent, scale, variant);
+
+        public void Init()
+        {
+            if (!ZNetScene.instance) return;
+            List<EffectList.EffectData> data = new();
+            foreach (string? effectName in m_effectNames)
+            {
+                if (ZNetScene.instance.GetPrefab(effectName) is not { } prefab) continue;
+                data.Add(new EffectList.EffectData(){m_prefab = prefab});
+            }
+
+            m_effectList.m_effectPrefabs = data.ToArray();
+        }
+    }
+}
+
+public static class BountyReadMeBuilder
+{
+    private static readonly string FilePath = AlmanacPaths.FolderPath + Path.DirectorySeparatorChar + "Bounty_README.md";
+    private static readonly string[] Prefix =
+    {
+        "# Almanac Bounties",
+        "The Almanac Bounty system lets players purchase bounty contracts to hunt special creatures.",
+        "",
+        "Bounties are defined in `.yml` files inside the **Bounties** folder.",
+        "Admins can add, remove, or edit bounty entries at runtime — changes will sync to all clients.",
+        "",
+        "Each bounty entry can define:",
+        "- **UniqueID**: Unique identifier for the bounty (e.g., `Troll.001`).",
+        "- **Creature**: The prefab name of the target creature (e.g., `Troll`, `Serpent`).",
+        "- **Name**: (Optional) Custom name override; if empty, a generated name will be used.",
+        "- **Icon**: Trophy sprite or icon for the bounty.",
+        "- **Biome**: The biome where the bounty will spawn (`Meadows`, `Swamp`, `AshLands`, etc.).",
+        "- **Health**: Override maximum health value of the bounty.",
+        "- **Level**: Creature level (scales difficulty).",
+        "- **DamageMultiplier**: Multiplier applied to the bounty’s attacks (e.g., `1.5`).",
+        "- **AlmanacTokenReward**: Tokens given upon completing the bounty.",
+        "- **Lore**: A short description displayed in the Almanac panel.",
+        "- **Cost**: Item or token requirements to purchase the bounty.",
+        "### Notes",
+        "- Costs can be `AlmanacToken` or regular items (e.g., `Coins`).",
+        "- Bounties require players to kill the target directly — indirect deaths won’t count.",
+        "- If the bounty despawns, escapes, or is killed by another player, the cost is returned.",
+        "- Bounties are subject to a configurable cooldown (default in minutes).",
+        "",
+        "### Tips",
+        "- You can reload or edit `.yml` bounty files while the server is running; changes sync automatically.",
+        "- Each bounty spawns a pin on the map when accepted.",
+        "- Default bounties include **Boar, Neck, Troll, Serpent, Abomination, Wraith, Lox, Seeker Brute, Fallen Valkyrie**.",
+        "- Use `Lore` to tell a short story or flavor text for each hunt."
+    };
+    
+    public static void Write()
+    {
+        if (File.Exists(FilePath)) return;
+        List<string> lines = new List<string>();
+        lines.AddRange(Prefix);
+
+        lines.Add("# Example Entry");
+        lines.Add("```yml");
+        lines.Add("UniqueID: Troll.001");
+        lines.Add("Creature: Troll");
+        lines.Add("Name: Forest Stalker");
+        lines.Add("Icon: TrophyFrostTroll");
+        lines.Add("Biome: BlackForest");
+        lines.Add("Health: 1200");
+        lines.Add("Level: 3");
+        lines.Add("DamageMultiplier: 1.5");
+        lines.Add("AlmanacTokenReward: 5");
+        lines.Add("Lore: \"Lumbering through the Black Forest, the troll’s steps shake the earth as it smashes all in its path.\"");
+        lines.Add("Cost:");
+        lines.Add("  Coins: 10");
+        lines.Add("```");
+        lines.Add("");
+        File.WriteAllLines(FilePath, lines);
     }
 }

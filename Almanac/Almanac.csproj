@@ -133,57 +133,50 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="Achievements\EffectMan.cs" />
-        <Compile Include="Achievements\Manager.cs" />
+        <Compile Include="Achievements\AchievementManager.cs" />
         <Compile Include="Achievements\AchievementTypes.cs" />
-        <Compile Include="Achievements\AchievementYML.cs" />
-        <Compile Include="Achievements\CreatureLists.cs" />
+        <Compile Include="Achievements\CreatureGroup.cs" />
         <Compile Include="API\ClassesAPI.cs" />
-        <Compile Include="API\TrackMinimalUI.cs" />
         <Compile Include="Bounties\Bounty.cs" />
         <Compile Include="Bounties\BountyManager.cs" />
-        <Compile Include="Bounties\BountyPatches.cs" />
-        <Compile Include="Bounties\CachedEffects.cs" />
-        <Compile Include="Bounties\Data.cs" />
-        <Compile Include="Data\BuildPieces.cs" />
-        <Compile Include="Data\Creatures.cs" />
-        <Compile Include="Data\Items.cs" />
-        <Compile Include="Data\PlayerStats.cs" />
-        <Compile Include="FileSystem\AlmanacPaths.cs" />
-        <Compile Include="FileSystem\FileWatcher.cs" />
-        <Compile Include="FileSystem\Filters.cs" />
-        <Compile Include="FileSystem\Leaderboard.cs" />
-        <Compile Include="FileSystem\ServerSyncedData.cs" />
-        <Compile Include="FileSystem\Patches.cs" />
+        <Compile Include="Bounties\NameGenerator.cs" />
+        <Compile Include="Data\PieceHelper.cs" />
+        <Compile Include="Data\CritterHelper.cs" />
+        <Compile Include="Data\ItemHelper.cs" />
+        <Compile Include="Data\Metrics.cs" />
+        <Compile Include="Leaderboard\Leaderboard.cs" />
+        <Compile Include="Lottery\LotteryManager.cs" />
+        <Compile Include="Managers\AssetBundleManager.cs" />
+        <Compile Include="Managers\CommandData.cs" />
+        <Compile Include="Managers\Configs.cs" />
+        <Compile Include="Managers\FontManager.cs" />
+        <Compile Include="Managers\LocalizationManager.cs" />
+        <Compile Include="Managers\SpriteManager.cs" />
+        <Compile Include="Marketplace\MarketManager.cs" />
         <Compile Include="Plugin.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
-        <Compile Include="TreasureHunt\Data.cs" />
+        <Compile Include="Store\StatusEffectManager.cs" />
+        <Compile Include="Store\StoreManager.cs" />
         <Compile Include="TreasureHunt\TreasureHunt.cs" />
         <Compile Include="TreasureHunt\TreasureManager.cs" />
-        <Compile Include="UI\AlmanacElement.cs" />
-        <Compile Include="UI\AlmanacUI.cs" />
-        <Compile Include="UI\Entries.cs" />
-        <Compile Include="UI\PanelElements.cs" />
-        <Compile Include="UI\SidePanel.cs" />
-        <Compile Include="Utilities\AlmanacCommands.cs" />
-        <Compile Include="Utilities\Assets.cs" />
-        <Compile Include="Utilities\FontManager.cs" />
+        <Compile Include="UI\AlmanacPanel.cs" />
+        <Compile Include="UI\Info.cs" />
+        <Compile Include="UI\Modal.cs" />
+        <Compile Include="Utilities\AlmanacPaths.cs" />
+        <Compile Include="Utilities\Entries.cs" />
+        <Compile Include="Utilities\Filters.cs" />
         <Compile Include="Utilities\Helpers.cs" />
-        <Compile Include="Utilities\LocalizationManager.cs" />
-        <Compile Include="Utilities\SpriteManager.cs" />
+        <Compile Include="Utilities\Keys.cs" />
+        <Compile Include="Utilities\RandomLocationFinder.cs" />
         <Compile Include="VersionHandshake.cs" />
     </ItemGroup>
     <ItemGroup>
         <None Include="App.config" />
     </ItemGroup>
     <ItemGroup>
-        <EmbeddedResource Include="..\..\..\bundles_2024\almanacui">
-          <Link>assets\almanacui</Link>
-        </EmbeddedResource>
         <Content Include=".gitignore" />
-        <EmbeddedResource Include="assets\arrowdrop.png" />
-        <EmbeddedResource Include="assets\toggleOff.png" />
-        <EmbeddedResource Include="assets\toggleOn.png" />
+        <EmbeddedResource Include="assets\almanac_ui" />
+        <Content Include="assets\almanac_ui.manifest" />
         <Content Include="environment.props" />
         <EmbeddedResource Include="icons\AlmanacIconButton.png" />
         <EmbeddedResource Include="icons\arrow_basic.png" />
@@ -212,18 +205,26 @@
         <EmbeddedResource Include="icons\sword_basic_blue.png" />
         <EmbeddedResource Include="icons\wood_log.png" />
         <EmbeddedResource Include="icons\wood_logs_three.png" />
-        <EmbeddedResource Include="icons\Checkmark.png" />
-        <EmbeddedResource Include="icons\Daggers_Icon.png" />
         <Content Include="ILRepack.targets" />
         <Content Include="Libs\GroupsAPI.dll" />
         <Content Include="Libs\LocalizationManager.dll">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
-        <EmbeddedResource Include="translations\English.yml" />
+        <Content Include="Thunderstore\Almanac.dll" />
+        <Content Include="Thunderstore\CHANGELOG.md" />
+        <Content Include="Thunderstore\manifest.json" />
+        <Content Include="Thunderstore\README.md" />
+        <Content Include="Thunderstore\RustyMods-Almanac-3.5.0.zip" />
+        <Content Include="translations\English.yml" />
         <Content Include="Libs\ServerSync.dll" />
-        <Content Include="Tutorials\Almanac_Readme.md" />
-        <Content Include="Tutorials\README.md" />
+        <Content Include="Thunderstore\icon.png" />
+        <EmbeddedResource Include="Tutorials\Achievements.md" />
+        <EmbeddedResource Include="Tutorials\Intro.md" />
         <Content Include="UpdateManifest.ps1" />
+        <EmbeddedResource Include="Tutorials\Bounties.md" />
+        <EmbeddedResource Include="Tutorials\Leaderboard.md" />
+        <EmbeddedResource Include="Tutorials\Store.md" />
+        <EmbeddedResource Include="Tutorials\Treasures.md" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.18.2" />

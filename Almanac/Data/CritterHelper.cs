@@ -1,0 +1,245 @@
+﻿using System.Collections.Generic;
+using Almanac.Managers;
+using Almanac.UI;
+using Almanac.Utilities;
+using UnityEngine;
+using static Almanac.Utilities.Entries;
+
+namespace Almanac.Data;
+
+
+public static class CritterHelper
+{
+    private static ItemDrop.ItemData? FindTrophy(this List<CharacterDrop.Drop> list)
+    {
+        foreach (var drop in list)
+        {
+            if (!drop.m_prefab.TryGetComponent(out ItemDrop itemDrop)) continue;
+            if (itemDrop.m_itemData.m_shared.m_itemType is ItemDrop.ItemData.ItemType.Trophy) return itemDrop.m_itemData;
+        }
+
+        return null;
+    }
+
+    public static AlmanacPanel.InfoView.Icons.DropInfo[] ToDropInfos(this List<CharacterDrop.Drop> drops)
+    {
+        List<AlmanacPanel.InfoView.Icons.DropInfo> infos = new();
+        foreach (CharacterDrop.Drop? drop in drops)
+        {
+            if (!drop.m_prefab.TryGetComponent(out ItemDrop component)) continue;
+            infos.Add(new AlmanacPanel.InfoView.Icons.DropInfo(component.m_itemData, drop.m_chance, drop.m_amountMin, drop.m_amountMax));
+        }
+
+        return infos.ToArray();
+    }
+
+    public static void Setup()
+    {
+        AlmanacPlugin.OnZNetScenePrefabs += OnZNetScenePrefabs;
+    }
+
+    private static void OnZNetScenePrefabs(GameObject prefab)
+    {
+        if (prefab == null || !prefab.TryGetComponent(out Character character)) return;
+        if (character is Player) return;
+        _ = new CritterInfo(prefab);
+    }
+
+    private static readonly Dictionary<string, Heightmap.Biome> creatureBiomes = new()
+    {
+        ["Boar"] = Heightmap.Biome.Meadows,
+        ["Boar_piggy"] = Heightmap.Biome.Meadows,
+        ["Neck"] = Heightmap.Biome.Meadows,
+        ["Deer"] =  Heightmap.Biome.Meadows,
+        ["Greyling"] = Heightmap.Biome.Meadows,
+        ["Eikthyr"] = Heightmap.Biome.Meadows,
+        ["Greydwarf"] = Heightmap.Biome.BlackForest,
+        ["Greydwarf_Shaman"] = Heightmap.Biome.BlackForest,
+        ["Greydwarf_Elite"] = Heightmap.Biome.BlackForest,
+        ["Troll"] = Heightmap.Biome.BlackForest,
+        ["gd_king"] = Heightmap.Biome.BlackForest,
+        ["Skeleton"] =  Heightmap.Biome.BlackForest | Heightmap.Biome.Swamp,
+        ["Leech"] = Heightmap.Biome.Swamp,
+        ["Abomination"] = Heightmap.Biome.Swamp,
+        ["Draugr"] =  Heightmap.Biome.Swamp,
+        ["Draugr_Ranged"] = Heightmap.Biome.Swamp,
+        ["Draugr_Elite"] = Heightmap.Biome.Swamp,
+        ["Blob"] =   Heightmap.Biome.Swamp,
+        ["BlobElite"] = Heightmap.Biome.Swamp,
+        ["Surtling"] = Heightmap.Biome.Swamp,
+        ["Wraith"] =  Heightmap.Biome.Swamp,
+        ["Skeleton_Poison"] = Heightmap.Biome.BlackForest | Heightmap.Biome.Swamp,
+        ["Wolf"] = Heightmap.Biome.Mountain,
+        ["Ulv"] = Heightmap.Biome.Mountain,
+        ["Bat"] = Heightmap.Biome.Mountain,
+        ["Fenring"] = Heightmap.Biome.Mountain,
+        ["Hatchling"] =   Heightmap.Biome.Mountain,
+        ["StoneGolem"] = Heightmap.Biome.Mountain,
+        ["Fenring_Cultist"] =  Heightmap.Biome.Mountain,
+        ["Goblin"] = Heightmap.Biome.Plains,
+        ["GoblinArcher"] = Heightmap.Biome.Plains,
+        ["GoblinBrute"] =  Heightmap.Biome.Plains,
+        ["Lox"] =  Heightmap.Biome.Plains,
+        ["Lox_Calf"] =  Heightmap.Biome.Plains,
+        ["Deathsquito"] =   Heightmap.Biome.Plains,
+        ["BlobTar"] =   Heightmap.Biome.Plains,
+        ["GoblinShaman"] =   Heightmap.Biome.Plains,
+        ["GoblinKing"] = Heightmap.Biome.Plains,
+        ["Seeker"] = Heightmap.Biome.Mistlands,
+        ["SeekerBrute"] = Heightmap.Biome.Mistlands,
+        ["Hare"] = Heightmap.Biome.Mistlands,
+        ["SeekerBrood"] = Heightmap.Biome.Mistlands,
+        ["Gjall"] = Heightmap.Biome.Mistlands,
+        ["Tick"] = Heightmap.Biome.Mistlands,
+        ["Dverger"] = Heightmap.Biome.Mistlands,
+        ["DvergerMage"] = Heightmap.Biome.Mistlands,
+        ["DvergerMageFire"] = Heightmap.Biome.Mistlands,
+        ["DvergerMageIce"] =  Heightmap.Biome.Mistlands,
+        ["DvergerMageSupport"] = Heightmap.Biome.Mistlands,
+        ["SeekerQueen"] = Heightmap.Biome.Mistlands,
+        ["Mistile"] = Heightmap.Biome.Mistlands,
+        ["Asksvin"] = Heightmap.Biome.AshLands,
+        ["Asksvin_hatchling"] = Heightmap.Biome.AshLands,
+        ["Morgen"] = Heightmap.Biome.AshLands,
+        ["Morgen_NonSleeping"] = Heightmap.Biome.AshLands,
+        ["Volture"] = Heightmap.Biome.AshLands,
+        ["Charred_Melee"] = Heightmap.Biome.AshLands,
+        ["BlobLava"] = Heightmap.Biome.AshLands,
+        ["Charred_Archer"] = Heightmap.Biome.AshLands,
+        ["Charred_Mage"] = Heightmap.Biome.AshLands,
+        ["FallenValkyrie"] = Heightmap.Biome.AshLands,
+        ["Fader"] = Heightmap.Biome.AshLands,
+        ["Skeleton_Hildir"] = Heightmap.Biome.BlackForest,
+        ["GoblinShaman_Hildir"] = Heightmap.Biome.Plains,
+        ["GoblinBruteBros"] = Heightmap.Biome.Plains,
+        ["GoblinBrute_Hildir"] = Heightmap.Biome.Plains,
+        ["Fenring_Cultist_Hildir"] = Heightmap.Biome.Plains,
+        ["Charred_Melee_Dyrnwyn"] = Heightmap.Biome.AshLands,
+        ["DvergerAshlands"] = Heightmap.Biome.AshLands,
+        ["BogWitchKvastur"] = Heightmap.Biome.Swamp,
+        ["Hen"] = Heightmap.Biome.Mistlands,
+        ["Chicken"] = Heightmap.Biome.Mistlands,
+        ["Charred_Twicher"] = Heightmap.Biome.AshLands,
+        ["Dragon"] = Heightmap.Biome.Mountain,
+        
+    };
+
+    private static Heightmap.Biome GetBiome(string name) => creatureBiomes.TryGetValue(name, out var biome) ? biome : Heightmap.Biome.None;
+
+    public static List<CritterInfo> GetCritters() => critters.FindAll(c => !Filters.Ignore(c.prefab.name));
+    private static readonly List<CritterInfo> critters = new();
+    public static readonly Dictionary<string, CritterInfo> namedCritters = new();
+    private static readonly Dictionary<string, CritterInfo> sharedCritters = new();
+    
+    public static bool Exists(string name) => namedCritters.ContainsKey(name) || sharedCritters.ContainsKey(name);
+    
+    public struct CritterInfo
+    {
+        private static readonly EntryBuilder builder = new();
+        public readonly GameObject prefab;
+        public readonly Character character;
+        public readonly BaseAI ai;
+        public readonly HashSet<ItemDrop> items = new();
+        public HashSet<Attack> attacks = new();
+        public readonly HashSet<ItemDrop> consumeItems = new();
+        public readonly CharacterDrop? drops;
+        public readonly Tameable? tameable;
+        public readonly Growup? growUp;
+        public readonly ItemDrop.ItemData? trophy = null;
+        public bool isTameable => tameable != null;
+
+        public bool isKnown() => PlayerInfo.GetPlayerStat(PlayerInfo.RecordType.Kill, character.m_name) > 0;
+
+        public CritterInfo(GameObject prefab)
+        {
+            this.prefab = prefab;
+            character = prefab.GetComponent<Character>();
+            ai = prefab.GetComponent<BaseAI>();
+            if (ai is MonsterAI monsterAI)
+            {
+                foreach (ItemDrop? item in monsterAI.m_consumeItems)
+                {
+                    if (item == null) continue;
+                    consumeItems.Add(item);
+                }
+            }
+            prefab.TryGetComponent(out drops);
+            trophy = drops?.m_drops.FindTrophy() ?? null;
+            prefab.TryGetComponent(out tameable);
+            growUp = prefab.GetComponent<Growup>();
+            if (character is Humanoid humanoid)
+            {
+                foreach (GameObject? item in humanoid.m_defaultItems)
+                {
+                    if (item == null || !item.TryGetComponent(out ItemDrop itemDrop)) continue;
+                    items.Add(itemDrop);
+                }
+                foreach (Humanoid.RandomItem? randomItem in humanoid.m_randomItems)
+                {
+                    if (randomItem.m_prefab == null ||
+                        !randomItem.m_prefab.TryGetComponent(out ItemDrop itemDrop)) continue;
+                    items.Add(itemDrop);
+                }
+
+                foreach (ItemDrop? item in items)
+                {
+                    attacks.Add(item.m_itemData.m_shared.m_attack);
+                    attacks.Add(item.m_itemData.m_shared.m_secondaryAttack);
+                }
+            }
+
+            critters.Add(this);
+            namedCritters[prefab.name] = this;
+            sharedCritters[character.m_name] = this;
+        }
+        
+        public List<Entry> ToEntries()
+        {
+            builder.Clear();
+            if (Configs.ShowAllData) builder.Add(Keys.InternalID, prefab.name);
+            int killCount = PlayerInfo.GetPlayerStat(PlayerInfo.RecordType.Kill, character.m_name);
+            int deathCount = PlayerInfo.GetPlayerStat(PlayerInfo.RecordType.Death, character.m_name);
+            builder.Add(Keys.Killed, killCount);
+            builder.Add(Keys.Died, deathCount);
+            builder.Add(Keys.Character);
+            builder.Add(Keys.Health, character.m_health);
+            builder.Add(Keys.Faction, character.m_faction);
+            builder.Add(Keys.Biome, GetBiome(prefab.name));
+            builder.Add(Keys.Group, character.m_group);
+            builder.Add(Keys.Resistances);
+            builder.Add(Keys.Blunt, character.m_damageModifiers.m_blunt);
+            builder.Add(Keys.Slash, character.m_damageModifiers.m_slash);
+            builder.Add(Keys.Pierce, character.m_damageModifiers.m_pierce);
+            builder.Add(Keys.Chop, character.m_damageModifiers.m_chop);
+            builder.Add(Keys.Pickaxe, character.m_damageModifiers.m_pickaxe);
+            builder.Add(Keys.Fire, character.m_damageModifiers.m_fire);
+            builder.Add(Keys.Frost, character.m_damageModifiers.m_frost);
+            builder.Add(Keys.Lightning, character.m_damageModifiers.m_lightning);
+            builder.Add(Keys.Poison, character.m_damageModifiers.m_poison);
+            builder.Add(Keys.Spirit, character.m_damageModifiers.m_spirit);
+            builder.Add(Keys.CreatureData);
+            builder.Add(Keys.AvoidFire, ai.m_avoidFire);
+            builder.Add(Keys.AfraidOfFire, ai.m_afraidOfFire);
+            builder.Add(Keys.AvoidWater, ai.m_avoidWater);
+            foreach(WeakSpot weakspot in character.m_weakSpots) builder.Add(Keys.Weakspot, weakspot.name);
+            builder.Add(Keys.StaggerWhenBlocked, character.m_staggerWhenBlocked);
+            builder.Add(Keys.StaggerDamageFactor, character.m_staggerDamageFactor);
+            builder.Add(Keys.TolerateWater, character.m_tolerateWater);
+            builder.Add(Keys.TolerateSmoke, character.m_tolerateSmoke);
+            builder.Add(Keys.TolerateTar, character.m_tolerateTar);
+            builder.Add(Keys.DefeatKey, character.m_defeatSetGlobalKey, Keys.None);
+            if (growUp != null)
+            {
+                builder.Add(Keys.GrowDuration, growUp.m_growTime);
+            }
+            if (tameable != null)
+            {
+                builder.Add(Keys.Husbandry);
+                builder.Add(Keys.FedDuration, tameable.m_fedDuration);
+                builder.Add(Keys.TamingDuration, tameable.m_tamingTime);
+                builder.Add(Keys.Commandable, tameable.m_commandable);
+            }
+            return builder.ToList();
+        }
+    }
+}

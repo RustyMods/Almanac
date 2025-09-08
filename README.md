@@ -1,95 +1,217 @@
 # Almanac
-The Valheim Almanac plugin is a comprehensive tool that meticulously indexes creatures, items, equipment, and player achievements, providing a detailed record of the Viking's journey. It seamlessly weaves together a rich tapestry of the player's accomplishments, transforming their adventures into a living achievement system within the expansive world of Valheim.
 
-**NEW FEATURE 3.1.7:** Almanac Bounties
+Welcome to Rusty's Almanac, your gateway to the enchanting world of Valheim!
 
-**NEW FEATURE 3.1.9:** Almanac Treasure Hunt
-### Features
-- Creature data
-- Item data
-- Pieces data
-- Player metrics
-- Achievement system
-  - Achievement Rewards: Items, Skill EXP or Status Effect
-- Leaderboard
-- Bounties
-- Treasure Hunt
+Rusty's comprehensive plugin catalogs all the items, pieces, and creatures that is loaded into the game.
 
-### Configurations
-- Knowledge wall server synced configuration
-- Achievement server synced configurations
+Explore the depths of Valheim with ease, armed with a wealth of information at your fingertips.
 
-<details>
-<summary><b>Changelog</b></summary>
-
-| `Version` | `Update Notes`                                                                                                      |
-|-----------|---------------------------------------------------------------------------------------------------------------------|
-| 1.0.0     | - Initial Release                                                                                                   |
-| 1.0.1     | - Wrong name lol                                                                                                    |
-| 1.0.2     | - Small Tweak for compatibility with RtdMonsters and monsterlabz                                                    |
-| 1.0.3     | - Fixed compatibility with modded monster mods that have missing values                                             |
-| 1.0.4     | - Minor tweaks to make mod work in various languages by having text dynamically resize                              |
-| 1.0.5     | - Minor changes to the logic on how it finds creature to display in languages other than english                    |
-| 1.0.6     | - Added a patch to fix any overlapping trophies                                                                     |
-| 1.0.7     | - Hotfix for latest valheim patch - more updates to come soon                                                       |
-| 2.0.0     | - Major update - Almanac now supports items                                                                         |
-| 2.0.1     | - Almanac now supports pieces                                                                                       |
-| 2.1.0     | - Added Black List feature and fixed minor bugs                                                                     |
-| 2.1.1     | - fixed minor bug                                                                                                   |
-| 2.1.2     | - fixed black list and duplicate pieces                                                                             |
-| 2.1.3     | - improved blacklist and added drop chance to creature info                                                         |
-| 2.2.0     | - Player Metrics and Achievement system                                                                             |
-| 2.2.1     | - Added item count / total to panels and compatibility with MinimalUI                                               |
-| 2.2.2     | - Controller Support                                                                                                |
-| 2.2.3     | - minor bug fix with kill tracker and added config to make almanac panel transparent to use with minimal ui         |
-| 2.2.4     | - another minor bug fix                                                                                             |
-| 2.2.5     | - Compatibility with World Advancement Progression                                                                  |
-| 2.2.6     | - Added Auga incompatibility flag and fixed guardian power icon for custom powers                                   |
-| 2.2.7     | - auga incompatibility                                                                                              |
-| 2.2.8     | - More redundancy on custom status effects and french translations update                                           |
-| 2.2.9     | - Some krumpac compatibility work and moved ignore list to a yml format in the config folder                        |
-| 2.3.0     | - Hotfix compatibility with recent valheim patch update                                                             |
-| 2.3.1     | - fix for list of biome creatures config                                                                            |
-| 3.0.0     | - Overhaul of entire project. Delete all old config files to clean up workspace                                     |
-| 3.0.1     | - Fixed the leaderboard and tweaked the creature panel                                                              |
-| 3.0.2     | - Localization for many languages built-in and some minor fixes                                                     |
-| 3.0.3     | - Fixed creature panel - achievement panel improved - localization improved                                         |
-| 3.0.4     | - Small localization fixes and filtering                                                                            |
-| 3.0.5     | - Added further information on fish and fixed achievement completion percentage                                     |
-| 3.0.6     | - Check completed achievements when achievements are changed                                                        |
-| 3.0.7     | - Fixed interact button not working until you opened inventory                                                      |
-| 3.0.8     | - Hotfix if defeat key not found in player data                                                                     |
-| 3.0.9     | - Fixed achievements rewards                                                                                        |
-| 3.1.0     | - Small fixes for compatibility with Krumpac                                                                        |
-| 3.1.1     | - Tweaked visuals of achievement panel to showcase active effects - effects persist upon death and log out / log in |
-| 3.1.2     | - Moved player tracked data to player custom data and added configurable hotkey to open almanac                     |
-| 3.1.3     | - Added new achievement reward types (Items,Skills,StatusEffect) and a redundancy if almanac fails to get item icon |
-| 3.1.4     | - Added function that updates leaderboard if player is server                                                       |
-| 3.1.5     | - Added feature to create grouped achievements                                                                      |
-| 3.1.6     | - Improved terminal commands and tweaked player controller to not move while almanac is open                        |
-| 3.1.7     | - Added new achievement type: CustomPickable and Almanac Bounties                                                   |
-| 3.1.8     | - Fixed achievement button                                                                                          |
-| 3.1.9     | - Improved Bounty UI, Added Treasure Hunt                                                                           |
-| 3.2.0     | - Fixed logout issues and patched eating food metric                                                                |
-| 3.2.1     | - Added cost to treasure hunts                                                                                      |
-</details>
+Moreover, Rusty's Almanac goes beyond mere documentation. With an integrated customizable achievement system and a leaderboard, users can shape their own unique experiences.
 
 
-![](https://i.imgur.com/wgmkQTD.png)
-![](https://i.imgur.com/f8II690.png)
+# Achievements
+Almanac lets you define custom achievements using `.yml` files in the Achievements folder.
+These achievements sync between server and client, and are dynamically reloaded when edited.
 
-## Contact information
-For Questions or Comments, find <span style="color:orange">Rusty</span> in the Odin Plus Team Discord
+Below are the available **Achievement Types** you can use:
+```
+None
+Deaths
+Fish
+Materials
+Consumables
+Weapons
+Swords
+Axes
+PoleArms
+Spears
+Maces
+Knives
+Shields
+Staves
+Arrows
+Bows
+Valuables
+Potions
+Trophies
+EnemyKills
+TreesChopped
+TimeInBase
+TimeOutOfBase
+ArrowsShot
+TotalJumps
+PlayerKills
+ItemsPicked
+DistanceWalked
+DistanceRan
+DistanceSailed
+DistanceInAir
+MineHits
+TotalMined
+CreatureTamed
+FoodEaten
+Recipes
+CreatureGroup
+Pickable
+Kill
+```
+### Achievement File Structure
+Each achievement is defined as a YAML file with properties like:
+- `UniqueID`: A unique identifier string (e.g., `Weapons.001`).
+- `Name`: Display name for the achievement.
+- `Lore`: A short description or flavor text.
+- `Icon`: The icon name from the game's assets.
+- `TokenReward`: Reward tokens for completing the achievement.
+- `Requirement`: The type, threshold, and optional group or prefab name.
 
-[![https://i.imgur.com/XXP6HCU.png](https://i.imgur.com/XXP6HCU.png)](https://discord.gg/v89DHnpvwS)
+### Examples
+- Defeating creatures from a biome: `AchievementType.CreatureGroup` with `Group = Meadows`.
+- Reaching a milestone (kills, distance, etc.): set `Requirement.Type` to the relevant stat.
+- Collecting all of an item type (fish, weapons, trophies, etc.): use collection-based types.
 
-Or come find me at the [Modding Corner](https://discord.gg/fB8aHSfA8B)
+### Tips
+- Files can be added, changed, or deleted while the server is running.
+- Server automatically syncs achievements to clients.
+- Thresholds can be left at `0` for auto-detection (e.g., total number of fish).
+- PrefabName is required for `Kill` and `Pickable` types.
 
-##
-If you enjoy this mod and want to support me:
-[PayPal](https://paypal.me/mpei)
+# Almanac Bounties
+The Almanac Bounty system lets players purchase bounty contracts to hunt special creatures.
 
-<span>
-<img src="https://i.imgur.com/rbNygUc.png" alt="" width="150">
-<img src="https://i.imgur.com/VZfZR0k.png" alt="https://www.buymeacoffee.com/peimalcolm2" width="150">
-</span>
+Bounties are defined in `.yml` files inside the **Bounties** folder.
+Admins can add, remove, or edit bounty entries at runtime — changes will sync to all clients.
+
+Each bounty entry can define:
+- **UniqueID**: Unique identifier for the bounty (e.g., `Troll.001`).
+- **Creature**: The prefab name of the target creature (e.g., `Troll`, `Serpent`).
+- **Name**: (Optional) Custom name override; if empty, a generated name will be used.
+- **Icon**: Trophy sprite or icon for the bounty.
+- **Biome**: The biome where the bounty will spawn (`Meadows`, `Swamp`, `AshLands`, etc.).
+- **Health**: Override maximum health value of the bounty.
+- **Level**: Creature level (scales difficulty).
+- **DamageMultiplier**: Multiplier applied to the bounty’s attacks (e.g., `1.5`).
+- **AlmanacTokenReward**: Tokens given upon completing the bounty.
+- **Lore**: A short description displayed in the Almanac panel.
+- **Cost**: Item or token requirements to purchase the bounty.
+### Notes
+- Costs can be `AlmanacToken` or regular items (e.g., `Coins`).
+- Bounties require players to kill the target directly — indirect deaths won’t count.
+- If the bounty despawns, escapes, or is killed by another player, the cost is returned.
+- Bounties are subject to a configurable cooldown (default in minutes).
+
+### Tips
+- You can reload or edit `.yml` bounty files while the server is running; changes sync automatically.
+- Each bounty spawns a pin on the map when accepted.
+- Default bounties include **Boar, Neck, Troll, Serpent, Abomination, Wraith, Lox, Seeker Brute, Fallen Valkyrie**.
+- Use `Lore` to tell a short story or flavor text for each hunt.
+# Example Entry
+```yml
+UniqueID: Troll.001
+Creature: Troll
+Name: Forest Stalker
+Icon: TrophyFrostTroll
+Biome: BlackForest
+Health: 1200
+Level: 3
+DamageMultiplier: 1.5
+AlmanacTokenReward: 5
+Lore: "Lumbering through the Black Forest, the troll’s steps shake the earth as it smashes all in its path."
+Cost:
+  Coins: 10
+```
+
+# Almanac Store
+The Almanac Store allows players to purchase temporary buffs, resources, and items.
+
+Store items are defined in `.yml` files inside the **Store** folder.
+Admins can add, remove, or modify store entries while the game is running.
+
+Each store entry can define:
+- **Name**: The store item name.
+- **Lore**: A short description shown in the tooltip.
+- **Icon**: The sprite name to display.
+- **Cost**: Either `AlmanacToken` or other items as payment.
+- **StatusEffect**: Optional effect applied when purchased.
+- **Items**: Optional rewards given to the player (like resources or gear).
+- **RequiredKey** Optional key required to purchase item
+
+### Example
+```yml
+Name: Lolite
+Cost:
+  Items:
+  - PrefabName: AlmanacToken
+    Amount: 100
+Icon: GemstoneBlue
+Items:
+- PrefabName: GemstoneBlue
+  Amount: 1
+  Quality: 1
+  Variant: 0
+Lore: Light is reflected sharply off this gem
+RequiredKey: Charred_Melee_Dyrnwyn
+```
+
+### Notes
+- `AlmanacToken` is the default store currency.
+- Costs can also be regular items (e.g. `Wood`, `Coins`).
+- Status effects must match valid IDs in the ObjectDB.
+- Item entries require a valid prefab name and amount.
+- `RequiredKey` should be `PrefabID` of creature, to check if player has killed at least one
+
+### Tips
+- Use `Lore` to explain what the store item does.
+- You can reload or edit `.yml` files during runtime; the store updates automatically.
+- The Almanac panel will refresh when the store tab is selected.
+
+# Treasure Hunts
+Almanac lets you define custom treasure hunts using `.yml` files in the TreasureHunt folder.
+These treasures sync between server and client, and are dynamically reloaded when edited.
+
+Treasure hunts create interactive map pins that spawn loot containers when you reach their location.
+Players can purchase treasure hunts using tokens from the Almanac store system.
+
+### Core Properties
+- `Name`: Display name for the treasure hunt (e.g., "Meadow Stash").
+- `Lore`: Descriptive flavor text shown to players.
+- `Icon`: The icon name from game assets (defaults to "map" if not specified).
+- `Biome`: Target biome where the treasure will spawn (see list above).
+
+### Cost System
+- `Cost`: Dictionary of required tokens/items to purchase this treasure hunt.
+    - Use `AlmanacToken` as the key for Almanac tokens.
+    - Example: `Cost: { "AlmanacToken": 10 }` for 10 tokens.
+
+### Loot Configuration
+- `Loot`: List of items that can be found in the treasure container.
+    - `Item`: Prefab name of the item (e.g., "Coins", "SilverOre").
+    - `Min`: Minimum stack size.
+    - `Max`: Maximum stack size.
+    - `Weight`: Drop chance weight (higher = more likely).
+
+## Example Treasure File
+```yaml
+Name: "Mountain Stash"
+Lore: "Only those who brave the jagged cliffs will uncover what the mountains hide."
+Icon: "map"
+Biome: "Mountain"
+Cost:
+  almanac_token: 1
+Loot:
+  - Item: "SilverOre"
+    Min: 10
+    Max: 20
+    Weight: 1.0
+  - Item: "WolfClaw"
+    Min: 1
+    Max: 20
+    Weight: 1.0
+  - Item: "TrophyCultist"
+    Min: 1
+    Max: 1
+    Weight: 1.0
+```
+
+![](https://i.imgur.com/lJbEYvq.png)
+![](https://i.imgur.com/oh1Y7D0.png)
+![](https://i.imgur.com/4d4LFnW.png)

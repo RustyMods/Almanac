@@ -177,6 +177,7 @@
         <Content Include=".gitignore" />
         <EmbeddedResource Include="assets\almanac_ui" />
         <Content Include="assets\almanac_ui.manifest" />
+        <Content Include="assets\almanac_ui.unitypackage" />
         <Content Include="environment.props" />
         <EmbeddedResource Include="icons\AlmanacIconButton.png" />
         <EmbeddedResource Include="icons\arrow_basic.png" />

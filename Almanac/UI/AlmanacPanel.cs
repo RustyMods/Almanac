@@ -2408,7 +2408,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             else
             {
                 Player.m_localPlayer.Message(MessageHud.MessageType.Center, Keys.TryAgainNextTime);
-                foreach(var previousMatch in matches) previousMatch.GetFinalElement().SetGlow(false);
+                foreach(Slot? previousMatch in matches) previousMatch.GetFinalElement().SetGlow(false);
             }
             isRolling = false;
             instance.OnUpdate = null;

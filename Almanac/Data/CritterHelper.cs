@@ -115,6 +115,19 @@ public static class CritterHelper
         ["Chicken"] = Heightmap.Biome.Mistlands,
         ["Charred_Twicher"] = Heightmap.Biome.AshLands,
         ["Dragon"] = Heightmap.Biome.Mountain,
+        ["Bjorn"] = Heightmap.Biome.BlackForest,
+        ["Bonemass"] = Heightmap.Biome.Swamp,
+        ["BlobFrost"] = Heightmap.Biome.Mountain,
+        ["BonemawSerpent"] = Heightmap.Biome.AshLands,
+        ["Charred_Archer_Fader"] = Heightmap.Biome.AshLands,
+        ["Charred_Melee_Fader"] = Heightmap.Biome.AshLands,
+        ["Charred_Twitcher"] = Heightmap.Biome.AshLands,
+        ["Charred_Twitcher_Summoned"] = Heightmap.Biome.AshLands,
+        ["Ghost"] = Heightmap.Biome.BlackForest,
+        ["Serpent"] = Heightmap.Biome.Ocean,
+        ["TentaRoot"] = Heightmap.Biome.BlackForest,
+        ["Unbjorn"] = Heightmap.Biome.Plains,
+        ["Wolf_cub"] = Heightmap.Biome.Mountain,
         
     };
     private static Heightmap.Biome GetBiome(string name) => creatureBiomes.TryGetValue(name, out var biome) ? biome : Heightmap.Biome.None;
@@ -123,18 +136,18 @@ public static class CritterHelper
     public static readonly Dictionary<string, CritterInfo> namedCritters = new();
     private static readonly Dictionary<string, CritterInfo> sharedCritters = new();
     public static bool Exists(string name) => namedCritters.ContainsKey(name) || sharedCritters.ContainsKey(name);
-    public struct CritterInfo
+    public readonly struct CritterInfo
     {
         private static readonly EntryBuilder builder = new();
         public readonly GameObject prefab;
         public readonly Character character;
-        public readonly BaseAI ai;
-        public readonly HashSet<ItemDrop> items = new();
-        public HashSet<Attack> attacks = new();
+        private readonly BaseAI ai;
+        private readonly HashSet<ItemDrop> items = new();
+        private readonly HashSet<Attack> attacks = new();
         public readonly HashSet<ItemDrop> consumeItems = new();
         public readonly CharacterDrop? drops;
-        public readonly Tameable? tameable;
-        public readonly Growup? growUp;
+        private readonly Tameable? tameable;
+        private readonly Growup? growUp;
         public readonly ItemDrop.ItemData? trophy = null;
         public bool isTameable => tameable != null;
         public bool isKnown() => PlayerInfo.GetPlayerStat(PlayerInfo.RecordType.Kill, character.m_name) > 0;

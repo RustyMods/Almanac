@@ -33,7 +33,6 @@ public static class PlayerExtensions
     {
         player.m_customData[PlayerInfo.ALMANAC_PLAYER_RECORDS] = serializer.Serialize(records);
     }
-    public static int GetKnownTextCount(this Player player) => player.m_knownTexts.Count;
     public static int GetKnownRecipeCount(this Player player) => player.m_knownRecipes.Count;
     public static int GetKnownMaterialCount(this Player player) => player.m_knownMaterial.Count;
     public static int GetKnownPiecesCount(this Player player) => PieceHelper.GetPieces().FindAll(piece => piece.isKnown(player)).Count;
@@ -56,6 +55,8 @@ public static class PlayerExtensions
     public static int GetKnownChests(this Player player) =>  ItemHelper.chests.FindAll(c => player.IsKnownMaterial(c.shared.m_name)).Count;
     public static int GetKnownLegs(this Player player) => ItemHelper.legs.FindAll(l => player.IsKnownMaterial(l.shared.m_name)).Count;
     public static int GetKnownValuables(this Player player) => ItemHelper.valuables.FindAll(v => player.IsKnownMaterial(v.shared.m_name)).Count;
+    public static int GetKnownTrinkets(this Player player) => ItemHelper.trinkets.FindAll(t => player.IsKnownMaterial(t.shared.m_name)).Count;
+    public static int GetKnownRecipes(this Player player) => player.m_knownRecipes.Count;
     public static void ClearRecords(this Player player)
     {
         player.m_customData.Remove(PlayerInfo.ALMANAC_PLAYER_RECORDS);
@@ -344,39 +345,97 @@ public static class PlayerInfo
     }
     public static List<MetricInfo> GetMetrics()
     {
-        if (!Player.m_localPlayer) return new();
-        List<MetricInfo> _metrics = new List<MetricInfo>
+        return Metrics;
+        // if (!Player.m_localPlayer) return new();
+        // List<MetricInfo> _metrics = new List<MetricInfo>
+        // {
+        //     new MetricInfo(Keys.Materials, SpriteManager.IconOption.Gem, () => $"{Player.m_localPlayer.GetKnownMaterialCount()}/{ItemHelper.materials.Count}"),
+        //     new MetricInfo(Keys.Pieces, "Hammer", () => $"{Player.m_localPlayer.GetKnownPiecesCount()}/{PieceHelper.GetPieces().Count}"),
+        //     new MetricInfo(Keys.Weapon, SpriteManager.IconOption.SwordBrown, () => $"{Player.m_localPlayer.GetKnownWeapons()}/{ItemHelper.weapons.Count}"),
+        //     new MetricInfo(Keys.Trophies, "TrophyBoar", () => $"{Player.m_localPlayer.GetKnownTrophies()}/{ItemHelper.trophies.Count}"),
+        //     new MetricInfo(Keys.Swords, SpriteManager.IconOption.SwordBlue, () => $"{Player.m_localPlayer.GetKnownSwords()}/{ItemHelper.swords.Count}"),
+        //     new MetricInfo(Keys.Axes, "AxeIron", () => $"{Player.m_localPlayer.GetKnownAxes()}/{ItemHelper.axes.Count}"),
+        //     new MetricInfo(Keys.Polearms, "AtgeirIron", () => $"{Player.m_localPlayer.GetKnownPolearms()}/{ItemHelper.polearms.Count}"),
+        //     new MetricInfo(Keys.Spears, "SpearBronze", () => $"{Player.m_localPlayer.GetKnownSpears()}/{ItemHelper.spears.Count}"),
+        //     new MetricInfo(Keys.Knives, "KnifeSkollAndHati", () => $"{Player.m_localPlayer.GetKnownKnives()}/{ItemHelper.knives.Count}"),
+        //     new MetricInfo(Keys.Clubs, "MaceBronze", () => $"{Player.m_localPlayer.GetKnownClubs()}/{ItemHelper.clubs.Count}"),
+        //     new MetricInfo(Keys.Shield, SpriteManager.IconOption.Shield, () => $"{Player.m_localPlayer.GetKnownShields()}/{ItemHelper.blocking.Count}"),
+        //     new MetricInfo(Keys.Bows, "Bow", () => $"{Player.m_localPlayer.GetKnownBows()}/{ItemHelper.bows.Count}"),
+        //     new MetricInfo(Keys.Fish, SpriteManager.IconOption.Fish, () => $"{Player.m_localPlayer.GetKnownFishes()}/{ItemHelper.fishes.Count}"),
+        //     new MetricInfo(Keys.Consumables, SpriteManager.IconOption.MushroomRed, () => $"{Player.m_localPlayer.GetKnownConsumables()}/{ItemHelper.consumables.Count}"),
+        //     new MetricInfo(Keys.Potions, SpriteManager.IconOption.BottleBlue, () => $"{Player.m_localPlayer.GetKnownPotions()}/{ItemHelper.potions.Count}"),
+        //     new MetricInfo(Keys.Staves, "StaffFireball", () => $"{Player.m_localPlayer.GetKnownStaves()}/{ItemHelper.staves.Count}"),
+        //     new MetricInfo(Keys.Baits, "FishingBaitAshlands", () => $"{Player.m_localPlayer.GetKnownBaits()}/{ItemHelper.baits.Count}"),
+        //     new MetricInfo(Keys.Helmet, "HelmetIron", () => $"{Player.m_localPlayer.GetKnownHelmets()}/{ItemHelper.helmets.Count}"),
+        //     new MetricInfo(Keys.ChestArmor, "ArmorIronChest", () => $"{Player.m_localPlayer.GetKnownChests()}/{ItemHelper.chests.Count}"),
+        //     new MetricInfo(Keys.LegArmor, "ArmorIronLegs", () => $"{Player.m_localPlayer.GetKnownLegs()}/{ItemHelper.legs.Count}"),
+        //     new MetricInfo(Keys.Valuables, "Amber", () => $"{Player.m_localPlayer.GetKnownValuables()}/{ItemHelper.valuables.Count}"),
+        //     new MetricInfo(Keys.Trinkets, "TrinketBronzeStamina", () => $"{Player.m_localPlayer.GetKnownTrinkets()}/{ItemHelper.trinkets.Count}"), 
+        // };
+        // return _metrics;
+    }
+
+    private static readonly List<MetricInfo> _metrics = new();
+    private static List<MetricInfo> Metrics
+    {
+        get
         {
-            new MetricInfo(Keys.Materials, SpriteManager.IconOption.Gem, () => $"{Player.m_localPlayer.GetKnownMaterialCount()}/{ItemHelper.materials.Count}"),
-            new MetricInfo(Keys.Pieces, "Hammer", () => $"{Player.m_localPlayer.GetKnownPiecesCount()}/{PieceHelper.GetPieces().Count}"),
-            new MetricInfo(Keys.Weapon, SpriteManager.IconOption.SwordBrown, () => $"{Player.m_localPlayer.GetKnownWeapons()}/{ItemHelper.weapons.Count}"),
-            new MetricInfo(Keys.Trophies, "TrophyBoar", () => $"{Player.m_localPlayer.GetKnownTrophies()}/{ItemHelper.trophies.Count}"),
-            new MetricInfo(Keys.Swords, SpriteManager.IconOption.SwordBlue, () => $"{Player.m_localPlayer.GetKnownSwords()}/{ItemHelper.swords.Count}"),
-            new MetricInfo(Keys.Axes, "AxeIron", () => $"{Player.m_localPlayer.GetKnownAxes()}/{ItemHelper.axes.Count}"),
-            new MetricInfo(Keys.Polearms, "AtgeirIron", () => $"{Player.m_localPlayer.GetKnownPolearms()}/{ItemHelper.polearms.Count}"),
-            new MetricInfo(Keys.Spears, "SpearBronze", () => $"{Player.m_localPlayer.GetKnownSpears()}/{ItemHelper.spears.Count}"),
-            new MetricInfo(Keys.Knives, "KnifeSkollAndHati", () => $"{Player.m_localPlayer.GetKnownKnives()}/{ItemHelper.knives.Count}"),
-            new MetricInfo(Keys.Clubs, "MaceBronze", () => $"{Player.m_localPlayer.GetKnownClubs()}/{ItemHelper.clubs.Count}"),
-            new MetricInfo(Keys.Shield, SpriteManager.IconOption.Shield, () => $"{Player.m_localPlayer.GetKnownShields()}/{ItemHelper.blocking.Count}"),
-            new MetricInfo(Keys.Bows, "Bow", () => $"{Player.m_localPlayer.GetKnownBows()}/{ItemHelper.bows.Count}"),
-            new MetricInfo(Keys.Fish, SpriteManager.IconOption.Fish, () => $"{Player.m_localPlayer.GetKnownFishes()}/{ItemHelper.fishes.Count}"),
-            new MetricInfo(Keys.Consumables, SpriteManager.IconOption.MushroomRed, () => $"{Player.m_localPlayer.GetKnownConsumables()}/{ItemHelper.consumables.Count}"),
-            new MetricInfo(Keys.Potions, SpriteManager.IconOption.BottleBlue, () => $"{Player.m_localPlayer.GetKnownPotions()}/{ItemHelper.potions.Count}"),
-            new MetricInfo(Keys.Staves, "StaffFireball", () => $"{Player.m_localPlayer.GetKnownStaves()}/{ItemHelper.staves.Count}"),
-            new MetricInfo(Keys.Baits, "FishingBaitAshlands", () => $"{Player.m_localPlayer.GetKnownBaits()}/{ItemHelper.baits.Count}"),
-            new MetricInfo(Keys.Helmet, "HelmetIron", () => $"{Player.m_localPlayer.GetKnownHelmets()}/{ItemHelper.helmets.Count}"),
-            new MetricInfo(Keys.ChestArmor, "ArmorIronChest", () => $"{Player.m_localPlayer.GetKnownChests()}/{ItemHelper.chests.Count}"),
-            new MetricInfo(Keys.LegArmor, "ArmorIronLegs", () => $"{Player.m_localPlayer.GetKnownLegs()}/{ItemHelper.legs.Count}"),
-            new MetricInfo(Keys.Valuables, "Amber", () => $"{Player.m_localPlayer.GetKnownValuables()}/{ItemHelper.valuables.Count}"),
-        };
-        return _metrics;
+            if (_metrics.Count != 0) return _metrics;
+            _ = new MetricInfo(Keys.Materials, SpriteManager.IconOption.Gem,
+                () => $"{Player.m_localPlayer.GetKnownMaterialCount()}/{ItemHelper.materials.Count}");
+            _ = new MetricInfo(Keys.Pieces, "Hammer",
+                () => $"{Player.m_localPlayer.GetKnownPiecesCount()}/{PieceHelper.GetPieces().Count}");
+            _ = new MetricInfo(Keys.Weapon, SpriteManager.IconOption.SwordBrown,
+                () => $"{Player.m_localPlayer.GetKnownWeapons()}/{ItemHelper.weapons.Count}");
+            _ = new MetricInfo(Keys.Trophies, "TrophyBoar",
+                () => $"{Player.m_localPlayer.GetKnownTrophies()}/{ItemHelper.trophies.Count}");
+            _ = new MetricInfo(Keys.Swords, SpriteManager.IconOption.SwordBlue,
+                () => $"{Player.m_localPlayer.GetKnownSwords()}/{ItemHelper.swords.Count}");
+            _ = new MetricInfo(Keys.Axes, "AxeIron",
+                () => $"{Player.m_localPlayer.GetKnownAxes()}/{ItemHelper.axes.Count}");
+            _ = new MetricInfo(Keys.Polearms, "AtgeirIron",
+                () => $"{Player.m_localPlayer.GetKnownPolearms()}/{ItemHelper.polearms.Count}");
+            _ = new MetricInfo(Keys.Spears, "SpearBronze",
+                () => $"{Player.m_localPlayer.GetKnownSpears()}/{ItemHelper.spears.Count}");
+            _ = new MetricInfo(Keys.Knives, "KnifeSkollAndHati",
+                () => $"{Player.m_localPlayer.GetKnownKnives()}/{ItemHelper.knives.Count}");
+            _ = new MetricInfo(Keys.Clubs, "MaceBronze",
+                () => $"{Player.m_localPlayer.GetKnownClubs()}/{ItemHelper.clubs.Count}");
+            _ = new MetricInfo(Keys.Shield, SpriteManager.IconOption.Shield,
+                () => $"{Player.m_localPlayer.GetKnownShields()}/{ItemHelper.blocking.Count}");
+            _ = new MetricInfo(Keys.Bows, "Bow",
+                () => $"{Player.m_localPlayer.GetKnownBows()}/{ItemHelper.bows.Count}");
+            _ = new MetricInfo(Keys.Fish, SpriteManager.IconOption.Fish,
+                () => $"{Player.m_localPlayer.GetKnownFishes()}/{ItemHelper.fishes.Count}");
+            _ = new MetricInfo(Keys.Consumables, SpriteManager.IconOption.MushroomRed,
+                () => $"{Player.m_localPlayer.GetKnownConsumables()}/{ItemHelper.consumables.Count}");
+            _ = new MetricInfo(Keys.Potions, SpriteManager.IconOption.BottleBlue,
+                () => $"{Player.m_localPlayer.GetKnownPotions()}/{ItemHelper.potions.Count}");
+            _ = new MetricInfo(Keys.Staves, "StaffFireball",
+                () => $"{Player.m_localPlayer.GetKnownStaves()}/{ItemHelper.staves.Count}");
+            _ = new MetricInfo(Keys.Baits, "FishingBaitAshlands",
+                () => $"{Player.m_localPlayer.GetKnownBaits()}/{ItemHelper.baits.Count}");
+            _ = new MetricInfo(Keys.Helmet, "HelmetIron",
+                () => $"{Player.m_localPlayer.GetKnownHelmets()}/{ItemHelper.helmets.Count}");
+            _ = new MetricInfo(Keys.ChestArmor, "ArmorIronChest",
+                () => $"{Player.m_localPlayer.GetKnownChests()}/{ItemHelper.chests.Count}");
+            _ = new MetricInfo(Keys.LegArmor, "ArmorIronLegs",
+                () => $"{Player.m_localPlayer.GetKnownLegs()}/{ItemHelper.legs.Count}");
+            _ = new MetricInfo(Keys.Valuables, "Amber",
+                () => $"{Player.m_localPlayer.GetKnownValuables()}/{ItemHelper.valuables.Count}");
+            _ = new MetricInfo(Keys.Trinkets, "TrinketBronzeStamina",
+                () => $"{Player.m_localPlayer.GetKnownTrinkets()}/{ItemHelper.trinkets.Count}");
+            _ = new MetricInfo(Keys.Recipes, SpriteManager.IconOption.BookRed,
+                () => $"{Player.m_localPlayer.GetKnownRecipeCount()}/{ItemHelper.recipes.Count}");
+            return _metrics;
+        }
     }
     public readonly struct MetricInfo
     {
         public readonly string Name;
         public readonly Sprite? Icon;
-        public string Description => _description.Invoke();
         private readonly Func<string> _description;
+        public string Description => _description.Invoke();
         
         public MetricInfo(string name, SpriteManager.IconOption icon, Func<string> description) : this(name, SpriteManager.GetSprite(icon), description) { }
         
@@ -387,6 +446,7 @@ public static class PlayerInfo
             Name = name;
             Icon = icon;
             _description = description;
+            _metrics.Add(this);
         }
     }
 }

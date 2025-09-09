@@ -570,6 +570,15 @@ public static class AchievementManager
         eikthyr.Requirement.Threshold = 25;
         eikthyr.Requirement.PrefabName = "Eikthyr";
         achievements[eikthyr.UniqueID] = eikthyr;
+        
+        Achievement trinkets = new Achievement();
+        trinkets.UniqueID = "Trinkets.001";
+        trinkets.Name = "Trinkets";
+        trinkets.Lore = "The powers of the ancients flow through you like a thunderous cloud.";
+        trinkets.Icon = "TrinketBronzeStamina";
+        trinkets.TokenReward = 100;
+        trinkets.Requirement.Type = AchievementType.Trinkets;
+        achievements[trinkets.UniqueID] = trinkets;
     }
     
     public static bool IsValidType(string input, out AchievementType type) => Enum.TryParse(input, true, out type);
@@ -741,6 +750,14 @@ public static class AchievementManager
                         builder.Add(isKnown ? x.shared.m_name : "???", isKnown);
                     }
                     break;
+                case AchievementType.Trinkets:
+                    builder.Add(Keys.Require);
+                    foreach (ItemHelper.ItemInfo x in ItemHelper.trinkets)
+                    {
+                        bool isKnown = Player.m_localPlayer.IsMaterialKnown(x.shared.m_name);
+                        builder.Add(isKnown ? x.shared.m_name : "???", isKnown);
+                    }
+                    break;
                 case AchievementType.CreatureGroup:
                     if (!CreatureGroup.TryGetGroup(Requirement.Group, out List<string> group)) break;
                     builder.Add(Keys.Require);
@@ -785,6 +802,8 @@ public static class AchievementManager
                     AchievementType.Valuables => Threshold > 0 ? Threshold : ItemHelper.valuables.Count,
                     AchievementType.Potions => Threshold > 0 ? Threshold : ItemHelper.potions.Count,
                     AchievementType.Trophies => Threshold > 0 ? Threshold : ItemHelper.trophies.Count,
+                    AchievementType.Trinkets => Threshold > 0 ? Threshold : ItemHelper.trinkets.Count,
+                    AchievementType.Recipes => Threshold > 0 ? Threshold : ItemHelper.recipes.Count,
                     AchievementType.CreatureGroup => CreatureGroup.TryGetGroup(Group, out List<string> group) ? group.Count : 0,
                     _ => Threshold,
                 };
@@ -811,6 +830,7 @@ public static class AchievementManager
                     AchievementType.Valuables => ItemHelper.valuables.Count(v => player.IsKnownMaterial(v.shared.m_name)),
                     AchievementType.Potions => ItemHelper.potions.Count(p => player.IsKnownMaterial(p.shared.m_name)),
                     AchievementType.Trophies => ItemHelper.trophies.Count(t => player.IsKnownMaterial(t.shared.m_name)),
+                    AchievementType.Trinkets => ItemHelper.trinkets.Count(t => player.IsKnownMaterial(t.shared.m_name)),
                     AchievementType.EnemyKills => PlayerInfo.GetPlayerStat(PlayerStatType.EnemyKills).Floor(),
                     AchievementType.TreesChopped => PlayerInfo.GetPlayerStat(PlayerStatType.Tree).Floor(),
                     AchievementType.TimeInBase => PlayerInfo.GetPlayerStat(PlayerStatType.TimeInBase).Floor(),
@@ -875,7 +895,7 @@ public static class AchievementHelpers
             AchievementType.Materials or AchievementType.Consumables or AchievementType.Weapons or AchievementType.Swords or 
                 AchievementType.Axes or AchievementType.PoleArms or AchievementType.Spears or AchievementType.Maces or 
                 AchievementType.Knives or AchievementType.Shields or AchievementType.Staves or AchievementType.Arrows or
-                AchievementType.Bows or AchievementType.Valuables or AchievementType.Potions or AchievementType.Trophies 
+                AchievementType.Bows or AchievementType.Valuables or AchievementType.Potions or AchievementType.Trophies or AchievementType.Trinkets
                 => requirement.prefab.TryGetComponent(out ItemDrop itemDrop) ? itemDrop.m_itemData.m_shared.m_name : "<color=red>Invalid</color>",
             AchievementType.ItemsPicked => requirement.prefab.TryGetComponent(out Pickable pickable) 
                 ? pickable.m_itemPrefab.TryGetComponent(out ItemDrop pickedItem) 

@@ -17,6 +17,7 @@ public enum AchievementType
     Shields,
     Staves,
     Arrows,
+    Trinkets,
     Bows,
     Valuables,
     Potions,

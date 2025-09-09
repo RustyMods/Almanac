@@ -62,7 +62,9 @@ public static class Filters
         "fire_pit_haldor",
         "fire_pit_hildir",
         "ShieldKnight",
-        "*_nochest"
+        "Larva",
+        "TurretBoltBone",
+        "*_nochest",
     };
 
     private static readonly List<string> specialFilters = new();

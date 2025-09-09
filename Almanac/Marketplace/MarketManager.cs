@@ -361,6 +361,13 @@ public static class MarketManager
             builder.Clear();
             builder.m_showAll = true;
             builder.Add(Helpers.ReplacePositionTags(GetPreview().GetTooltip()) + "\n\n", "lore");
+            if (this.HasSockets())
+            {
+                var jewels = this.GetSocketedGemSharedNames();
+                builder.Add($"Sockets ({jewels.Count})");
+                foreach (var jewel in jewels) builder.Add(Keys.Name, jewel);
+                builder.Add(Keys.Data);
+            }
             builder.Add(Keys.CostPerUnit, GetCostPerUnit().ToString(CultureInfo.InvariantCulture));
             builder.Add(Keys.PostedBy, PostedBy);
             builder.Add(Keys.DatePosted, DatePosted.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"));

@@ -305,6 +305,8 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
     private static readonly Tutorial leaderboard = new(Keys.Leaderboard, "Leaderboard.md");
     private static readonly Tutorial store = new(Keys.AlmanacStore, "Store.md");
     private static readonly Tutorial treasures = new (Keys.Treasures, "Treasures.md");
+
+    private ScrollRect[] scrollRects;
     
     public void Awake()
     {
@@ -374,6 +376,15 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         Tabs[Tab.TabOption.Lottery].SetActive(Configs.ShowLottery);
         Tabs[Tab.TabOption.Metrics].SetActive(Configs.ShowMetrics);
         Tabs[Tab.TabOption.Leaderboard].SetActive(Configs.ShowLeaderboard);
+        
+        scrollRects = GetComponentsInChildren<ScrollRect>(true);
+        OnScrollbarSensitivityChanged(Configs.ScrollbarSensitivity);
+    }
+
+    public static void OnScrollbarSensitivityChanged(float sensitivity)
+    {
+        if (instance?.scrollRects == null) return;
+        foreach(var scrollbar in instance.scrollRects) scrollbar.scrollSensitivity = sensitivity;
     }
 
     public void Update()
@@ -927,7 +938,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             sell.SetName(Keys.Inventory);
             sell.SetDescription(Keys.SellYourItems);
             sell.Interactable(true);
-            sell.OnClick(OnMarketplaceSell);
+            sell.OnClick(OnMarketplace);
             ElementView.Element revenue = elementView.Create();
             revenue.SetIcon(SpriteManager.GetSprite(SpriteManager.IconOption.SilverCoins));
             revenue.SetName(Keys.Revenue);
@@ -1017,7 +1028,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         elementView.Resize(elementView.Count);
     }
 
-    public void OnMarketplaceSell()
+    public void OnMarketplace()
     {
         Tabs[Tab.TabOption.Store].SetSelected(true);
         Reset(store);
@@ -1040,7 +1051,16 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 description.Interactable(true);
                 description.SetButtonText(Keys.SetupSale);
                 OnMainButton = () => modalBuilder.SetupSale(itemData);
-                description.view.CreateTextArea().SetText(Helpers.ReplacePositionTags(itemData.GetTooltip()));
+                description.view.CreateTextArea().SetText(Helpers.ReplacePositionTags(itemData.GetTooltip()) + "\n");
+                if (itemData.HasSockets())
+                {
+                    var jewels = itemData.GetSocketedGemSharedNames();
+                    description.view.CreateTitle().SetTitle($"Sockets ({jewels.Count})");
+                    foreach (string? jewel in jewels)
+                    {
+                        description.view.CreateKeyValue().SetText("Jewel Name", jewel);
+                    }
+                }
                 description.view.Resize();
             });
         }
@@ -1204,6 +1224,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             icon = transform.Find("Icon").GetComponent<Image>();
             defaultIcon = icon.sprite;
             name = transform.Find("Name").GetComponent<Text>();
+            name.horizontalOverflow = HorizontalWrapMode.Wrap;
             view = new InfoView(transform.Find("ListView"));
             requirements = new RequirementView(transform.Find("Requirements"));
             button = transform.Find("MainButton").GetComponent<Button>();
@@ -1253,7 +1274,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         }
         public override List<GridElement> GetElements() => elements.Select(GridElement (e) => e).ToList();
         public override GridElement? GetSelectedElement() => selectedElement;
-
         public void SetSelectedColor(Color color)
         {
             _element.SetSelectedColor(color);
@@ -1412,6 +1432,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 "helmets" => info.IsHelmet(),
                 "armor" => info.IsChest(),
                 "legs" => info.IsLegs(),
+                "trinkets" => info.IsTrinket(),
                 _ => false,
             };
         }
@@ -2077,7 +2098,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         public void SetActive(bool enable) => prefab.SetActive(enable);
         public void Update()
         {
-            foreach(var item in items) item.Update(Player.m_localPlayer);
+            foreach(RequirementItem? item in items) item.Update(Player.m_localPlayer);
         }
         private class RequirementItem
         {

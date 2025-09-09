@@ -37,6 +37,7 @@ public static class Configs
     private static ConfigEntry<Toggle> _allowConversion = null!;
     private static ConfigEntry<int> _conversionRate = null!;
     private static ConfigEntry<string> _conversionItem = null!;
+    private static ConfigEntry<float> _scrollbarSensitivity = null!;
     
     public static bool UseIgnoreList => _UseIgnoreList.Value is Toggle.On;
     public static bool ShowBounties => _BountyEnabled.Value is Toggle.On;
@@ -60,6 +61,7 @@ public static class Configs
     public static bool AllowConversion => _allowConversion.Value is Toggle.On;
     public static int ConversionRate => _conversionRate.Value;
     public static string ConversionItem => _conversionItem.Value;
+    public static float ScrollbarSensitivity => _scrollbarSensitivity.Value;
 
     public static AlmanacPanel.Background.BackgroundOption bkgOption => Transparent
         ? AlmanacPanel.Background.BackgroundOption.Transparent
@@ -117,6 +119,8 @@ public static class Configs
             AlmanacPanel.instance.background.SetBackground(bkgOption);
             Modal.instance.background.SetBackground(bkgOption);
         };
+        _scrollbarSensitivity = config("5 - Scrollbar Sensitivity", "Sensitivity", 700f, "High is more sensitive");
+        _scrollbarSensitivity.SettingChanged += (_, _) => AlmanacPanel.OnScrollbarSensitivityChanged(ScrollbarSensitivity);
         
         SetupWatcher();
     }

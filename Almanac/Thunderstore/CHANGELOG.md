@@ -1,3 +1,8 @@
+# 3.5.11
+- Added tooltip for jewelcrafted items
+- Added trinkets achievement category
+- Fixed scroll sensitivity, configurable
+
 # 3.5.1
 - Updated filters list, delete old file
 - Fixed conversion toggle targeting wrong config

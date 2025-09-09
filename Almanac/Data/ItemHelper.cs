@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Almanac.Achievements;
 using Almanac.Managers;
 using Almanac.Utilities;
 using UnityEngine;
@@ -135,6 +136,7 @@ public static class ItemHelper
         }
     }
     private static bool IsBait(this ItemDrop itemDrop) => itemDrop.name.ToLower().Contains("bait");
+    public static List<Recipe> recipes => ObjectDB.instance.m_recipes;
     public static List<ItemInfo> baits => GetItems().Where(item => item.itemDrop.IsBait()).ToList();
     public static List<ItemInfo> swords => GetItemsBySkill(Skills.SkillType.Swords);
     public static List<ItemInfo> axes => GetItemsBySkill(Skills.SkillType.Axes);
@@ -149,6 +151,7 @@ public static class ItemHelper
     public static List<ItemInfo> bows => GetItemByType(ItemType.Bow);
     public static List<ItemInfo> valuables => GetItems().Where(item => item.shared.m_value > 0).ToList();
     public static List<ItemInfo> trophies => GetItemByType(ItemType.Trophy);
+    public static List<ItemInfo> trinkets => GetItemByType(ItemType.Trinket);
     public static List<ItemInfo> fishes => GetItemByType(ItemType.Fish);
     public static List<ItemInfo> materials => GetItemByType(ItemType.Material);
     public static List<ItemInfo> consumables =>  GetItemByType(ItemType.Consumable);
@@ -177,6 +180,7 @@ public static class ItemHelper
     public static bool IsHelmet(this ItemInfo info) => helmets.Contains(info);
     public static bool IsChest(this ItemInfo info) => chests.Contains(info);
     public static bool IsLegs(this ItemInfo info) => legs.Contains(info);
+    public static bool IsTrinket(this ItemInfo info) => trinkets.Contains(info);
     public static ItemInfo? GetInfo(this ItemDrop item) => item.m_itemData.GetInfo();
     private static readonly Dictionary<string, ItemInfo> ItemInfos = new();
     public readonly record struct ItemInfo
@@ -225,6 +229,7 @@ public static class ItemHelper
             builder.Add(Keys.QuestItem, shared.m_questItem);
             builder.Add(Keys.EquipDuration, shared.m_equipDuration, Entries.EntryBuilder.Option.Seconds);
             builder.Add(Keys.Floating, isFloating);
+            // builder.Add(shared.m_subtitle, "lore");
             if (droppedBy.Count > 0)
             {
                 builder.Add(Keys.DroppedBy);
@@ -346,6 +351,16 @@ public static class ItemHelper
                                 builder.Add(skill, amount);
                             }
                         }
+                    }
+                    break;
+                case ItemType.Trinket:
+                    builder.Add(Keys.Trinkets);
+                    if (shared.m_fullAdrenalineSE is { } adrenaline)
+                    {
+                        builder.Add(Keys.EquipEffect, adrenaline.m_name);
+                        builder.Add(Keys.BlockAdrenaline, shared.m_blockAdrenaline);
+                        builder.Add(Keys.PerfectBlockAdrenaline, shared.m_perfectBlockAdrenaline);
+                        builder.Add(adrenaline.GetTooltipString(), "lore");
                     }
                     break;
                 case ItemType.Consumable:
@@ -495,7 +510,7 @@ public static class ItemHelper
                         if (shared.m_setStatusEffect is {} setStatus)
                         {
                             builder.Add(setStatus.GetTooltipString(), "lore");
-                            foreach (var skill in Skills.s_allSkills)
+                            foreach (Skills.SkillType skill in Skills.s_allSkills)
                             {
                                 float amount = 0f;
                                 setStatus.ModifySkillLevel(skill, ref amount);

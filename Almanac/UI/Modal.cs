@@ -6,6 +6,7 @@ using Almanac.Achievements;
 using Almanac.Bounties;
 using Almanac.Data;
 using Almanac.Managers;
+using Almanac.Marketplace;
 using Almanac.Store;
 using Almanac.TreasureHunt;
 using Almanac.Utilities;
@@ -311,7 +312,6 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                 _modal.CreateTitle().SetTitle(field.label + (field.required ? "<color=red>*</color>" : ""));
                 TextArea tooltip = _modal.CreateTextArea();
                 tooltip.SetText(field.tooltip);
-                if (form is MarketPlaceForm) tooltip.SetTextColor(Color.white);
                 Field input = _modal.CreateField();
                 input.SetPlaceholder(field.placeholder);
                 input.SetContentType(field.contentType);
@@ -336,7 +336,38 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         public void SetupSale(ItemDrop.ItemData item)
         {
             FormData form = new MarketPlaceForm(item);
-            Setup(form);
+            _modal.Clear();
+            string itemTooltip = item.GetTooltip();
+            if (item.HasSockets())
+            {
+                List<string> jewels = item.GetSocketedGemSharedNames();
+                itemTooltip += $"\n\n<color=orange>Sockets ({jewels.Count})</color>";
+                foreach (string jewel in jewels)
+                {
+                    itemTooltip += $"\n<color=yellow>- {jewel}</color>";
+                }
+            }
+            itemTooltip += "\n\n";
+            TextArea info = _modal.CreateTextArea();
+            info.SetText(itemTooltip);
+            info.SetTextColor(Color.white);
+            foreach (FormData.FormField? field in form.fields)
+            {
+                _modal.CreateTitle().SetTitle(field.label + (field.required ? "<color=red>*</color>" : ""));
+                TextArea tooltip = _modal.CreateTextArea();
+                tooltip.SetText(field.tooltip);
+                Field input = _modal.CreateField();
+                input.SetPlaceholder(field.placeholder);
+                input.SetContentType(field.contentType);
+                input.OnValueChanged(s => field.validationCallback.Invoke(s, input, field));
+            }
+            _modal.Resize();
+            _modal.scrollbar.value = 1f;
+            _modal.OnUpdate = _ => form.Update(_modal, Close);
+            _modal.SetActive(true);
+            _modal.SetTopic(form.topic);
+            _modal.SetButtonText(form.cancelText);
+            _modal.OnMainButton = Close;
         }
         public void Build(FormType type)
         {
@@ -372,11 +403,10 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             Item = item;
             SetTitle("Sell your item");
             SetElementIcon(item.GetIcon());
-            SetDescription("Sell Item");
-            SetButtonText("Sell Item");
+            SetDescription(Keys.SellItem);
+            SetButtonText(Keys.SellItem);
             SetTopic(item.m_shared.m_name);
-            string tooltip = item.GetTooltip() + "\n\n\n" + "<color=orange>Set Price</color><color=red>*</color>";
-            AddField(item.m_shared.m_name, tooltip, "10", (s, field, data) =>
+            AddField(Keys.Cost, "Almanac Token price", "10", (s, field, data) =>
             {
                 if (string.IsNullOrEmpty(s) || !int.TryParse(s, out var price))
                 {
@@ -407,7 +437,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         }
         protected override void Create()
         {
-            if (Marketplace.MarketManager.AddMarketItem(Item, Cost, Stack, Player.m_localPlayer.GetPlayerName()))
+            if (MarketManager.AddMarketItem(Item, Cost, Stack, Player.m_localPlayer.GetPlayerName()))
             {
                 if (Player.m_localPlayer.IsItemEquiped(Item)) Player.m_localPlayer.UnequipItem(Item);
                 Player.m_localPlayer.GetInventory().RemoveItem(Item, Stack); ;

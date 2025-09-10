@@ -18,8 +18,8 @@ public static class MarketManager
 {
     private static readonly ISerializer serializer = new SerializerBuilder().ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitNull).Build();
     private static readonly IDeserializer deserializer = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
-    private static string? MarketFilePath;
-    private static string? RevenueFilePath;
+    private static string? MarketFileName;
+    private static string? RevenueFileName;
     private static readonly CustomSyncedValue<string> SyncedMarket = new(AlmanacPlugin.ConfigSync, "Almanac_Server_Synced_Market", "");
     private static readonly CustomSyncedValue<string> SyncedRevenue = new(AlmanacPlugin.ConfigSync, "Almanac_Server_Synced_Revenue", "");
 
@@ -34,25 +34,22 @@ public static class MarketManager
     }
     private static void Save()
     {
-        if (!ZNet.instance || !ZNet.instance.IsServer() || MarketFilePath == null || RevenueFilePath == null) return;
-        AlmanacPaths.CreateFolderDirectories();
-        
+        if (!ZNet.instance || !ZNet.instance.IsServer() || MarketFileName == null || RevenueFileName == null) return;
         string marketData = serializer.Serialize(marketItems);
         byte[] compressedMarketData = CompressAndEncode(marketData);
-        File.WriteAllBytes(MarketFilePath, compressedMarketData);
-        
+        AlmanacPlugin.MarketplaceDir.WriteAllBytes(MarketFileName, compressedMarketData);
         string revenueData = serializer.Serialize(revenues);
         byte[] compressedRevenueData = CompressAndEncode(revenueData);
-        File.WriteAllBytes(RevenueFilePath, compressedRevenueData);
+        AlmanacPlugin.MarketplaceDir.WriteAllBytes(RevenueFileName, compressedRevenueData);
     }
     private static void Read()
     {
-        if (!ZNet.instance || !ZNet.instance.IsServer()  || MarketFilePath == null || RevenueFilePath == null) return;
-        if (File.Exists(MarketFilePath))
+        if (!ZNet.instance || !ZNet.instance.IsServer()  || MarketFileName == null || RevenueFileName == null) return;
+        if (File.Exists(MarketFileName))
         {
             try
             {
-                byte[] compressedData = File.ReadAllBytes(MarketFilePath);
+                byte[] compressedData = File.ReadAllBytes(MarketFileName);
                 string data = DecompressAndDecode(compressedData);
             
                 Dictionary<string, Market> deserializedData = deserializer.Deserialize<Dictionary<string, Market>>(data);
@@ -61,15 +58,15 @@ public static class MarketManager
             }
             catch
             {
-                AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server marketplace: " + Path.GetFileName(MarketFilePath));
+                AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server marketplace: " + Path.GetFileName(MarketFileName));
             }
         }
 
-        if (File.Exists(RevenueFilePath))
+        if (File.Exists(RevenueFileName))
         {
             try
             {
-                byte[] compressedData = File.ReadAllBytes(RevenueFilePath);
+                byte[] compressedData = File.ReadAllBytes(RevenueFileName);
                 string data = DecompressAndDecode(compressedData);
                 Dictionary<string, int> deserializedData = deserializer.Deserialize<Dictionary<string, int>>(data);
                 revenues.Clear();
@@ -77,7 +74,7 @@ public static class MarketManager
             }
             catch
             {
-                AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server revenue: " + Path.GetFileName(RevenueFilePath));
+                AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server revenue: " + Path.GetFileName(RevenueFileName));
             }
         }
     }
@@ -117,8 +114,8 @@ public static class MarketManager
     }
     private static void Initialize()
     {
-        MarketFilePath = AlmanacPaths.MarketplaceFolderPath + Path.DirectorySeparatorChar + ZNet.instance.GetWorldName() + ".Marketplace.dat";
-        RevenueFilePath = AlmanacPaths.MarketplaceFolderPath + Path.DirectorySeparatorChar + ZNet.instance.GetWorldName() + ".Revenue.dat";
+        MarketFileName = ZNet.instance.GetWorldName() + ".Marketplace.dat";
+        RevenueFileName = ZNet.instance.GetWorldName() + ".Revenue.dat";
         ZRoutedRpc.instance.Register<string>(nameof(RPC_AddMarketItem), RPC_AddMarketItem);
         ZRoutedRpc.instance.Register<string>(nameof(RPC_RemoveMarketItem), RPC_RemoveMarketItem);
         ZRoutedRpc.instance.Register<string>(nameof(RPC_RemoveRevenue), RPC_RemoveRevenue);

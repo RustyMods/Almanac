@@ -33,13 +33,11 @@ public static class CreatureGroup
     {
         AlmanacPlugin.OnZNetAwake += UpdateSyncedGroups;
         LoadDefaults();
-        AlmanacPaths.CreateFolderDirectories();
-        string[] files = Directory.GetFiles(AlmanacPaths.CreatureFolderPath, "*.yml");
+        string[] files = AlmanacPlugin.CreatureDir.GetFiles("*.yml");
         if (files.Length == 0)
         {
-            string path = AlmanacPaths.CreatureFolderPath + Path.DirectorySeparatorChar + "Creatures.yml";
             string data = serializer.Serialize(groups);
-            File.WriteAllText(path, data);
+            AlmanacPlugin.CreatureDir.WriteFile("Creatures.yml", data);
         }
         else
         {
@@ -52,7 +50,7 @@ public static class CreatureGroup
         }
 
         SyncedCreatureGroups.ValueChanged += OnSyncedGroupsChange;
-        FileSystemWatcher watcher = new  FileSystemWatcher(AlmanacPaths.CreatureFolderPath, "*.yml");
+        FileSystemWatcher watcher = new FileSystemWatcher(AlmanacPlugin.CreatureDir.Path, "*.yml");
         watcher.EnableRaisingEvents = true;
         watcher.IncludeSubdirectories = true;
         watcher.NotifyFilter = NotifyFilters.LastWrite;

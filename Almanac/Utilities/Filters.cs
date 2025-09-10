@@ -70,12 +70,13 @@ public static class Filters
     private static readonly List<string> specialFilters = new();
     public static void Setup()
     {
-        if (!File.Exists(AlmanacPaths.IgnorePath))
+        if (!AlmanacPlugin.FilterDir.FileExists("IgnoreList.yml"))
         {
-            File.WriteAllLines(AlmanacPaths.IgnorePath, m_default);
+            AlmanacPlugin.FilterDir.WriteAllLines("IgnoreList.yml", m_default);
         }
+        
         filters.Clear();
-        foreach (string line in File.ReadLines(AlmanacPaths.IgnorePath))
+        foreach (string line in AlmanacPlugin.FilterDir.ReadAllLines("IgnoreList.yml"))
         {
             if (line.StartsWith("#")) continue;
             if (line.StartsWith("*"))

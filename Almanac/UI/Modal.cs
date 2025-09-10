@@ -579,9 +579,9 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             se.StartMessage = StartMsg;
             se.StopMessage = StopMsg;
 
-            string path = AlmanacPaths.CustomEffectPath + Path.DirectorySeparatorChar + se.UniqueID + ".yml";
+            string fileName = se.UniqueID + ".yml";
             string data = CustomEffectManager.serializer.Serialize(se);
-            File.WriteAllText(path, data);
+            AlmanacPlugin.CustomEffectDir.WriteFile(fileName, data);
             Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"Created '{se.Name} custom status effect successfully!'");
         }
     }
@@ -794,10 +794,9 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             {
                 bounty.Cost.Add(cost.PrefabID, cost.Amount);
             }
-
-            string path = AlmanacPaths.BountyFolderPath + Path.DirectorySeparatorChar + bounty.UniqueID + ".yml";
+            string fileName = bounty.UniqueID + ".yml";
             string data = BountyManager.serializer.Serialize(bounty);
-            File.WriteAllText(path, data);
+            AlmanacPlugin.BountyDir.WriteFile(fileName, data);
             Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"Bounty '{bounty.UniqueID}' created successfully!");
         }
     }
@@ -984,8 +983,8 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             }
 
             string data = TreasureManager.serializer.Serialize(treasure);
-            string path = AlmanacPaths.TreasureHuntFolderPath + Path.DirectorySeparatorChar + treasure.Name + ".yml";
-            File.WriteAllText(path, data);
+            string fileName = treasure.Name + ".yml";
+            AlmanacPlugin.TreasureDir.WriteFile(fileName, data);
             Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"Treasure '{treasure.Name}' created successfully!");
         }
         protected override bool IsValid()
@@ -1256,8 +1255,8 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             }
             storeItem.RequiredDefeated = RequiredKey;
             string serialized = StoreManager.serializer.Serialize(storeItem);
-            string path = AlmanacPaths.StoreFolderPath + Path.DirectorySeparatorChar + storeItem.Name + ".yml";
-            File.WriteAllText(path, serialized);
+            string fileName = storeItem.Name + ".yml";
+            AlmanacPlugin.StoreDir.WriteFile(fileName, serialized);
             Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"Store Item '{storeItem.Name}' created successfully!");
         }
     }
@@ -1473,8 +1472,8 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             achievement.Requirement.Threshold = threshold;
             achievement.TokenReward = rewardAmount;
             string serialized = AchievementManager.serializer.Serialize(achievement);
-            string path = AlmanacPaths.AchievementFolderPath + Path.DirectorySeparatorChar + achievement.Name + ".yml";
-            File.WriteAllText(path, serialized);
+            string fileName = achievement.UniqueID + ".yml";
+            AlmanacPlugin.AchievementDir.WriteFile(fileName, serialized);;
             Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"Achievement '{achievement.Name}' created successfully!");
         }
     }

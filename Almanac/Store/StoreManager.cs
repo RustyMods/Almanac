@@ -32,15 +32,14 @@ public static class StoreManager
         AlmanacPlugin.OnPlayerProfileSavePlayerDataPrefix += player => player.SaveTokens();
         AlmanacPlugin.OnZNetAwake += UpdateServerStore;
         LoadDefaults();
-        AlmanacPaths.CreateFolderDirectories();
-        string[] files = Directory.GetFiles(AlmanacPaths.StoreFolderPath, "*.yml");
+        string[] files = AlmanacPlugin.StoreDir.GetFiles("*.yml");
         if (files.Length <= 0)
         {
             foreach (StoreItem? item in items.Values)
             {
                 string data = serializer.Serialize(item);
-                string path = Path.Combine(AlmanacPaths.StoreFolderPath, item.Name + ".yml");
-                File.WriteAllText(path, data);
+                string fileName = item.Name + ".yml";
+                var path = AlmanacPlugin.StoreDir.WriteFile(fileName, data);
                 fileItems[path] = item;
             }
         }
@@ -57,7 +56,7 @@ public static class StoreManager
         }
 
         SyncedStore.ValueChanged += OnServerStoreChanged;
-        FileSystemWatcher watcher = new FileSystemWatcher(AlmanacPaths.StoreFolderPath, "*.yml");
+        FileSystemWatcher watcher = new FileSystemWatcher(AlmanacPlugin.StoreDir.Path, "*.yml");
         watcher.EnableRaisingEvents = true;
         watcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
         watcher.NotifyFilter = NotifyFilters.LastWrite;
@@ -499,7 +498,6 @@ public static class StoreHelpers
 
 public static class StoreReadMeBuilder
 {
-    private static readonly string FilePath = AlmanacPaths.FolderPath + Path.DirectorySeparatorChar + "Store_README.md";
     private static readonly string[] Prefix =
     {
         "# Almanac Store",
@@ -533,10 +531,10 @@ public static class StoreReadMeBuilder
 
     public static void Write()
     {
-        if (File.Exists(FilePath)) return;
+        if (AlmanacPlugin.AlmanacDir.FileExists("Store_README.md")) return;
         var lines = new List<string>();
         lines.AddRange(Prefix);
         lines.AddRange(Postfix);
-        File.WriteAllLines(FilePath, lines);
+        AlmanacPlugin.AlmanacDir.WriteAllLines("Store_README.md", lines);
     }
 }

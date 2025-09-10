@@ -8,7 +8,6 @@ namespace Almanac.Utilities;
 
 public static class Keys
 {
-    private static readonly string FilePath = AlmanacPaths.FolderPath + Path.DirectorySeparatorChar + "Almanac.English.yml";
     private static readonly Dictionary<string, string> keys = new();
     public static void Write()
     {
@@ -20,7 +19,7 @@ public static class Keys
         {
             lines.Add($"{kvp.Key}: '{kvp.Value}'");
         }
-        File.WriteAllLines(FilePath, lines);
+        AlmanacPlugin.AlmanacDir.WriteAllLines("Almanac.English.yml", lines);
     }
     private static void LocalizePlayerStats()
     {

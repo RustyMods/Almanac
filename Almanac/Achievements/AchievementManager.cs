@@ -35,14 +35,14 @@ public static class AchievementManager
     public static void Setup()
     {
         LoadDefaults();
-        AlmanacPaths.CreateFolderDirectories();
-        string[] files = Directory.GetFiles(AlmanacPaths.AchievementFolderPath, "*.yml");
+        string[] files = AlmanacPlugin.AchievementDir.GetFiles("*.yml");
         if (files.Length == 0)
         {
             foreach (Achievement achievement in achievements.Values)
             {
                 string data = serializer.Serialize(achievement);
-                string path = Path.Combine(AlmanacPaths.AchievementFolderPath, achievement.Name + ".yml");
+                string fileName = achievement.Name + ".yml";
+                string path = AlmanacPlugin.AchievementDir.WriteFile(fileName, data);
                 File.WriteAllText(path, data);
                 fileAchievements[path] = achievement;
             }
@@ -66,8 +66,7 @@ public static class AchievementManager
             }            
         }
         SyncedServerAchievements.ValueChanged += OnServerAchievementsChanged;
-        
-        FileSystemWatcher watcher = new FileSystemWatcher(AlmanacPaths.AchievementFolderPath, "*.yml");
+        FileSystemWatcher watcher = new FileSystemWatcher(AlmanacPlugin.AchievementDir.Path, "*.yml");
         watcher.EnableRaisingEvents = true;
         watcher.IncludeSubdirectories = true;
         watcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
@@ -912,7 +911,6 @@ public static class AchievementHelpers
 
 public static class AchievementReadMeBuilder
 {
-    private static readonly string FilePath = AlmanacPaths.FolderPath + Path.DirectorySeparatorChar + "Achievements_README.md";
     private static readonly string[] Prefix = new[]
     {
         "# Achievements",
@@ -949,12 +947,12 @@ public static class AchievementReadMeBuilder
 
     public static void Write()
     {
-        if (File.Exists(FilePath)) return;
+        if (AlmanacPlugin.AlmanacDir.FileExists("Achievements_README.md")) return;
         var achievementTypes = Enum.GetNames(typeof(AchievementType));
         List<string> lines = new();
         lines.AddRange(Prefix);
         lines.AddRange(achievementTypes);
         lines.AddRange(Postfix);
-        File.WriteAllLines(FilePath, lines);
+        AlmanacPlugin.AlmanacDir.WriteAllLines("Achievements_README.md", lines);
     }
 }

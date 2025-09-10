@@ -28,7 +28,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.5.12";
+        internal const string ModVersion = "3.5.13";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         public const string ConfigFileName = ModGUID + ".cfg";
@@ -37,6 +37,18 @@ namespace Almanac
         private readonly Harmony _harmony = new(ModGUID);
         public static readonly ManualLogSource AlmanacLogger = BepInEx.Logging.Logger.CreateLogSource(ModName);
         public static readonly ConfigSync ConfigSync = new(ModGUID) { DisplayName = ModName, CurrentVersion = ModVersion, MinimumRequiredVersion = ModVersion };
+        public static readonly AlmanacDir AlmanacDir = new(Paths.ConfigPath, ModName);
+        public static readonly AlmanacDir AchievementDir = new(AlmanacDir.Path, "Achievements");
+        public static readonly AlmanacDir FilterDir = new (AlmanacDir.Path, "Filters");
+        public static readonly AlmanacDir CreatureDir = new (AlmanacDir.Path, "CreatureGroups");
+        public static readonly AlmanacDir BountyDir = new (AlmanacDir.Path, "Bounties");
+        public static readonly AlmanacDir TreasureDir = new (AlmanacDir.Path, "Treasures");
+        public static readonly AlmanacDir StoreDir = new (AlmanacDir.Path, "Store");
+        public static readonly AlmanacDir CustomEffectDir = new (AlmanacDir.Path, "CustomEffects");
+        public static readonly AlmanacDir LeaderboardDir = new (AlmanacDir.Path, "Leaderboards");
+        public static readonly AlmanacDir LotteryDir = new (AlmanacDir.Path, "Lotteries");
+        public static readonly AlmanacDir MarketplaceDir = new (AlmanacDir.Path, "Marketplace");
+        public static readonly AlmanacDir IconsDir = new (AlmanacDir.Path, "Icons");
         public static AlmanacPlugin instance = null!;
         public static event Action? OnZNetAwake;
         public static event Action? OnZNetSceneAwake;
@@ -47,12 +59,11 @@ namespace Almanac
         public static event Action? OnObjectDBAwake;
         public static event Action<GameObject>? OnZNetScenePrefabs;
         public static event Action<GameObject>? OnObjectDBPrefabs;
-        
         public void Awake()
         {
             instance = this;
             
-            AlmanacPaths.CreateFolderDirectories();
+            // AlmanacPaths.CreateFolderDirectories();
             Keys.Write();
             Localizer.Load();
             Configs.Load();
@@ -72,7 +83,7 @@ namespace Almanac
             ItemHelper.Setup();
             PieceHelper.Setup();
             PlayerInfo.Setup();
-            
+            SpriteManager.RegisterCustomIcons();
             SetupCommands();
             
             // Use to rebuild readmes 
@@ -85,9 +96,7 @@ namespace Almanac
             Assembly assembly = Assembly.GetExecutingAssembly();
             _harmony.PatchAll(assembly);
         }
-
         private void OnDestroy() => Config.Save();
-
         private void SetupCommands()
         {
             Terminal.ConsoleCommand main = new(CommandData.m_startCommand, "Use help to find commands", args =>

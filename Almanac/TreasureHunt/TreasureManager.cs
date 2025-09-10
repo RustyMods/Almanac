@@ -26,7 +26,7 @@ public class TreasureManager : MonoBehaviour
     public static Dictionary<string, TreasureData> treasures = new();
     private static readonly Dictionary<string, TreasureData> fileTreasures = new();
     public static TreasureLocation? ActiveTreasureLocation;
-
+    public static bool IsActive => ActiveTreasureLocation != null;
     private static readonly CustomSyncedValue<string> SyncedTreasures = new(AlmanacPlugin.ConfigSync, "ServerSynced_Almanac_Treasures", "");
     public static readonly ISerializer serializer = new SerializerBuilder().ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitNull).Build();
     private static readonly IDeserializer deserializer = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
@@ -64,15 +64,14 @@ public class TreasureManager : MonoBehaviour
     {
         AlmanacPlugin.instance.gameObject.AddComponent<TreasureManager>();
         LoadDefaults();
-        AlmanacPaths.CreateFolderDirectories();
-        string[] files = Directory.GetFiles(AlmanacPaths.TreasureHuntFolderPath);
+        string[] files = AlmanacPlugin.TreasureDir.GetFiles("*.yml");
         if (files.Length == 0)
         {
             foreach (TreasureData? treasure in treasures.Values)
             {
-                string path = Path.Combine(AlmanacPaths.TreasureHuntFolderPath, treasure.Name + ".yml");
+                string fileName = treasure.Name + ".yml";
                 string data = serializer.Serialize(treasure);
-                File.WriteAllText(path, data);
+                var path = AlmanacPlugin.TreasureDir.WriteFile(fileName, data);
                 fileTreasures[path] = treasure;
             }
         }
@@ -95,7 +94,7 @@ public class TreasureManager : MonoBehaviour
         }
 
         SyncedTreasures.ValueChanged += OnServerTreasureChange;
-        FileSystemWatcher watcher = new FileSystemWatcher(AlmanacPaths.TreasureHuntFolderPath, "*.yml");
+        FileSystemWatcher watcher = new FileSystemWatcher(AlmanacPlugin.TreasureDir.Path, "*.yml");
         watcher.EnableRaisingEvents = true;
         watcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
         watcher.NotifyFilter = NotifyFilters.LastWrite;
@@ -250,6 +249,23 @@ public class TreasureManager : MonoBehaviour
         ashlands.Loot.Add("FlametalOreNew", 10, 30);
         treasures[ashlands.Name] = ashlands;
     }
+
+    private static void ReturnCost(Player player, TreasureData data)
+    {
+        if (player.NoCostCheat()) return;
+        foreach (var item in data.Cost.Items)
+        {
+            if (item.isToken)
+            {
+                player.AddTokens(item.Amount);
+            }
+            else
+            {
+                player.GetInventory()
+                    .AddItem(item.item?.m_itemData?.m_shared.m_name, item.Amount, 1, 0, 0L, "");
+            }
+        }
+    }
     public static void CancelTreasure()
     {
         if (ActiveTreasureLocation == null) return;
@@ -259,6 +275,12 @@ public class TreasureManager : MonoBehaviour
             znv.ClaimOwnership();
             znv.Destroy();
         }
+        Player.m_localPlayer.Message(MessageHud.MessageType.Center, Keys.BountyCanceled);
+        if (Configs.ReturnTreasureCostWhenCancel)
+        {
+            ReturnCost(Player.m_localPlayer, ActiveTreasureLocation.data);
+        }
+        ActiveTreasureLocation.RemovePin();
         ActiveTreasureLocation = null;
     }
     public static bool AcceptTreasure(TreasureData data)
@@ -280,6 +302,7 @@ public class TreasureManager : MonoBehaviour
             Player.m_localPlayer.Message(MessageHud.MessageType.Center,"Failed to find treasure spawn location");
             return false;
         }
+        data.Purchase(Player.m_localPlayer);
         treasureLocation.AddPin();
         Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"{Keys.SearchFor} {treasureLocation.data.Name}");
         datetime = DateTime.Now;
@@ -441,6 +464,40 @@ public class TreasureManager : MonoBehaviour
             builder.Add(Keys.Loot);
             return builder.ToList();
         }
+
+        public bool CanPurchase(Player player)
+        {
+            if (player.NoCostCheat()) return true;
+            foreach (var item in Cost.Items)
+            {
+                if (item.isToken)
+                {
+                    if (player.GetTokens() < item.Amount) return false;
+                }
+                else
+                {
+                    if (player.GetInventory().CountItems(item.item?.m_itemData.m_shared.m_name ?? "$item_coins") < item.Amount) return false;
+                }
+            }
+
+            return true;
+        }
+
+        public void Purchase(Player player)
+        {
+            if (player.NoCostCheat()) return;
+            foreach (var item in Cost.Items)
+            {
+                if (item.isToken)
+                {
+                    player.RemoveTokens(item.Amount);
+                }
+                else
+                {
+                    player.GetInventory().RemoveItem(item.item?.m_itemData.m_shared.m_name ?? "$item_coins", item.Amount);
+                }
+            }
+        }
     }
 
     [Serializable]
@@ -489,7 +546,7 @@ public static class TreasureHelpers
 
 public static class TreasureReadMeBuilder
 {
-    private static readonly string FilePath = AlmanacPaths.FolderPath + Path.DirectorySeparatorChar + "Treasure_README.md";
+    // private static readonly string FilePath = AlmanacPaths.FolderPath + Path.DirectorySeparatorChar + "Treasure_README.md";
     private static readonly string[] Prefix = new[]
     {
         "# Treasure Hunts",
@@ -602,7 +659,7 @@ public static class TreasureReadMeBuilder
 
     public static void Write()
     {
-        if (File.Exists(FilePath)) return;
+        if (AlmanacPlugin.AlmanacDir.FileExists("Treasure_README.md")) return;
         IOrderedEnumerable<string> biomes = Enum.GetNames(typeof(Heightmap.Biome))
             .Where(biome => biome != "None" && biome != "All")
             .OrderBy(biome => biome);
@@ -612,7 +669,7 @@ public static class TreasureReadMeBuilder
         lines.AddRange(biomes);
         lines.AddRange(MiddleSection);
         lines.AddRange(Postfix);
-        
-        File.WriteAllLines(FilePath, lines);
+        AlmanacPlugin.AlmanacDir.WriteAllLines("Treasure_README.md", lines);
+
     }
 }

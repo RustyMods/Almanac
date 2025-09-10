@@ -1,3 +1,9 @@
+# 3.5.13
+- Fixed treasure not consuming cost when purchased
+- Fixed bounties not consuming cost when purchased
+- Added config for treasures and bounties to return cost if canceled
+- Fixed being able to spawn items even when not admin and not no cost
+
 # 3.5.12
 - Added option to use arrow key up and down
 - Fixed valuables showing all materials

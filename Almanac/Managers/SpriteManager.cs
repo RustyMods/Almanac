@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using Almanac.Data;
+using Almanac.Utilities;
 using HarmonyLib;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -142,4 +144,43 @@ public static class SpriteManager
         if (sprite != null) sprite.name = fileName;
         return sprite;
     }
+
+    public static void RegisterCustomIcons()
+    {
+        string[] files = AlmanacPlugin.IconsDir.GetFiles("*.png");
+        foreach (string file in files)
+        {
+            if (ReadSprite(file) is not {} sprite) continue;
+            icons[sprite.name] = sprite;
+        }
+    }
+
+    private static Sprite? ReadSprite(string filePath)
+    {
+        if (!File.Exists(filePath)) return null;
+        var ext = Path.GetExtension(filePath);
+        if (!string.Equals(ext, ".png", System.StringComparison.OrdinalIgnoreCase)) return null;
+
+        try
+        {
+            byte[] bytes = File.ReadAllBytes(filePath);
+            Texture2D texture = new Texture2D(2, 2, TextureFormat.ARGB32, mipChain: false);
+            bool ok = texture.LoadImage(bytes);
+            if (!ok) return null;
+
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.filterMode = FilterMode.Bilinear;
+
+            var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
+            sprite.name = Path.GetFileNameWithoutExtension(filePath);
+            AlmanacPlugin.AlmanacLogger.LogWarning("Successfully registered icon: " + Path.GetFileName(filePath));
+            return sprite;
+        }
+        catch
+        {
+            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to read custom icon: " + Path.GetFileName(filePath));
+            return null;
+        }
+    }
+
 }

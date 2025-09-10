@@ -157,7 +157,7 @@
         <Compile Include="UI\AlmanacPanel.cs" />
         <Compile Include="UI\Info.cs" />
         <Compile Include="UI\Modal.cs" />
-        <Compile Include="Utilities\AlmanacPaths.cs" />
+        <Compile Include="Utilities\AlmanacDir.cs" />
         <Compile Include="Utilities\Entries.cs" />
         <Compile Include="Utilities\Filters.cs" />
         <Compile Include="Utilities\Helpers.cs" />

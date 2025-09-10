@@ -38,7 +38,8 @@ public static class Configs
     private static ConfigEntry<int> _conversionRate = null!;
     private static ConfigEntry<string> _conversionItem = null!;
     private static ConfigEntry<float> _scrollbarSensitivity = null!;
-    
+    private static ConfigEntry<Toggle> _returnBountyCostWhenCancel = null!;
+    private static ConfigEntry<Toggle> _returnTreasureCostWhenCancel = null!;
     public static bool UseIgnoreList => _UseIgnoreList.Value is Toggle.On;
     public static bool ShowBounties => _BountyEnabled.Value is Toggle.On;
     public static bool ShowAchievements => _AchievementsEnabled.Value is Toggle.On;
@@ -62,6 +63,8 @@ public static class Configs
     public static int ConversionRate => _conversionRate.Value;
     public static string ConversionItem => _conversionItem.Value;
     public static float ScrollbarSensitivity => _scrollbarSensitivity.Value;
+    public static bool ReturnBountyCostWhenCancel => _returnBountyCostWhenCancel.Value is Toggle.On;
+    public static bool ReturnTreasureCostWhenCancel => _returnTreasureCostWhenCancel.Value is Toggle.On;
 
     public static AlmanacPanel.Background.BackgroundOption bkgOption => Transparent
         ? AlmanacPanel.Background.BackgroundOption.Transparent
@@ -98,11 +101,14 @@ public static class Configs
         _TreasureEnabled = config("4 - Treasures", "Enabled", Toggle.On, "If on, treasure feature is enabled");
         _TreasureEnabled.SettingChanged += (_, _) =>
             AlmanacPanel.instance?.Tabs[AlmanacPanel.Tab.TabOption.Treasures].SetActive(ShowTreasures);
+        _returnTreasureCostWhenCancel = config("4 - Treasures", "Cancel Return Cost", Toggle.Off,
+            "If on, cost will be reimbursed when canceled");
         
         _BountyCooldown = config("3 - Bounties", "Cooldown", 30, "Set cooldown between bounty hunts, in minutes");
         _BountyEnabled = config("3 - Bounties", "Enabled", Toggle.On, "If on, bounty feature is enabled");
         _BountyEnabled.SettingChanged += (_, _) =>
             AlmanacPanel.instance?.Tabs[AlmanacPanel.Tab.TabOption.Bounties].SetActive(ShowBounties);
+        _returnBountyCostWhenCancel = config("3 - Bounties", "Cancel Return Cost", Toggle.Off, "If on, cost will be reimbursed when canceled");
         
         _lotteryCost = config("4 - Lottery", "Cost to Roll", 1, "Set cost to roll");
         _minFullHouse = config("4 - Lottery", "Min Full House", 10, "Set minimum full house reward");

@@ -293,7 +293,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
     private Modal.ModalBuilder modalBuilder = null!;
     private const float Input_Cooldown = 0.1f;
     private float lastInputTime;
-
     private static bool isLocalAdminOrHostAndNoCost
     {
         get
@@ -870,8 +869,10 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                     }
                 }
                 description.view.Resize();
-                bool isActive = TreasureManager.ActiveTreasureLocation != null;
+                bool isActive = TreasureManager.IsActive;
+                bool canPurchase = treasure.CanPurchase(Player.m_localPlayer);
                 description.SetButtonText(isActive ? Keys.CancelHunt : Keys.StartTreasureHunt);
+                description.Interactable(canPurchase || isActive);
                 OnMainButton = () =>
                 {
                     if (isActive)
@@ -886,6 +887,8 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                             description.SetButtonText(Keys.CancelHunt);
                         }
                     }
+
+                    isActive = TreasureManager.IsActive;
                 };
                 description.requirements.Set(treasure.Cost);
                 description.requirements.SetLevel(string.Empty);
@@ -1852,14 +1855,17 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                                 instance.description.Reset();
                                 instance.description.SetName(item.m_itemData.m_shared.m_name);
                                 instance.description.SetIcon(info?.GetIcon());
-                                instance.description.Interactable(ZNet.instance.LocalPlayerIsAdminOrHost());
-                                instance.description.SetButtonText(Keys.Spawn);
-                                instance.OnMainButton = () =>
+                                if (isLocalAdminOrHostAndNoCost)
                                 {
-                                    if (info == null) return;
-                                    GameObject go = Instantiate(info.Value.prefab, Player.m_localPlayer.transform.position, Quaternion.identity);
-                                    go.GetComponent<ItemDrop>().m_itemData.m_worldLevel = Game.m_worldLevel;
-                                };
+                                    instance.description.Interactable(true);
+                                    instance.description.SetButtonText(Keys.Spawn);
+                                    instance.OnMainButton = () =>
+                                    {
+                                        if (info == null) return;
+                                        GameObject go = Instantiate(info.Value.prefab, Player.m_localPlayer.transform.position, Quaternion.identity);
+                                        go.GetComponent<ItemDrop>().m_itemData.m_worldLevel = Game.m_worldLevel;
+                                    };
+                                }
                                 instance.description.view.CreateTextArea().SetText((info?.shared.m_description ?? string.Empty) + "\n\n");
                                 if (info?.itemData.IsPartOfSet() ?? false)
                                 {
@@ -1909,13 +1915,16 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                                 instance.description.Reset();
                                 instance.description.SetName(info.item.m_shared.m_name);
                                 instance.description.SetIcon(info.item.GetIcon());
-                                instance.description.Interactable(ZNet.instance.LocalPlayerIsAdminOrHost());
-                                instance.description.SetButtonText(Keys.Spawn);
-                                instance.OnMainButton = () =>
+                                if (isLocalAdminOrHostAndNoCost)
                                 {
-                                    GameObject go = Instantiate(itemInfo.prefab, Player.m_localPlayer.transform.position, Quaternion.identity);
-                                    go.GetComponent<ItemDrop>().m_itemData.m_worldLevel = Game.m_worldLevel;
-                                };
+                                    instance.description.Interactable(true);
+                                    instance.description.SetButtonText(Keys.Spawn);
+                                    instance.OnMainButton = () =>
+                                    {
+                                        GameObject go = Instantiate(itemInfo.prefab, Player.m_localPlayer.transform.position, Quaternion.identity);
+                                        go.GetComponent<ItemDrop>().m_itemData.m_worldLevel = Game.m_worldLevel;
+                                    };
+                                }
                                 instance.description.view.CreateTextArea().SetText((info.item.m_shared.m_description ?? string.Empty) + "\n\n");
                                 if (info.item.IsPartOfSet())
                                 {
@@ -1965,14 +1974,17 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                                 instance.description.Reset();
                                 instance.description.SetName(item.m_itemData.m_shared.m_name);
                                 instance.description.SetIcon(info?.GetIcon());
-                                instance.description.Interactable(ZNet.instance.LocalPlayerIsAdminOrHost());
-                                instance.description.SetButtonText(Keys.Spawn);
-                                instance.OnMainButton = () =>
+                                if (isLocalAdminOrHostAndNoCost)
                                 {
-                                    if (info == null) return;
-                                    GameObject go = Instantiate(info.Value.prefab, Player.m_localPlayer.transform.position, Quaternion.identity);
-                                    go.GetComponent<ItemDrop>().m_itemData.m_worldLevel = Game.m_worldLevel;
-                                };
+                                    instance.description.Interactable(true);
+                                    instance.description.SetButtonText(Keys.Spawn);
+                                    instance.OnMainButton = () =>
+                                    {
+                                        if (info == null) return;
+                                        GameObject go = Instantiate(info.Value.prefab, Player.m_localPlayer.transform.position, Quaternion.identity);
+                                        go.GetComponent<ItemDrop>().m_itemData.m_worldLevel = Game.m_worldLevel;
+                                    };
+                                }
                                 instance.description.view.CreateTextArea().SetText((info?.shared.m_description ?? string.Empty) + "\n\n");
                                 if (info?.itemData.IsPartOfSet() ?? false)
                                 {

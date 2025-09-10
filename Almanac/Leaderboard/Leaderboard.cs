@@ -32,7 +32,8 @@ public static class Leaderboard
     }
     private static void Initialize()
     {
-        LeaderboardFilePath = AlmanacPaths.LeaderboardFolderPath + Path.DirectorySeparatorChar + ZNet.instance.GetWorldName() + ".Leaderboard.dat";
+        LeaderboardFilePath = ZNet.instance.GetWorldName() + ".Leaderboard.dat";
+
         ZRoutedRpc.instance.Register<ZPackage>(nameof(RPC_Leaderboard), RPC_Leaderboard);
         Read();
         UpdateServerLeaderboard();
@@ -96,10 +97,9 @@ public static class Leaderboard
     private static void Save()
     {
         if (!ZNet.instance || !ZNet.instance.IsServer() || LeaderboardFilePath == null) return;
-        AlmanacPaths.CreateFolderDirectories();
         string data = serializer.Serialize(players);
         byte[] compressedData = CompressAndEncode(data);
-        File.WriteAllBytes(LeaderboardFilePath, compressedData);
+        AlmanacPlugin.LeaderboardDir.WriteAllBytes(LeaderboardFilePath, compressedData);
     }
     private static void Read()
     {

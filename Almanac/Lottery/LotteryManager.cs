@@ -11,7 +11,7 @@ namespace Almanac.Lottery;
 
 public static class LotteryManager
 {
-    private static string? LotteryFilePath;
+    private static string? LotteryFileName;
     private static readonly CustomSyncedValue<string> SyncedLottery = new(AlmanacPlugin.ConfigSync, "Almanac_Server_Synced_Lottery", "");
     public static int LotteryTotal = 10;
     public static void Setup()
@@ -23,7 +23,8 @@ public static class LotteryManager
 
     private static void Initialize()
     {
-        LotteryFilePath = AlmanacPaths.LotteryFolderPath + Path.DirectorySeparatorChar + ZNet.instance.GetWorldName() + ".Lottery.dat";
+        LotteryFileName = ZNet.instance.GetWorldName() + ".Lottery.dat";
+
         ZRoutedRpc.instance.Register<int>(nameof(RPC_Lottery),RPC_Lottery);
         Read();
         UpdateServerLottery();
@@ -32,26 +33,25 @@ public static class LotteryManager
     private static void Read()
     {
         LotteryTotal = Configs.MinFullHouse;
-        if (!ZNet.instance || !ZNet.instance.IsServer()  || LotteryFilePath == null) return;
-        if (!File.Exists(LotteryFilePath)) return;
+        if (!ZNet.instance || !ZNet.instance.IsServer()  || LotteryFileName == null) return;
+        if (!File.Exists(LotteryFileName)) return;
         try
         {
-            byte[] compressedData = File.ReadAllBytes(LotteryFilePath);
+            byte[] compressedData = File.ReadAllBytes(LotteryFileName);
             string data = DecompressAndDecode(compressedData);
             LotteryTotal = int.TryParse(data, out int result) ? Math.Max(result, Configs.MinFullHouse) : Configs.MinFullHouse;
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server lottery: " + Path.GetFileName(LotteryFilePath));
+            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server lottery: " + Path.GetFileName(LotteryFileName));
         }
     }
 
     private static void Save()
     {
-        if (!ZNet.instance || !ZNet.instance.IsServer() || LotteryFilePath == null) return;
-        AlmanacPaths.CreateFolderDirectories();
+        if (!ZNet.instance || !ZNet.instance.IsServer() || LotteryFileName == null) return;
         byte[] compressedData = CompressAndEncode(LotteryTotal.ToString());
-        File.WriteAllBytes(LotteryFilePath, compressedData);
+        AlmanacPlugin.LotteryDir.WriteAllBytes(LotteryFileName, compressedData);
     }
     
     private static byte[] CompressAndEncode(string text)

@@ -2,15 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using Almanac.Data;
 using Almanac.Managers;
 using Almanac.Store;
 using Almanac.UI;
 using Almanac.Utilities;
 using BepInEx;
-using HarmonyLib;
-using JetBrains.Annotations;
 using ServerSync;
 using UnityEngine;
 using YamlDotNet.Serialization;
@@ -132,7 +129,7 @@ public class BountyManager : MonoBehaviour
             }
             else
             {
-                player.GetInventory().RemoveItem(item.PrefabName, item.Amount);
+                player.GetInventory().RemoveItem(item.item?.m_itemData.m_shared.m_name, item.Amount);
             }
         }
     }
@@ -157,6 +154,10 @@ public class BountyManager : MonoBehaviour
         ActiveBountyLocation.data.completed = false;
         ReturnCost(Player.m_localPlayer, ActiveBountyLocation.data);
         if (ActiveBountyLocation.pin != null) Minimap.instance.RemovePin(ActiveBountyLocation.pin);
+        if (Configs.ReturnBountyCostWhenCancel)
+        {
+            ReturnCost(Player.m_localPlayer, ActiveBountyLocation.data);
+        }
         ActiveBountyLocation = null;
         Player.m_localPlayer.Message(MessageHud.MessageType.Center, Keys.BountyCanceled);
     }
@@ -166,15 +167,14 @@ public class BountyManager : MonoBehaviour
         AlmanacPlugin.OnZNetAwake += UpdateServerBounties;
         AlmanacPlugin.OnZNetSceneAwake += OnZNetSceneAwake;
         LoadDefaults();
-        AlmanacPaths.CreateFolderDirectories();
-        string[] files = Directory.GetFiles(AlmanacPaths.BountyFolderPath, "*.yml");
+        string[] files = AlmanacPlugin.BountyDir.GetFiles("*.yml");
         if (files.Length <= 0)
         {
             foreach (BountyData? bounty in bounties.Values)
             {
                 string data = serializer.Serialize(bounty);
-                string path = AlmanacPaths.BountyFolderPath + Path.DirectorySeparatorChar + bounty.UniqueID + ".yml";
-                File.WriteAllText(path, data);
+                string fileName = bounty.UniqueID + ".yml";
+                string path = AlmanacPlugin.BountyDir.WriteFile(fileName, data);
                 fileBounties[path] = bounty;
             }
         }
@@ -191,8 +191,7 @@ public class BountyManager : MonoBehaviour
         }
 
         SyncedBounties.ValueChanged += OnServerBountyChanged;
-        
-        FileSystemWatcher watcher = new  FileSystemWatcher(AlmanacPaths.BountyFolderPath, "*.yml");
+        FileSystemWatcher watcher = new FileSystemWatcher(AlmanacPlugin.BountyDir.Path, "*.yml");
         watcher.EnableRaisingEvents = true;
         watcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
         watcher.NotifyFilter = NotifyFilters.LastWrite;
@@ -577,7 +576,6 @@ public class BountyManager : MonoBehaviour
 
 public static class BountyReadMeBuilder
 {
-    private static readonly string FilePath = AlmanacPaths.FolderPath + Path.DirectorySeparatorChar + "Bounty_README.md";
     private static readonly string[] Prefix =
     {
         "# Almanac Bounties",
@@ -613,7 +611,7 @@ public static class BountyReadMeBuilder
     
     public static void Write()
     {
-        if (File.Exists(FilePath)) return;
+        if (AlmanacPlugin.AlmanacDir.FileExists("Bounty_README.md")) return;
         List<string> lines = new List<string>();
         lines.AddRange(Prefix);
 
@@ -633,6 +631,6 @@ public static class BountyReadMeBuilder
         lines.Add("  Coins: 10");
         lines.Add("```");
         lines.Add("");
-        File.WriteAllLines(FilePath, lines);
+        AlmanacPlugin.AlmanacDir.WriteAllLines("Bounty_README.md", lines);
     }
 }

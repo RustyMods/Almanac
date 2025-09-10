@@ -128,7 +128,6 @@ public static class CritterHelper
         ["TentaRoot"] = Heightmap.Biome.BlackForest,
         ["Unbjorn"] = Heightmap.Biome.Plains,
         ["Wolf_cub"] = Heightmap.Biome.Mountain,
-        
     };
     private static Heightmap.Biome GetBiome(string name) => creatureBiomes.TryGetValue(name, out var biome) ? biome : Heightmap.Biome.None;
     public static List<CritterInfo> GetCritters() => critters.FindAll(c => !Filters.Ignore(c.prefab.name));

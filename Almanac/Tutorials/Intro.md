@@ -6,4 +6,6 @@ With this lore at your side, you may chart the unknown and face the trials of th
 
 Yet the Almanac is more than record-keeping—it is a hall of deeds. Through sagas of achievement and the clash of rivals upon the leaderboard, each warrior may carve their own legend.
 
-<color=yellow>Hold Left Alt to drag window</color>
+Hold <color=yellow>Left Alt</color> to drag window
+<color=yellow>Tab</color> to return to inventory
+<color=yellow>Esc</color> to close

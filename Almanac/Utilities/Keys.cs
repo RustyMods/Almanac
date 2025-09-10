@@ -324,6 +324,12 @@ public static class Keys
     public static readonly string Blocking = "$skill_blocking";
     public const string Axes = "$skill_axes";
     public const string Bows = "$skill_bows";
+    public static readonly string Cape = new Key("$label_cape", "Cape").key;
+    public static readonly string SellYourItem = new Key("$label_sellyouritem", "Sell your item").key;
+    public static readonly string AlmanacTokenPrice = new Key("$label_almanactokenprice", "Almanac token price").key;
+    public static readonly string StackSize = new Key("$label_stacksize", "Stack size").key;
+    public static readonly string SetSizeOfStack = new Key("$label_setsizeofstack", "Set size of stack").key;
+    public static readonly string UsedIn = new Key("$label_usedin", "Used In").key;
     public static readonly string ElementalMagic = "$skill_elementalmagic";
     public static readonly string BloodMagic = "$skill_bloodmagic";
     public static readonly string All = "$skill_all";

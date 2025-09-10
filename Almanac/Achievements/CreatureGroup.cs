@@ -9,18 +9,6 @@ using ServerSync;
 using YamlDotNet.Serialization;
 
 namespace Almanac.Achievements;
-
-public static class GroupExtensions
-{
-    public static void Add<T>(this List<T> list, params T[] values) => list.AddRange(values);
-    public static void AddRange<T, V>(this Dictionary<T, V> dict, Dictionary<T, V> other)
-    {
-        foreach (KeyValuePair<T, V> kvp in other)
-        {
-            dict[kvp.Key] = kvp.Value;
-        }
-    }
-}
 public static class CreatureGroup
 {
     private static readonly ISerializer serializer = new SerializerBuilder().Build();
@@ -109,10 +97,10 @@ public static class CreatureGroup
     private static void LoadDefaults()
     {
         groups["Meadows"] = new() { "Neck", "Greyling", "Boar", "Deer", "Eikthyr" };
-        groups["BlackForest"] = new() { "Skeleton", "Greydwarf", "Greydwarf_Shaman", "Greydwarf_Elite", "Ghost", "Troll", "gd_king" };
+        groups["BlackForest"] = new() { "Skeleton", "Greydwarf", "Bjorn", "Greydwarf_Shaman", "Greydwarf_Elite", "Ghost", "Troll", "gd_king" };
         groups["Swamp"] = new() { "Skeleton_Poison", "Leech", "Draugr", "BogWitchKvastur", "Draugr_Ranged", "Draugr_Elite", "Blob", "BlobElite", "Wraith", "Abomination", "Surtling", "Bonemass" };
         groups["Mountain"] = new() { "Wolf", "Ulv", "Wolf_cub", "Fenring", "Fenring_Cultist", "StoneGolem", "Hatchling", "Bat", "Dragon" };
-        groups["Plains"] = new() { "Goblin", "GoblinShaman", "GoblinBrute", "Lox", "Lox_Calf", "Deathsquito", "BlobTar", "GoblinKing" };
+        groups["Plains"] = new() { "Goblin", "GoblinShaman", "Unbjorn", "GoblinBrute", "Lox", "Lox_Calf", "Deathsquito", "BlobTar", "GoblinKing" };
         groups["Mistlands"] = new() { "Seeker", "SeekerBrood", "SeekerBrute", "Tick", "Gjall", "Dverger", "DvergerMage", "Hare", "Hen", "SeekerQueen" };
         groups["Ocean"] = new() { "Serpent", "BonemawSerpent" };
         groups["AshLands"] = new() { "Charred_Melee", "Morgen", "Charred_Archer", "BlobLava", "Charred_Mage", "Charred_Twitcher", "Volture", "Asksvin", "Asksvin_hatchling", "FallenValkyrie", "Fader" };

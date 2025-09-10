@@ -390,6 +390,7 @@ public static class MarketManager
                 string data = serializer.Serialize(this);
                 ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.instance.GetServerPeerID(), nameof(RPC_RemoveMarketItem), data);
             }
+            Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"{Keys.Purchased} {itemData.m_shared.m_name}");
             return true;
         }
     }

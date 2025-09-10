@@ -401,12 +401,12 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         public MarketPlaceForm(ItemDrop.ItemData item)
         {
             Item = item;
-            SetTitle("Sell your item");
+            SetTitle(Keys.SellYourItem);
             SetElementIcon(item.GetIcon());
             SetDescription(Keys.SellItem);
             SetButtonText(Keys.SellItem);
             SetTopic(item.m_shared.m_name);
-            AddField(Keys.Cost, "Almanac Token price", "10", (s, field, data) =>
+            AddField(Keys.Cost, Keys.AlmanacTokenPrice, "10", (s, field, data) =>
             {
                 if (string.IsNullOrEmpty(s) || !int.TryParse(s, out var price))
                 {
@@ -420,7 +420,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     field.SetTextColor(Color.white);
                 }
             }, InputField.ContentType.IntegerNumber);
-            AddField("Stack Size", "Set size of stack", "1", (s, field, data) =>
+            AddField(Keys.StackSize, Keys.SetSizeOfStack, "1", (s, field, data) =>
             {
                 if (string.IsNullOrEmpty(s) || !int.TryParse(s, out var size) || size > item.m_stack)
                 {

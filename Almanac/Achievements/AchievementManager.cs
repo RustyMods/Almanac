@@ -648,7 +648,7 @@ public static class AchievementManager
                     break;
                 case AchievementType.Swords:
                     builder.Add(Keys.Require);
-                    foreach (ItemHelper.ItemInfo x in ItemHelper.weapons)
+                    foreach (ItemHelper.ItemInfo x in ItemHelper.swords)
                     {
                         bool isKnown = Player.m_localPlayer.IsMaterialKnown(x.shared.m_name);
                         builder.Add(isKnown ? x.shared.m_name : "???", isKnown);
@@ -728,7 +728,7 @@ public static class AchievementManager
                     break;
                 case AchievementType.Valuables:
                     builder.Add(Keys.Require);
-                    foreach (ItemHelper.ItemInfo x in ItemHelper.materials)
+                    foreach (ItemHelper.ItemInfo x in ItemHelper.valuables)
                     {
                         bool isKnown = Player.m_localPlayer.IsMaterialKnown(x.shared.m_name);
                         builder.Add(isKnown ? x.shared.m_name : "???", isKnown);

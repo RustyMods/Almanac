@@ -54,7 +54,7 @@ public static class JewelCraft
     public static List<string> GetSocketedGemSharedNames(this MarketManager.MarketItem marketItem)
     {
         List<string> sharedNames = new();
-        foreach(var item in marketItem.GetSockets()) sharedNames.Add(item.m_itemData.m_shared.m_name);
+        foreach(ItemDrop? item in marketItem.GetSockets()) sharedNames.Add(item.m_itemData.m_shared.m_name);
         return sharedNames;
     }
 }

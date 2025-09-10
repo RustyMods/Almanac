@@ -10,7 +10,14 @@ public static class Helpers
 {
     public static readonly Color32 OrangeColor = new (255, 164, 0, 255);
     public static readonly Color _OrangeColor = new Color(1f, 0.6431373f, 0f, 1f);
-
+    public static void Add<T>(this List<T> list, params T[] values) => list.AddRange(values);
+    public static void AddRange<T, V>(this Dictionary<T, V> dict, Dictionary<T, V> other)
+    {
+        foreach (KeyValuePair<T, V> kvp in other)
+        {
+            dict[kvp.Key] = kvp.Value;
+        }
+    }
     public static string SplitCamelCase(string input)
     {
         string result = Regex.Replace(input, "([A-Z])", " $1");

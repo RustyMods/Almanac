@@ -447,7 +447,7 @@ public static class StoreHelpers
 {
     public static void Add(this List<StoreManager.StoreItem.ItemInfo> list, string name, int amount, int quality = 1, int variant = 0) => list.Add(new StoreManager.StoreItem.ItemInfo(name, amount, quality, variant));
     public static int GetTokens(this Player player) =>
-        player.m_customData.TryGetValue(StoreManager.STORE_TOKEN, out var token)
+        player.m_customData.TryGetValue(StoreManager.STORE_TOKEN, out string? token)
             ? int.TryParse(token, out int amount) ? amount : 0
             : 0;
 

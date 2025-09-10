@@ -112,9 +112,6 @@
         <Reference Include="UnityEngine.InputLegacyModule">
             <HintPath>$(CorlibPath)\UnityEngine.InputLegacyModule.dll</HintPath>
         </Reference>
-        <Reference Include="UnityEngine.ParticleSystemModule">
-            <HintPath>$(CorlibPath)\UnityEngine.ParticleSystemModule.dll</HintPath>
-        </Reference>
         <Reference Include="UnityEngine.PhysicsModule">
             <HintPath>$(CorlibPath)\UnityEngine.PhysicsModule.dll</HintPath>
         </Reference>
@@ -133,6 +130,7 @@
         <Compile Include="Achievements\AchievementTypes.cs" />
         <Compile Include="Achievements\CreatureGroup.cs" />
         <Compile Include="API\ClassesAPI.cs" />
+        <Compile Include="API\EpicMMOSystem_API.cs" />
         <Compile Include="Bounties\Bounty.cs" />
         <Compile Include="Bounties\BountyManager.cs" />
         <Compile Include="Bounties\NameGenerator.cs" />

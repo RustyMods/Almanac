@@ -189,7 +189,7 @@ public static class InventoryGui_Awake_Patch
 }
 
 [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.OnOpenTrophies))]
-public static class UpdateAlmanacAssets
+public static class InventoryGui_OnOpenTrophies_Prefix
 {
     [UsedImplicitly]
     private static bool Prefix(InventoryGui __instance)
@@ -202,28 +202,24 @@ public static class UpdateAlmanacAssets
 }
     
 [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.OnCloseTrophies))]
-public static class DestroyAlmanacAssets
+public static class InventoryGui_OnCloseTrophies_Postfix
 {
     [UsedImplicitly]
     private static void Postfix() => AlmanacPanel.instance?.Hide();
-    
 }
 
 [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.UpdateTrophyList))]
-public static class UpdateTrophyListPatch
+public static class InventoryGui_UpdateTrophyList_Prefix
 {
     [UsedImplicitly]
     private static bool Prefix() => false;
 }
 
 [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.Hide))]
-public static class InventoryGuiHidePatch
+public static class InventoryGui_Hide_Prefix
 {
     [UsedImplicitly]
-    private static bool Prefix()
-    {
-        return !AlmanacPanel.InSearchField();
-    }
+    private static bool Prefix() => !AlmanacPanel.InSearchField();
 }
 
 [HarmonyPatch(typeof(PlayerController), nameof(PlayerController.TakeInput))]
@@ -268,6 +264,13 @@ public static class InventoryGui_IsVisible_Patch
 
 public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler
 {
+    private static readonly Tutorial achievements = new (Keys.Achievement, "Achievements.md");
+    private static readonly Tutorial bounties = new (Keys.Bounties, "Bounties.md");
+    private static readonly Tutorial intro = new (Keys.Almanac, "Intro.md");
+    private static readonly Tutorial leaderboard = new(Keys.Leaderboard, "Leaderboard.md");
+    private static readonly Tutorial store = new(Keys.AlmanacStore, "Store.md");
+    private static readonly Tutorial treasures = new (Keys.Treasures, "Treasures.md");
+    
     public static ConfigEntry<Vector3> panelPos = null!;
     public Background background = null!;
     public Text topic = null!;
@@ -278,6 +281,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
     private RightPanel description = null!;
     private Search mainSearch = null!;
     private Search sideSearch = null!;
+    private ScrollRect[]? scrollRects;
     private ButtonElement close = null!;
     public Currency currency = null!;
     private Vector3 mouseDifference = Vector3.zero;
@@ -287,6 +291,8 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
     public static AlmanacPanel? instance;
     private static Modal? modal;
     private Modal.ModalBuilder modalBuilder = null!;
+    private const float Input_Cooldown = 0.1f;
+    private float lastInputTime;
 
     private static bool isLocalAdminOrHostAndNoCost
     {
@@ -297,16 +303,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             return isAdmin && Player.m_localPlayer.NoCostCheat();
         }
     }
-        
-
-    private static readonly Tutorial achievements = new (Keys.Achievement, "Achievements.md");
-    private static readonly Tutorial bounties = new (Keys.Bounties, "Bounties.md");
-    private static readonly Tutorial intro = new (Keys.Almanac, "Intro.md");
-    private static readonly Tutorial leaderboard = new(Keys.Leaderboard, "Leaderboard.md");
-    private static readonly Tutorial store = new(Keys.AlmanacStore, "Store.md");
-    private static readonly Tutorial treasures = new (Keys.Treasures, "Treasures.md");
-
-    private ScrollRect[] scrollRects;
     
     public void Awake()
     {
@@ -384,54 +380,29 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
     public static void OnScrollbarSensitivityChanged(float sensitivity)
     {
         if (instance?.scrollRects == null) return;
-        foreach(var scrollbar in instance.scrollRects) scrollbar.scrollSensitivity = sensitivity;
+        foreach(ScrollRect scrollbar in instance.scrollRects) scrollbar.scrollSensitivity = sensitivity;
     }
 
     public void Update()
     {
         if (!IsVisible()) return;
-        if (Input.GetKeyDown(KeyCode.Escape) || (Input.GetKeyDown(KeyCode.Tab) && !InSearchField()) || !Player.m_localPlayer || Player.m_localPlayer.IsDead())
+        if (!Player.m_localPlayer || Player.m_localPlayer.IsDead())
         {
             Hide();
             return;
         }
+
         float dt = Time.deltaTime;
+        if (Time.time - lastInputTime > Input_Cooldown && (ZInput.GetKeyDown(KeyCode.Escape) || (ZInput.GetKeyDown(KeyCode.Tab) && !InSearchField())))
+        {
+            lastInputTime = Time.time;
+            Hide();
+            return;
+        }
         OnUpdate?.Invoke(dt);
         lottery.UpdateGlow(dt);
-        HandleArrowKeys();
+        GridView.activeView?.HandleArrowKeys();
     }
-
-    public void HandleArrowKeys()
-    {
-        if (!IsVisible()) return;
-        // TODO: figure out how to implement up and down
-        if (!Input.GetKeyDown(KeyCode.LeftArrow) 
-            && !Input.GetKeyDown(KeyCode.RightArrow) 
-            // && !Input.GetKeyDown(KeyCode.UpArrow) 
-            // && !Input.GetKeyDown(KeyCode.DownArrow)
-            )
-            return;
-        if (GridView.activeView == null) return;
-        if (GridView.activeView.GetSelectedElement() is not { } selectedElement) return;
-        List<GridElement> list = GridView.activeView.GetElements();
-        int indexOf = list.IndexOf(selectedElement);
-        if (indexOf == -1) return;
-        int nextElement = 0;
-        
-        if (Input.GetKeyDown(KeyCode.LeftArrow))
-        {
-            nextElement = Math.Max(indexOf - 1, 0);
-        }
-        else if (Input.GetKeyDown(KeyCode.RightArrow))
-        {
-            nextElement = Math.Min(indexOf + 1, list.Count - 1);
-        }
-
-        if (nextElement == indexOf) return;
-        if (!list[nextElement].IsKnown()) return;
-        list[nextElement].Select();
-    }
-
     public void OnDestroy()
     {
         instance = null;
@@ -608,6 +579,42 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                         description.view.CreateIcons().SetIcons(icons.ToArray());
                     }
                 }
+
+                if (data.IsUsedInOtherRecipes || data.IsUsedInPieces)
+                {
+                    description.view.CreateTitle().SetTitle(Keys.UsedIn);
+                    if (data.IsUsedInOtherRecipes)
+                    {
+                        if (data.usedIn.Count > 4)
+                        {
+                            IEnumerable<List<Recipe>> batches = data.usedIn.ToList().Batch(4);
+                            foreach (List<Recipe>? batch in batches)
+                            {
+                                description.view.CreateIcons().SetIcons(batch.ToArray());
+                            }
+                        }
+                        else
+                        {
+                            description.view.CreateIcons().SetIcons(data.usedIn.ToArray());
+                        }
+                    }
+
+                    if (data.IsUsedInPieces)
+                    {
+                        if (data.usedInPieces.Count > 4)
+                        {
+                            IEnumerable<List<PieceHelper.PieceInfo>> batches = data.usedInPieces.ToList().Batch(4);
+                            foreach (List<PieceHelper.PieceInfo>? batch in batches)
+                            {
+                                description.view.CreateIcons().SetIcons(batch.ToArray());
+                            }
+                        }
+                        else
+                        {
+                            description.view.CreateIcons().SetIcons(data.usedInPieces.ToArray());
+                        }
+                    }
+                }
                 if (data.recipe is not null)
                 {
                     description.requirements.Set(data.recipe);
@@ -695,10 +702,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 {
                     description.Interactable(true);
                     description.SetButtonText(Keys.Give);
-                    OnMainButton = () =>
-                    {
-                        Player.m_localPlayer.GetSEMan().AddStatusEffect(se.NameHash());
-                    };
+                    OnMainButton = () => Player.m_localPlayer.GetSEMan().AddStatusEffect(se.NameHash());
                 }
                 description.SetName(se.m_name);
                 description.SetIcon(se.m_icon);
@@ -964,12 +968,8 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                     description.SetButtonText(Keys.Purchase);
                     playerItem.ToEntries().Build(description.view);
                     description.view.Resize();
-                    OnMainButton = () =>
-                    {
-                        playerItem.Purchase(Player.m_localPlayer);
-                        Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"{Keys.Purchased} {playerItem.itemData.m_shared.m_name}");
-                    };
-                    OnUpdate = _ =>  description.requirements.Update();
+                    OnMainButton = () => playerItem.Purchase(Player.m_localPlayer);
+                    OnUpdate = _ => description.requirements.Update();
                     description.requirements.SetTokens(playerItem.TokenCost);
                     description.requirements.SetLevel(playerItem.Quality);
                 });
@@ -1018,7 +1018,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                     Player.m_localPlayer.Purchase(data);
                     canPurchase = data.Cost.CanPurchase(Player.m_localPlayer);
                     description.Interactable(canPurchase);
-                    Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"{Keys.Purchase} {data.Name}");
                 };
                 OnUpdate = _ =>  description.requirements.Update();
                 description.view.Resize();
@@ -1054,7 +1053,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 description.view.CreateTextArea().SetText(Helpers.ReplacePositionTags(itemData.GetTooltip()) + "\n");
                 if (itemData.HasSockets())
                 {
-                    var jewels = itemData.GetSocketedGemSharedNames();
+                    List<string> jewels = itemData.GetSocketedGemSharedNames();
                     description.view.CreateTitle().SetTitle($"Sockets ({jewels.Count})");
                     foreach (string? jewel in jewels)
                     {
@@ -1148,26 +1147,18 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
     }
     
     public void SetTopic(string text) => topic.text = Localization.instance.Localize(text);
-
     public void SetPanelPosition(Vector3 pos) => transform.position = pos;
-    
     public void OnDrag(PointerEventData eventData)
     {
         if (!Input.GetKey(KeyCode.LeftAlt)) return;
         SetPanelPosition(Input.mousePosition + mouseDifference);
     }
-
     public void OnBeginDrag(PointerEventData eventData)
     {
         Vector2 pos = eventData.position;
         mouseDifference = transform.position - new Vector3(pos.x, pos.y, 0);
     }
-
-    public void OnEndDrag(PointerEventData eventData)
-    {
-        panelPos.Value = transform.position;
-    }
-
+    public void OnEndDrag(PointerEventData eventData) => panelPos.Value = transform.position;
     public static void OnSelectedColorChange(object sender, EventArgs e)
     {
         if (sender is not ConfigEntry<Color> config) return;
@@ -1244,7 +1235,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
 
         public void Reset()
         {
-            name.text = "";
+            name.text = string.Empty;
             view.Clear();
             requirements.SetActive(false);
             button.gameObject.SetActive(false);
@@ -1264,6 +1255,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         public ButtonView(Transform transform) : base(transform)
         {
             _element = new ElementButton(transform.Find("Viewport/Button"));
+            handleArrowKeys = true;
         }
 
         public ElementButton Create()
@@ -1272,8 +1264,9 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             elements.Add(button);
             return button;
         }
-        public override List<GridElement> GetElements() => elements.Select(GridElement (e) => e).ToList();
-        public override GridElement? GetSelectedElement() => selectedElement;
+
+        protected override List<GridElement> GetElements() => elements.Select(GridElement (e) => e).ToList();
+        protected override GridElement? GetSelectedElement() => selectedElement;
         public void SetSelectedColor(Color color)
         {
             _element.SetSelectedColor(color);
@@ -1334,7 +1327,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             public override void Select() => button.onClick.Invoke();
             public void SetLabel(string text) => label.text = Localization.instance.Localize(text);
             public void OnClick(UnityAction action) => button.onClick.AddListener(action);
-            public void SetActive(bool enable)=>prefab.SetActive(enable);
             public void SetSelectedColor(Color color) => selected.color = color;
             public void SetSelected(bool enable) => selected.gameObject.SetActive(enable);
             public void Interactable(bool enable) => button.interactable = enable;
@@ -1357,6 +1349,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         public ElementView(Transform transform) : base(transform)
         {
             _element = new Element(transform.Find("Viewport/ListElement"));
+            handleArrowKeys = true;
         }
         public Element Create()
         {
@@ -1364,8 +1357,9 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             elements.Add(temp);
             return temp;
         }
-        public override List<GridElement> GetElements() => elements.Select(GridElement (e) => e).ToList();
-        public override GridElement? GetSelectedElement() => selectedElement;
+
+        protected override List<GridElement> GetElements() => elements.Select(GridElement (e) => e).ToList();
+        protected override GridElement? GetSelectedElement() => selectedElement;
         public void SetSelected(Element element)
         {
             foreach (Element? item in elements)
@@ -1477,7 +1471,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             public void SetName(string text) => name.text = Localization.instance.Localize(text);
             public void SetDescription(string text) => description.text = Localization.instance.Localize(text);
             public void SetIconColor(Color color) => icon.color = color;
-            public void SetActive(bool enable) => prefab.SetActive(enable);
             public void Interactable(bool enable) => button.interactable = enable;
             public void SetSelected(bool enable) => selected.gameObject.SetActive(enable);
             public void SetSelectedColor(Color color) => selected.color = color;
@@ -1493,7 +1486,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             }
         }
     }
-
     public class GridElement
     {
         protected readonly GameObject prefab;
@@ -1505,6 +1497,8 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         {
         }
         public virtual bool IsKnown() => false;
+        public bool IsHidden() => !prefab.activeInHierarchy;
+        public void SetActive(bool enable) => prefab.SetActive(enable);
         public void Destroy() => Object.Destroy(prefab);
     }
     public class GridView
@@ -1516,6 +1510,10 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         public static readonly List<GridView> views = new List<GridView>();
         public static GridView? activeView;
         private readonly float height;
+        protected bool handleArrowKeys;
+        private float lastInputTime;
+        private float availableWidth => root.rect.width - grid.padding.left - grid.padding.right;
+        private int columns => Mathf.Max(1, Mathf.FloorToInt((availableWidth + grid.spacing.x) / (grid.cellSize.x + grid.spacing.x)));
         protected GridView(Transform transform)
         {
             prefab = transform.gameObject;
@@ -1525,8 +1523,92 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             grid = root.GetComponent<GridLayoutGroup>();
             views.Add(this);
         }
-        public virtual List<GridElement> GetElements() => new();
-        public virtual GridElement? GetSelectedElement() => null;
+        protected virtual List<GridElement> GetElements() => new();
+        protected virtual GridElement? GetSelectedElement() => null;
+        private void ScrollToElement(int elementIndex)
+        {
+            List<GridElement> elements = GetElements();
+            if (elementIndex < 0 || elementIndex >= elements.Count) return;
+            int elementRow = elementIndex / columns;
+            float elementY = grid.padding.top + elementRow * (grid.cellSize.y + grid.spacing.y);
+            float viewportHeight = height;
+            float contentHeight = root.sizeDelta.y;
+            if (contentHeight <= viewportHeight)
+            {
+                scrollbar.value = 1f;
+                return;
+            }
+            float elementCenterY = elementY + grid.cellSize.y / 2f;
+            float targetScrollY = elementCenterY - viewportHeight / 2f;
+            float maxScrollY = contentHeight - viewportHeight;
+            targetScrollY = Mathf.Clamp(targetScrollY, 0f, maxScrollY);
+            float scrollbarValue = 1f - (targetScrollY / maxScrollY);
+            scrollbar.value = Mathf.Clamp01(scrollbarValue);
+        }
+        
+        public void HandleArrowKeys()
+        {
+            if (activeView == null || !IsVisible() || !handleArrowKeys) return;
+            if (Time.time - lastInputTime < Input_Cooldown) return;
+            if (!ZInput.GetKeyDown(KeyCode.LeftArrow) && !ZInput.GetKeyDown(KeyCode.RightArrow) && !ZInput.GetKeyDown(KeyCode.UpArrow) && !ZInput.GetKeyDown(KeyCode.DownArrow)) return;
+            lastInputTime = Time.time;
+            if (activeView.GetSelectedElement() is not { } selectedElement) return;
+            List<GridElement> list = activeView.GetElements().Where(element => !element.IsHidden()).ToList();
+            int indexOf = list.IndexOf(selectedElement);
+            if (indexOf == -1) return;
+            int nextElement = indexOf;
+            if (ZInput.GetKeyDown(KeyCode.LeftArrow))
+            {
+                nextElement = FindNextValidElement(list, indexOf, -1, 0, list.Count - 1);
+            }
+            else if (ZInput.GetKeyDown(KeyCode.RightArrow))
+            {
+                nextElement = FindNextValidElement(list, indexOf, 1, 0, list.Count - 1);
+            }
+            else if (ZInput.GetKeyDown(KeyCode.UpArrow))
+            {
+                nextElement = FindNextValidElementVertical(list, indexOf, -columns, 0, list.Count - 1);
+            }
+            else if (ZInput.GetKeyDown(KeyCode.DownArrow))
+            {
+                nextElement = FindNextValidElementVertical(list, indexOf, columns, 0, list.Count - 1);
+            }
+
+            if (nextElement == indexOf) return;
+            GridElement element = list[nextElement];
+            element.Select();
+            ScrollToElement(nextElement);
+        }
+
+        private static int FindNextValidElement(List<GridElement> list, int currentIndex, int direction, int minIndex, int maxIndex)
+        {
+            int nextIndex = currentIndex;
+            do
+            {
+                nextIndex += direction;
+                if (nextIndex < minIndex || nextIndex > maxIndex)
+                {
+                    return currentIndex;
+                }
+            }
+            while (!list[nextIndex].IsKnown());
+            
+            return nextIndex;
+        }
+        private static int FindNextValidElementVertical(List<GridElement> list, int currentIndex, int columnStep, int minIndex, int maxIndex)
+        {
+            int nextIndex = currentIndex + columnStep;
+            
+            while (nextIndex >= minIndex && nextIndex <= maxIndex)
+            {
+                if (list[nextIndex].IsKnown())
+                {
+                    return nextIndex;
+                }
+                nextIndex += columnStep;
+            }
+            return currentIndex;
+        }
         public void SetActive(bool enable)
         {
             activeView = null;
@@ -1538,8 +1620,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         }
         public void Resize(int count)
         {
-            float availableWidth = root.rect.width - grid.padding.left - grid.padding.right;
-            int columns = Mathf.Max(1, Mathf.FloorToInt((availableWidth + grid.spacing.x) / (grid.cellSize.x + grid.spacing.x)));
             int rows = Mathf.CeilToInt((float)count / columns);
             float totalHeight = grid.padding.top + grid.padding.bottom + rows * grid.cellSize.y + Mathf.Max(0, rows - 1) * grid.spacing.y;
             root.sizeDelta = new Vector2(root.sizeDelta.x, Mathf.Max(totalHeight, height));
@@ -1650,6 +1730,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 public void SetIcon(Sprite? sprite) => icon.sprite = sprite;
                 public void SetName(string text) => name.text = Localization.instance.Localize(text);
                 public void SetAmount(string value) => amount.text = Localization.instance.Localize(value);
+                public void SetAmount(int value) => amount.text = value.ToString();
                 public void SetIconColor(Color color) => icon.color = color;
                 public void OnClick(UnityAction action) => button.onClick.AddListener(action);
                 public void Interactable(bool enable) => button.interactable = enable;
@@ -1702,6 +1783,105 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                     else element.Hide();
                 }
             }
+            
+            public void SetIcons(params PieceHelper.PieceInfo[] pieces)
+            {
+                for (int index = 0; index < elements.Count; index++)
+                {
+                    IconElement element = elements[index];
+                    if (pieces.Length > index)
+                    {
+                        PieceHelper.PieceInfo info = pieces[index];
+                        bool isKnown = Player.m_localPlayer.NoCostCheat() || Player.m_localPlayer.IsPieceKnown(info.piece);
+                        element.SetIcon(info.piece.m_icon);
+                        element.SetName(isKnown ? info.piece.m_name : "???");
+                        element.SetAmount(string.Empty);
+                        element.SetIconColor(isKnown ? Color.white : Color.black);
+                        if (isKnown)
+                        {
+                            element.Interactable(true);
+                            element.OnClick(() =>
+                            {
+                                if (instance == null) return;
+                                instance.sideSearch.Reset();
+                                instance.OnUpdate = null;
+                                instance.OnMainButton = null;
+                                instance.description.Reset();
+                                instance.description.SetName(info.piece.m_name);
+                                instance.description.SetIcon(info.piece.m_icon);
+                                instance.description.Interactable(false);
+                                info.ToEntries().Build(instance.description.view);
+                                instance.description.view.Resize();
+                                instance.description.requirements.Set(info.piece.m_resources);
+                            });
+                        }
+                    }
+                    else
+                    {
+                        element.Hide();
+                    }
+                }
+            }
+
+            public void SetIcons(params Recipe[] recipes)
+            {
+                for (int index = 0; index < elements.Count; index++)
+                {
+                    IconElement element = elements[index];
+                    if (recipes.Length > index)
+                    {
+                        Recipe recipe = recipes[index];
+                        ItemDrop item = recipe.m_item;
+                        ItemHelper.ItemInfo? info = item.GetInfo();
+                        bool isKnown = Player.m_localPlayer.NoCostCheat() ||
+                                       Player.m_localPlayer.IsKnownMaterial(item.m_itemData.m_shared.m_name);
+                        element.SetIcon(info?.GetIcon());
+                        element.SetName(isKnown ? info?.itemData.m_shared.m_name ?? string.Empty : "???");
+                        if (recipe.m_amount > 1) element.SetAmount(recipe.m_amount);
+                        else element.SetAmount(string.Empty);
+                        element.SetIconColor(isKnown ? Color.white : Color.black);
+                        if (isKnown)
+                        {
+                            element.Interactable(true);
+                            element.OnClick(() =>
+                            {
+                                if (instance == null) return;
+                                instance.sideSearch.Reset();
+                                instance.OnUpdate = null;
+                                instance.OnMainButton = null;
+                                instance.description.Reset();
+                                instance.description.SetName(item.m_itemData.m_shared.m_name);
+                                instance.description.SetIcon(info?.GetIcon());
+                                instance.description.Interactable(ZNet.instance.LocalPlayerIsAdminOrHost());
+                                instance.description.SetButtonText(Keys.Spawn);
+                                instance.OnMainButton = () =>
+                                {
+                                    if (info == null) return;
+                                    GameObject go = Instantiate(info.Value.prefab, Player.m_localPlayer.transform.position, Quaternion.identity);
+                                    go.GetComponent<ItemDrop>().m_itemData.m_worldLevel = Game.m_worldLevel;
+                                };
+                                instance.description.view.CreateTextArea().SetText((info?.shared.m_description ?? string.Empty) + "\n\n");
+                                if (info?.itemData.IsPartOfSet() ?? false)
+                                {
+                                    instance.description.view.CreateTitle().SetTitle($"{info?.shared.m_setName} ({info?.shared.m_setSize})");
+                                    instance.description.view.CreateIcons().SetIcons(info?.setItems.ToArray() ?? Array.Empty<ItemDrop>());
+                                }
+                                info?.ToEntries().Build(instance.description.view);
+                                instance.description.view.Resize();
+                                if (info?.recipe is {} itemRecipe)
+                                {
+                                    instance.description.requirements.Set(itemRecipe);
+                                    instance.OnUpdate = _ => instance.description.requirements.Update();
+                                }
+                            });
+                        }
+                    }
+                    else
+                    {
+                        element.Hide();
+                    }
+                }
+            }
             public void SetIcons(params DropInfo[] infos)
             {
                 for (int index = 0; index < elements.Count; index++)
@@ -1742,28 +1922,13 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                                     instance.description.view.CreateTitle().SetTitle($"{info.item.m_shared.m_setName} ({info.item.m_shared.m_setSize})");
                                     instance.description.view.CreateIcons().SetIcons(info.item.GetSet().ToArray());
                                 }
-                                foreach (Entries.Entry entry in itemInfo.ToEntries())
-                                {
-                                    switch (entry.type)
-                                    {
-                                        case Entries.Entry.EntryType.Title:
-                                            instance.description.view.CreateTitle().SetTitle(entry.title);
-                                            break;
-                                        case Entries.Entry.EntryType.Area:
-                                            instance.description.view.CreateTextArea().SetText(entry.title + "\n\n");
-                                            break;
-                                        case Entries.Entry.EntryType.KeyValue:
-                                            instance.description.view.CreateKeyValue().SetText(entry.title, entry.value);
-                                            break;
-                                    }
-                                }
-
+                                itemInfo.ToEntries().Build(instance.description.view);
+                                instance.description.view.Resize();
                                 if (itemInfo.recipe is {} recipe)
                                 {
                                     instance.description.requirements.Set(recipe);
                                     instance.OnUpdate = _ => instance.description.requirements.Update();
                                 }
-                                instance.description.view.Resize();
                             });
                         }
                     }
@@ -1814,27 +1979,13 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                                     instance.description.view.CreateTitle().SetTitle($"{info?.shared.m_setName} ({info?.shared.m_setSize})");
                                     instance.description.view.CreateIcons().SetIcons(info?.setItems.ToArray() ?? Array.Empty<ItemDrop>());
                                 }
-                                foreach (Entries.Entry entry in info?.ToEntries() ?? new())
-                                {
-                                    switch (entry.type)
-                                    {
-                                        case Entries.Entry.EntryType.Title:
-                                            instance.description.view.CreateTitle().SetTitle(entry.title);
-                                            break;
-                                        case Entries.Entry.EntryType.Area:
-                                            instance.description.view.CreateTextArea().SetText(entry.title + "\n\n");
-                                            break;
-                                        case Entries.Entry.EntryType.KeyValue:
-                                            instance.description.view.CreateKeyValue().SetText(entry.title, entry.value);
-                                            break;
-                                    }
-                                }
+                                info?.ToEntries().Build(instance.description.view);
+                                instance.description.view.Resize();
                                 if (info?.recipe is {} recipe)
                                 {
                                     instance.description.requirements.Set(recipe);
                                     instance.OnUpdate = _ => instance.description.requirements.Update();
                                 }
-                                instance.description.view.Resize();
                             });
                         }
                     }
@@ -2030,7 +2181,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             }
             SetActive(true);
         }
-
         public void Set(StoreManager.StoreCost costs)
         {
             for (int index = 0; index < items.Count; ++index)
@@ -2050,7 +2200,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             }
             SetActive(true);
         }
-
         public void Set(Recipe recipe) => Set(recipe.m_resources);
         public void Set(Piece.Requirement[] requirements)
         {
@@ -2087,7 +2236,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             }
             SetActive(true);
         }
-
         public void SetLevel(int level) => SetLevel(level.ToString());
         public void SetLevel(string level) => starText.text = Localization.instance.Localize(level);
         public void SetLevelIcon(Sprite sprite) => starIcon.sprite = sprite;

@@ -1,3 +1,10 @@
+# 3.5.12
+- Added option to use arrow key up and down
+- Fixed valuables showing all materials
+- Fixed swords showing all weapons
+- Added Bjorn and Unbjorn to default creature groups - delete old files if you want to use them
+- Added used in recipes to item description
+
 # 3.5.11
 - Added tooltip for jewelcrafted items
 - Added trinkets achievement category

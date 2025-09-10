@@ -28,8 +28,8 @@ public static class PieceHelper
     }
     private static readonly List<PieceInfo> pieces = new();
     public static List<PieceInfo> GetPieces() => pieces.FindAll(x => !Filters.Ignore(x.prefab.name));
-    public static List<PieceInfo> plants => GetPieces().Where(p => p.plant != null).ToList();
-    public readonly struct PieceInfo
+    public static List<PieceInfo> plants => GetPieces().FindAll(p => p.plant != null);
+    public readonly record struct PieceInfo
     {
         private static readonly EntryBuilder builder = new();
         public readonly GameObject prefab;

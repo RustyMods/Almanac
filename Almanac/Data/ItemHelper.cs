@@ -107,7 +107,7 @@ public static class ItemHelper
         {
             if (_pickableItems != null) return _pickableItems;
             var result  = new Dictionary<string, ItemInfo>();
-            foreach (var pickable in pickables)
+            foreach (Pickable? pickable in pickables)
             {
                 if (pickable.m_itemPrefab == null) continue;
                 if (!pickable.m_itemPrefab.TryGetComponent(out ItemDrop component)) continue;
@@ -145,10 +145,12 @@ public static class ItemHelper
     public static List<ItemInfo> clubs => GetItemsBySkill(Skills.SkillType.Clubs);
     public static List<ItemInfo> knives =>  GetItemsBySkill(Skills.SkillType.Knives);
     public static List<ItemInfo> blocking => GetItemsBySkill(Skills.SkillType.Blocking);
+    public static List<ItemInfo> capes => GetItemByType(ItemType.Shoulder);
     public static List<ItemInfo> staves => GetItemsBySkill(Skills.SkillType.ElementalMagic, Skills.SkillType.BloodMagic);
     public static List<ItemInfo> potions => consumables.Where(item => item.shared.m_consumeStatusEffect != null).ToList();
     public static List<ItemInfo> ammo => GetItemByType(ItemType.Ammo);
-    public static List<ItemInfo> bows => GetItemByType(ItemType.Bow);
+    public static List<ItemInfo> bows => GetItemsBySkill(Skills.SkillType.Bows);
+    public static List<ItemInfo> crossbows => GetItemsBySkill(Skills.SkillType.Crossbows);
     public static List<ItemInfo> valuables => GetItems().Where(item => item.shared.m_value > 0).ToList();
     public static List<ItemInfo> trophies => GetItemByType(ItemType.Trophy);
     public static List<ItemInfo> trinkets => GetItemByType(ItemType.Trinket);
@@ -195,7 +197,11 @@ public static class ItemHelper
         public readonly List<Sprite> Icons = new();
         private readonly HashSet<Character> droppedBy = new();
         public readonly HashSet<ItemDrop> setItems = new();
+        public readonly HashSet<Recipe> usedIn = new();
+        public readonly HashSet<PieceHelper.PieceInfo> usedInPieces = new();
         private readonly bool isFloating;
+        public bool IsUsedInOtherRecipes => usedIn.Count != 0;
+        public bool IsUsedInPieces => usedInPieces.Count != 0;
         public Sprite? GetIcon() => itemData.GetIcon();
         public ItemInfo(GameObject prefab)
         {
@@ -209,6 +215,8 @@ public static class ItemHelper
             setItems = itemData.GetSet();
             if (!itemData.HasIcons()) return;
             Icons.AddRange(shared.m_icons);
+            usedIn = recipes.Where(r => r.m_item != null && r.m_resources.Any(resource => resource.m_resItem.name == prefab.name)).ToHashSet();
+            usedInPieces = PieceHelper.GetPieces().Where(p => p.piece.m_resources.Any(resource => resource.m_resItem.name == prefab.name)).ToHashSet();
             ItemInfos[shared.m_name] = this;
         }
 
@@ -414,8 +422,8 @@ public static class ItemHelper
                     break;
                 case ItemType.Shield:
                     builder.Add(Keys.Shield);
-                    builder.Add(Keys.Armor, shared.m_blockPower, shared.m_blockPowerPerLevel, "/lvl");
-                    builder.Add(Keys.BlockForce, shared.m_deflectionForce, shared.m_deflectionForcePerLevel, "/lvl");
+                    builder.Add(Keys.Armor, shared.m_blockPower, shared.m_blockPowerPerLevel, $"/{Keys.Lvl}");
+                    builder.Add(Keys.BlockForce, shared.m_deflectionForce, shared.m_deflectionForcePerLevel, $"/{Keys.Lvl}");
                     builder.Add(Keys.ParryBonus, shared.m_timedBlockBonus);
                     if (itemData.IsPartOfSet())
                     {

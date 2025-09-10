@@ -5,9 +5,6 @@ namespace Almanac.Utilities;
 public static class RandomLocationFinder
 {
     private const float maxRadius = 9500f;
-    private const float minSpawnDistance = 2f;
-    private const float maxYDistance = 10f;
-    private const int solidHeightMargin = 1000;
     private static Vector3 GetRandomVectorWithin(Vector3 point, float margin)
     {
         Vector2 vector2 = UnityEngine.Random.insideUnitCircle * margin;

@@ -8,7 +8,7 @@ namespace Almanac.Managers;
 
 public class CommandData
 {
-    public static readonly string m_startCommand = "almanac";
+    public const string m_startCommand = "almanac";
     public static readonly Dictionary<string, CommandData> m_commands = new();
 
     private readonly string m_description;

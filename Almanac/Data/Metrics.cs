@@ -43,10 +43,12 @@ public static class PlayerExtensions
     public static int GetKnownSpears(this Player player) => ItemHelper.spears.FindAll(spear => player.IsKnownMaterial(spear.shared.m_name)).Count;
     public static int GetKnownKnives(this Player player) => ItemHelper.knives.FindAll(knive => player.IsKnownMaterial(knive.shared.m_name)).Count;
     public static int GetKnownShields(this Player player) => ItemHelper.blocking.FindAll(shield => player.IsKnownMaterial(shield.shared.m_name)).Count;
+    public static int GetKnownCapes(this Player player) => ItemHelper.capes.FindAll(cape => player.IsKnownMaterial(cape.shared.m_name)).Count;
     public static int GetKnownPotions(this Player player) => ItemHelper.potions.FindAll(potion => player.IsKnownMaterial(potion.shared.m_name)).Count;
     public static int GetKnownClubs(this Player player)=>ItemHelper.clubs.FindAll(c => player.IsKnownMaterial(c.shared.m_name)).Count;
     public static int GetKnownStaves(this Player player)=>ItemHelper.staves.FindAll(s => player.IsKnownMaterial(s.shared.m_name)).Count;
     public static int GetKnownBows(this Player player)=>ItemHelper.bows.FindAll(b => player.IsKnownMaterial(b.shared.m_name)).Count;
+    public static int GetKnownCrossbows(this Player player) => ItemHelper.crossbows.FindAll(c => player.IsKnownMaterial(c.shared.m_name)).Count;
     public static int GetKnownTrophies(this Player player) => ItemHelper.trophies.FindAll(t => player.IsKnownMaterial(t.shared.m_name)).Count;
     public static int GetKnownBaits(this Player player) => ItemHelper.baits.FindAll(b => player.IsKnownMaterial(b.shared.m_name)).Count;
     public static int GetKnownFishes(this Player player) => ItemHelper.fishes.FindAll(f => player.IsKnownMaterial(f.shared.m_name)).Count;
@@ -56,7 +58,6 @@ public static class PlayerExtensions
     public static int GetKnownLegs(this Player player) => ItemHelper.legs.FindAll(l => player.IsKnownMaterial(l.shared.m_name)).Count;
     public static int GetKnownValuables(this Player player) => ItemHelper.valuables.FindAll(v => player.IsKnownMaterial(v.shared.m_name)).Count;
     public static int GetKnownTrinkets(this Player player) => ItemHelper.trinkets.FindAll(t => player.IsKnownMaterial(t.shared.m_name)).Count;
-    public static int GetKnownRecipes(this Player player) => player.m_knownRecipes.Count;
     public static void ClearRecords(this Player player)
     {
         player.m_customData.Remove(PlayerInfo.ALMANAC_PLAYER_RECORDS);
@@ -114,17 +115,13 @@ public static class PlayerInfo
     public static int GetPlayerStat(RecordType type, string name)
     {
         if (!Player.m_localPlayer || string.IsNullOrEmpty(name)) return 0;
-        switch (type)
+        return type switch
         {
-            case RecordType.Kill:
-                return Records?.GetKills(name) ?? 0;
-            case RecordType.Death:
-                return Records?.GetDeaths(name) ?? 0;
-            case RecordType.Pickable:
-                return Records?.GetItemPicked(name) ?? 0;
-            default:
-                return 0;
-        }
+            RecordType.Kill => Records?.GetKills(name) ?? 0,
+            RecordType.Death => Records?.GetDeaths(name) ?? 0,
+            RecordType.Pickable => Records?.GetItemPicked(name) ?? 0,
+            _ => 0
+        };
     }
     
     [HarmonyPatch(typeof(Character), nameof(Character.OnDeath))]
@@ -335,46 +332,16 @@ public static class PlayerInfo
     }
     private static List<MetricInfo> PickableMetrics()
     {
-        List<MetricInfo> _metrics = new List<MetricInfo>();
+        List<MetricInfo> metrics = new List<MetricInfo>();
         foreach (Pickable? pickable in ItemHelper.pickables)
         {
             if (!ItemHelper.pickableItems.TryGetValue(pickable.name, out ItemHelper.ItemInfo info)) continue;
-            _metrics.Add(new MetricInfo(info.shared.m_name, info.GetIcon(), () => $"{Keys.Picked} x{GetPlayerStat(RecordType.Pickable, pickable.name)}"));
+            metrics.Add(new MetricInfo(info.shared.m_name, info.GetIcon(), () => $"{Keys.Picked} x{GetPlayerStat(RecordType.Pickable, pickable.name)}"));
         }
-        return _metrics;
+        return metrics;
     }
-    public static List<MetricInfo> GetMetrics()
-    {
-        return Metrics;
-        // if (!Player.m_localPlayer) return new();
-        // List<MetricInfo> _metrics = new List<MetricInfo>
-        // {
-        //     new MetricInfo(Keys.Materials, SpriteManager.IconOption.Gem, () => $"{Player.m_localPlayer.GetKnownMaterialCount()}/{ItemHelper.materials.Count}"),
-        //     new MetricInfo(Keys.Pieces, "Hammer", () => $"{Player.m_localPlayer.GetKnownPiecesCount()}/{PieceHelper.GetPieces().Count}"),
-        //     new MetricInfo(Keys.Weapon, SpriteManager.IconOption.SwordBrown, () => $"{Player.m_localPlayer.GetKnownWeapons()}/{ItemHelper.weapons.Count}"),
-        //     new MetricInfo(Keys.Trophies, "TrophyBoar", () => $"{Player.m_localPlayer.GetKnownTrophies()}/{ItemHelper.trophies.Count}"),
-        //     new MetricInfo(Keys.Swords, SpriteManager.IconOption.SwordBlue, () => $"{Player.m_localPlayer.GetKnownSwords()}/{ItemHelper.swords.Count}"),
-        //     new MetricInfo(Keys.Axes, "AxeIron", () => $"{Player.m_localPlayer.GetKnownAxes()}/{ItemHelper.axes.Count}"),
-        //     new MetricInfo(Keys.Polearms, "AtgeirIron", () => $"{Player.m_localPlayer.GetKnownPolearms()}/{ItemHelper.polearms.Count}"),
-        //     new MetricInfo(Keys.Spears, "SpearBronze", () => $"{Player.m_localPlayer.GetKnownSpears()}/{ItemHelper.spears.Count}"),
-        //     new MetricInfo(Keys.Knives, "KnifeSkollAndHati", () => $"{Player.m_localPlayer.GetKnownKnives()}/{ItemHelper.knives.Count}"),
-        //     new MetricInfo(Keys.Clubs, "MaceBronze", () => $"{Player.m_localPlayer.GetKnownClubs()}/{ItemHelper.clubs.Count}"),
-        //     new MetricInfo(Keys.Shield, SpriteManager.IconOption.Shield, () => $"{Player.m_localPlayer.GetKnownShields()}/{ItemHelper.blocking.Count}"),
-        //     new MetricInfo(Keys.Bows, "Bow", () => $"{Player.m_localPlayer.GetKnownBows()}/{ItemHelper.bows.Count}"),
-        //     new MetricInfo(Keys.Fish, SpriteManager.IconOption.Fish, () => $"{Player.m_localPlayer.GetKnownFishes()}/{ItemHelper.fishes.Count}"),
-        //     new MetricInfo(Keys.Consumables, SpriteManager.IconOption.MushroomRed, () => $"{Player.m_localPlayer.GetKnownConsumables()}/{ItemHelper.consumables.Count}"),
-        //     new MetricInfo(Keys.Potions, SpriteManager.IconOption.BottleBlue, () => $"{Player.m_localPlayer.GetKnownPotions()}/{ItemHelper.potions.Count}"),
-        //     new MetricInfo(Keys.Staves, "StaffFireball", () => $"{Player.m_localPlayer.GetKnownStaves()}/{ItemHelper.staves.Count}"),
-        //     new MetricInfo(Keys.Baits, "FishingBaitAshlands", () => $"{Player.m_localPlayer.GetKnownBaits()}/{ItemHelper.baits.Count}"),
-        //     new MetricInfo(Keys.Helmet, "HelmetIron", () => $"{Player.m_localPlayer.GetKnownHelmets()}/{ItemHelper.helmets.Count}"),
-        //     new MetricInfo(Keys.ChestArmor, "ArmorIronChest", () => $"{Player.m_localPlayer.GetKnownChests()}/{ItemHelper.chests.Count}"),
-        //     new MetricInfo(Keys.LegArmor, "ArmorIronLegs", () => $"{Player.m_localPlayer.GetKnownLegs()}/{ItemHelper.legs.Count}"),
-        //     new MetricInfo(Keys.Valuables, "Amber", () => $"{Player.m_localPlayer.GetKnownValuables()}/{ItemHelper.valuables.Count}"),
-        //     new MetricInfo(Keys.Trinkets, "TrinketBronzeStamina", () => $"{Player.m_localPlayer.GetKnownTrinkets()}/{ItemHelper.trinkets.Count}"), 
-        // };
-        // return _metrics;
-    }
-
+    public static List<MetricInfo> GetMetrics() => Metrics;
+    
     private static readonly List<MetricInfo> _metrics = new();
     private static List<MetricInfo> Metrics
     {
@@ -405,6 +372,8 @@ public static class PlayerInfo
                 () => $"{Player.m_localPlayer.GetKnownShields()}/{ItemHelper.blocking.Count}");
             _ = new MetricInfo(Keys.Bows, "Bow",
                 () => $"{Player.m_localPlayer.GetKnownBows()}/{ItemHelper.bows.Count}");
+            _ = new MetricInfo(Keys.Crossbows, "CrossbowArbalest",
+                () => $"{Player.m_localPlayer.GetKnownCrossbows()}/{ItemHelper.crossbows.Count}");
             _ = new MetricInfo(Keys.Fish, SpriteManager.IconOption.Fish,
                 () => $"{Player.m_localPlayer.GetKnownFishes()}/{ItemHelper.fishes.Count}");
             _ = new MetricInfo(Keys.Consumables, SpriteManager.IconOption.MushroomRed,
@@ -427,6 +396,8 @@ public static class PlayerInfo
                 () => $"{Player.m_localPlayer.GetKnownTrinkets()}/{ItemHelper.trinkets.Count}");
             _ = new MetricInfo(Keys.Recipes, SpriteManager.IconOption.BookRed,
                 () => $"{Player.m_localPlayer.GetKnownRecipeCount()}/{ItemHelper.recipes.Count}");
+            _ = new MetricInfo(Keys.Cape, "CapeLinen",
+                () => $"{Player.m_localPlayer.GetKnownCapes()}/{ItemHelper.capes.Count}");
             return _metrics;
         }
     }
@@ -436,11 +407,8 @@ public static class PlayerInfo
         public readonly Sprite? Icon;
         private readonly Func<string> _description;
         public string Description => _description.Invoke();
-        
         public MetricInfo(string name, SpriteManager.IconOption icon, Func<string> description) : this(name, SpriteManager.GetSprite(icon), description) { }
-        
         public MetricInfo(string name, string icon, Func<string> description) : this(name, SpriteManager.GetSprite(icon), description){}
-
         public MetricInfo(string name, Sprite? icon, Func<string> description)
         {
             Name = name;

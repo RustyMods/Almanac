@@ -31,6 +31,31 @@ public static class InventoryGui_Awake_Patch
         GameObject? trophyPanel = __instance.m_trophiesPanel;
         GameObject? sfx = craftingPanel.GetComponentInChildren<ButtonSfx>().m_sfxPrefab;
 
+        if (DialoguePanel._panel != null)
+        {
+            Text[] npcDialogueText = DialoguePanel._panel.GetComponentsInChildren<Text>(true);
+            foreach (var component in DialoguePanel._panel.GetComponentsInChildren<ButtonSfx>(true)) component.m_sfxPrefab = sfx;
+            FontManager.SetFont(npcDialogueText);
+            DialoguePanel._panel.AddComponent<DialoguePanel>();
+            GameObject dialoguePanel = Object.Instantiate(DialoguePanel._panel, __instance.transform.parent.Find("HUD"));
+            dialoguePanel.name = "Almanac NPC Dialogue";
+        }
+
+        Text[] npcTexts = NPCCustomization._Modal.GetComponentsInChildren<Text>(true);
+        foreach (var component in NPCCustomization._Modal.GetComponentsInChildren<ButtonSfx>(true)) component.m_sfxPrefab = sfx;
+        FontManager.SetFont(npcTexts);
+        NPCCustomization._Modal.CopySpriteAndMaterial(trophyPanel, "bkg", "TrophiesFrame/border (1)");
+        NPCCustomization._Modal.CopySpriteAndMaterial(craftingPanel, "ListView/Viewport/Element/Title/TabBorder", "TabsButtons/TabBorder");
+        NPCCustomization._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Scrollbar", "TrophiesFrame/Trophies/TrophyListScroll");
+        NPCCustomization._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Scrollbar/Sliding Area/Handle", "TrophiesFrame/Trophies/TrophyListScroll/Sliding Area/Handle");
+        NPCCustomization._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Viewport", "TrophiesFrame/Trophies/TrophyList");
+        NPCCustomization._Modal.CopySpriteAndMaterial(craftingPanel, "ListView/Viewport/Element/InputField/Glow", "RepairButton/Glow");
+        NPCCustomization._Modal.CopySpriteAndMaterial(trophyPanel, "MainButton", "TrophiesFrame/Closebutton");
+        NPCCustomization._Modal.CopyButtonState(trophyPanel, "MainButton", "TrophiesFrame/Closebutton");
+        NPCCustomization._Modal.AddComponent<NPCCustomization>();
+        GameObject npc_modal = Object.Instantiate(NPCCustomization._Modal, __instance.transform.parent.Find("HUD"));
+        npc_modal.name = "Almanac NPC UI";
+        
         Text[]? modalTexts = Modal._Modal.GetComponentsInChildren<Text>(true);
         foreach (ButtonSfx? component in Modal._Modal.GetComponentsInChildren<ButtonSfx>(true)) component.m_sfxPrefab = sfx;
         FontManager.SetFont(modalTexts);
@@ -46,7 +71,6 @@ public static class InventoryGui_Awake_Patch
 
         Modal._Modal.CopySpriteAndMaterial(trophyPanel, "MainButton", "TrophiesFrame/Closebutton");
         Modal._Modal.CopyButtonState(trophyPanel, "MainButton", "TrophiesFrame/Closebutton");
-        foreach (ButtonSfx? component in Modal._Modal.GetComponentsInChildren<ButtonSfx>(true)) component.m_sfxPrefab = sfx;
     
         Modal._Modal.AddComponent<Modal>();
         
@@ -173,18 +197,8 @@ public static class InventoryGui_Awake_Patch
         
         go.AddComponent<AlmanacPanel>();
         
-        Transform info = Utils.FindChild(__instance.m_inventoryRoot.transform, "Info");
-        Transform trophiesOpenButton = Utils.FindChild(info, "Trophies");
-        Transform image = Utils.FindChild(trophiesOpenButton, "Image");
-
-        if (trophiesOpenButton.TryGetComponent(out UITooltip openTrophiesToolTip))
-        {
-            openTrophiesToolTip.m_text = Keys.Almanac;
-        }
-        if (image.TryGetComponent(out Image trophiesOpenImage))
-        {
-            trophiesOpenImage.sprite = SpriteManager.AlmanacIcon;
-        }
+        AlmanacPanel.inventoryButton = new AlmanacPanel.AlmanacButton(__instance);
+        AlmanacPanel.inventoryButton.Show(Configs.ShowAlmanac);
     }
 }
 
@@ -194,7 +208,7 @@ public static class InventoryGui_OnOpenTrophies_Prefix
     [UsedImplicitly]
     private static bool Prefix(InventoryGui __instance)
     {
-        if (AlmanacPanel.instance == null) return true;
+        if (AlmanacPanel.instance == null || !Configs.ShowAlmanac) return true;
         AlmanacPanel.instance.Show();
         __instance.Hide();
         return false;
@@ -212,7 +226,7 @@ public static class InventoryGui_OnCloseTrophies_Postfix
 public static class InventoryGui_UpdateTrophyList_Prefix
 {
     [UsedImplicitly]
-    private static bool Prefix() => false;
+    private static bool Prefix() => !Configs.ShowAlmanac;
 }
 
 [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.Hide))]
@@ -258,42 +272,90 @@ public static class InventoryGui_IsVisible_Patch
     [UsedImplicitly]
     private static void Postfix(ref bool __result)
     {
-        __result |= AlmanacPanel.IsVisible();
+        __result |= AlmanacPanel.IsVisible() || NPCCustomization.IsVisible() || DialoguePanel.IsVisible();
     }
 }
 
 public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler
 {
-    private static readonly Tutorial achievements = new (Keys.Achievement, "Achievements.md");
-    private static readonly Tutorial bounties = new (Keys.Bounties, "Bounties.md");
-    private static readonly Tutorial intro = new (Keys.Almanac, "Intro.md");
-    private static readonly Tutorial leaderboard = new(Keys.Leaderboard, "Leaderboard.md");
-    private static readonly Tutorial store = new(Keys.AlmanacStore, "Store.md");
-    private static readonly Tutorial treasures = new (Keys.Treasures, "Treasures.md");
+    public class AlmanacButton
+    {
+        private readonly UITooltip tooltip;
+        private readonly Image icon;
+
+        private readonly Sprite defaultIcon;
+        private readonly string defaultTooltip;
+
+        private bool replaced;
+        public AlmanacButton(InventoryGui instance)
+        {
+            Transform info = Utils.FindChild(instance.m_inventoryRoot.transform, "Info");
+            Transform trophiesOpenButton = Utils.FindChild(info, "Trophies");
+            Transform image = Utils.FindChild(trophiesOpenButton, "Image");
+            
+            tooltip = trophiesOpenButton.GetComponent<UITooltip>();
+            icon = image.GetComponent<Image>();
+            defaultIcon = icon.sprite;
+            defaultTooltip = tooltip.m_text;
+        }
+
+        public void Show(bool enable)
+        {
+            if (enable) Replace();
+            else Revert();
+        }
+
+        private void Replace()
+        {
+            if (replaced) return;
+            SetIcon(SpriteManager.AlmanacIcon);
+            SetTooltip(Keys.Almanac);
+            replaced = true;
+        }
+
+        private void Revert()
+        {
+            if (!replaced) return;
+            SetIcon(defaultIcon);
+            SetTooltip(defaultTooltip);
+            replaced = false;
+        }
+
+        private void SetTooltip(string text) => tooltip.m_text = text;
+        private void SetIcon(Sprite sprite) => icon.sprite = sprite;
+    }
+    public static AlmanacButton? inventoryButton;
+    
+    private static readonly Tutorials.Tutorial achievements = new (Keys.Achievement, "Achievements.md");
+    private static readonly Tutorials.Tutorial bounties = new (Keys.Bounties, "Bounties.md");
+    private static readonly Tutorials.Tutorial intro = new (Keys.Almanac, "Intro.md");
+    private static readonly Tutorials.Tutorial leaderboard = new(Keys.Leaderboard, "Leaderboard.md");
+    private static readonly Tutorials.Tutorial store = new(Keys.AlmanacStore, "Store.md");
+    private static readonly Tutorials.Tutorial treasures = new (Keys.Treasures, "Treasures.md");
     
     public static ConfigEntry<Vector3> panelPos = null!;
     public Background background = null!;
     public Text topic = null!;
     public readonly Dictionary<Tab.TabOption, Tab> Tabs = new();
-    private ButtonView buttonView = null!;
-    private ElementView elementView = null!;
+    public ButtonView buttonView = null!;
+    public ElementView elementView = null!;
     private Lottery lottery = null!;
-    private RightPanel description = null!;
+    public RightPanel description = null!;
     private Search mainSearch = null!;
     private Search sideSearch = null!;
     private ScrollRect[]? scrollRects;
     private ButtonElement close = null!;
     public Currency currency = null!;
     private Vector3 mouseDifference = Vector3.zero;
-    private Action<float>? OnUpdate;
-    private Action? OnMainButton;
+    public Action<float>? OnUpdate;
+    public Action? OnMainButton;
     
     public static AlmanacPanel? instance;
     private static Modal? modal;
     private Modal.ModalBuilder modalBuilder = null!;
     private const float Input_Cooldown = 0.1f;
     private float lastInputTime;
-    private static bool isLocalAdminOrHostAndNoCost
+    public static bool isLocalAdminOrHostAndNoCost
     {
         get
         {
@@ -363,10 +425,14 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         Tabs[Tab.TabOption.Metrics].SetLabel(Keys.Metrics);
         Tabs[Tab.TabOption.Leaderboard].SetLabel(Keys.Leaderboard);
         
+        Tabs[Tab.TabOption.Trophies].SetActive(Configs.ShowTrophies);
+        Tabs[Tab.TabOption.Items].SetActive(Configs.ShowItems);
+        Tabs[Tab.TabOption.Pieces].SetActive(Configs.ShowPieces);
+        Tabs[Tab.TabOption.Creatures].SetActive(Configs.ShowCreatures);
+        Tabs[Tab.TabOption.StatusEffects].SetActive(Configs.ShowStatusEffects);
         Tabs[Tab.TabOption.Achievements].SetActive(Configs.ShowAchievements);
         Tabs[Tab.TabOption.Bounties].SetActive(Configs.ShowBounties);
         Tabs[Tab.TabOption.Treasures].SetActive(Configs.ShowTreasures);
-        Tabs[Tab.TabOption.StatusEffects].SetActive(Configs.ShowStatusEffects);
         Tabs[Tab.TabOption.Store].SetActive(Configs.ShowStore);
         Tabs[Tab.TabOption.Lottery].SetActive(Configs.ShowLottery);
         Tabs[Tab.TabOption.Metrics].SetActive(Configs.ShowMetrics);
@@ -374,6 +440,8 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         
         scrollRects = GetComponentsInChildren<ScrollRect>(true);
         OnScrollbarSensitivityChanged(Configs.ScrollbarSensitivity);
+        SetTopic(Keys.Almanac);
+        elementView.SetSelectedColor(Configs.OutlineColor);
     }
 
     public static void OnScrollbarSensitivityChanged(float sensitivity)
@@ -410,13 +478,48 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
 
     public static bool IsVisible() => instance?.gameObject.activeInHierarchy ?? false;
 
-    public void Show()
+    public void Show(Tab.TabOption option = Tab.TabOption.Trophies)
     {
         gameObject.SetActive(true);
-        SetTopic(Keys.Almanac);
+
+        switch (option)
+        {
+            case Tab.TabOption.Items:
+                OnItemTab();
+                break;
+            case Tab.TabOption.Creatures:
+                OnCreatureTab();
+                break;
+            case Tab.TabOption.Pieces:
+                OnPieceTab();
+                break;
+            case Tab.TabOption.Leaderboard:
+                OnLeaderboardTab();
+                break;
+            case Tab.TabOption.Achievements:
+                OnAchievementTab();
+                break;
+            case Tab.TabOption.Bounties:
+                OnBountyTab();
+                break;
+            case Tab.TabOption.Treasures:
+                OnTreasureTab();
+                break;
+            case Tab.TabOption.Store:
+                OnStoreTab();
+                break;
+            case Tab.TabOption.Lottery:
+                OnLotteryTab();
+                break;
+            case Tab.TabOption.Metrics:
+                OnMetricsTab();
+                break;
+            default:
+                OnTrophyTab();
+                break;
+        }
+        
         currency.SetAmount(Player.m_localPlayer.GetTokens());
-        OnTrophyTab();
-        elementView.SetSelectedColor(Configs.OutlineColor);
     }
 
     public void Hide()
@@ -427,7 +530,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
 
     private void Reset() => Reset(null);
 
-    private void Reset(Tutorial? info)
+    private void Reset(Tutorials.Tutorial? info)
     {
         buttonView.Clear();
         elementView.Clear();
@@ -444,7 +547,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         OnMainButton = null;
     }
 
-    public static bool InSearchField() => instance?.mainSearch.IsSearching() == true || instance?.sideSearch.IsSearching() == true || Modal.IsFocused();
+    public static bool InSearchField() => instance?.mainSearch.IsSearching() == true || instance?.sideSearch.IsSearching() == true || Modal.IsFocused() || NPCCustomization.IsVisible();
 
     public void OnTrophyTab()
     {
@@ -462,27 +565,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             item.SetIcon(data.GetIcon());
             item.SetIconColor(isKnown ? Color.white : Color.black);
             item.Interactable(isKnown);
-            item.OnClick(() =>
-            {
-                elementView.SetSelected(item);
-                description.Reset();
-                description.SetName(data.shared.m_name);
-                description.SetIcon(data.GetIcon());
-                if (isLocalAdminOrHostAndNoCost)
-                {
-                    description.Interactable(true);
-                    description.SetButtonText(Keys.Spawn);
-                    OnMainButton = () =>
-                    {
-                        GameObject go = Instantiate(data.prefab, Player.m_localPlayer.transform.position, Quaternion.identity);
-                        go.GetComponent<ItemDrop>().m_itemData.m_worldLevel = Game.m_worldLevel;
-                    };
-                }
-                InfoView.TextArea tooltip = description.view.CreateTextArea();
-                tooltip.SetText(data.shared.m_description + "\n\n");
-                data.ToEntries().Build(description.view);
-                description.view.Resize();
-            });
+            item.OnClick(() => data.OnClick(this, item));
         }
         elementView.Resize(elementView.Count);
     }
@@ -505,18 +588,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             item.SetIcon(data.piece.m_icon);
             item.SetIconColor(isKnown ? Color.white : Color.black);
             item.Interactable(isKnown);
-            item.OnClick(() =>
-            {
-                elementView.SetSelected(item);
-                description.Reset();
-                description.SetName(data.piece.m_name);
-                description.SetIcon(data.piece.m_icon);
-                data.ToEntries().Build(description.view);
-                description.view.Resize();
-                description.Interactable(false);
-                description.requirements.Set(data.piece.m_resources);
-                OnUpdate = _ => description.requirements.Update();
-            });
+            item.OnClick(() => data.OnClick(this, item));
         }
         elementView.Resize(elementView.Count);
     }
@@ -538,89 +610,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             item.SetIcon(data.GetIcon());
             item.SetIconColor(isKnown ? Color.white : Color.black);
             item.Interactable(isKnown);
-            item.OnClick(() =>
-            {
-                elementView.SetSelected(item);
-                description.Reset();
-                description.SetName(data.shared.m_name);
-                description.SetIcon(data.GetIcon());
-                if (isLocalAdminOrHostAndNoCost)
-                {
-                    description.Interactable(true);
-                    description.SetButtonText(Keys.Spawn);
-                    OnMainButton = () =>
-                    {
-                        GameObject go = Instantiate(data.prefab, Player.m_localPlayer.transform.position, Quaternion.identity);
-                        go.GetComponent<ItemDrop>().m_itemData.m_worldLevel = Game.m_worldLevel;
-                    };
-                }
-                description.view.CreateTextArea().SetText(data.shared.m_description + "\n\n");
-                if (data.itemData.IsPartOfSet())
-                {
-                    description.view.CreateTitle().SetTitle($"{data.shared.m_setName} ({data.shared.m_setSize})");
-                    description.view.CreateIcons().SetIcons(data.setItems.ToArray());
-                }
-                data.ToEntries().Build(description.view);
-                if (data.itemData.HasVariants())
-                {
-                    description.view.CreateTitle().SetTitle(Keys.Variant);
-                    List<Sprite> icons = data.Icons.Skip(1).ToList();
-                    if (icons.Count > 4)
-                    {
-                        IEnumerable<List<Sprite>> batches = icons.Batch(4);
-                        foreach (List<Sprite>? batch in batches)
-                        {
-                            description.view.CreateIcons().SetIcons(batch.ToArray());
-                        }
-                    }
-                    else
-                    {
-                        description.view.CreateIcons().SetIcons(icons.ToArray());
-                    }
-                }
-
-                if (data.IsUsedInOtherRecipes || data.IsUsedInPieces)
-                {
-                    description.view.CreateTitle().SetTitle(Keys.UsedIn);
-                    if (data.IsUsedInOtherRecipes)
-                    {
-                        if (data.usedIn.Count > 4)
-                        {
-                            IEnumerable<List<Recipe>> batches = data.usedIn.ToList().Batch(4);
-                            foreach (List<Recipe>? batch in batches)
-                            {
-                                description.view.CreateIcons().SetIcons(batch.ToArray());
-                            }
-                        }
-                        else
-                        {
-                            description.view.CreateIcons().SetIcons(data.usedIn.ToArray());
-                        }
-                    }
-
-                    if (data.IsUsedInPieces)
-                    {
-                        if (data.usedInPieces.Count > 4)
-                        {
-                            IEnumerable<List<PieceHelper.PieceInfo>> batches = data.usedInPieces.ToList().Batch(4);
-                            foreach (List<PieceHelper.PieceInfo>? batch in batches)
-                            {
-                                description.view.CreateIcons().SetIcons(batch.ToArray());
-                            }
-                        }
-                        else
-                        {
-                            description.view.CreateIcons().SetIcons(data.usedInPieces.ToArray());
-                        }
-                    }
-                }
-                if (data.recipe is not null)
-                {
-                    description.requirements.Set(data.recipe);
-                    OnUpdate = _ => description.requirements.Update();
-                }
-                description.view.Resize();
-            });
+            item.OnClick(() => data.OnClick(this, item));
         }
         elementView.Resize(elementView.Count);
     }
@@ -638,35 +628,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             item.isKnown = isKnown;
             item.SetLabel(isKnown ? data.character.m_name : "???");
             item.Interactable(isKnown);
-            item.OnClick(() =>
-            {
-                buttonView.SetSelected(item);
-                description.Reset();
-                description.SetName(data.character.m_name);
-                if (isLocalAdminOrHostAndNoCost)
-                {
-                    description.Interactable(true);
-                    description.SetButtonText(Keys.Spawn);
-                    OnMainButton = () =>
-                    {
-                        Instantiate(data.prefab, Player.m_localPlayer.transform.position, Quaternion.identity);
-                    };
-                }
-                description.SetIcon(data.trophy?.HasIcons() ?? false ? data.trophy.GetIcon() : null);
-                data.ToEntries().Build(description.view);
-                if (data is { isTameable: true, consumeItems.Count: > 0 })
-                {
-                    description.view.CreateTitle().SetTitle(Keys.ConsumeItem);
-                    description.view.CreateIcons().SetIcons(data.consumeItems.ToArray());
-                }
-
-                if (data.drops != null)
-                {
-                    description.view.CreateTitle().SetTitle(Keys.CharacterDrops);
-                    description.view.CreateIcons().SetIcons(data.drops.m_drops.ToDropInfos());
-                }
-                description.view.Resize();
-            });
+            item.OnClick(() => data.OnClick(this, item));
         }
         buttonView.Resize(buttonView.Count);
     }
@@ -727,33 +689,12 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         {
             ElementView.Element item = elementView.Create();
             bool isCompleted = achievement.IsCompleted(Player.m_localPlayer);
-            bool isCollected = achievement.IsCollected(Player.m_localPlayer);
             item.SetName(achievement.Name);
             item.SetIcon(achievement.icon);
             item.SetIconColor(isCompleted ? Color.white : Color.black);
             item.SetDescription(achievement.Lore);
             item.Interactable(true);
-            item.OnClick(() =>
-            {
-                elementView.SetSelected(item);
-                description.Reset();
-                description.SetName(achievement.Name);
-                description.SetIcon(achievement.icon);
-                achievement.ToEntries().Build(description.view);
-                description.requirements.SetTokens(achievement.TokenReward);
-                description.view.Resize();
-                description.SetButtonText(isCompleted ? isCollected ? Keys.Collected : Keys.CollectReward : Keys.InProgress);
-                description.Interactable(isCompleted && !isCollected);
-                if (!isCompleted) return;
-                OnMainButton = () =>
-                {
-                    Player.m_localPlayer.AddTokens(achievement.TokenReward);
-                    Player.m_localPlayer.SetAchievementCollected(achievement);
-                    Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"{Keys.Collected} {Keys.AlmanacToken} x{achievement.TokenReward}");
-                    description.Interactable(false);
-                    description.SetButtonText(Keys.Collected);
-                };
-            });
+            item.OnClick(() => achievement.OnClick(this, item));
         }
         elementView.Resize(elementView.Count);
     }
@@ -763,63 +704,19 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         Tabs[Tab.TabOption.Bounties].SetSelected(true);
         Reset(bounties);
         elementView.SetActive(true);
-        if (isLocalAdminOrHostAndNoCost)
-        {
-            modalBuilder.Build(Modal.ModalBuilder.FormType.Bounty);
-        }
+        if (isLocalAdminOrHostAndNoCost) modalBuilder.Build(Modal.ModalBuilder.FormType.Bounty);
         foreach (BountyManager.BountyData? bounty in BountyManager.bounties.Values)
         {
+            bool hasReqs = bounty.HasRequirements(Player.m_localPlayer);
+            if (Configs.HideUnknownEntries && !hasReqs) continue;
             ElementView.Element item = elementView.Create();
-            bool isKnown = Player.m_localPlayer.NoCostCheat() || bounty.HasRequirements();
-            item.isKnown = isKnown;
-            if (Configs.HideUnknownEntries && !isKnown) continue;
-            item.SetName(isKnown ? bounty.character?.m_name ?? "<color=red>Invalid</color>" : "???");
+            item.isKnown = hasReqs;
+            item.SetName(hasReqs ? bounty.character?.m_name ?? "<color=red>Invalid</color>" : "???");
             item.SetDescription(bounty.GetNameOverride());
             item.SetIcon(bounty.icon);
-            item.SetIconColor(isKnown ? Color.white : Color.black);
-            item.Interactable(isKnown);
-            item.OnClick(() =>
-            {
-                elementView.SetSelected(item);
-                description.Reset();
-                description.SetName(bounty.character?.m_name ?? "<color=red>Invalid</color>");
-                description.SetIcon(bounty.icon);
-                bounty.ToEntries().Build(description.view);
-                description.view.Resize();
-                bool isActive = BountyManager.ActiveBountyLocation != null;
-                bool isCompleted = BountyManager.ActiveBountyLocation?.data.completed ?? false;
-                bool canPurchase = BountyManager.CanPurchase(Player.m_localPlayer, bounty);
-                description.Interactable(canPurchase || isActive);
-                description.SetButtonText(isActive ? isCompleted ? Keys.Collect : Keys.CancelBounty : Keys.StartBounty);
-                OnMainButton = () =>
-                {
-                    if (BountyManager.ActiveBountyLocation is {} activeBountyLocation)
-                    {
-                        if (isCompleted)
-                        {
-                            Player.m_localPlayer.AddTokens(activeBountyLocation.data.AlmanacTokenReward);
-                            activeBountyLocation.data.completed = false;
-                            BountyManager.ActiveBountyLocation = null;
-                            description.SetButtonText(Keys.StartBounty);
-                        }
-                        else
-                        {
-                            BountyManager.CancelBounty();
-                            description.SetButtonText(Keys.StartBounty);
-                        }
-                    }
-                    else
-                    {
-                        if (BountyManager.AcceptBounty(bounty))
-                        {
-                            description.SetButtonText(Keys.CancelBounty);
-                        }
-                    }
-                };
-                description.requirements.Set(bounty.Cost);
-                description.requirements.SetLevel(bounty.Level);
-                OnUpdate = _ => description.requirements.Update();
-            });
+            item.SetIconColor(hasReqs ? Color.white : Color.black);
+            item.Interactable(hasReqs);
+            item.OnClick(() => bounty.OnClick(this, item));
         }
         elementView.Resize(elementView.Count);
     }
@@ -835,65 +732,16 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         }
         foreach (TreasureManager.TreasureData? treasure in TreasureManager.treasures.Values)
         {
-            ElementView.Element item = elementView.Create();
             bool isKnown = Player.m_localPlayer.NoCostCheat() || Player.m_localPlayer.IsBiomeKnown(treasure.biome);
-            item.isKnown = isKnown;
             if (Configs.HideUnknownEntries && !isKnown) continue;
+            ElementView.Element item = elementView.Create();
+            item.isKnown = isKnown;
             item.SetName(isKnown ? treasure.Name : "???");
             item.SetIcon(treasure.icon);
             item.SetDescription(string.Empty);
             item.SetIconColor(isKnown ? Color.white : Color.black);
             item.Interactable(isKnown);
-            item.OnClick(() =>
-            {
-                elementView.SetSelected(item);
-                description.Reset();
-                description.SetName(treasure.Name);
-                description.SetIcon(treasure.icon);
-                description.Interactable(true);
-                treasure.ToEntries().Build(description.view);
-                List<InfoView.Icons.DropInfo> drops = treasure.ToDropInfo();
-                if (drops.Count > 0)
-                {
-                    if (drops.Count > 4)
-                    {
-                        IEnumerable<List<InfoView.Icons.DropInfo>> batches = treasure.ToDropInfo().Batch(4);
-                        foreach (List<InfoView.Icons.DropInfo>? batch in batches)
-                        {
-                            description.view.CreateIcons().SetIcons(batch.ToArray());
-                        }
-                    }
-                    else
-                    {
-                        description.view.CreateIcons().SetIcons(drops.ToArray());
-                    }
-                }
-                description.view.Resize();
-                bool isActive = TreasureManager.IsActive;
-                bool canPurchase = treasure.CanPurchase(Player.m_localPlayer);
-                description.SetButtonText(isActive ? Keys.CancelHunt : Keys.StartTreasureHunt);
-                description.Interactable(canPurchase || isActive);
-                OnMainButton = () =>
-                {
-                    if (isActive)
-                    {
-                        TreasureManager.CancelTreasure();
-                        description.SetButtonText(Keys.StartTreasureHunt);
-                    }
-                    else
-                    {
-                        if (TreasureManager.AcceptTreasure(treasure))
-                        {
-                            description.SetButtonText(Keys.CancelHunt);
-                        }
-                    }
-
-                    isActive = TreasureManager.IsActive;
-                };
-                description.requirements.Set(treasure.Cost);
-                description.requirements.SetLevel(string.Empty);
-                OnUpdate = _ =>  description.requirements.Update();
-            });
+            item.OnClick(() => treasure.OnClick(this, item));
         }
         elementView.Resize(elementView.Count);
     }
@@ -919,22 +767,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 item.SetName(conversion.name);
                 item.SetDescription(conversion.description);
                 item.Interactable(true);
-                item.OnClick(() =>
-                {
-                    description.Reset();
-                    description.SetName(conversion.name);
-                    description.SetIcon(conversion.icon);
-                    description.Interactable(true);
-                    conversion.ToEntries().Build(description.view);
-                    description.view.Resize();
-                    description.requirements.Set(conversion.Amount, conversion.item);
-                    description.requirements.SetLevel(string.Empty);
-                    description.SetButtonText(Keys.Convert);
-                    bool hasReqs = conversion.HasRequirements(Player.m_localPlayer);
-                    description.Interactable(hasReqs);
-                    OnMainButton = () => conversion.Purchase(Player.m_localPlayer);
-                    OnUpdate =  _ =>  description.requirements.Update();
-                });
+                item.OnClick(() => conversion.OnClick(this));
             }   
         }
 
@@ -960,22 +793,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 item.SetName(formattedName);
                 item.SetDescription(playerItem.itemData.m_shared.m_description);
                 item.Interactable(true);
-                item.OnClick(() =>
-                {
-                    elementView.SetSelected(item);
-                    description.Reset();
-                    description.SetName(formattedName);
-                    description.SetIcon(playerItem.itemData.GetIcon());
-                    bool hasReqs = playerItem.HasRequirements(Player.m_localPlayer);
-                    description.Interactable(hasReqs);
-                    description.SetButtonText(Keys.Purchase);
-                    playerItem.ToEntries().Build(description.view);
-                    description.view.Resize();
-                    OnMainButton = () => playerItem.Purchase(Player.m_localPlayer);
-                    OnUpdate = _ => description.requirements.Update();
-                    description.requirements.SetTokens(playerItem.TokenCost);
-                    description.requirements.SetLevel(playerItem.Quality);
-                });
+                item.OnClick(() => playerItem.OnClick(this, item));
             }
         }
         foreach (StoreManager.StoreItem? data in StoreManager.GetStoreItems())
@@ -989,43 +807,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             item.SetIcon(data.sprite);
             item.SetIconColor(hasReqs ? Color.white : Color.black);
             item.Interactable(hasReqs);
-            item.OnClick(() =>
-            {
-                elementView.SetSelected(item);
-                description.Reset();
-                description.SetName(data.Name);
-                description.SetIcon(data.sprite);
-                bool canPurchase = data.Cost.CanPurchase(Player.m_localPlayer);
-                description.Interactable(canPurchase);
-                data.ToEntries().Build(description.view);
-                if (data.Items.Count > 0)
-                {
-                    description.view.CreateTitle().SetTitle(Keys.Items);
-                    if (data.Items.Count > 4)
-                    {
-                        IEnumerable<List<StoreManager.StoreItem.ItemInfo>> batches = data.Items.Batch(4);
-                        foreach (List<StoreManager.StoreItem.ItemInfo>? batch in batches)
-                        {
-                            description.view.CreateIcons().SetIcons(batch.ToArray());
-                        }
-                    }
-                    else
-                    {
-                        description.view.CreateIcons().SetIcons(data.Items.ToArray());
-                    }
-                }
-                description.requirements.Set(data.Cost);
-                description.SetButtonText(Keys.Purchase);
-                OnMainButton = () =>
-                {
-                    Player.m_localPlayer.Purchase(data);
-                    canPurchase = data.Cost.CanPurchase(Player.m_localPlayer);
-                    description.Interactable(canPurchase);
-                };
-                OnUpdate = _ =>  description.requirements.Update();
-                description.view.Resize();
-                description.requirements.SetLevel(string.Empty);
-            });
+            item.OnClick(() => data.OnClick(this, item));
         }
         elementView.Resize(elementView.Count);
     }
@@ -1101,14 +883,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             item.SetDescription($"{Keys.Rank} {player.GetRank()}");
             item.SetIcon(SpriteManager.GetSprite(SpriteManager.IconOption.CrownGold));
             item.Interactable(true);
-            item.OnClick(() =>
-            {
-                elementView.SetSelected(item);
-                description.Reset();
-                description.SetName(player.PlayerName);
-                player.ToEntries().Build(description.view);
-                description.view.Resize();
-            });
+            item.OnClick(() => player.OnClick(this, item));
         }
         elementView.Resize(elementView.Count);
     }
@@ -1202,7 +977,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         public void Reset() => field.SetTextWithoutNotify(null);
     }
 
-    private class RightPanel
+    public class RightPanel
     {
         private readonly Image icon;
         private readonly Text name;
@@ -1746,7 +1521,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 }
                 public bool Contains(string query) => name.text.ToLower().Contains(query.ToLower());
             }
-
             public void SetTokens(int count)
             {
                 int max = 999;
@@ -1786,9 +1560,29 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                     else element.Hide();
                 }
             }
-            
+            public void SetIcons(params CritterHelper.CritterInfo[] characters)
+            {
+                if (instance == null) return;
+                for (int index = 0; index < elements.Count; ++index)
+                {
+                    IconElement element = elements[index];
+                    if (characters.Length > index)
+                    {
+                        CritterHelper.CritterInfo info = characters[index];
+                        bool isKnown = Player.m_localPlayer.NoCostCheat() || !Configs.UseKnowledgeWall || info.isKnown();
+                        element.SetIcon(info.trophy?.GetIcon());
+                        element.SetName(info.character.m_name);
+                        element.SetAmount(string.Empty);
+                        element.SetIconColor(isKnown ? Color.white : Color.black);
+                        element.Interactable(isKnown);
+                        element.OnClick(() => info.OnClick(instance, null));
+                    }
+                    else element.Hide();
+                }
+            }
             public void SetIcons(params PieceHelper.PieceInfo[] pieces)
             {
+                if (instance == null) return;
                 for (int index = 0; index < elements.Count; index++)
                 {
                     IconElement element = elements[index];
@@ -1800,24 +1594,8 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                         element.SetName(isKnown ? info.piece.m_name : "???");
                         element.SetAmount(string.Empty);
                         element.SetIconColor(isKnown ? Color.white : Color.black);
-                        if (isKnown)
-                        {
-                            element.Interactable(true);
-                            element.OnClick(() =>
-                            {
-                                if (instance == null) return;
-                                instance.sideSearch.Reset();
-                                instance.OnUpdate = null;
-                                instance.OnMainButton = null;
-                                instance.description.Reset();
-                                instance.description.SetName(info.piece.m_name);
-                                instance.description.SetIcon(info.piece.m_icon);
-                                instance.description.Interactable(false);
-                                info.ToEntries().Build(instance.description.view);
-                                instance.description.view.Resize();
-                                instance.description.requirements.Set(info.piece.m_resources);
-                            });
-                        }
+                        element.Interactable(isKnown);
+                        element.OnClick(() => info.OnClick(instance, null));
                     }
                     else
                     {
@@ -1825,9 +1603,9 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                     }
                 }
             }
-
             public void SetIcons(params Recipe[] recipes)
             {
+                if (instance == null) return;
                 for (int index = 0; index < elements.Count; index++)
                 {
                     IconElement element = elements[index];
@@ -1835,52 +1613,20 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                     {
                         Recipe recipe = recipes[index];
                         ItemDrop item = recipe.m_item;
-                        ItemHelper.ItemInfo? info = item.GetInfo();
+                        if (item.GetInfo() is not { } info)
+                        {
+                            element.Hide();
+                            continue;
+                        }
                         bool isKnown = Player.m_localPlayer.NoCostCheat() ||
                                        Player.m_localPlayer.IsKnownMaterial(item.m_itemData.m_shared.m_name);
-                        element.SetIcon(info?.GetIcon());
-                        element.SetName(isKnown ? info?.itemData.m_shared.m_name ?? string.Empty : "???");
+                        element.SetIcon(info.GetIcon());
+                        element.SetName(isKnown ? info.itemData.m_shared.m_name ?? string.Empty : "???");
                         if (recipe.m_amount > 1) element.SetAmount(recipe.m_amount);
                         else element.SetAmount(string.Empty);
                         element.SetIconColor(isKnown ? Color.white : Color.black);
-                        if (isKnown)
-                        {
-                            element.Interactable(true);
-                            element.OnClick(() =>
-                            {
-                                if (instance == null) return;
-                                instance.sideSearch.Reset();
-                                instance.OnUpdate = null;
-                                instance.OnMainButton = null;
-                                instance.description.Reset();
-                                instance.description.SetName(item.m_itemData.m_shared.m_name);
-                                instance.description.SetIcon(info?.GetIcon());
-                                if (isLocalAdminOrHostAndNoCost)
-                                {
-                                    instance.description.Interactable(true);
-                                    instance.description.SetButtonText(Keys.Spawn);
-                                    instance.OnMainButton = () =>
-                                    {
-                                        if (info == null) return;
-                                        GameObject go = Instantiate(info.Value.prefab, Player.m_localPlayer.transform.position, Quaternion.identity);
-                                        go.GetComponent<ItemDrop>().m_itemData.m_worldLevel = Game.m_worldLevel;
-                                    };
-                                }
-                                instance.description.view.CreateTextArea().SetText((info?.shared.m_description ?? string.Empty) + "\n\n");
-                                if (info?.itemData.IsPartOfSet() ?? false)
-                                {
-                                    instance.description.view.CreateTitle().SetTitle($"{info?.shared.m_setName} ({info?.shared.m_setSize})");
-                                    instance.description.view.CreateIcons().SetIcons(info?.setItems.ToArray() ?? Array.Empty<ItemDrop>());
-                                }
-                                info?.ToEntries().Build(instance.description.view);
-                                instance.description.view.Resize();
-                                if (info?.recipe is {} itemRecipe)
-                                {
-                                    instance.description.requirements.Set(itemRecipe);
-                                    instance.OnUpdate = _ => instance.description.requirements.Update();
-                                }
-                            });
-                        }
+                        element.Interactable(isKnown);
+                        element.OnClick(() => info.OnClick(instance, null));
                     }
                     else
                     {
@@ -1890,56 +1636,25 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             }
             public void SetIcons(params DropInfo[] infos)
             {
+                if (instance == null) return;
                 for (int index = 0; index < elements.Count; index++)
                 {
                     IconElement element = elements[index];
                     if (infos.Length > index)
                     {
                         DropInfo info = infos[index];
+                        if (info.item.GetInfo() is not { } itemInfo)
+                        {
+                            element.Hide();
+                            continue;
+                        }
                         bool isKnown = Player.m_localPlayer.IsMaterialKnown(info.item.m_shared.m_name) || Player.m_localPlayer.NoCostCheat();
                         element.SetIcon(info.item.GetIcon());
                         element.SetName(isKnown ? info.item.m_shared.m_name : string.Empty);
                         element.SetAmount(isKnown ? $"{info.min}-{info.max} ({info.chance * 100}%)" : string.Empty);
                         element.SetIconColor(isKnown ? Color.white : Color.black);
-                        
-                        if (isKnown)
-                        {
-                            element.Interactable(true);
-                            element.OnClick(() =>
-                            {
-                                if (instance == null) return;
-                                if (info.item.GetInfo() is not { } itemInfo) return;
-                                instance.sideSearch.Reset();
-                                instance.OnUpdate = null;
-                                instance.OnMainButton = null;
-                                instance.description.Reset();
-                                instance.description.SetName(info.item.m_shared.m_name);
-                                instance.description.SetIcon(info.item.GetIcon());
-                                if (isLocalAdminOrHostAndNoCost)
-                                {
-                                    instance.description.Interactable(true);
-                                    instance.description.SetButtonText(Keys.Spawn);
-                                    instance.OnMainButton = () =>
-                                    {
-                                        GameObject go = Instantiate(itemInfo.prefab, Player.m_localPlayer.transform.position, Quaternion.identity);
-                                        go.GetComponent<ItemDrop>().m_itemData.m_worldLevel = Game.m_worldLevel;
-                                    };
-                                }
-                                instance.description.view.CreateTextArea().SetText((info.item.m_shared.m_description ?? string.Empty) + "\n\n");
-                                if (info.item.IsPartOfSet())
-                                {
-                                    instance.description.view.CreateTitle().SetTitle($"{info.item.m_shared.m_setName} ({info.item.m_shared.m_setSize})");
-                                    instance.description.view.CreateIcons().SetIcons(info.item.GetSet().ToArray());
-                                }
-                                itemInfo.ToEntries().Build(instance.description.view);
-                                instance.description.view.Resize();
-                                if (itemInfo.recipe is {} recipe)
-                                {
-                                    instance.description.requirements.Set(recipe);
-                                    instance.OnUpdate = _ => instance.description.requirements.Update();
-                                }
-                            });
-                        }
+                        element.Interactable(isKnown);
+                        element.OnClick(() => itemInfo.OnClick(instance, null));
                     }
                     else
                     {
@@ -1947,59 +1662,50 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                     }
                 }
             }
+
+            public void SetIcons(params ItemHelper.ItemInfo[] infos)
+            {
+                if (instance == null) return;
+                for (int index = 0; index < elements.Count; index++)
+                {
+                    IconElement element = elements[index];
+                    if (infos.Length > index)
+                    {
+                        ItemHelper.ItemInfo info = infos[index];
+                        bool isKnown = Player.m_localPlayer.NoCostCheat() ||
+                                       Player.m_localPlayer.IsKnownMaterial(info.itemData.m_shared.m_name);
+                        element.SetIcon(info.GetIcon());
+                        element.SetName(isKnown ? info.itemData.m_shared.m_name ?? string.Empty : "???");
+                        element.SetAmount(string.Empty);
+                        element.SetIconColor(isKnown ? Color.white : Color.black);
+                        element.Interactable(isKnown);
+                        element.OnClick(() => info.OnClick(instance, null));
+                    }
+                    else element.Hide();
+                }
+            }
             public void SetIcons(params ItemDrop[] itemDrops)
             {
+                if (instance == null) return;
                 for (int index = 0; index < elements.Count; index++)
                 {
                     IconElement element = elements[index];
                     if (itemDrops.Length > index)
                     {
                         ItemDrop item = itemDrops[index];
-                        ItemHelper.ItemInfo? info = item.GetInfo();
+                        if (item.GetInfo() is not { } info)
+                        {
+                            element.Hide();
+                            continue;
+                        }
                         bool isKnown = Player.m_localPlayer.NoCostCheat() ||
                                        Player.m_localPlayer.IsKnownMaterial(item.m_itemData.m_shared.m_name);
-                        element.SetIcon(info?.GetIcon());
-                        element.SetName(isKnown ? info?.itemData.m_shared.m_name ?? string.Empty : "???");
+                        element.SetIcon(info.GetIcon());
+                        element.SetName(isKnown ? info.itemData.m_shared.m_name ?? string.Empty : "???");
                         element.SetAmount(string.Empty);
                         element.SetIconColor(isKnown ? Color.white : Color.black);
-                        if (isKnown)
-                        {
-                            element.Interactable(true);
-                            element.OnClick(() =>
-                            {
-                                if (instance == null) return;
-                                instance.sideSearch.Reset();
-                                instance.OnUpdate = null;
-                                instance.OnMainButton = null;
-                                instance.description.Reset();
-                                instance.description.SetName(item.m_itemData.m_shared.m_name);
-                                instance.description.SetIcon(info?.GetIcon());
-                                if (isLocalAdminOrHostAndNoCost)
-                                {
-                                    instance.description.Interactable(true);
-                                    instance.description.SetButtonText(Keys.Spawn);
-                                    instance.OnMainButton = () =>
-                                    {
-                                        if (info == null) return;
-                                        GameObject go = Instantiate(info.Value.prefab, Player.m_localPlayer.transform.position, Quaternion.identity);
-                                        go.GetComponent<ItemDrop>().m_itemData.m_worldLevel = Game.m_worldLevel;
-                                    };
-                                }
-                                instance.description.view.CreateTextArea().SetText((info?.shared.m_description ?? string.Empty) + "\n\n");
-                                if (info?.itemData.IsPartOfSet() ?? false)
-                                {
-                                    instance.description.view.CreateTitle().SetTitle($"{info?.shared.m_setName} ({info?.shared.m_setSize})");
-                                    instance.description.view.CreateIcons().SetIcons(info?.setItems.ToArray() ?? Array.Empty<ItemDrop>());
-                                }
-                                info?.ToEntries().Build(instance.description.view);
-                                instance.description.view.Resize();
-                                if (info?.recipe is {} recipe)
-                                {
-                                    instance.description.requirements.Set(recipe);
-                                    instance.OnUpdate = _ => instance.description.requirements.Update();
-                                }
-                            });
-                        }
+                        element.Interactable(isKnown);
+                        element.OnClick(() => info.OnClick(instance, null));
                     }
                     else
                     {
@@ -2111,12 +1817,9 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             private static float GetTextPreferredHeight(Text text, RectTransform rect)
             {
                 if (string.IsNullOrEmpty(text.text)) return 0f;
-        
                 TextGenerator textGen = text.cachedTextGenerator;
-        
-                var settings = text.GetGenerationSettings(rect.rect.size);
+                TextGenerationSettings settings = text.GetGenerationSettings(rect.rect.size);
                 float preferredHeight = textGen.GetPreferredHeight(text.text, settings);
-        
                 return preferredHeight;
             }
             public override bool Contains(string query) => area.text.ToLower().Contains(query.ToLower());
@@ -2153,7 +1856,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             public void Destroy() => Object.Destroy(prefab);
         }
     }
-    private class RequirementView
+    public class RequirementView
     {
         private readonly GameObject prefab;
         private readonly List<RequirementItem> items = new();

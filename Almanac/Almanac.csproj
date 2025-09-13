@@ -97,6 +97,9 @@
         <Reference Include="UnityEngine">
             <HintPath>$(CorlibPath)\UnityEngine.dll</HintPath>
         </Reference>
+        <Reference Include="UnityEngine.AnimationModule">
+          <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Valheim\valheim_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
+        </Reference>
         <Reference Include="UnityEngine.AssetBundleModule">
             <HintPath>$(CorlibPath)\UnityEngine.AssetBundleModule.dll</HintPath>
         </Reference>
@@ -134,6 +137,7 @@
         <Compile Include="Bounties\Bounty.cs" />
         <Compile Include="Bounties\BountyManager.cs" />
         <Compile Include="Bounties\NameGenerator.cs" />
+        <Compile Include="Data\ModHelper.cs" />
         <Compile Include="Data\PieceHelper.cs" />
         <Compile Include="Data\CritterHelper.cs" />
         <Compile Include="Data\ItemHelper.cs" />
@@ -148,15 +152,25 @@
         <Compile Include="Managers\SpriteManager.cs" />
         <Compile Include="Marketplace\JewelCraft.cs" />
         <Compile Include="Marketplace\MarketManager.cs" />
+        <Compile Include="NPC\Clone.cs" />
+        <Compile Include="NPC\NPC.cs" />
+        <Compile Include="NPC\VikingNameGenerator.cs" />
+        <Compile Include="NPC\NPCTalk.cs" />
+        <Compile Include="NPC\PieceManager.cs" />
+        <Compile Include="NPC\PrefabManager.cs" />
+        <Compile Include="NPC\DialogueManager.cs" />
+        <Compile Include="NPC\RandomTalkManager.cs" />
         <Compile Include="Plugin.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="Store\StatusEffectManager.cs" />
         <Compile Include="Store\StoreManager.cs" />
         <Compile Include="TreasureHunt\TreasureHunt.cs" />
         <Compile Include="TreasureHunt\TreasureManager.cs" />
+        <Compile Include="Tutorials\Tutorial.cs" />
         <Compile Include="UI\AlmanacPanel.cs" />
-        <Compile Include="UI\Info.cs" />
+        <Compile Include="UI\DialoguePanel.cs" />
         <Compile Include="UI\Modal.cs" />
+        <Compile Include="UI\NPCCustomization.cs" />
         <Compile Include="Utilities\AlmanacDir.cs" />
         <Compile Include="Utilities\Entries.cs" />
         <Compile Include="Utilities\Filters.cs" />
@@ -173,6 +187,10 @@
         <EmbeddedResource Include="assets\almanac_ui" />
         <Content Include="assets\almanac_ui.manifest" />
         <Content Include="assets\almanac_ui.unitypackage" />
+        <EmbeddedResource Include="assets\npc_ui" />
+        <EmbeddedResource Include="assets\npc_dialogue" />
+        <Content Include="assets\npc_dialogue.manifest" />
+        <Content Include="assets\npc_ui.manifest" />
         <Content Include="environment.props" />
         <EmbeddedResource Include="icons\AlmanacIconButton.png" />
         <EmbeddedResource Include="icons\arrow_basic.png" />
@@ -203,9 +221,6 @@
         <EmbeddedResource Include="icons\wood_logs_three.png" />
         <Content Include="ILRepack.targets" />
         <Content Include="Libs\GroupsAPI.dll" />
-        <Content Include="Libs\LocalizationManager.dll">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
         <Content Include="Thunderstore\Almanac.dll" />
         <Content Include="Thunderstore\CHANGELOG.md" />
         <Content Include="Thunderstore\manifest.json" />

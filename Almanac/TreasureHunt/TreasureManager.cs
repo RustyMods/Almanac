@@ -26,11 +26,14 @@ public class TreasureManager : MonoBehaviour
     public static Dictionary<string, TreasureData> treasures = new();
     private static readonly Dictionary<string, TreasureData> fileTreasures = new();
     public static TreasureLocation? ActiveTreasureLocation;
+    public static readonly AlmanacDir TreasureDir = new (AlmanacPlugin.AlmanacDir.Path, "Treasures");
+
     public static bool IsActive => ActiveTreasureLocation != null;
     private static readonly CustomSyncedValue<string> SyncedTreasures = new(AlmanacPlugin.ConfigSync, "ServerSynced_Almanac_Treasures", "");
     public static readonly ISerializer serializer = new SerializerBuilder().ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitNull).Build();
     private static readonly IDeserializer deserializer = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
 
+    public static bool TryGetTreasure(string id, out TreasureData treasure) => treasures.TryGetValue(id, out treasure);
     public static TreasureManager? instance;
     public void Awake()
     {
@@ -64,14 +67,14 @@ public class TreasureManager : MonoBehaviour
     {
         AlmanacPlugin.instance.gameObject.AddComponent<TreasureManager>();
         LoadDefaults();
-        string[] files = AlmanacPlugin.TreasureDir.GetFiles("*.yml");
+        string[] files = TreasureDir.GetFiles("*.yml", true);
         if (files.Length == 0)
         {
             foreach (TreasureData? treasure in treasures.Values)
             {
                 string fileName = treasure.Name + ".yml";
                 string data = serializer.Serialize(treasure);
-                var path = AlmanacPlugin.TreasureDir.WriteFile(fileName, data);
+                var path = TreasureDir.WriteFile(fileName, data);
                 fileTreasures[path] = treasure;
             }
         }
@@ -94,10 +97,11 @@ public class TreasureManager : MonoBehaviour
         }
 
         SyncedTreasures.ValueChanged += OnServerTreasureChange;
-        FileSystemWatcher watcher = new FileSystemWatcher(AlmanacPlugin.TreasureDir.Path, "*.yml");
+        FileSystemWatcher watcher = new FileSystemWatcher(TreasureDir.Path, "*.yml");
         watcher.EnableRaisingEvents = true;
         watcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
         watcher.NotifyFilter = NotifyFilters.LastWrite;
+        watcher.IncludeSubdirectories = true;
         watcher.Created += OnCreated;
         watcher.Changed += OnChange;
         watcher.Deleted += OnDeleted;
@@ -497,6 +501,57 @@ public class TreasureManager : MonoBehaviour
                     player.GetInventory().RemoveItem(item.item?.m_itemData.m_shared.m_name ?? "$item_coins", item.Amount);
                 }
             }
+        }
+
+        public void OnClick(AlmanacPanel panel, AlmanacPanel.ElementView.Element item)
+        {
+            panel.elementView.SetSelected(item);
+            panel.description.Reset();
+            panel.description.SetName(Name);
+            panel.description.SetIcon(icon);
+            panel.description.Interactable(true);
+            ToEntries().Build(panel.description.view);
+            List<AlmanacPanel.InfoView.Icons.DropInfo> drops = ToDropInfo();
+            if (drops.Count > 0)
+            {
+                if (drops.Count > 4)
+                {
+                    IEnumerable<List<AlmanacPanel.InfoView.Icons.DropInfo>> batches = ToDropInfo().Batch(4);
+                    foreach (List<AlmanacPanel.InfoView.Icons.DropInfo>? batch in batches)
+                    {
+                        panel.description.view.CreateIcons().SetIcons(batch.ToArray());
+                    }
+                }
+                else
+                {
+                    panel.description.view.CreateIcons().SetIcons(drops.ToArray());
+                }
+            }
+            panel.description.view.Resize();
+            bool isActive = IsActive;
+            bool canPurchase = CanPurchase(Player.m_localPlayer);
+            panel.description.SetButtonText(isActive ? Keys.CancelHunt : Keys.StartTreasureHunt);
+            panel.description.Interactable(canPurchase || isActive);
+            panel.OnMainButton = () =>
+            {
+                if (isActive)
+                {
+                    CancelTreasure();
+                    panel.description.SetButtonText(Keys.StartTreasureHunt);
+                }
+                else
+                {
+                    if (AcceptTreasure(this))
+                    {
+                        panel.description.SetButtonText(Keys.CancelHunt);
+                    }
+                }
+                isActive = IsActive;
+                canPurchase = CanPurchase(Player.m_localPlayer);
+            };
+            panel.description.requirements.Set(Cost);
+            panel.description.requirements.SetLevel(string.Empty);
+            panel.OnUpdate = _ =>  panel.description.requirements.Update();
         }
     }
 

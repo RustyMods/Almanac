@@ -14,6 +14,8 @@ public static class CreatureGroup
     private static readonly ISerializer serializer = new SerializerBuilder().Build();
     private static readonly IDeserializer deserializer = new DeserializerBuilder().Build();
     private static readonly CustomSyncedValue<string> SyncedCreatureGroups = new(AlmanacPlugin.ConfigSync, "Almanac_Synced_Creature_Groups", "");
+    public static readonly AlmanacDir CreatureDir = new (AlmanacPlugin.AlmanacDir.Path, "CreatureGroups"); 
+
     private static readonly Dictionary<string, List<string>> groups = new();
     public static int GetProgress(string group, int threshold)
     {
@@ -33,11 +35,11 @@ public static class CreatureGroup
     {
         AlmanacPlugin.OnZNetAwake += UpdateSyncedGroups;
         LoadDefaults();
-        string[] files = AlmanacPlugin.CreatureDir.GetFiles("*.yml");
+        string[] files = CreatureDir.GetFiles("*.yml", true);
         if (files.Length == 0)
         {
             string data = serializer.Serialize(groups);
-            AlmanacPlugin.CreatureDir.WriteFile("Creatures.yml", data);
+            CreatureDir.WriteFile("Creatures.yml", data);
         }
         else
         {
@@ -50,7 +52,7 @@ public static class CreatureGroup
         }
 
         SyncedCreatureGroups.ValueChanged += OnSyncedGroupsChange;
-        FileSystemWatcher watcher = new FileSystemWatcher(AlmanacPlugin.CreatureDir.Path, "*.yml");
+        FileSystemWatcher watcher = new FileSystemWatcher(CreatureDir.Path, "*.yml");
         watcher.EnableRaisingEvents = true;
         watcher.IncludeSubdirectories = true;
         watcher.NotifyFilter = NotifyFilters.LastWrite;

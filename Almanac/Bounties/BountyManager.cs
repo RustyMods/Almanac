@@ -22,6 +22,7 @@ public class BountyManager : MonoBehaviour
     public static readonly ISerializer serializer = new SerializerBuilder().ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitNull).Build();
     private static readonly IDeserializer deserializer = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
     private static readonly CustomSyncedValue<string> SyncedBounties = new(AlmanacPlugin.ConfigSync, "ServerSynced_Almanac_Bounties", "");
+    public static readonly AlmanacDir BountyDir = new (AlmanacPlugin.AlmanacDir.Path, "Bounties");
     public static readonly Dictionary<string, BountyData> bounties = new();
     private static Dictionary<string, BountyData> fileBounties = new();
     public static BountyLocation? ActiveBountyLocation;
@@ -33,6 +34,8 @@ public class BountyManager : MonoBehaviour
     private const int solidHeightMargin = 1000;
     private const float spawnOffset = 5f;
     private static DateTime datetime = DateTime.MaxValue;
+    
+    public static bool TryGetBountyData(string id, out BountyData data) => bounties.TryGetValue(id, out data); 
     public void Awake()
     {
         instance = this;
@@ -76,7 +79,7 @@ public class BountyManager : MonoBehaviour
         go.AddComponent<Bounty>();
         SpawnEffects.Create(go.transform.position, Quaternion.identity);
     }
-    private static bool IsOnCooldown()
+    public static bool IsOnCooldown()
     {
         int cooldownDuration = Configs.BountyCooldown;
         if (cooldownDuration <= 0f) return false;
@@ -95,6 +98,10 @@ public class BountyManager : MonoBehaviour
         Purchase(Player.m_localPlayer, data);
         bountyLocation.AddPin();
         ActiveBountyLocation = bountyLocation;
+        if (string.IsNullOrEmpty(bountyLocation.data.Name))
+        {
+            bountyLocation.data.Name = NameGenerator.GenerateName(bountyLocation.data.character?.m_name ?? bountyLocation.data.Creature);
+        }
         Player.m_localPlayer.Message(MessageHud.MessageType.Center, Keys.Hunt + " " + bountyLocation.data.Name);
         datetime = DateTime.Now;
         AlmanacPlugin.AlmanacLogger.LogDebug("Successfully added bounty: " + bountyLocation.data.GetNameOverride());
@@ -118,7 +125,7 @@ public class BountyManager : MonoBehaviour
 
         return true;
     }
-    private static void Purchase(Player player, BountyData data)
+    public static void Purchase(Player player, BountyData data)
     {
         if (player.NoCostCheat()) return;
         foreach (StoreManager.StoreCost.Cost? item in data.Cost.Items)
@@ -167,14 +174,14 @@ public class BountyManager : MonoBehaviour
         AlmanacPlugin.OnZNetAwake += UpdateServerBounties;
         AlmanacPlugin.OnZNetSceneAwake += OnZNetSceneAwake;
         LoadDefaults();
-        string[] files = AlmanacPlugin.BountyDir.GetFiles("*.yml");
+        string[] files = BountyDir.GetFiles("*.yml", true);
         if (files.Length <= 0)
         {
             foreach (BountyData? bounty in bounties.Values)
             {
                 string data = serializer.Serialize(bounty);
                 string fileName = bounty.UniqueID + ".yml";
-                string path = AlmanacPlugin.BountyDir.WriteFile(fileName, data);
+                string path = BountyDir.WriteFile(fileName, data);
                 fileBounties[path] = bounty;
             }
         }
@@ -191,10 +198,11 @@ public class BountyManager : MonoBehaviour
         }
 
         SyncedBounties.ValueChanged += OnServerBountyChanged;
-        FileSystemWatcher watcher = new FileSystemWatcher(AlmanacPlugin.BountyDir.Path, "*.yml");
+        FileSystemWatcher watcher = new FileSystemWatcher(BountyDir.Path, "*.yml");
         watcher.EnableRaisingEvents = true;
         watcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
         watcher.NotifyFilter = NotifyFilters.LastWrite;
+        watcher.IncludeSubdirectories = true;
         watcher.Created += OnCreated;
         watcher.Changed += OnChange;
         watcher.Deleted += OnDeleted;
@@ -508,8 +516,7 @@ public class BountyManager : MonoBehaviour
             }
             return builder.ToList();
         }
-        public bool HasRequirements() =>
-            PlayerInfo.GetPlayerStat(PlayerInfo.RecordType.Kill, character?.m_name ?? string.Empty) > 0;
+        public bool HasRequirements(Player player) => player.NoCostCheat() || PlayerInfo.GetPlayerStat(PlayerInfo.RecordType.Kill, character?.m_name ?? string.Empty) > 0;
         [NonSerialized, YamlIgnore] public bool completed;
         [YamlIgnore] public Heightmap.Biome biome => Enum.TryParse(Biome, true, out Heightmap.Biome land) ? land : Heightmap.Biome.None;
         [YamlIgnore] private GameObject? _prefab;
@@ -545,6 +552,48 @@ public class BountyManager : MonoBehaviour
                 if (cost.isToken) player.AddTokens(cost.Amount);
                 else player.GetInventory().AddItem(cost.PrefabName, cost.Amount, 1, 0, 0L, string.Empty);
             }
+        }
+
+        public void OnClick(AlmanacPanel panel, AlmanacPanel.ElementView.Element item)
+        {
+            panel.elementView.SetSelected(item);
+            panel.description.Reset();
+            panel.description.SetName(character?.m_name ?? "<color=red>Invalid</color>");
+            panel.description.SetIcon(icon);
+            ToEntries().Build(panel.description.view);
+            panel.description.view.Resize();
+            bool isActive = ActiveBountyLocation != null;
+            bool isCompleted = ActiveBountyLocation?.data.completed ?? false;
+            bool canPurchase = CanPurchase(Player.m_localPlayer, this);
+            panel.description.Interactable(canPurchase || isActive);
+            panel.description.SetButtonText(isActive ? isCompleted ? Keys.Collect : Keys.CancelBounty : Keys.StartBounty);
+            panel.OnMainButton = () =>
+            {
+                if (ActiveBountyLocation is {} activeBountyLocation)
+                {
+                    if (isCompleted)
+                    {
+                        Player.m_localPlayer.AddTokens(activeBountyLocation.data.AlmanacTokenReward);
+                        activeBountyLocation.data.completed = false;
+                        ActiveBountyLocation = null;
+                    }
+                    else
+                    {
+                        CancelBounty();
+                    }
+                    panel.description.SetButtonText(Keys.StartBounty);
+                }
+                else
+                {
+                    if (AcceptBounty(this))
+                    {
+                        panel.description.SetButtonText(Keys.CancelBounty);
+                    }
+                }
+            };
+            panel.description.requirements.Set(Cost);
+            panel.description.requirements.SetLevel(Level);
+            panel.OnUpdate = _ => panel.description.requirements.Update();
         }
     }
 

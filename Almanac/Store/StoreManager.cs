@@ -25,6 +25,8 @@ public static class StoreManager
     private static readonly IDeserializer deserializer = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
     private static readonly CustomSyncedValue<string> SyncedStore = new (AlmanacPlugin.ConfigSync, "ServerSynced_Almanac_Store", "");
     public const string STORE_TOKEN = "AlmanacToken";
+    public static readonly AlmanacDir StoreDir = new (AlmanacPlugin.AlmanacDir.Path, "Store");
+
     public static bool Exists(string name) => items.ContainsKey(name);
     public static List<StoreItem> GetStoreItems() => items.Values.ToList();
     public static void Setup()
@@ -32,14 +34,14 @@ public static class StoreManager
         AlmanacPlugin.OnPlayerProfileSavePlayerDataPrefix += player => player.SaveTokens();
         AlmanacPlugin.OnZNetAwake += UpdateServerStore;
         LoadDefaults();
-        string[] files = AlmanacPlugin.StoreDir.GetFiles("*.yml");
+        string[] files = StoreDir.GetFiles("*.yml", true);
         if (files.Length <= 0)
         {
             foreach (StoreItem? item in items.Values)
             {
                 string data = serializer.Serialize(item);
                 string fileName = item.Name + ".yml";
-                var path = AlmanacPlugin.StoreDir.WriteFile(fileName, data);
+                var path = StoreDir.WriteFile(fileName, data);
                 fileItems[path] = item;
             }
         }
@@ -56,10 +58,11 @@ public static class StoreManager
         }
 
         SyncedStore.ValueChanged += OnServerStoreChanged;
-        FileSystemWatcher watcher = new FileSystemWatcher(AlmanacPlugin.StoreDir.Path, "*.yml");
+        FileSystemWatcher watcher = new FileSystemWatcher(StoreDir.Path, "*.yml");
         watcher.EnableRaisingEvents = true;
         watcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
         watcher.NotifyFilter = NotifyFilters.LastWrite;
+        watcher.IncludeSubdirectories = true;
         watcher.Created += OnCreated;
         watcher.Changed += OnChanged;
         watcher.Deleted += OnDeleted;
@@ -315,6 +318,23 @@ public static class StoreManager
             builder.Add($"{item.m_itemData.m_shared.m_name} x{Amount}", $"{Keys.AlmanacToken} x{TokenAmount}");
             return builder.ToList();
         }
+
+        public void OnClick(AlmanacPanel panel)
+        {
+            panel.description.Reset();
+            panel.description.SetName(name);
+            panel.description.SetIcon(icon);
+            panel.description.Interactable(true);
+            ToEntries().Build(panel.description.view);
+            panel.description.view.Resize();
+            panel.description.requirements.Set(Amount, item);
+            panel.description.requirements.SetLevel(string.Empty);
+            panel.description.SetButtonText(Keys.Convert);
+            bool hasReqs = HasRequirements(Player.m_localPlayer);
+            panel.description.Interactable(hasReqs);
+            panel.OnMainButton = () => Purchase(Player.m_localPlayer);
+            panel.OnUpdate =  _ =>  panel.description.requirements.Update();
+        }
     }
 
     [Serializable]
@@ -359,6 +379,45 @@ public static class StoreManager
             }
             return builder.ToList();
         }
+
+        public void OnClick(AlmanacPanel panel, AlmanacPanel.ElementView.Element item)
+        {
+            panel.elementView.SetSelected(item);
+            panel.description.Reset();
+            panel.description.SetName(Name);
+            panel.description.SetIcon(sprite);
+            bool canPurchase = Cost.CanPurchase(Player.m_localPlayer);
+            panel.description.Interactable(canPurchase);
+            ToEntries().Build(panel.description.view);
+            if (Items.Count > 0)
+            {
+                panel.description.view.CreateTitle().SetTitle(Keys.Items);
+                if (Items.Count > 4)
+                {
+                    IEnumerable<List<ItemInfo>> batches = Items.Batch(4);
+                    foreach (List<ItemInfo> batch in batches)
+                    {
+                        panel.description.view.CreateIcons().SetIcons(batch.ToArray());
+                    }
+                }
+                else
+                {
+                    panel.description.view.CreateIcons().SetIcons(Items.ToArray());
+                }
+            }
+            panel.description.requirements.Set(Cost);
+            panel.description.SetButtonText(Keys.Purchase);
+            panel.OnMainButton = () =>
+            {
+                Player.m_localPlayer.Purchase(this);
+                canPurchase = Cost.CanPurchase(Player.m_localPlayer);
+                panel.description.Interactable(canPurchase);
+            };
+            panel.OnUpdate = _ =>  panel.description.requirements.Update();
+            panel.description.view.Resize();
+            panel.description.requirements.SetLevel(string.Empty);
+        }
+        
         [Serializable]
         public class StatusEffectData
         {
@@ -375,7 +434,13 @@ public static class StoreManager
 
             public bool Add(Player player)
             {
-                if (player.GetSEMan().AddStatusEffect(ID.GetStableHashCode()) is not { } se) return false;
+                if (player.GetSEMan().GetStatusEffect(ID.GetStableHashCode()) is { } status)
+                {
+                    status.m_ttl = GetDuration(status.m_ttl);
+                    status.m_time = 0f;
+                    return true;
+                }
+                if (player.GetSEMan().AddStatusEffect(ID.GetStableHashCode(), true) is not { } se) return false;
                 se.m_ttl = GetDuration(se.m_ttl);
                 return true;
             }

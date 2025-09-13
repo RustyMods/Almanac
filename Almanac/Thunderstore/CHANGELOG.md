@@ -1,3 +1,18 @@
+# 3.5.15
+- YAML is now an external dependency: https://thunderstore.io/c/valheim/p/ValheimModding/YamlDotNet/
+- Fixed leaderboard get rank method dividing by zero when player has never died
+- Fixed store status effect purchase not resetting timer
+- New feature: Placeable NPC (alpha) [admin only]
+- All tabs are configurable, so you can use NPC to access almanac instead of normal button
+- Main button (that replaced trophy button) can be disabled
+- Releasing NPC (alpha) early due to some errors that needs to be addressed
+
+# 3.5.14
+- Added Icons folder to register custom icons
+- Improved descriptions baits, dropped by, used by to use interactable icons
+- Added filters server sync
+- Fixed almanac data copying previous loaded character onto new one
+
 # 3.5.13
 - Fixed treasure not consuming cost when purchased
 - Fixed bounties not consuming cost when purchased

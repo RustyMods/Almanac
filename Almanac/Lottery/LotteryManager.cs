@@ -14,6 +14,7 @@ public static class LotteryManager
     private static string? LotteryFileName;
     private static readonly CustomSyncedValue<string> SyncedLottery = new(AlmanacPlugin.ConfigSync, "Almanac_Server_Synced_Lottery", "");
     public static int LotteryTotal = 10;
+    public static readonly AlmanacDir LotteryDir = new (AlmanacPlugin.AlmanacDir.Path, "Lotteries");
     public static void Setup()
     {
         AlmanacPlugin.OnZNetAwake += Initialize;
@@ -51,7 +52,7 @@ public static class LotteryManager
     {
         if (!ZNet.instance || !ZNet.instance.IsServer() || LotteryFileName == null) return;
         byte[] compressedData = CompressAndEncode(LotteryTotal.ToString());
-        AlmanacPlugin.LotteryDir.WriteAllBytes(LotteryFileName, compressedData);
+        LotteryDir.WriteAllBytes(LotteryFileName, compressedData);
     }
     
     private static byte[] CompressAndEncode(string text)

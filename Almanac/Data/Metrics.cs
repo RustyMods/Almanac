@@ -15,10 +15,11 @@ public static class PlayerExtensions
     private static readonly ISerializer serializer = new SerializerBuilder().Build();
     private static readonly IDeserializer deserializer = new DeserializerBuilder().Build();
 
-    public static PlayerInfo.PlayerRecords? GetRecords(this Player player)
+    public static PlayerInfo.PlayerRecords GetRecords(this Player player)
     {
         try
         {
+            if (!player.m_customData.ContainsKey(PlayerInfo.ALMANAC_PLAYER_RECORDS)) return new PlayerInfo.PlayerRecords();
             return player.m_customData.TryGetValue(PlayerInfo.ALMANAC_PLAYER_RECORDS, out string value)
                 ? deserializer.Deserialize<PlayerInfo.PlayerRecords>(value)
                 : new PlayerInfo.PlayerRecords();
@@ -26,7 +27,7 @@ public static class PlayerExtensions
         catch
         {
             player.m_customData.Remove(PlayerInfo.ALMANAC_PLAYER_RECORDS);
-            return null;
+            return new PlayerInfo.PlayerRecords();
         }
     }
     public static void Save(this PlayerInfo.PlayerRecords records, Player player)
@@ -41,7 +42,7 @@ public static class PlayerExtensions
     public static int GetKnownAxes(this Player player) => ItemHelper.axes.FindAll(axe => player.IsKnownMaterial(axe.shared.m_name)).Count;
     public static int GetKnownPolearms(this Player player)  => ItemHelper.polearms.FindAll(polearm => player.IsKnownMaterial(polearm.shared.m_name)).Count;
     public static int GetKnownSpears(this Player player) => ItemHelper.spears.FindAll(spear => player.IsKnownMaterial(spear.shared.m_name)).Count;
-    public static int GetKnownKnives(this Player player) => ItemHelper.knives.FindAll(knive => player.IsKnownMaterial(knive.shared.m_name)).Count;
+    public static int GetKnownKnives(this Player player) => ItemHelper.knives.FindAll(knife => player.IsKnownMaterial(knife.shared.m_name)).Count;
     public static int GetKnownShields(this Player player) => ItemHelper.blocking.FindAll(shield => player.IsKnownMaterial(shield.shared.m_name)).Count;
     public static int GetKnownCapes(this Player player) => ItemHelper.capes.FindAll(cape => player.IsKnownMaterial(cape.shared.m_name)).Count;
     public static int GetKnownPotions(this Player player) => ItemHelper.potions.FindAll(potion => player.IsKnownMaterial(potion.shared.m_name)).Count;
@@ -77,8 +78,8 @@ public static class PlayerInfo
 {
     public static readonly string ALMANAC_PLAYER_RECORDS = "AlmanacPlayerRecords";
     private static PlayerRecords? _cachedRecords;
-    public static void ClearRecords() => _cachedRecords = new();
-    private static PlayerRecords? Records
+    public static void ClearRecords() => _cachedRecords = new PlayerRecords();
+    private static PlayerRecords Records
     {
         get
         {
@@ -117,9 +118,9 @@ public static class PlayerInfo
         if (!Player.m_localPlayer || string.IsNullOrEmpty(name)) return 0;
         return type switch
         {
-            RecordType.Kill => Records?.GetKills(name) ?? 0,
-            RecordType.Death => Records?.GetDeaths(name) ?? 0,
-            RecordType.Pickable => Records?.GetItemPicked(name) ?? 0,
+            RecordType.Kill => Records.GetKills(name),
+            RecordType.Death => Records.GetDeaths(name),
+            RecordType.Pickable => Records.GetItemPicked(name),
             _ => 0
         };
     }
@@ -134,11 +135,11 @@ public static class PlayerInfo
             if (__instance.m_lastHit?.GetAttacker() is not { } attacker) return;
             if (attacker == Player.m_localPlayer)
             {
-                Records?.kills.IncrementOrSet(__instance.m_name);
+                Records.kills.IncrementOrSet(__instance.m_name);
             }
             else if (__instance == Player.m_localPlayer)
             {
-                Records?.deaths.IncrementOrSet(attacker.m_name);
+                Records.deaths.IncrementOrSet(attacker.m_name);
             }
         }
     }
@@ -162,7 +163,7 @@ public static class PlayerInfo
             if (!__instance || !character || !__result) return;
             if (character is not Player player || player != Player.m_localPlayer) return;
             string itemName = __instance.name.Replace("(Clone)", string.Empty);
-            Records?.itemsPicked.IncrementOrSet(itemName);
+            Records.itemsPicked.IncrementOrSet(itemName);
         }
     }
 
@@ -173,8 +174,8 @@ public static class PlayerInfo
         private static void Postfix(SEMan __instance, int nameHash)
         {
             if (__instance.m_character != Player.m_localPlayer) return;
-            if (Records?.knownStatusEffects.Contains(nameHash) ?? false) return;
-            Records?.knownStatusEffects.Add(nameHash);
+            if (Records.knownStatusEffects.Contains(nameHash)) return;
+            Records.knownStatusEffects.Add(nameHash);
         }
     }
 
@@ -186,20 +187,27 @@ public static class PlayerInfo
         private static void Postfix(SEMan __instance, StatusEffect statusEffect)
         {
             if (__instance.m_character != Player.m_localPlayer) return;
-            if (Records?.knownStatusEffects.Contains(statusEffect.NameHash()) ?? false) return;
-            Records?.knownStatusEffects.Add(statusEffect.NameHash());
+            if (Records.knownStatusEffects.Contains(statusEffect.NameHash())) return;
+            Records.knownStatusEffects.Add(statusEffect.NameHash());
         }
     }
     public static void Setup()
     {
-        AlmanacPlugin.OnPlayerProfileLoadPlayerData += player =>
+        AlmanacPlugin.OnPlayerProfileLoadPlayerDataPostfix += player =>
         {
             _cachedRecords = player.GetRecords();
         };
         AlmanacPlugin.OnPlayerProfileSavePlayerDataPrefix += player =>
         {
-            Records?.Save(player);
+            Records.Save(player);
         };
+    }
+
+    [HarmonyPatch(typeof(FejdStartup), nameof(FejdStartup.OnNewCharacterDone))]
+    private static class FejdStartup_OnNewCharacterDone_Patch
+    {
+        [UsedImplicitly]
+        private static void Prefix() => _cachedRecords = new();
     }
     public static List<Entries.Entry> GetEntries()
     {

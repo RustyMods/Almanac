@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using Almanac.Data;
 using Almanac.Managers;
+using Almanac.Store;
 using Almanac.UI;
 using Almanac.Utilities;
 using BepInEx;
@@ -26,23 +27,26 @@ public static class ZNet_RegisterAchievements
 public static class AchievementManager
 {
     public const string ACHIEVEMENT_KEY = "Almanac_Collected_Achievements";
-    public static readonly ISerializer serializer = new SerializerBuilder().ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitNull).Build();
+    public static readonly ISerializer serializer = new SerializerBuilder()
+        .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitDefaults | DefaultValuesHandling.OmitNull | DefaultValuesHandling.OmitEmptyCollections)
+        .Build();
     public static readonly IDeserializer deserializer = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
 
     private static readonly CustomSyncedValue<string> SyncedServerAchievements = new(AlmanacPlugin.ConfigSync, "Almanac_Server_Synced_Achievements", "");
     public static readonly Dictionary<string, Achievement> achievements = new();
     private static readonly Dictionary<string, Achievement> fileAchievements = new();
+    public static readonly AlmanacDir AchievementDir = new(AlmanacPlugin.AlmanacDir.Path, "Achievements");
     public static void Setup()
     {
         LoadDefaults();
-        string[] files = AlmanacPlugin.AchievementDir.GetFiles("*.yml");
+        string[] files = AchievementDir.GetFiles("*.yml", true);
         if (files.Length == 0)
         {
             foreach (Achievement achievement in achievements.Values)
             {
                 string data = serializer.Serialize(achievement);
                 string fileName = achievement.Name + ".yml";
-                string path = AlmanacPlugin.AchievementDir.WriteFile(fileName, data);
+                string path = AchievementDir.WriteFile(fileName, data);
                 File.WriteAllText(path, data);
                 fileAchievements[path] = achievement;
             }
@@ -66,7 +70,7 @@ public static class AchievementManager
             }            
         }
         SyncedServerAchievements.ValueChanged += OnServerAchievementsChanged;
-        FileSystemWatcher watcher = new FileSystemWatcher(AlmanacPlugin.AchievementDir.Path, "*.yml");
+        FileSystemWatcher watcher = new FileSystemWatcher(AchievementDir.Path, "*.yml");
         watcher.EnableRaisingEvents = true;
         watcher.IncludeSubdirectories = true;
         watcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
@@ -590,6 +594,7 @@ public static class AchievementManager
         public string Lore = string.Empty;
         public string Icon = string.Empty;
         public int TokenReward;
+        [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
         public AchievementRequirement Requirement = new();
         [YamlIgnore] public Sprite? icon => SpriteManager.GetSprite(Icon);
         public void CopyFrom(Achievement other)
@@ -771,6 +776,30 @@ public static class AchievementManager
             }
             return builder.ToList();
         }
+
+        public void OnClick(AlmanacPanel panel, AlmanacPanel.ElementView.Element item)
+        {
+            bool isCompleted = this.IsCompleted(Player.m_localPlayer);
+            bool isCollected = this.IsCollected(Player.m_localPlayer);
+            panel.elementView.SetSelected(item);
+            panel.description.Reset();
+            panel.description.SetName(Name);
+            panel.description.SetIcon(icon);
+            ToEntries().Build(panel.description.view);
+            panel.description.requirements.SetTokens(TokenReward);
+            panel.description.view.Resize();
+            panel.description.SetButtonText(isCompleted ? isCollected ? Keys.Collected : Keys.CollectReward : Keys.InProgress);
+            panel.description.Interactable(isCompleted && !isCollected);
+            if (!isCompleted) return;
+            panel.OnMainButton = () =>
+            {
+                Player.m_localPlayer.AddTokens(TokenReward);
+                Player.m_localPlayer.SetAchievementCollected(this);
+                panel.description.Interactable(false);
+                panel.description.SetButtonText(Keys.Collected);
+            };
+        }
+        
         [Serializable]
         public class AchievementRequirement
         {

@@ -212,6 +212,148 @@ Loot:
     Weight: 1.0
 ```
 
+# Dialogue System [ALPHA]
+Almanac provides a comprehensive NPC dialogue system using `.yml` files in the Dialogues folder.
+These dialogues sync between server and client, and are dynamically reloaded when files are edited.
+
+Below are the available **Command Types** you can use:
+```
+Exit: closes dialogue
+Give: adds item into player inventory
+Take: removes item from player inventory
+Teleport: teleports player to position 
+MapPin: adds temporary pin on the map
+StartBounty: starts a bounty
+CancelBounty: cancels active bounty
+CompleteBounty: rewards bounty
+StartTreasure: starts a treasure hunt
+CancelTreasure: cancels active treasure hunt
+OpenAlmanac: opens almanac panel
+OpenItems: opens almanac item tab
+OpenPieces: opens almanac pieces tab
+OpenCreatures: etc.
+OpenAchievements
+OpenStore
+OpenLeaderboard
+OpenBounties
+OpenTreasures
+OpenMetrics
+OpenLottery
+```
+
+### Dialogue File Structure
+Each dialogue is defined as a YAML file with properties like:
+- `UniqueID`: A unique identifier string (e.g., `npc.intro.001`).
+- `Label`: Button text that appears for this dialogue option.
+- `Text`: Main dialogue text displayed when requirements are met.
+- `AltText`: Alternative text shown when requirements are not met.
+- `Dialogues`: List of dialogue IDs that become available as options.
+- `Action`: Command to execute with label and parameters.
+- `Requirements`: Conditions that must be met to interact with this dialogue.
+
+### Action Commands
+**Panel Commands**: `OpenAlmanac`, `OpenItems`, `OpenCreatures`, etc. open specific UI panels.
+
+**Item Commands**:
+- `Give`: Gives items to player. Parameters: `ItemName, Amount, Quality?, Variant?` `? = optional`
+- `Take`: Takes items from player. Same parameter format.
+
+**Location Commands**:
+- `Teleport`: Instantly transports player. Parameters: `X, Y, Z`
+- `MapPin`: Adds temporary map marker. Parameters: `X, Y, Z, Label, Duration (seconds)`
+
+**Activity Commands**:
+- `StartBounty`: Begins bounty hunt. Parameters: `BountyID`
+- `StartTreasure`: Begins treasure hunt. Parameters: `TreasureID`
+- `CancelBounty`/`CancelTreasure`: Cancels active hunts. (Will not be displayed if no active hunts)
+
+### Requirements System
+Control when dialogues are available using:
+- `Keys`: Player must have specific game keys (boss defeats, etc.)
+- `NotKeys`: Player must NOT have specific keys
+- `Killed`: Required creature kills. Format: `CreatureName, Count; AnotherCreature, Count`
+- `NotKilled`: Creatures player must NOT have killed
+- `Achievements`: Required achievement IDs (comma-separated)
+- `NotAchievements`: Achievements player must NOT have
+- `Dialogues`: Required Dialogue IDs (recorded by `Give` or `Take` Actions)
+- `NotDialogues`: Required NOT Dialogue IDs
+
+### Text Features
+**Alternative Text**: Use `AltText` to show different messages when requirements aren't met.
+
+**Conditional Display**: Dialogues automatically show different text based on:
+- Whether player has required items (for Take commands)
+- Whether player already received rewards (for Give commands)
+- Whether requirements are satisfied
+
+### Examples
+
+**Basic Conversation**:
+```yaml
+UniqueID: npc.greeting
+Label: Hello there
+Text: Welcome to our village, traveler!
+Dialogues:
+  - npc.ask_directions
+  - npc.ask_trade
+Action:
+  Type: Exit
+  Label: Farewell
+```
+
+**Item Trading**:
+```yaml
+UniqueID: npc.trade_sword
+Label: I need a weapon
+Text: Here, take this iron sword for your journey.
+AltText: I already gave you a sword, remember?
+Action:
+  Type: Give
+  Label: Take Sword
+  Parameters: SwordIron, 1, 2, 0
+Requirements:
+  Killed: Eikthyr, 1
+```
+
+**Location Marking**:
+```yaml
+UniqueID: npc.mark_cave
+Label: Where's the nearest cave?
+Text: There's a cave system to the north. Let me mark it for you.
+Action:
+  Type: MapPin
+  Label: Mark Cave
+  Parameters: 100, 25, -150, Mysterious Cave, 180 (3min)
+```
+
+**Requirement-Based Dialogue**:
+```yaml
+UniqueID: npc.veteran_talk
+Label: Tell me about the bosses
+Text: You've proven yourself against the ancient evils!
+Requirements:
+  Killed: Eikthyr, 1; gd_king, 1
+  Keys: defeated_bonemass
+```
+
+### Organization Tips
+- Use descriptive UniqueIDs like `merchant.weapons.intro`
+- Organize files by NPC type or location
+- Create conversation trees using the `Dialogues` list
+- Use folders to separate different areas or storylines
+
+### Technical Notes
+- Files can be added, changed, or deleted while the server is running
+- Server automatically syncs dialogues to clients
+- Map pins disappear after 100 seconds
+- Give/Take commands automatically prevent duplicate transactions
+- Requirements are checked in real-time
+
+## Random Talk
+Additionally, you can set each NPC with random talk that triggers whenever a player gets close or leaves, or every minute.
+
+The YML files are synced and can be reloaded during gameplay.
+
 ![](https://i.imgur.com/lJbEYvq.png)
 ![](https://i.imgur.com/oh1Y7D0.png)
 ![](https://i.imgur.com/4d4LFnW.png)

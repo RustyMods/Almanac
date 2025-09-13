@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Almanac.Managers;
 using Almanac.UI;
 using Almanac.Utilities;
@@ -131,11 +132,12 @@ public static class CritterHelper
     };
     private static Heightmap.Biome GetBiome(string name) => creatureBiomes.TryGetValue(name, out var biome) ? biome : Heightmap.Biome.None;
     public static List<CritterInfo> GetCritters() => critters.FindAll(c => !Filters.Ignore(c.prefab.name));
+    public static CritterInfo? GetInfo(this Character character) => namedCritters.TryGetValue(character.name, out var info) ? info : null;
     private static readonly List<CritterInfo> critters = new();
     public static readonly Dictionary<string, CritterInfo> namedCritters = new();
     private static readonly Dictionary<string, CritterInfo> sharedCritters = new();
     public static bool Exists(string name) => namedCritters.ContainsKey(name) || sharedCritters.ContainsKey(name);
-    public readonly struct CritterInfo
+    public readonly record struct CritterInfo
     {
         private static readonly EntryBuilder builder = new();
         public readonly GameObject prefab;
@@ -192,11 +194,22 @@ public static class CritterHelper
             namedCritters[prefab.name] = this;
             sharedCritters[character.m_name] = this;
         }
-        
-        public List<Entry> ToEntries()
+
+        private List<Entry> ToEntries()
         {
-            builder.Clear();
-            if (Configs.ShowAllData) builder.Add(Keys.InternalID, prefab.name);
+            builder.Clear();    
+            if (Configs.ShowAllData)
+            {
+                builder.Add(Keys.InternalID, prefab.name);
+                // if (ModHelper.TryGetAssetInfo(prefab.name, out ModHelper.AssetInfo assetInfo))
+                // {
+                //     builder.Add("Asset Bundle", assetInfo.bundle);
+                //     if (assetInfo.info != null)
+                //     {
+                //         builder.Add("Plugin", assetInfo.info.Metadata.Name);
+                //     }
+                // }
+            }
             int killCount = PlayerInfo.GetPlayerStat(PlayerInfo.RecordType.Kill, character.m_name);
             int deathCount = PlayerInfo.GetPlayerStat(PlayerInfo.RecordType.Death, character.m_name);
             builder.Add(Keys.Killed, killCount);
@@ -240,6 +253,53 @@ public static class CritterHelper
                 builder.Add(Keys.Commandable, tameable.m_commandable);
             }
             return builder.ToList();
+        }
+
+        public void OnClick(AlmanacPanel panel, AlmanacPanel.ButtonView.ElementButton? element)
+        {
+            if (element != null) panel.buttonView.SetSelected(element);
+            panel.description.Reset();
+            panel.description.SetName(character.m_name);
+            if (AlmanacPanel.isLocalAdminOrHostAndNoCost)
+            {
+                panel.description.Interactable(true);
+                panel.description.SetButtonText(Keys.Spawn);
+                var go = prefab;
+                panel.OnMainButton = () =>
+                {
+                    Object.Instantiate(go, Player.m_localPlayer.transform.position, Quaternion.identity);
+                };
+            }
+            panel.description.SetIcon(trophy?.HasIcons() ?? false ? trophy.GetIcon() : null);
+            ToEntries().Build(panel.description.view);
+            if (this is { isTameable: true, consumeItems.Count: > 0 })
+            {
+                panel.description.view.CreateTitle().SetTitle(Keys.ConsumeItem);
+                if (consumeItems.Count > 4)
+                {
+                    IEnumerable<List<ItemDrop>> batches = consumeItems.ToList().Batch(4);
+                    foreach (List<ItemDrop>? batch in batches)
+                    {
+                        panel.description.view.CreateIcons().SetIcons(batch.ToArray());
+                    }
+                }
+                else panel.description.view.CreateIcons().SetIcons(consumeItems.ToArray());
+            }
+
+            if (drops != null)
+            {
+                panel.description.view.CreateTitle().SetTitle(Keys.CharacterDrops);
+                if (drops.m_drops.Count > 4)
+                {
+                    IEnumerable<List<CharacterDrop.Drop>> batches = drops.m_drops.Batch(4);
+                    foreach (List<CharacterDrop.Drop>? batch in batches)
+                    {
+                        panel.description.view.CreateIcons().SetIcons(batch.ToDropInfos());
+                    }
+                }
+                else panel.description.view.CreateIcons().SetIcons(drops.m_drops.ToDropInfos());
+            }
+            panel.description.view.Resize();
         }
     }
 }

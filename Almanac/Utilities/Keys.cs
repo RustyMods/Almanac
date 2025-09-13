@@ -71,6 +71,8 @@ public static class Keys
     public static readonly string TotalKills = new Key("$label_total_kills", "Total kills").key;
     public static readonly string ChestArmor = new Key("$label_chest_armor", "Chest armor").key;
     public static readonly string LegArmor = new Key("$label_leg_armor", "Leg armor").key;
+    public const string Talk = "$raven_interact";
+    public static readonly string Customize = new Key("$label_customize", "Customize").key;
     public static readonly string TotalDeaths = new Key("$label_total_deaths", "Total deaths").key;
     public static readonly string Ratio = new Key("$label_ratio", "Ratio").key;
     public static readonly string BountyAvailableIn = new Key("$msg_bounty_available_in", "Bounty available in").key;
@@ -78,6 +80,7 @@ public static class Keys
     public static readonly string BountyStolen = new Key("$msg_bountystolen", "Bounty stolen by").key;
     public static readonly string Bounties = new Key("$label_bounties", "Bounties").key;
     public static readonly string Treasures = new Key("$label_treasures", "Treasures").key;
+    public static readonly string CancelTreasure = new Key("$label_cancel_treasure", "Cancel treasure hunt").key;
     public static readonly string Store = new Key("$label_store", "Store").key;
     public static readonly string AlmanacStore = Almanac + " " + Store;
     public static readonly string TreasureAvailableIn = new Key("$msg_treasure_available_in", "Treasure available in").key;

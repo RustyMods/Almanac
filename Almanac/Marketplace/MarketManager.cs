@@ -20,6 +20,8 @@ public static class MarketManager
     private static readonly IDeserializer deserializer = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
     private static string? MarketFileName;
     private static string? RevenueFileName;
+    public static readonly AlmanacDir MarketplaceDir = new (AlmanacPlugin.AlmanacDir.Path, "Marketplace");
+
     private static readonly CustomSyncedValue<string> SyncedMarket = new(AlmanacPlugin.ConfigSync, "Almanac_Server_Synced_Market", "");
     private static readonly CustomSyncedValue<string> SyncedRevenue = new(AlmanacPlugin.ConfigSync, "Almanac_Server_Synced_Revenue", "");
 
@@ -37,10 +39,10 @@ public static class MarketManager
         if (!ZNet.instance || !ZNet.instance.IsServer() || MarketFileName == null || RevenueFileName == null) return;
         string marketData = serializer.Serialize(marketItems);
         byte[] compressedMarketData = CompressAndEncode(marketData);
-        AlmanacPlugin.MarketplaceDir.WriteAllBytes(MarketFileName, compressedMarketData);
+        MarketplaceDir.WriteAllBytes(MarketFileName, compressedMarketData);
         string revenueData = serializer.Serialize(revenues);
         byte[] compressedRevenueData = CompressAndEncode(revenueData);
-        AlmanacPlugin.MarketplaceDir.WriteAllBytes(RevenueFileName, compressedRevenueData);
+        MarketplaceDir.WriteAllBytes(RevenueFileName, compressedRevenueData);
     }
     private static void Read()
     {
@@ -389,6 +391,23 @@ public static class MarketManager
             }
             Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"{Keys.Purchased} {itemData.m_shared.m_name}");
             return true;
+        }
+
+        public void OnClick(AlmanacPanel panel, AlmanacPanel.ElementView.Element item)
+        {
+            panel.elementView.SetSelected(item);
+            panel.description.Reset();
+            panel.description.SetName(itemData.m_shared.m_name + $" x{Stack}");
+            panel.description.SetIcon(itemData.GetIcon());
+            bool hasReqs = HasRequirements(Player.m_localPlayer);
+            panel.description.Interactable(hasReqs);
+            panel.description.SetButtonText(Keys.Purchase);
+            ToEntries().Build(panel.description.view);
+            panel.description.view.Resize();
+            panel.OnMainButton = () => Purchase(Player.m_localPlayer);
+            panel.OnUpdate = _ => panel.description.requirements.Update();
+            panel.description.requirements.SetTokens(TokenCost);
+            panel.description.requirements.SetLevel(Quality);
         }
     }
 }

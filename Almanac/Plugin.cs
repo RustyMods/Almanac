@@ -8,13 +8,11 @@ using Almanac.Data;
 using Almanac.Lottery;
 using Almanac.Managers;
 using Almanac.Marketplace;
+using Almanac.NPC;
 using Almanac.Store;
 using Almanac.TreasureHunt;
-using Almanac.UI;
 using Almanac.Utilities;
 using BepInEx;
-using BepInEx.Bootstrap;
-using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 using JetBrains.Annotations;
@@ -23,12 +21,13 @@ using UnityEngine;
 
 namespace Almanac
 {
+    
     [BepInPlugin(ModGUID, ModName, ModVersion)]
     [BepInIncompatibility("randyknapp.mods.auga")]
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.5.13";
+        internal const string ModVersion = "3.5.15";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         public const string ConfigFileName = ModGUID + ".cfg";
@@ -38,22 +37,11 @@ namespace Almanac
         public static readonly ManualLogSource AlmanacLogger = BepInEx.Logging.Logger.CreateLogSource(ModName);
         public static readonly ConfigSync ConfigSync = new(ModGUID) { DisplayName = ModName, CurrentVersion = ModVersion, MinimumRequiredVersion = ModVersion };
         public static readonly AlmanacDir AlmanacDir = new(Paths.ConfigPath, ModName);
-        public static readonly AlmanacDir AchievementDir = new(AlmanacDir.Path, "Achievements");
-        public static readonly AlmanacDir FilterDir = new (AlmanacDir.Path, "Filters");
-        public static readonly AlmanacDir CreatureDir = new (AlmanacDir.Path, "CreatureGroups");
-        public static readonly AlmanacDir BountyDir = new (AlmanacDir.Path, "Bounties");
-        public static readonly AlmanacDir TreasureDir = new (AlmanacDir.Path, "Treasures");
-        public static readonly AlmanacDir StoreDir = new (AlmanacDir.Path, "Store");
-        public static readonly AlmanacDir CustomEffectDir = new (AlmanacDir.Path, "CustomEffects");
-        public static readonly AlmanacDir LeaderboardDir = new (AlmanacDir.Path, "Leaderboards");
-        public static readonly AlmanacDir LotteryDir = new (AlmanacDir.Path, "Lotteries");
-        public static readonly AlmanacDir MarketplaceDir = new (AlmanacDir.Path, "Marketplace");
-        public static readonly AlmanacDir IconsDir = new (AlmanacDir.Path, "Icons");
         public static AlmanacPlugin instance = null!;
         public static event Action? OnZNetAwake;
         public static event Action? OnZNetSceneAwake;
         public static event Action? OnZNetSave;
-        public static event Action<Player>? OnPlayerProfileLoadPlayerData;
+        public static event Action<Player>? OnPlayerProfileLoadPlayerDataPostfix;
         public static event Action? OnPlayerProfileSavePlayerDataPostfix;
         public static event Action<Player>? OnPlayerProfileSavePlayerDataPrefix;
         public static event Action? OnObjectDBAwake;
@@ -62,12 +50,14 @@ namespace Almanac
         public void Awake()
         {
             instance = this;
-            
-            // AlmanacPaths.CreateFolderDirectories();
+            Clone._root = new GameObject("Almanac.PrefabManager.Clones");
+            DontDestroyOnLoad(Clone._root);
+            Clone._root.SetActive(false);
             Keys.Write();
             Localizer.Load();
             Configs.Load();
             
+            SpriteManager.RegisterCustomIcons();
             StoreManager.Setup();
             BountyManager.Setup();
             TreasureManager.Setup();
@@ -83,7 +73,8 @@ namespace Almanac
             ItemHelper.Setup();
             PieceHelper.Setup();
             PlayerInfo.Setup();
-            SpriteManager.RegisterCustomIcons();
+            DialogueManager.Setup();
+            RandomTalkManager.Setup();
             SetupCommands();
             
             // Use to rebuild readmes 
@@ -163,7 +154,7 @@ namespace Almanac
         private static class PlayerProfile_LoadPlayerData_Patch
         {
             [UsedImplicitly]
-            private static void Postfix(Player player) => OnPlayerProfileLoadPlayerData?.Invoke(player);
+            private static void Postfix(Player player) => OnPlayerProfileLoadPlayerDataPostfix?.Invoke(player);
         }
 
         [HarmonyPatch(typeof(ZNet), nameof(ZNet.Save))]
@@ -187,6 +178,7 @@ namespace Almanac
             [UsedImplicitly]
             public static void Postfix(ZNetScene __instance)
             {
+                // ModHelper.MapAssets();
                 foreach (GameObject? prefab in __instance.m_prefabs) OnZNetScenePrefabs?.Invoke(prefab);
                 OnZNetSceneAwake?.Invoke();
             }

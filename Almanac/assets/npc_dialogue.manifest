@@ -1,0 +1,70 @@
+ManifestFileVersion: 0
+CRC: 4171219794
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: bf14423f002994e86ea668f61a28c121
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 7dd57c471c1c6b31777f16de69614b09
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: bf14423f002994e86ea668f61a28c121
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 1aa08ab6e0800fa44ae55d278d1423e3, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 2a4db7a114972834c8e4117be1d82ba3, type: 3}
+- Class: 114
+  Script: {fileID: 2033781369, guid: d920e4723ba2566674efb2f0c3eb6edb, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 3312d7739989d2b4e91e6319e9a96d76, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 222
+  Script: {instanceID: 0}
+- Class: 224
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers:
+- AssemblyName: UnityEngine.CoreModule
+  ClassName: UnityEngine.Events.PersistentCallGroup
+- AssemblyName: UnityEngine.CoreModule
+  ClassName: UnityEngine.RectOffset
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.AnimationTriggers
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Button/ButtonClickedEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.ColorBlock
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.FontData
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.MaskableGraphic/CullStateChangedEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Navigation
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.ScrollRect/ScrollRectEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.Scrollbar/ScrollEvent
+- AssemblyName: UnityEngine.UI
+  ClassName: UnityEngine.UI.SpriteState
+Assets:
+- Assets/Almanac/NEW/NPCDialogue.prefab
+Dependencies: []

@@ -2,6 +2,7 @@
 using System.Linq;
 using Almanac.Achievements;
 using Almanac.Managers;
+using Almanac.UI;
 using Almanac.Utilities;
 using UnityEngine;
 using static ItemDrop.ItemData;
@@ -23,14 +24,15 @@ public static class ItemHelper
         }
         return set;
     }
-    private static HashSet<Character> DroppedBy(this ItemDrop.ItemData item)
+    private static HashSet<CritterHelper.CritterInfo> DroppedBy(this ItemDrop.ItemData item)
     {
-        HashSet<Character> characters = new();
+        HashSet<CritterHelper.CritterInfo> characters = new();
         foreach (GameObject prefab in ZNetScene.instance.m_prefabs)
         {
             if (!prefab.TryGetComponent(out Character character) || !prefab.TryGetComponent(out CharacterDrop component)) continue;
             if (!component.m_drops.Contains(item)) continue;
-            characters.Add(character);
+            if (character.GetInfo() is not { } info) continue;
+            characters.Add(info);
         }
         return characters;
     }
@@ -150,6 +152,7 @@ public static class ItemHelper
     public static List<ItemInfo> potions => consumables.Where(item => item.shared.m_consumeStatusEffect != null).ToList();
     public static List<ItemInfo> ammo => GetItemByType(ItemType.Ammo);
     public static List<ItemInfo> bows => GetItemsBySkill(Skills.SkillType.Bows);
+    public static List<ItemInfo> unarmed => GetItemsBySkill(Skills.SkillType.Unarmed);
     public static List<ItemInfo> crossbows => GetItemsBySkill(Skills.SkillType.Crossbows);
     public static List<ItemInfo> valuables => GetItems().Where(item => item.shared.m_value > 0).ToList();
     public static List<ItemInfo> trophies => GetItemByType(ItemType.Trophy);
@@ -170,6 +173,7 @@ public static class ItemHelper
     public static bool IsClub(this ItemInfo info) => clubs.Contains(info);
     public static bool IsKnives(this ItemInfo info) => knives.Contains(info);
     public static bool IsShield(this ItemInfo info) => blocking.Contains(info);
+    public static bool IsUnarmed(this ItemInfo info) => unarmed.Contains(info);
     public static bool IsTrophy(this ItemInfo info) => trophies.Contains(info);
     public static bool IsFish(this ItemInfo info) => fishes.Contains(info);
     public static bool IsMaterial(this ItemInfo info) => materials.Contains(info);
@@ -194,14 +198,31 @@ public static class ItemHelper
         public readonly ItemDrop.ItemData itemData = null!;
         public readonly SharedData shared = null!;
         public readonly Recipe? recipe;
-        public readonly List<Sprite> Icons = new();
-        private readonly HashSet<Character> droppedBy = new();
-        public readonly HashSet<ItemDrop> setItems = new();
-        public readonly HashSet<Recipe> usedIn = new();
-        public readonly HashSet<PieceHelper.PieceInfo> usedInPieces = new();
+        private readonly List<Sprite> Icons = new();
+        private readonly HashSet<CritterHelper.CritterInfo> droppedBy = new();
+        private readonly HashSet<ItemDrop> setItems = new();
+        private readonly HashSet<Recipe> usedIn = new();
+        private readonly HashSet<PieceHelper.PieceInfo> usedInPieces = new();
+        private readonly Fish? fish;
+        private readonly HashSet<ItemInfo> _itemBaits = new();
+        private HashSet<ItemInfo> itemBaits
+        {
+            get
+            {
+                if (_itemBaits.Count != 0 || fish == null) return _itemBaits;
+                foreach (Fish.BaitSetting? bait in fish.m_baits)
+                {
+                    if (bait.m_bait != null && bait.m_bait.GetInfo() is { } info)
+                    {
+                        _itemBaits.Add(info);
+                    }
+                }
+                return _itemBaits;
+            }
+        }
         private readonly bool isFloating;
-        public bool IsUsedInOtherRecipes => usedIn.Count != 0;
-        public bool IsUsedInPieces => usedInPieces.Count != 0;
+        private bool IsUsedInOtherRecipes => usedIn.Count != 0;
+        private bool IsUsedInPieces => usedInPieces.Count != 0;
         public Sprite? GetIcon() => itemData.GetIcon();
         public ItemInfo(GameObject prefab)
         {
@@ -213,6 +234,7 @@ public static class ItemHelper
             shared = itemData.m_shared;
             droppedBy = itemData.DroppedBy();
             setItems = itemData.GetSet();
+            fish = prefab.GetComponent<Fish>();
             if (!itemData.HasIcons()) return;
             Icons.AddRange(shared.m_icons);
             usedIn = recipes.Where(r => r.m_item != null && r.m_resources.Any(resource => resource.m_resItem.name == prefab.name)).ToHashSet();
@@ -220,10 +242,21 @@ public static class ItemHelper
             ItemInfos[shared.m_name] = this;
         }
 
-        public List<Entries.Entry> ToEntries()
+        private List<Entries.Entry> ToEntries()
         {
             builder.Clear();
-            if (Configs.ShowAllData) builder.Add(Keys.InternalID, prefab.name);
+            if (Configs.ShowAllData)
+            {
+                builder.Add(Keys.InternalID, prefab.name);
+                // if (ModHelper.TryGetAssetInfo(prefab.name, out ModHelper.AssetInfo assetInfo))
+                // {
+                //     builder.Add("Asset Bundle", assetInfo.bundle);
+                //     if (assetInfo.info != null)
+                //     {
+                //         builder.Add("Plugin", assetInfo.info.Metadata.Name);
+                //     }
+                // }
+            }
             builder.Add(Keys.Teleportable, shared.m_teleportable);
             builder.Add(Keys.Value, shared.m_value);
             builder.Add(Keys.Weight, shared.m_weight);
@@ -237,19 +270,10 @@ public static class ItemHelper
             builder.Add(Keys.QuestItem, shared.m_questItem);
             builder.Add(Keys.EquipDuration, shared.m_equipDuration, Entries.EntryBuilder.Option.Seconds);
             builder.Add(Keys.Floating, isFloating);
-            // builder.Add(shared.m_subtitle, "lore");
-            if (droppedBy.Count > 0)
-            {
-                builder.Add(Keys.DroppedBy);
-                foreach (Character character in droppedBy)
-                {
-                    builder.Add(Keys.Name, character.m_name);
-                }
-            }
             switch (shared.m_itemType)
             {
                 case ItemType.Fish:
-                    if (prefab.TryGetComponent(out Fish fish))
+                    if (fish != null)
                     {
                         builder.Add(Keys.Fish);
                         builder.Add(Keys.SwimRange, fish.m_swimRange);
@@ -269,11 +293,6 @@ public static class ItemHelper
                         builder.Add(Keys.JumpOnLandChance, fish.m_jumpOnLandChance);
                         builder.Add(Keys.JumpFrequency, fish.m_jumpFrequencySeconds, Entries.EntryBuilder.Option.Seconds);
                         builder.Add(Keys.FishFast, fish.m_fast);
-                        builder.Add(Keys.Baits);
-                        foreach (Fish.BaitSetting? bait in fish.m_baits)
-                        {
-                            builder.Add(bait.m_bait.m_itemData.m_shared.m_name, bait.m_chance, Entries.EntryBuilder.Option.Percentage);
-                        }
                     }
                     break;
                 case ItemType.Helmet or ItemType.Legs or ItemType.Chest or ItemType.Customization or ItemType.Shoulder:
@@ -529,6 +548,124 @@ public static class ItemHelper
                     break;
             }
             return builder.ToList();
+        }
+        public void OnClick(AlmanacPanel panel, AlmanacPanel.ElementView.Element? element)
+        {
+            if (element != null) panel.elementView.SetSelected(element);
+            panel.description.Reset();
+            panel.description.SetName(shared.m_name);
+            panel.description.SetIcon(GetIcon());
+            if (AlmanacPanel.isLocalAdminOrHostAndNoCost)
+            {
+                panel.description.Interactable(true);
+                panel.description.SetButtonText(Keys.Spawn);
+                GameObject? gameObject = prefab;
+                panel.OnMainButton = () =>
+                {
+                    GameObject go = Object.Instantiate(gameObject, Player.m_localPlayer.transform.position, Quaternion.identity);
+                    go.GetComponent<ItemDrop>().m_itemData.m_worldLevel = Game.m_worldLevel;
+                };
+            }
+            panel.description.view.CreateTextArea().SetText(shared.m_description + "\n\n");
+            if (itemData.IsPartOfSet())
+            {
+                panel.description.view.CreateTitle().SetTitle($"{shared.m_setName} ({shared.m_setSize})");
+                if (setItems.Count > 4)
+                {
+                    IEnumerable<List<ItemDrop>> batches = setItems.ToList().Batch(4);
+                    foreach (List<ItemDrop>? batch in batches)
+                    {
+                        panel.description.view.CreateIcons().SetIcons(batch.ToArray());
+                    }
+                }
+                else panel.description.view.CreateIcons().SetIcons(setItems.ToArray());
+            }
+            ToEntries().Build(panel.description.view);
+            if (itemData.HasVariants())
+            {
+                panel.description.view.CreateTitle().SetTitle(Keys.Variant);
+                List<Sprite> icons = Icons.Skip(1).ToList();
+                if (icons.Count > 4)
+                {
+                    IEnumerable<List<Sprite>> batches = icons.Batch(4);
+                    foreach (List<Sprite>? batch in batches)
+                    {
+                        panel.description.view.CreateIcons().SetIcons(batch.ToArray());
+                    }
+                }
+                else
+                {
+                    panel.description.view.CreateIcons().SetIcons(icons.ToArray());
+                }
+            }
+            if (droppedBy.Count > 0)
+            {
+                panel.description.view.CreateTitle().SetTitle(Keys.DroppedBy);
+                if (droppedBy.Count > 4)
+                {
+                    IEnumerable<List<CritterHelper.CritterInfo>> batches = droppedBy.ToList().Batch(4);
+                    foreach (List<CritterHelper.CritterInfo>? batch in batches)
+                    {
+                        panel.description.view.CreateIcons().SetIcons(batch.ToArray());
+                    }
+                }
+                else panel.description.view.CreateIcons().SetIcons(droppedBy.ToArray());
+            }
+            if (IsUsedInOtherRecipes || IsUsedInPieces)
+            {
+                panel.description.view.CreateTitle().SetTitle(Keys.UsedIn);
+                if (IsUsedInOtherRecipes)
+                {
+                    if (usedIn.Count > 4)
+                    {
+                        IEnumerable<List<Recipe>> batches = usedIn.ToList().Batch(4);
+                        foreach (List<Recipe>? batch in batches)
+                        {
+                            panel.description.view.CreateIcons().SetIcons(batch.ToArray());
+                        }
+                    }
+                    else
+                    {
+                        panel.description.view.CreateIcons().SetIcons(usedIn.ToArray());
+                    }
+                }
+
+                if (IsUsedInPieces)
+                {
+                    if (usedInPieces.Count > 4)
+                    {
+                        IEnumerable<List<PieceHelper.PieceInfo>> batches = usedInPieces.ToList().Batch(4);
+                        foreach (List<PieceHelper.PieceInfo>? batch in batches)
+                        {
+                            panel.description.view.CreateIcons().SetIcons(batch.ToArray());
+                        }
+                    }
+                    else
+                    {
+                        panel.description.view.CreateIcons().SetIcons(usedInPieces.ToArray());
+                    }
+                }
+            }
+            if (fish != null)
+            {
+                panel.description.view.CreateTitle().SetTitle(Keys.Baits);
+                if (itemBaits.Count > 4)
+                {
+                    IEnumerable<List<ItemInfo>> batches = itemBaits.ToList().Batch(4);
+                    foreach (List<ItemInfo>? batch in batches)
+                    {
+                        panel.description.view.CreateIcons().SetIcons(batch.ToArray());
+                    }
+                }
+                else panel.description.view.CreateIcons().SetIcons(itemBaits.ToArray());
+                
+            }
+            if (recipe is not null)
+            {
+                panel.description.requirements.Set(recipe);
+                panel.OnUpdate = _ => panel.description.requirements.Update();
+            }
+            panel.description.view.Resize();
         }
     }
     private static readonly Dictionary<string, ItemDrop> m_itemBySharedName = new();

@@ -25,6 +25,8 @@ public static class CustomEffectManager
     private static Dictionary<string, CustomEffect.Data> effects = new();
     private static readonly Dictionary<string, CustomEffect.Data> fileEffects = new();
     private static readonly Dictionary<CustomEffect.Data, CustomEffect> registeredEffects = new();
+    public static readonly AlmanacDir CustomEffectDir = new (AlmanacPlugin.AlmanacDir.Path, "CustomEffects");
+
     private static void Initialize()
     {
         foreach (CustomEffect.Data? data in effects.Values)
@@ -43,14 +45,14 @@ public static class CustomEffectManager
         AlmanacPlugin.OnObjectDBAwake += Initialize;
         AlmanacPlugin.OnZNetAwake += UpdateServerEffects;
         LoadDefaults();
-        string[] files = AlmanacPlugin.CustomEffectDir.GetFiles("*.yml");
+        string[] files = CustomEffectDir.GetFiles("*.yml");
         if (files.Length == 0)
         {
             foreach (CustomEffect.Data effectData in effects.Values)
             {
                 string data = serializer.Serialize(effectData);
                 string fileName = effectData.UniqueID + ".yml";
-                var path = AlmanacPlugin.CustomEffectDir.WriteFile(fileName, data);
+                var path = CustomEffectDir.WriteFile(fileName, data);
                 fileEffects[path] = effectData;
             }
         }
@@ -66,7 +68,7 @@ public static class CustomEffectManager
         }
 
         SyncedEffectData.ValueChanged += OnServerEffectsChanged;
-        FileSystemWatcher watcher = new FileSystemWatcher(AlmanacPlugin.CustomEffectDir.Path, "*.yml");
+        FileSystemWatcher watcher = new FileSystemWatcher(CustomEffectDir.Path, "*.yml");
         watcher.EnableRaisingEvents = true;
         watcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
         watcher.Changed += OnChanged;

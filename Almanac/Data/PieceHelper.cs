@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Almanac.Managers;
+using Almanac.UI;
 using Almanac.Utilities;
 using UnityEngine;
 using static Almanac.Utilities.Entries;
@@ -51,6 +52,8 @@ public static class PieceHelper
         private readonly Turret? turret;
         private readonly Fermenter? fermenter;
         public readonly Plant? plant;
+        public readonly ArcheryTarget? archeryTarget;
+        public readonly Catapult catapult;
         public bool isKnown(Player player) => piece.m_resources.All(item => player.IsKnownMaterial(item.m_resItem.m_itemData.m_shared.m_name));
 
         public readonly bool isFeast;
@@ -78,18 +81,31 @@ public static class PieceHelper
             turret = prefab.GetComponent<Turret>();
             fermenter = prefab.GetComponent<Fermenter>();
             plant = prefab.GetComponent<Plant>();
-            
+            archeryTarget = prefab.GetComponentInChildren<ArcheryTarget>();
+            catapult =  prefab.GetComponent<Catapult>();
             isFeast = prefab.GetComponent<ItemDrop>();
             isShip = ship != null;
             isPlant = plant != null;
             pieces.Add(this);
         }
-        public List<Entry> ToEntries()
+
+        private List<Entry> ToEntries()
         {
             builder.Clear();
             if (!string.IsNullOrEmpty(piece.m_description)) builder.Add(piece.m_description, "lore");
-            if (Configs.ShowAllData) builder.Add(Keys.InternalID, prefab.name);
-            if (Configs.ShowAllData) builder.Add(Keys.Enabled, piece.m_enabled);
+            if (Configs.ShowAllData)
+            {
+                builder.Add(Keys.InternalID, prefab.name);
+                builder.Add(Keys.Enabled, piece.m_enabled);
+                // if (ModHelper.TryGetAssetInfo(prefab.name, out ModHelper.AssetInfo assetInfo))
+                // {
+                //     builder.Add("Asset Bundle", assetInfo.bundle);
+                //     if (assetInfo.info != null)
+                //     {
+                //         builder.Add("Plugin", assetInfo.info.Metadata.Name);
+                //     }
+                // }
+            }
             builder.Add(Keys.PieceCategory, piece.m_category);
             if (piece.m_craftingStation != null)
             {
@@ -286,8 +302,31 @@ public static class PieceHelper
                 builder.Add(Keys.GrowDuration, plant.m_growTime, EntryBuilder.Option.Seconds);
                 builder.Add(Keys.Biome, plant.m_biome);
             }
+
+            if (archeryTarget != null)
+            {
+                //TODO
+            }
+
+            if (catapult != null)
+            {
+                //TODO
+            }
             
             return builder.ToList();
+        }
+
+        public void OnClick(AlmanacPanel panel, AlmanacPanel.ElementView.Element? item)
+        {
+            if (item != null) panel.elementView.SetSelected(item);
+            panel.description.Reset();
+            panel.description.SetName(piece.m_name);
+            panel.description.SetIcon(piece.m_icon);
+            ToEntries().Build(panel.description.view);
+            panel.description.view.Resize();
+            panel.description.Interactable(false);
+            panel.description.requirements.Set(piece.m_resources);
+            panel.OnUpdate = _ => panel.description.requirements.Update();
         }
     }
 }

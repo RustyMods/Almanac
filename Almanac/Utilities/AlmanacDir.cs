@@ -7,7 +7,6 @@ namespace Almanac.Utilities;
 public class AlmanacDir 
 {
     public readonly string Path;
-    
     public AlmanacDir(string dir, string name)
     {
         Path = System.IO.Path.Combine(dir, name);
@@ -19,9 +18,10 @@ public class AlmanacDir
         if (!Directory.Exists(Path)) Directory.CreateDirectory(Path);
     }
 
-    public string[] GetFiles(string searchPattern = "*")
+    public string[] GetFiles(string searchPattern = "*", bool includeSubDirs = false)
     {
-        return ExecuteWithRetry(() => Directory.GetFiles(Path, searchPattern));
+        SearchOption searchOption = includeSubDirs ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+        return ExecuteWithRetry(() => Directory.GetFiles(Path, searchPattern, searchOption));
     }
 
     public string[] GetDirectories(string searchPattern = "*")
@@ -29,9 +29,16 @@ public class AlmanacDir
         return ExecuteWithRetry(() => Directory.GetDirectories(Path, searchPattern));
     }
 
+    public string CreateDir(string dirName)
+    {
+        string fullPath = System.IO.Path.Combine(Path, dirName);
+        if (Directory.Exists(fullPath)) return fullPath;
+        Directory.CreateDirectory(fullPath);    
+        return fullPath;
+    }
     public string WriteFile(string fileName, string content)
     {
-        var fullPath = System.IO.Path.Combine(Path, fileName);
+        string fullPath = System.IO.Path.Combine(Path, fileName);
         ExecuteWithRetry(() => File.WriteAllText(fullPath, content));
         return fullPath;
     }

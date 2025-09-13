@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using Almanac.Achievements;
 using Almanac.Data;
+using Almanac.UI;
 using Almanac.Utilities;
 using HarmonyLib;
 using JetBrains.Annotations;
@@ -20,6 +21,7 @@ public static class Leaderboard
     private static string? LeaderboardFilePath;
     private static readonly CustomSyncedValue<string> SyncedLeaderboard = new(AlmanacPlugin.ConfigSync, "Almanac_Server_Synced_Leaderboard", "");
     private static readonly Dictionary<string, LeaderboardInfo> players = new();
+    public static readonly AlmanacDir LeaderboardDir = new (AlmanacPlugin.AlmanacDir.Path, "Leaderboards");
     private static readonly ISerializer serializer = new SerializerBuilder().Build();
     private static readonly IDeserializer deserializer = new DeserializerBuilder().Build();
     public static void Setup()
@@ -27,7 +29,7 @@ public static class Leaderboard
         AlmanacPlugin.OnZNetAwake += Initialize;
         SyncedLeaderboard.ValueChanged += OnSyncedLeaderboardChange;
         AlmanacPlugin.OnZNetSave += Save;
-        AlmanacPlugin.OnPlayerProfileLoadPlayerData += _ => SendLocalPlayerInfo();
+        AlmanacPlugin.OnPlayerProfileLoadPlayerDataPostfix += _ => SendLocalPlayerInfo();
         AlmanacPlugin.OnPlayerProfileSavePlayerDataPostfix += SendLocalPlayerInfo;
     }
     private static void Initialize()
@@ -99,7 +101,7 @@ public static class Leaderboard
         if (!ZNet.instance || !ZNet.instance.IsServer() || LeaderboardFilePath == null) return;
         string data = serializer.Serialize(players);
         byte[] compressedData = CompressAndEncode(data);
-        AlmanacPlugin.LeaderboardDir.WriteAllBytes(LeaderboardFilePath, compressedData);
+        LeaderboardDir.WriteAllBytes(LeaderboardFilePath, compressedData);
     }
     private static void Read()
     {
@@ -161,7 +163,7 @@ public static class Leaderboard
 
         public int GetRank()
         {
-            return CollectedAchievements + Mathf.Max(Kills / Deaths, 0);
+            return CollectedAchievements + Mathf.Max(Kills / Math.Max(Deaths, 1), 0);
         }
 
         public List<Entries.Entry> ToEntries()
@@ -173,6 +175,15 @@ public static class Leaderboard
             builder.Add(Keys.Ratio, Deaths == 0 ? Kills : (float)Kills / Deaths);
             builder.Add(Keys.LastUpdated, LastUpdated.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"));
             return builder.ToList();
+        }
+
+        public void OnClick(AlmanacPanel panel, AlmanacPanel.ElementView.Element item)
+        {
+            panel.elementView.SetSelected(item);
+            panel.description.Reset();
+            panel.description.SetName(PlayerName);
+            ToEntries().Build(panel.description.view);
+            panel.description.view.Resize();
         }
     }
 }

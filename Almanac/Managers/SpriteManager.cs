@@ -12,6 +12,8 @@ namespace Almanac.Managers;
 
 public static class SpriteManager
 {
+    public static readonly AlmanacDir IconsDir = new (AlmanacPlugin.AlmanacDir.Path, "Icons");
+
     public static void OnObjectDBStatusEffects(StatusEffect se)
     {
         icons[se.name] = se.m_icon;
@@ -147,7 +149,7 @@ public static class SpriteManager
 
     public static void RegisterCustomIcons()
     {
-        string[] files = AlmanacPlugin.IconsDir.GetFiles("*.png");
+        string[] files = IconsDir.GetFiles("*.png");
         foreach (string file in files)
         {
             if (ReadSprite(file) is not {} sprite) continue;
@@ -173,7 +175,7 @@ public static class SpriteManager
 
             var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
             sprite.name = Path.GetFileNameWithoutExtension(filePath);
-            AlmanacPlugin.AlmanacLogger.LogWarning("Successfully registered icon: " + Path.GetFileName(filePath));
+            AlmanacPlugin.AlmanacLogger.LogDebug("Successfully registered icon: " + Path.GetFileName(filePath));
             return sprite;
         }
         catch

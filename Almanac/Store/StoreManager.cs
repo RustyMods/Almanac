@@ -21,7 +21,9 @@ public static class StoreManager
 {
     private static readonly Dictionary<string, StoreItem> items = new();
     private static readonly Dictionary<string, StoreItem> fileItems = new();
-    public static readonly ISerializer serializer = new SerializerBuilder().ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitNull).Build();
+    public static readonly ISerializer serializer = new SerializerBuilder()
+        .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitDefaults | DefaultValuesHandling.OmitNull | DefaultValuesHandling.OmitEmptyCollections)
+        .Build();
     private static readonly IDeserializer deserializer = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
     private static readonly CustomSyncedValue<string> SyncedStore = new (AlmanacPlugin.ConfigSync, "ServerSynced_Almanac_Store", "");
     public const string STORE_TOKEN = "AlmanacToken";
@@ -349,6 +351,7 @@ public static class StoreManager
         public List<ItemInfo> Items = new();
         public string Lore = string.Empty;
         public string RequiredDefeated = string.Empty;
+        public string RequiredAchievement = string.Empty;
         public StoreItem(){}
         [YamlIgnore] public Sprite? sprite => SpriteManager.GetSprite(Icon);
 

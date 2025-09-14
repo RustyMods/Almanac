@@ -307,7 +307,6 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
         m_oneshot = oneshot;
         m_timeSinceLastEmote = 0f;
     }
-
     public void StartEmote(string emote, bool oneshot = true)
     {
         var num = m_nview.GetZDO().GetInt(ZDOVars.s_emoteID);
@@ -315,7 +314,6 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
         m_nview.GetZDO().Set(ZDOVars.s_emote, emote);
         m_nview.GetZDO().Set(ZDOVars.s_emoteOneshot, oneshot);
     }
-    
     public void StopEmote()
     {
         m_zanim.SetInt("crafting", 0);
@@ -324,9 +322,7 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
         m_nview.GetZDO().Set(ZDOVars.s_emoteID, num + 1);
         m_nview.GetZDO().Set(ZDOVars.s_emote, string.Empty);
     }
-
     private static string GetPrefabFromHash(int hash) => !ObjectDB.instance || ObjectDB.instance.GetItemPrefab(hash) is not { } prefab ? string.Empty : prefab.name;
-    
     public bool Interact(Humanoid user, bool hold, bool alt)
     {
         if (alt)
@@ -339,9 +335,7 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
         }
         return false;
     }
-
     public bool UseItem(Humanoid user, ItemDrop.ItemData item) => false;
-
     public string GetHoverText()
     {
         string text = $"{m_name}";
@@ -355,15 +349,12 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
         }
         return Localization.instance.Localize(text);
     }
-
     public string GetHoverName() => m_name;
-    
     public void Damage(HitData hit)
     {
         if (!m_nview.IsValid()) return;
         m_nview.InvokeRPC(nameof(RPC_Damage), hit);
     }
-
     public void RPC_Damage(long sender, HitData hit)
     {
         if (hit.m_hitType == HitData.HitType.CinderFire || hit.m_hitType == HitData.HitType.AshlandsOcean) return;

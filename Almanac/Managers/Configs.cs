@@ -41,6 +41,7 @@ public static class Configs
     private static ConfigEntry<Toggle> _piecesEnabled = null!;
     private static ConfigEntry<Toggle> _creaturesEnabled = null!;
     private static ConfigEntry<Toggle> _almanacEnabled = null!;
+    private static ConfigEntry<Vector2> _elementViewGridSize = null!;
     
     private static ConfigEntry<Toggle> _allowConversion = null!;
     private static ConfigEntry<int> _conversionRate = null!;
@@ -80,6 +81,8 @@ public static class Configs
     public static bool ShowCreatures => _creaturesEnabled.Value is Toggle.On;
     public static bool ShowAlmanac => _almanacEnabled.Value is Toggle.On;
     
+    public static Vector2 ElementViewGridSize => _elementViewGridSize.Value;
+    
     public static Vector3 CustomizationPos => _customizationPos.Value;
     public static Vector3 DialoguePos => _dialoguePos.Value;
 
@@ -97,7 +100,7 @@ public static class Configs
         _UseIgnoreList = config("1 - General", "Use Ignore List", Toggle.On, "If on, the plugin uses the IgnoreList.yml to filter almanac");
         _ShowAllData = config("1 - General", "Show All Data", Toggle.Off, "If on, Almanac does not filter extra data, like prefab name and material name");
         _allowConversion = config("1 - General", "Enable Conversion", Toggle.On, "If on, players can convert chosen item into almanac tokens");
-        _conversionRate = config("1 - General", "Conversion Rate", 10, "Set conversion ratio, ie. 10 coins for 1 token");
+        _conversionRate = config("1 - General", "Conversion Rate", 50, "Set conversion ratio, ie. 50 coins for 1 token");
         _conversionItem = config("1 - General", "Conversion Item", "Coins", "Set item to use to convert into almanac tokens");
         _almanacEnabled = config("1 - General", "Almanac Button", Toggle.On, "If on, almanac button replaces trophies button");
         _almanacEnabled.SettingChanged += (_, _) => AlmanacPanel.inventoryButton?.Show(ShowAlmanac);
@@ -159,6 +162,8 @@ public static class Configs
         _customizationPos = config("5 - User Interface", "NPC Customization", new Vector3(490f, 170f, 0f), "Set position of customization");
         _dialoguePos = config("5 - User Interface", "NPC Dialogue", new Vector3(980f, 365f, 0f), "Set position of dialogue");
         _dialoguePos.SettingChanged += DialoguePanel.OnPosChange;
+        _elementViewGridSize = config("5 - User Interface", "Grid Element Size", new Vector2(180f, 180f), "");
+        _elementViewGridSize.SettingChanged += (_, _) => AlmanacPanel.instance?.elementView.SetGridElementSize(ElementViewGridSize);
         SetupWatcher();
     }
     

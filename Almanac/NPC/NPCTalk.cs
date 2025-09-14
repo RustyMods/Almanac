@@ -61,11 +61,9 @@ public class NPCTalk : MonoBehaviour
         SetRandomGreets(randomTalk.Greets);
         SetRandomGoodbye(randomTalk.GoodBye);
     }
-    
     public void SetRandomTalk(List<string> talk) => m_randomTalk = talk;
     public void SetRandomGreets(List<string> talk) => m_randomGreets = talk;
     public void SetRandomGoodbye(List<string> talk) => m_randomGoodbye = talk;
-
     public void Update()
     {
         if (!m_nview.IsValid()) return;

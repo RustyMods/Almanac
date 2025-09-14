@@ -442,6 +442,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         OnScrollbarSensitivityChanged(Configs.ScrollbarSensitivity);
         SetTopic(Keys.Almanac);
         elementView.SetSelectedColor(Configs.OutlineColor);
+        elementView.SetGridElementSize(Configs.ElementViewGridSize);
     }
 
     public static void OnScrollbarSensitivityChanged(float sensitivity)
@@ -1301,6 +1302,8 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             grid = root.GetComponent<GridLayoutGroup>();
             views.Add(this);
         }
+
+        public void SetGridElementSize(Vector2 size) => grid.cellSize = size;
         protected virtual List<GridElement> GetElements() => new();
         protected virtual GridElement? GetSelectedElement() => null;
         private void ScrollToElement(int elementIndex)

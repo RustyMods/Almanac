@@ -198,11 +198,12 @@ public static class ItemHelper
         public readonly ItemDrop.ItemData itemData = null!;
         public readonly SharedData shared = null!;
         public readonly Recipe? recipe;
-        private readonly List<Sprite> Icons = new();
+        private readonly HashSet<Sprite> Icons = new();
         private readonly HashSet<CritterHelper.CritterInfo> droppedBy = new();
         private readonly HashSet<ItemDrop> setItems = new();
         private readonly HashSet<Recipe> usedIn = new();
         private readonly HashSet<PieceHelper.PieceInfo> usedInPieces = new();
+        private readonly HashSet<PieceHelper.PieceInfo> usedInConversions = new();
         private readonly Fish? fish;
         private readonly HashSet<ItemInfo> _itemBaits = new();
         private HashSet<ItemInfo> itemBaits
@@ -223,6 +224,8 @@ public static class ItemHelper
         private readonly bool isFloating;
         private bool IsUsedInOtherRecipes => usedIn.Count != 0;
         private bool IsUsedInPieces => usedInPieces.Count != 0;
+        
+        private bool IsUsedInConversions => usedInConversions.Count != 0;
         public Sprite? GetIcon() => itemData.GetIcon();
         public ItemInfo(GameObject prefab)
         {
@@ -236,9 +239,13 @@ public static class ItemHelper
             setItems = itemData.GetSet();
             fish = prefab.GetComponent<Fish>();
             if (!itemData.HasIcons()) return;
-            Icons.AddRange(shared.m_icons);
+            foreach (var icon in shared.m_icons)
+            {
+                Icons.Add(icon);
+            }
             usedIn = recipes.Where(r => r.m_item != null && r.m_resources.Any(resource => resource.m_resItem.name == prefab.name)).ToHashSet();
             usedInPieces = PieceHelper.GetPieces().Where(p => p.piece.m_resources.Any(resource => resource.m_resItem.name == prefab.name)).ToHashSet();
+            usedInConversions = PieceHelper.GetPieces().Where(p => p.conversions.Any(c => c.from.name == prefab.name)).ToHashSet();
             ItemInfos[shared.m_name] = this;
         }
 
@@ -298,9 +305,12 @@ public static class ItemHelper
                 case ItemType.Helmet or ItemType.Legs or ItemType.Chest or ItemType.Customization or ItemType.Shoulder:
                     builder.Add(Keys.Armor);
                     builder.Add(Keys.Armor, shared.m_armor, shared.m_armorPerLevel, $"/{Keys.Lvl}");
-                    builder.Add(Keys.Material, shared.m_armorMaterial);
-                    builder.Add(Keys.HideHelmet, shared.m_helmetHideHair);
-                    builder.Add(Keys.HideBeard, shared.m_helmetHideBeard);
+                    if (Configs.ShowAllData)
+                    {
+                        builder.Add(Keys.Material, shared.m_armorMaterial);
+                        builder.Add(Keys.HideHelmet, shared.m_helmetHideHair);
+                        builder.Add(Keys.HideBeard, shared.m_helmetHideBeard);
+                    }
                     if (shared.m_damageModifiers.Count > 0)
                     {
                         builder.Add(Keys.Resistances);
@@ -645,6 +655,22 @@ public static class ItemHelper
                         panel.description.view.CreateIcons().SetIcons(usedInPieces.ToArray());
                     }
                 }
+                
+                // if (IsUsedInConversions)
+                // {
+                //     if (usedInConversions.Count > 4)
+                //     {
+                //         IEnumerable<List<PieceHelper.PieceInfo>> batches = usedInPieces.ToList().Batch(4);
+                //         foreach (List<PieceHelper.PieceInfo>? batch in batches)
+                //         {
+                //             panel.description.view.CreateIcons().SetIcons(batch.ToArray());
+                //         }
+                //     }
+                //     else
+                //     {
+                //         panel.description.view.CreateIcons().SetIcons(usedInPieces.ToArray());
+                //     }
+                // }
             }
             if (fish != null)
             {

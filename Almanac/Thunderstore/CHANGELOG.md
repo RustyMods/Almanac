@@ -1,3 +1,9 @@
+# 3.5.16
+- Added null check when indexing ZNetScene and ObjectDB prefabs
+- Fixed bounty return cost default item from `$item_coins` to `Coins`, if prefab is not valid
+- Fixed bounty override health not being applied
+- Config to modify grid element size (if you want to change row count)
+
 # 3.5.15
 - YAML is now an external dependency: https://thunderstore.io/c/valheim/p/ValheimModding/YamlDotNet/
 - Fixed leaderboard get rank method dividing by zero when player has never died

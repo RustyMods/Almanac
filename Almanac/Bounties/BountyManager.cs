@@ -62,16 +62,21 @@ public class BountyManager : MonoBehaviour
     public void SpawnBounty()
     {
         if (ActiveBountyLocation == null) return;
-
-        ZDO? zdo = ZDOMan.instance.CreateNewZDO(ActiveBountyLocation.position, ActiveBountyLocation.data.Creature.GetStableHashCode());
+        var hash = ActiveBountyLocation.data.Creature.GetStableHashCode();
+        ZDO? zdo = ZDOMan.instance.CreateNewZDO(ActiveBountyLocation.position, hash);
         zdo.Persistent = false;
         zdo.Type = ZDO.ObjectType.Default;
         zdo.Distant = false;
-        zdo.SetPrefab(ActiveBountyLocation.data.Creature.GetStableHashCode());
+        zdo.SetPrefab(hash);
         zdo.SetOwner(ZDOMan.GetSessionID());
         if (ActiveBountyLocation.data.Level > 1) zdo.Set(ZDOVars.s_level, ActiveBountyLocation.data.Level);
         zdo.Set(ZDOVars.s_tamedName, ActiveBountyLocation.data.GetNameOverride());
-        if (ActiveBountyLocation.data.Health > 0) zdo.Set(ZDOVars.s_maxHealth, ActiveBountyLocation.data.Health);
+        if (ActiveBountyLocation.data.Health > 0)
+        {
+            zdo.Set(BountyVars.BountyHealth, ActiveBountyLocation.data.Health);
+            zdo.Set(ZDOVars.s_maxHealth, ActiveBountyLocation.data.Health);
+            zdo.Set(ZDOVars.s_health, ActiveBountyLocation.data.Health);
+        }
         zdo.Set(BountyVars.BountyID, ActiveBountyLocation.data.UniqueID);
         zdo.Set(BountyVars.DamageModifier, ActiveBountyLocation.data.DamageMultiplier);
         zdo.Set(ZDOVars.s_creator, Player.m_localPlayer.GetPlayerID());
@@ -104,9 +109,6 @@ public class BountyManager : MonoBehaviour
         }
         Player.m_localPlayer.Message(MessageHud.MessageType.Center, Keys.Hunt + " " + bountyLocation.data.Name);
         datetime = DateTime.Now;
-        AlmanacPlugin.AlmanacLogger.LogDebug("Successfully added bounty: " + bountyLocation.data.GetNameOverride());
-        AlmanacPlugin.AlmanacLogger.LogDebug("Location: " + bountyLocation.position.x + " " + bountyLocation.position.z);
-        
         return true;
     }
     public static bool CanPurchase(Player player, BountyData data)
@@ -151,7 +153,7 @@ public class BountyManager : MonoBehaviour
             }
             else
             {
-                player.GetInventory().AddItem(item.item?.m_itemData.m_shared.m_name ?? "$item_coins", item.Amount, 1, 0, 0L, string.Empty);
+                player.GetInventory().AddItem(item.item?.m_itemData.m_shared.m_name ?? "Coins", item.Amount, 1, 0, 0L, string.Empty);
             }
         }
     }
@@ -159,7 +161,6 @@ public class BountyManager : MonoBehaviour
     {
         if (ActiveBountyLocation == null) return;
         ActiveBountyLocation.data.completed = false;
-        ReturnCost(Player.m_localPlayer, ActiveBountyLocation.data);
         if (ActiveBountyLocation.pin != null) Minimap.instance.RemovePin(ActiveBountyLocation.pin);
         if (Configs.ReturnBountyCostWhenCancel)
         {
@@ -545,6 +546,7 @@ public class BountyManager : MonoBehaviour
             Name = NameGenerator.GenerateName(character?.m_name ?? Creature);
             return Name;
         }
+
         public void ReturnCost(Player player)
         {
             foreach (StoreManager.StoreCost.Cost? cost in Cost.Items)

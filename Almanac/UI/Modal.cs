@@ -1149,6 +1149,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     data.isValid = false;
                     return;
                 }
+                field.SetTextColor(Color.white);
                 data.isValid = true;
                 RequiredKey = key.ToString();
                 field.SetWithoutNotify(key.ToString());

@@ -22,6 +22,7 @@ public static class BountyVars
 {
     public static readonly int DamageModifier = "DamageModifier".GetStableHashCode();
     public static readonly int BountyID = "BountyID".GetStableHashCode();
+    public static readonly int BountyHealth = "BountyHealth".GetStableHashCode();
 }
 
 [RequireComponent(typeof(Character))]
@@ -57,6 +58,11 @@ public class Bounty : MonoBehaviour
         m_monsterAI.SetAlerted(true);
         m_monsterAI.SetHuntPlayer(true);
         m_monsterAI.SetTarget(Player.GetPlayer(m_hunter));
+        
+        var healthOverride = m_nview.GetZDO().GetFloat(BountyVars.BountyHealth, m_character.m_health);
+        var health = healthOverride * m_character.m_level;
+        m_character.SetMaxHealth(health);
+        m_character.SetHealth(health);
     }
 
     public void Update() => UpdatePin();
@@ -66,6 +72,7 @@ public class Bounty : MonoBehaviour
         DestroyPin();
         if (!m_isDead)
         {
+            if (m_hunter != Player.m_localPlayer.GetPlayerID()) return;
             Player.m_localPlayer.Message(MessageHud.MessageType.Center, Keys.BountyEscaped);
             BountyManager.ActiveBountyLocation?.data.ReturnCost(Player.m_localPlayer);
             BountyManager.ActiveBountyLocation = null;
@@ -82,11 +89,11 @@ public class Bounty : MonoBehaviour
     public void DestroyPin() => Minimap.instance.RemovePin(pin);
     public void OnDeath()
     {
-        if (!m_character) return;
+        if (m_character == null) return;
         if (m_character.m_lastHit?.GetAttacker() is Player player)
         {
             long killerID = player.GetPlayerID();
-            if (Groups.API.FindGroupMemberByPlayerId(killerID) is not null || killerID == m_hunter)
+            if ((Groups.API.IsLoaded() && Groups.API.FindGroupMemberByPlayerId(killerID) is not null) || killerID == m_hunter)
             {
                 if (BountyManager.bounties.TryGetValue(m_bountyID, out BountyManager.BountyData bounty))
                 {
@@ -95,7 +102,7 @@ public class Bounty : MonoBehaviour
             }
             else
             {
-                Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"{Keys.BountyStolen} {player.GetPlayerName()}, {Keys.ReturningCost}");
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"{Keys.BountyStolen} {player.GetPlayerName()}");
                 BountyManager.ActiveBountyLocation = null;
             }
             

@@ -19,7 +19,9 @@ namespace Almanac.Store;
 
 public static class CustomEffectManager
 {
-    public static readonly ISerializer serializer = new SerializerBuilder().ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitNull).Build();
+    public static readonly ISerializer serializer = new SerializerBuilder()
+        .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitDefaults | DefaultValuesHandling.OmitNull | DefaultValuesHandling.OmitEmptyCollections)
+        .Build();
     private static readonly IDeserializer deserializer = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
     private static readonly CustomSyncedValue<string> SyncedEffectData = new(AlmanacPlugin.ConfigSync, "ServerSynced_Almanac_CustomEffect_Data", "");
     private static Dictionary<string, CustomEffect.Data> effects = new();
@@ -459,9 +461,13 @@ public class CustomEffect : SE_Stats
         public string Tooltip = string.Empty;
         public float Duration = 0f;
         public string Icon = string.Empty;
+        [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
         public List<string> StartEffects = new();
+        [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
         public List<string> StopEffects = new();
+        [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
         public Dictionary<string, float> Modifiers = new();
+        [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
         public Dictionary<string, float> Skills = new();
         [YamlIgnore] public Sprite? icon => SpriteManager.GetSprite(Icon);
         public void CopyFrom(Data other)

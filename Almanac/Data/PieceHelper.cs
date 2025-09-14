@@ -30,6 +30,34 @@ public static class PieceHelper
     private static readonly List<PieceInfo> pieces = new();
     public static List<PieceInfo> GetPieces() => pieces.FindAll(x => !Filters.Ignore(x.prefab.name));
     public static List<PieceInfo> plants => GetPieces().FindAll(p => p.plant != null);
+
+    public readonly record struct ItemConversion(ItemDrop from, ItemDrop to)
+    {
+        public readonly ItemDrop from = from;
+        public readonly ItemDrop to = to;
+    }
+
+    public static List<ItemConversion> ToConversions(this List<Smelter.ItemConversion> smelter)
+    {
+        List<ItemConversion> conversions = new();
+        foreach (var itemConversion in smelter)
+        {
+            conversions.Add(new ItemConversion(itemConversion.m_from, itemConversion.m_to));
+        }
+
+        return conversions;
+    }
+
+    public static List<ItemConversion> ToConversions(this List<CookingStation.ItemConversion> cookingStation)
+    {
+        List<ItemConversion> conversions = new();
+        foreach (var itemConversion in cookingStation)
+        {
+            conversions.Add(new ItemConversion(itemConversion.m_from, itemConversion.m_to));
+        }
+        return conversions;
+    }
+    
     public readonly record struct PieceInfo
     {
         private static readonly EntryBuilder builder = new();
@@ -54,6 +82,7 @@ public static class PieceHelper
         public readonly Plant? plant;
         public readonly ArcheryTarget? archeryTarget;
         public readonly Catapult catapult;
+        public readonly HashSet<ItemConversion> conversions = new();
         public bool isKnown(Player player) => piece.m_resources.All(item => player.IsKnownMaterial(item.m_resItem.m_itemData.m_shared.m_name));
 
         public readonly bool isFeast;
@@ -86,6 +115,21 @@ public static class PieceHelper
             isFeast = prefab.GetComponent<ItemDrop>();
             isShip = ship != null;
             isPlant = plant != null;
+            if (cookingStation != null)
+            {
+                foreach (var conversion in cookingStation.m_conversion)
+                {
+                    conversions.Add(new ItemConversion(conversion.m_from, conversion.m_to));
+                }
+            }
+
+            if (smelter != null)
+            {
+                foreach (var conversion in smelter.m_conversion)
+                {
+                    conversions.Add(new ItemConversion(conversion.m_from, conversion.m_to));
+                }
+            }
             pieces.Add(this);
         }
 

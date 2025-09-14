@@ -27,7 +27,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.5.15";
+        internal const string ModVersion = "3.5.16";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         public const string ConfigFileName = ModGUID + ".cfg";
@@ -179,7 +179,11 @@ namespace Almanac
             public static void Postfix(ZNetScene __instance)
             {
                 // ModHelper.MapAssets();
-                foreach (GameObject? prefab in __instance.m_prefabs) OnZNetScenePrefabs?.Invoke(prefab);
+                foreach (GameObject? prefab in __instance.m_prefabs)
+                {
+                    if (prefab == null) continue;
+                    OnZNetScenePrefabs?.Invoke(prefab);
+                }
                 OnZNetSceneAwake?.Invoke();
             }
         }
@@ -194,6 +198,7 @@ namespace Almanac
                 if (ZNetScene.instance == null) return;
                 foreach (GameObject? prefab in ObjectDB.instance.m_items)
                 {
+                    if (prefab == null) continue;
                     OnObjectDBPrefabs?.Invoke(prefab);
                 }
                 foreach (StatusEffect se in ObjectDB.instance.m_StatusEffects)

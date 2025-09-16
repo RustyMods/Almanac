@@ -47,7 +47,7 @@ public static class CustomEffectManager
         AlmanacPlugin.OnObjectDBAwake += Initialize;
         AlmanacPlugin.OnZNetAwake += UpdateServerEffects;
         LoadDefaults();
-        string[] files = CustomEffectDir.GetFiles("*.yml");
+        string[] files = CustomEffectDir.GetFiles("*.yml", true);
         if (files.Length == 0)
         {
             foreach (CustomEffect.Data effectData in effects.Values)
@@ -56,6 +56,7 @@ public static class CustomEffectManager
                 string fileName = effectData.UniqueID + ".yml";
                 var path = CustomEffectDir.WriteFile(fileName, data);
                 fileEffects[path] = effectData;
+                effectData.Path = path;
             }
         }
         else
@@ -66,6 +67,7 @@ public static class CustomEffectManager
                 CustomEffect.Data data = deserializer.Deserialize<CustomEffect.Data>(File.ReadAllText(file));
                 effects[data.UniqueID] = data;
                 fileEffects[file] = data;
+                data.Path = file;
             }
         }
 
@@ -73,6 +75,8 @@ public static class CustomEffectManager
         FileSystemWatcher watcher = new FileSystemWatcher(CustomEffectDir.Path, "*.yml");
         watcher.EnableRaisingEvents = true;
         watcher.SynchronizingObject = ThreadingHelper.SynchronizingObject;
+        watcher.IncludeSubdirectories = true;
+        watcher.NotifyFilter = NotifyFilters.LastWrite;
         watcher.Changed += OnChanged;
         watcher.Created += OnCreated;
         watcher.Deleted += OnDeleted;
@@ -250,6 +254,43 @@ public static class CustomEffectManager
     }
     
     public static bool Exists(string name) => ObjectDB.instance.GetStatusEffect(name.GetStableHashCode()) != null;
+
+    public static void ApplyModifier(this HitData hit, HitData.DamageType type, float multiplier)
+    {
+        switch (type)
+        {
+            case  HitData.DamageType.Blunt:
+                hit.m_damage.m_blunt *= multiplier;
+                break;
+            case  HitData.DamageType.Slash:
+                hit.m_damage.m_slash *= multiplier;
+                break;
+            case  HitData.DamageType.Pierce:
+                hit.m_damage.m_pierce *= multiplier;
+                break;
+            case HitData.DamageType.Chop:
+                hit.m_damage.m_chop *= multiplier;
+                break;
+            case HitData.DamageType.Pickaxe:
+                hit.m_damage.m_pickaxe *= multiplier;
+                break;
+            case HitData.DamageType.Fire:
+                hit.m_damage.m_fire *= multiplier;
+                break;
+            case HitData.DamageType.Frost:
+                hit.m_damage.m_frost *= multiplier;
+                break;
+            case HitData.DamageType.Lightning:
+                hit.m_damage.m_lightning *= multiplier;
+                break;
+            case HitData.DamageType.Poison:
+                hit.m_damage.m_poison *= multiplier;
+                break;
+            case HitData.DamageType.Spirit:
+                hit.m_damage.m_spirit *= multiplier;
+                break;
+        }
+    }
 }
 public class CustomEffect : SE_Stats
 {
@@ -334,30 +375,20 @@ public class CustomEffect : SE_Stats
         if (data.Skills.TryGetValue("All", out var all)) level += all;
         if (data.Skills.TryGetValue(skill.ToString(), out var amount)) level += amount;
     }
-    public override void OnDamaged(HitData hit, Character character) => hit.ApplyModifier(Mathf.Clamp01(1f - m_damageReduction));
-    public void ModifyDamages(ref HitData hit)
+
+    public override void OnDamaged(HitData hit, Character character)
     {
-        hit.m_damage.m_blunt *= 1f - m_bluntResistance;
-        hit.m_damage.m_slash *= 1f - m_slashResistance;
-        hit.m_damage.m_pierce *= 1f - m_pierceResistance;
-        hit.m_damage.m_chop *= 1f - m_chopResistance;
-        hit.m_damage.m_pickaxe *= 1f - m_pickaxeResistance;
-        hit.m_damage.m_fire *= 1f - m_fireResistance;
-        hit.m_damage.m_frost *= 1f - m_frostResistance;
-        hit.m_damage.m_lightning *= 1f - m_lightningResistance;
-        hit.m_damage.m_poison *= 1f - m_poisonResistance;
-        hit.m_damage.m_spirit *= 1f - m_spiritResistance;
-        
-        if (hit.m_damage.m_blunt < 0f) hit.m_damage.m_blunt = 0f;
-        if (hit.m_damage.m_slash < 0f) hit.m_damage.m_slash = 0f;
-        if (hit.m_damage.m_pierce < 0f) hit.m_damage.m_pierce = 0f;
-        if (hit.m_damage.m_chop < 0f) hit.m_damage.m_chop = 0f;
-        if (hit.m_damage.m_pickaxe < 0f) hit.m_damage.m_pickaxe = 0f;
-        if (hit.m_damage.m_fire < 0f) hit.m_damage.m_fire = 0f;
-        if (hit.m_damage.m_frost < 0f) hit.m_damage.m_frost = 0f;
-        if (hit.m_damage.m_lightning < 0f) hit.m_damage.m_lightning = 0f;
-        if (hit.m_damage.m_poison < 0f) hit.m_damage.m_poison = 0f;
-        if (hit.m_damage.m_spirit < 0f) hit.m_damage.m_spirit = 0f;
+        hit.m_damage.m_blunt *= Mathf.Clamp01(1f - m_bluntResistance);
+        hit.m_damage.m_slash *= Mathf.Clamp01(1f - m_slashResistance);
+        hit.m_damage.m_pierce *= Mathf.Clamp01(1f - m_pierceResistance);
+        hit.m_damage.m_chop *= Mathf.Clamp01(1f - m_chopResistance);
+        hit.m_damage.m_pickaxe *= Mathf.Clamp01(1f - m_pickaxeResistance);
+        hit.m_damage.m_fire *= Mathf.Clamp01(1f - m_fireResistance);
+        hit.m_damage.m_frost *= Mathf.Clamp01(1f - m_frostResistance);
+        hit.m_damage.m_lightning *= Mathf.Clamp01(1f - m_lightningResistance);
+        hit.m_damage.m_poison *= Mathf.Clamp01(1f - m_poisonResistance);
+        hit.m_damage.m_spirit *= Mathf.Clamp01(1f - m_spiritResistance);
+        hit.ApplyModifier(Mathf.Clamp01(1f - m_damageReduction));
     }
     public void LifeSteal(HitData hit, Character character)
     {
@@ -470,6 +501,7 @@ public class CustomEffect : SE_Stats
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
         public Dictionary<string, float> Skills = new();
         [YamlIgnore] public Sprite? icon => SpriteManager.GetSprite(Icon);
+        [YamlIgnore] public string Path = string.Empty;
         public void CopyFrom(Data other)
         {
             UniqueID = other.UniqueID;
@@ -514,21 +546,6 @@ public class CustomEffect : SE_Stats
             {
                 if (effect is not CustomEffect customEffect) continue;
                 customEffect.LifeSteal(hit, player);
-            }
-        }
-    }
-
-    [HarmonyPatch(typeof(Character), nameof(Character.ApplyDamage))]
-    public static class Character_ApplyDamage_Patch
-    {
-        [UsedImplicitly]
-        private static void Prefix(Character __instance, HitData hit)
-        {
-            if (__instance is not Player) return;
-            foreach (var se in __instance.GetSEMan().GetStatusEffects())
-            {
-                if (se is not CustomEffect customEffect) continue;
-                customEffect.ModifyDamages(ref hit);
             }
         }
     }
@@ -636,13 +653,13 @@ public static class CEVarsHelper
         "- If you are admin, you can use the creation tool to define your status effect file, then upload the file to your server."
     };
 
-    public static string[] BuildReadMe()
+    public static List<string> BuildReadMe()
     {
         List<string> lines = new List<string>();
         lines.AddRange(Prefix);
         lines.AddRange(allVars);
         lines.AddRange(Postfix);
-        return lines.ToArray();
+        return lines;
     }
 
     public static bool IsCEVar(string value)

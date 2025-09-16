@@ -196,11 +196,6 @@ public static class MarketManager
         if (!dict.TryGetValue(key, out Market? market)) market = new Market(key);
         return market;
     }
-    private static void AddOrSet(this Dictionary<string, int> dict, string key, int value)
-    {
-        if (dict.ContainsKey(key)) dict[key] += value;
-        else dict[key] = value;
-    }
     public static void RPC_AddMarketItem(long sender, string pkg)
     {
         try
@@ -230,7 +225,7 @@ public static class MarketManager
     }
     private static void AddRevenue(string playerName, int amount)
     {
-        revenues.AddOrSet(playerName, amount);
+        revenues.IncrementOrSet(playerName, amount);
         UpdateServerRevenue();
     }
     private static void AddMarketItem(MarketItem marketItem)

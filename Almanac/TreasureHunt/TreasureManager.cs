@@ -76,6 +76,7 @@ public class TreasureManager : MonoBehaviour
                 string data = serializer.Serialize(treasure);
                 var path = TreasureDir.WriteFile(fileName, data);
                 fileTreasures[path] = treasure;
+                treasure.Path = path;
             }
         }
         else
@@ -88,6 +89,7 @@ public class TreasureManager : MonoBehaviour
                     TreasureData data = deserializer.Deserialize<TreasureData>(File.ReadAllText(file));
                     treasures[data.Name] = data;
                     fileTreasures[file] = data;
+                    data.Path = file;
                 }
                 catch
                 {
@@ -446,6 +448,8 @@ public class TreasureManager : MonoBehaviour
             Cost = data.Cost;
             Loot = data.Loot;
         }
+
+        [YamlIgnore] public string Path = string.Empty;
         [YamlIgnore] public Heightmap.Biome biome => Enum.TryParse(Biome, true, out Heightmap.Biome land) ? land : Heightmap.Biome.None;
         [YamlIgnore] public Sprite? icon => SpriteManager.GetSprite(Icon);
         public List<AlmanacPanel.InfoView.Icons.DropInfo> ToDropInfo()
@@ -510,6 +514,28 @@ public class TreasureManager : MonoBehaviour
             panel.description.SetName(Name);
             panel.description.SetIcon(icon);
             panel.description.Interactable(true);
+            if (AlmanacPanel.isLocalAdminOrHostAndNoCost)
+            {
+                AlmanacPanel.InfoView.EditButton edit = panel.description.view.CreateEditButton();
+                edit.SetLabel("Edit");
+                edit.OnClick(() =>
+                {
+                    var form = new FormPanel.TreasureForm();
+                    form.SetTopic("Edit Treasure");
+                    form.SetButtonText("Confirm Edit");
+                    form.SetDescription("Edit Treasure Ledger");
+                    form.inEditMode = true;
+                    form.overridePath = Path;
+                    panel.formBuilder.Setup(form);
+                    form.nameField.input?.Set(Name);
+                    form.loreField.input?.Set(Lore);
+                    form.iconField.input?.Set(Icon);
+                    form.biomeField.input?.Set(Biome);
+                    form.costField.input?.Set(Cost.ToString());
+                    form.lootField.input?.Set(string.Join(":", Loot.Select(l => l.ToString())));
+                    form.HasChanged = false;
+                });
+            }
             ToEntries().Build(panel.description.view);
             List<AlmanacPanel.InfoView.Icons.DropInfo> drops = ToDropInfo();
             if (drops.Count > 0)
@@ -570,6 +596,8 @@ public class TreasureManager : MonoBehaviour
             Max = max;
             Weight = weight;
         }
+
+        public override string ToString() => $"{Item}, {Min}, {Max}, {Weight}";
         [YamlIgnore] public GameObject? prefab => ObjectDB.instance.GetItemPrefab(Item);
         [YamlIgnore] public bool isValid => prefab is not null;
         public DropTable.DropData ToDropTableData()

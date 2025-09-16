@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Almanac.Managers;
 using Almanac.NPC;
@@ -282,7 +283,7 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
                     element.OnValueChanged(s => element.SetFieldColor(!IsValidBeard(s) ? Color.red : Color.white));
                     break;
                 case SettingType.Animation:
-                    element.OnValueChanged(s => element.SetFieldColor(!NPC.NPC.IsValidEmote(s) ? Color.red : Color.white));
+                    element.OnValueChanged(s => element.SetFieldColor(!Enum.TryParse(s, true, out PlayerAnims _) ? Color.red : Color.white));
                     break;
                 case SettingType.SkinColor or SettingType.HairColor:
                     element.OnValueChanged(s =>

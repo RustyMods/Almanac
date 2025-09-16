@@ -32,7 +32,7 @@ public static class ModalExtensions
         }
     }
 }
-public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
+public class FormPanel : MonoBehaviour, IDragHandler, IBeginDragHandler
 {
     public static readonly GameObject _Modal = AssetBundleManager.LoadAsset<GameObject>("almanac_ui", "AlmanacModal")!;
     public RectTransform root = null!;
@@ -50,8 +50,8 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
     public float minHeight;
     public float padding;
     public float buffer = 5f;
-    public static Modal? instance;
-    private readonly List<ModalElement> elements = new();
+    public static FormPanel? instance;
+    private readonly List<FormElement> elements = new();
     private Vector3 mouseDifference = Vector3.zero;
     private Action? OnMainButton;
     private Action<float>? OnUpdate;
@@ -85,7 +85,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
     {
         float dt = Time.deltaTime;
         OnUpdate?.Invoke(dt);
-        foreach (ModalElement? element in elements) element.Update(dt);
+        foreach (FormElement? element in elements) element.Update(dt);
     }
     public void SetButtonText(string text) => mainButtonText.text = Localization.instance.Localize(text);
     public static bool IsFocused() => instance?.elements.Any(x => x.IsTyping()) ?? false;
@@ -113,7 +113,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
     }
     public void Clear()
     {
-        foreach(ModalElement? element in elements) element.Destroy();
+        foreach(FormElement? element in elements) element.Destroy();
         elements.Clear();
     }
     public void Resize()
@@ -133,7 +133,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         Vector2 pos = eventData.position;
         mouseDifference = transform.position - new Vector3(pos.x, pos.y, 0);
     }
-    public class Field : ModalElement
+    public class Field : FormElement
     {
         private readonly InputField field;
         private readonly RectTransform rect;
@@ -177,6 +177,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         private void SetBackgroundColor(Color color) => bkg.color = color;
         private void SetGlow(bool enable) => glow.gameObject.SetActive(enable);
         public void SetWithoutNotify(string input) => field.SetTextWithoutNotify(input);
+        public void Set(string input) => field.text = input;
         public void SetContentType(InputField.ContentType type) => field.contentType = type;
         public override bool Contains(string query) => field.text.Contains(query);
         public void SetTextColor(Color color) => field.textComponent.color = color;
@@ -184,7 +185,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         public void SetPlaceholder(string text) => placeholder.text = Localization.instance.Localize(text);
         public override bool IsTyping() => field.isFocused;
     }
-    public class TextArea : ModalElement
+    public class TextArea : FormElement
     {
         private readonly Text area;
         private readonly RectTransform rect;
@@ -222,7 +223,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             return preferredHeight;
         }
     }
-    public class Title : ModalElement
+    public class Title : FormElement
     {
         private readonly Text title;
         public Title(Transform transform) : base(transform)
@@ -238,7 +239,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         }
         public override bool Contains(string query) => title.text.Contains(query);
     }
-    public class ButtonElement : ModalElement
+    public class ButtonElement : FormElement
     {
         private readonly Text label;
         private readonly Button button;
@@ -257,12 +258,12 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         public void SetText(string text) => label.text = Localization.instance.Localize(text);
         public void OnClick(UnityAction action) => button.onClick.AddListener(action);
     }
-    public class ModalElement
+    public class FormElement
     {
         protected readonly GameObject prefab;
         public float height;
         protected readonly float _minHeight;
-        protected ModalElement(Transform transform)
+        protected FormElement(Transform transform)
         {
             prefab = transform.gameObject;
             height = transform.GetComponent<RectTransform>().sizeDelta.y;
@@ -299,44 +300,46 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         }
     }
 
-    public class ModalBuilder
+    public class FormBuilder
     {
-        private readonly Modal _modal;
+        private readonly FormPanel _formPanel;
         private readonly AlmanacPanel.ElementView _view;
         public enum FormType {Achievement, StoreItem, Bounty, Treasure, StatusEffect}
-        private void Setup(FormData form)
+        public void Setup(FormData form)
         {
-            _modal.Clear();
+            _formPanel.Clear();
             foreach (FormData.FormField? field in form.fields)
             {
-                _modal.CreateTitle().SetTitle(field.label + (field.required ? "<color=red>*</color>" : ""));
-                TextArea tooltip = _modal.CreateTextArea();
+                _formPanel.CreateTitle().SetTitle(field.label + (field.required ? "<color=red>*</color>" : ""));
+                TextArea tooltip = _formPanel.CreateTextArea();
                 tooltip.SetText(field.tooltip);
-                Field input = _modal.CreateField();
+                Field input = _formPanel.CreateField();
                 input.SetPlaceholder(field.placeholder);
                 input.SetContentType(field.contentType);
                 input.OnValueChanged(s => field.validationCallback.Invoke(s, input, field));
+                field.input = input;
             }
-            _modal.Resize();
-            _modal.scrollbar.value = 1f;
-            _modal.OnUpdate = _ => form.Update(_modal, Close);
-            _modal.SetActive(true);
-            _modal.SetTopic(form.topic);
-            _modal.SetButtonText(form.cancelText);
-            _modal.OnMainButton = Close;
+            _formPanel.Resize();
+            _formPanel.scrollbar.value = 1f;
+            _formPanel.OnUpdate = _ => form.Update(_formPanel, Close);
+            _formPanel.SetActive(true);
+            _formPanel.SetTopic(form.topic);
+            
+            _formPanel.SetButtonText(form.cancelText);
+            _formPanel.OnMainButton = Close;
         }
         private void Close()
         {
-            _modal.OnUpdate = null;
-            _modal.OnMainButton = null;
-            _modal.Clear();
-            _modal.SetActive(false);
+            _formPanel.OnUpdate = null;
+            _formPanel.OnMainButton = null;
+            _formPanel.Clear();
+            _formPanel.SetActive(false);
         }
 
         public void SetupSale(ItemDrop.ItemData item)
         {
             FormData form = new MarketPlaceForm(item);
-            _modal.Clear();
+            _formPanel.Clear();
             string itemTooltip = item.GetTooltip();
             if (item.HasSockets())
             {
@@ -348,26 +351,27 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                 }
             }
             itemTooltip += "\n\n";
-            TextArea info = _modal.CreateTextArea();
+            TextArea info = _formPanel.CreateTextArea();
             info.SetText(itemTooltip);
             info.SetTextColor(Color.white);
             foreach (FormData.FormField? field in form.fields)
             {
-                _modal.CreateTitle().SetTitle(field.label + (field.required ? "<color=red>*</color>" : ""));
-                TextArea tooltip = _modal.CreateTextArea();
+                _formPanel.CreateTitle().SetTitle(field.label + (field.required ? "<color=red>*</color>" : ""));
+                TextArea tooltip = _formPanel.CreateTextArea();
                 tooltip.SetText(field.tooltip);
-                Field input = _modal.CreateField();
+                Field input = _formPanel.CreateField();
                 input.SetPlaceholder(field.placeholder);
                 input.SetContentType(field.contentType);
                 input.OnValueChanged(s => field.validationCallback.Invoke(s, input, field));
+                field.input = input;
             }
-            _modal.Resize();
-            _modal.scrollbar.value = 1f;
-            _modal.OnUpdate = _ => form.Update(_modal, Close);
-            _modal.SetActive(true);
-            _modal.SetTopic(form.topic);
-            _modal.SetButtonText(form.cancelText);
-            _modal.OnMainButton = Close;
+            _formPanel.Resize();
+            _formPanel.scrollbar.value = 1f;
+            _formPanel.OnUpdate = _ => form.Update(_formPanel, Close);
+            _formPanel.SetActive(true);
+            _formPanel.SetTopic(form.topic);
+            _formPanel.SetButtonText(form.cancelText);
+            _formPanel.OnMainButton = Close;
         }
         public void Build(FormType type)
         {
@@ -387,9 +391,9 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             element.Interactable(true);
             element.OnClick(() => Setup(form));
         }
-        public ModalBuilder(Modal modal, AlmanacPanel.ElementView view)
+        public FormBuilder(FormPanel formPanel, AlmanacPanel.ElementView view)
         {
-            _modal = modal;
+            _formPanel = formPanel;
             _view = view;
         }
     }
@@ -408,6 +412,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             SetTopic(item.m_shared.m_name);
             AddField(Keys.Cost, Keys.AlmanacTokenPrice, "10", (s, field, data) =>
             {
+                HasChanged = true;
                 if (string.IsNullOrEmpty(s) || !int.TryParse(s, out var price))
                 {
                     field.SetTextColor(Color.red);
@@ -422,6 +427,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             }, InputField.ContentType.IntegerNumber);
             AddField(Keys.StackSize, Keys.SetSizeOfStack, "1", (s, field, data) =>
             {
+                HasChanged = true;
                 if (string.IsNullOrEmpty(s) || !int.TryParse(s, out var size) || size > item.m_stack)
                 {
                     field.SetTextColor(Color.red);
@@ -449,7 +455,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         }
     }
 
-    private class StatusEffectForm : FormData
+    public class StatusEffectForm : FormData
     {
         private string UniqueID = string.Empty;
         private string Name = string.Empty;
@@ -459,14 +465,27 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         private readonly Dictionary<string, float> Modifiers = new();
         private string StartMsg = string.Empty;
         private string StopMsg = string.Empty;
+
+        public readonly FormField idField;
+        public readonly FormField nameField;
+        public readonly FormField iconField;
+        public readonly FormField tooltipField;
+        public readonly FormField durationField;
+        public readonly FormField modifiersField;
+        public readonly FormField startMsgField;
+        public readonly FormField stopMsgField;
+
+        public bool inEditMode;
+        public string overridePath = string.Empty;
         public StatusEffectForm()
         {
             SetButtonText(Keys.Create);
             SetTopic(Keys.CreateNewStatusEffect);
             SetDescription(Keys.CreateNewStatusEffect);
-            AddField(Keys.UniqueID, "Must be a unique", "...", (s, field, data) =>
+            idField = AddField(Keys.UniqueID, "Must be a unique", "...", (s, field, data) =>
             {
-                if (string.IsNullOrEmpty(s) || CustomEffectManager.Exists(s))
+                HasChanged = true;
+                if (string.IsNullOrEmpty(s) || (!inEditMode && CustomEffectManager.Exists(s)))
                 {
                     field.SetTextColor(Color.red);
                     data.isValid = false;
@@ -478,9 +497,10 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     UniqueID = s;
                 }
             });
-            AddField("Display Name", "Display name of custom effect", "Viking Power",
+            nameField = AddField("Display Name", "Display name of custom effect", "Viking Power",
                 (s, field, data) =>
                 {
+                    HasChanged = true;
                     if (string.IsNullOrEmpty(s))
                     {
                         field.SetTextColor(Color.red);
@@ -493,12 +513,14 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                         Name = s;
                     }
                 });
-            AddField("Tooltip", "Optional", "...", (s, _, _) =>
+            tooltipField = AddField("Tooltip", "Optional", "...", (s, _, _) =>
             {
+                HasChanged = true;
                 Tooltip = s;
             }, startsValid: true);
-            AddField("Icon", "Name of icon, can be items, pieces or almanac icons", "TrophyBoar", (s, field, data) =>
+            iconField = AddField("Icon", "Name of icon, can be items, pieces or almanac icons", "TrophyBoar", (s, field, data) =>
             {
+                HasChanged = true;
                 if (string.IsNullOrEmpty(s) || SpriteManager.GetSprite(s) is null)
                 {
                     field.SetTextColor(Color.red);
@@ -511,59 +533,63 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     data.isValid = true;
                 }
             });
-            AddField(Keys.Duration, "Length of effect, in seconds", "800.5", (s, field, data) =>
-                {
-                    if (string.IsNullOrEmpty(s) || !float.TryParse(s, out float duration))
-                    {
-                        field.SetTextColor(Color.red);
-                        data.isValid = false;
-                    }
-                    else
-                    {
-                        Duration = duration;
-                        field.SetTextColor(Color.white);
-                        data.isValid = true;
-                    }
-                },
-                InputField.ContentType.DecimalNumber);
-            AddField("Modifiers", "Format: [Modifier,Float] : ...", "StaminaRegenModifier,1.1",
-                (s, field, data) =>
-                {
-                    Modifiers.Clear();
-                    if (string.IsNullOrEmpty(s))
-                    {
-                        field.SetTextColor(Color.red);
-                        data.isValid = false;
-                    }
-
-                    string[] effects = s.Trim().Split(':');
-                    foreach (string effect in effects)
-                    {
-                        string[] parts = effect.Trim().Split(',');
-                        if (parts.Length != 2)
-                        {
-                            field.SetTextColor(Color.red);
-                            data.isValid = false;
-                            return;
-                        }
-                        string name = parts[0].Trim();
-                        if (!CEVarsHelper.IsCEVar(name) || !float.TryParse(parts[1].Trim(), out float duration))
-                        {
-                            field.SetTextColor(Color.red);
-                            data.isValid = false;
-                            return;
-                        }
-                        Modifiers[name] = duration;
-                    }
-                    data.isValid = true;
-                    field.SetTextColor(Color.white);
-                });
-            AddField("Start Message", "Optional", "...", (s, _, _) =>
+            durationField = AddField(Keys.Duration, "Length of effect, in seconds", "800.5", (s, field, data) =>
             {
+                HasChanged = true;
+                if (string.IsNullOrEmpty(s) || !float.TryParse(s, out float duration))
+                {
+                    field.SetTextColor(Color.red);
+                    data.isValid = false;
+                }
+                else
+                {
+                    Duration = duration;
+                    field.SetTextColor(Color.white);
+                    data.isValid = true;
+                }
+            },
+            InputField.ContentType.DecimalNumber);
+            modifiersField = AddField("Modifiers", "Format: [Modifier,Float] : ...", "StaminaRegenModifier,1.1",
+            (s, field, data) =>
+            {
+                HasChanged = true;
+                Modifiers.Clear();
+                if (string.IsNullOrEmpty(s))
+                {
+                    field.SetTextColor(Color.red);
+                    data.isValid = false;
+                }
+
+                string[] effects = s.Trim().Split(':');
+                foreach (string effect in effects)
+                {
+                    string[] parts = effect.Trim().Split(',');
+                    if (parts.Length != 2)
+                    {
+                        field.SetTextColor(Color.red);
+                        data.isValid = false;
+                        return;
+                    }
+                    string name = parts[0].Trim();
+                    if (!CEVarsHelper.IsCEVar(name) || !float.TryParse(parts[1].Trim(), out float duration))
+                    {
+                        field.SetTextColor(Color.red);
+                        data.isValid = false;
+                        return;
+                    }
+                    Modifiers[name] = duration;
+                }
+                data.isValid = true;
+                field.SetTextColor(Color.white);
+            });
+            startMsgField = AddField("Start Message", "Optional", "...", (s, _, _) =>
+            {
+                HasChanged = true;
                 StartMsg = s;
             }, startsValid: true);
-            AddField("Stop Message", "Optional", "...", (s, _, _) =>
+            stopMsgField = AddField("Stop Message", "Optional", "...", (s, _, _) =>
             {
+                HasChanged = true;
                 StopMsg = s;
             }, startsValid: true);
         }
@@ -581,11 +607,11 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
 
             string fileName = se.UniqueID + ".yml";
             string data = CustomEffectManager.serializer.Serialize(se);
-            CustomEffectManager.CustomEffectDir.WriteFile(fileName, data);
-            Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"Created '{se.Name} custom status effect successfully!'");
+            CustomEffectManager.CustomEffectDir.WriteFile(string.IsNullOrEmpty(overridePath) ? fileName : overridePath, data);
+            Player.m_localPlayer.Message(MessageHud.MessageType.Center, !inEditMode ? $"Created '{se.Name} custom status effect successfully!'" : $"Updated '{se.Name} custom status effect successfully!'");
         }
     }
-    private class BountyForm : FormData
+    public class BountyForm : FormData
     {
         private string UniqueID = string.Empty;
         private string Creature = string.Empty;
@@ -598,14 +624,30 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         private float DamageMultiplier = 1f;
         private int TokenReward;
         private readonly List<CostForm> Cost = new();
+
+        public readonly FormField idField;
+        public readonly FormField creatureField;
+        public readonly FormField nameField;
+        public readonly FormField loreField;
+        public readonly FormField iconField;
+        public readonly FormField biomeField;
+        public readonly FormField healthField;
+        public readonly FormField levelField;
+        public readonly FormField damageMultiplierField;
+        public readonly FormField costField;
+        public readonly FormField tokenField;
+
+        public bool inEditMode;
+        public string OverridePath = string.Empty;
         public BountyForm()
         {
             SetButtonText("Create Bounty Ledger");
             SetTopic("Create New bounty");
             SetDescription("Create new bounty ledger");
-            AddField(Keys.UniqueID, "Must be a unique name", "...", (s, field, data) =>
+            idField = AddField(Keys.UniqueID, "Must be a unique name", "...", (s, field, data) =>
             {
-                if (string.IsNullOrEmpty(s) || BountyManager.Exists(s))
+                HasChanged = true;
+                if (string.IsNullOrEmpty(s) || (!inEditMode && BountyManager.Exists(s)))
                 {
                     field.SetTextColor(Color.red);
                     data.isValid = false;
@@ -617,8 +659,9 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     UniqueID = s;
                 }
             });
-            AddField("Creature ID", "Case-sensitive", "Boar", (s, field, data) =>
+            creatureField = AddField("Creature ID", "Case-sensitive", "Boar", (s, field, data) =>
             {
+                HasChanged = true;
                 if (string.IsNullOrEmpty(s) || !CritterHelper.Exists(s))
                 {
                     field.SetTextColor(Color.red);
@@ -631,17 +674,20 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     data.isValid = true;
                 }
             });
-            AddField("Override Name", "Optional, if empty, name will be generated", "Boar the wicked",
+            nameField = AddField("Override Name", "Optional, if empty, name will be generated", "Boar the wicked",
                 (s, _, _) =>
                 {
+                    HasChanged = true;
                     Name = s;
                 }, startsValid: true);
-            AddField("Lore", "Optional", "...", (s, _, _) =>
+            loreField = AddField("Lore", "Optional", "...", (s, _, _) =>
             {
+                HasChanged = true;
                 Lore = s;
             }, startsValid: true);
-            AddField("Icon", "Name of icon, can be items, pieces or almanac icons", "TrophyBoar", (s, field, data) =>
+            iconField = AddField("Icon", "Name of icon, can be items, pieces or almanac icons", "TrophyBoar", (s, field, data) =>
             {
+                HasChanged = true;
                 if (string.IsNullOrEmpty(s) || SpriteManager.GetSprite(s) is null)
                 {
                     field.SetTextColor(Color.red);
@@ -654,8 +700,9 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     data.isValid = true;
                 }
             });
-            AddField(Keys.Biome, "Biome treasure will spawn in", "Meadows", (s, field, data) =>
+            biomeField = AddField(Keys.Biome, "Biome treasure will spawn in", "Meadows", (s, field, data) =>
             {
+                HasChanged = true;
                 if (string.IsNullOrEmpty(s) || !Enum.TryParse(s, true, out Heightmap.Biome land))
                 {
                     field.SetTextColor(Color.red);
@@ -669,9 +716,10 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     field.SetWithoutNotify(Biome);
                 }
             });
-            AddField("Override Health", "Optional, if empty, uses default health of creature", "1000",
+            healthField = AddField("Override Health", "Optional, if empty, uses default health of creature", "1000",
                 (s, field, _) =>
                 {
+                    HasChanged = true;
                     if (string.IsNullOrEmpty(s) || !float.TryParse(s, out float hp))
                     {
                         field.SetTextColor(Color.red);
@@ -682,8 +730,9 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                         field.SetTextColor(Color.white);
                     }
                 }, InputField.ContentType.DecimalNumber, startsValid: true);
-            AddField("Override Level", "Optional, if empty, uses default of level 1", "2", (s, field, _) =>
+            levelField = AddField("Override Level", "Optional, if empty, uses default of level 1", "2", (s, field, _) =>
                 {
+                    HasChanged = true;
                     if (string.IsNullOrEmpty(s) || !int.TryParse(s, out int lvl))
                     {
                         field.SetTextColor(Color.red);
@@ -695,8 +744,9 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     }
                 },
                 InputField.ContentType.IntegerNumber, true);
-            AddField("Damage Multiplier", "Optional, if empty, does not modify damage", "1.5", (s, field, data) =>
+            damageMultiplierField = AddField("Damage Multiplier", "Optional, if empty, does not modify damage", "1.5", (s, field, data) =>
                 {
+                    HasChanged = true;
                     if (string.IsNullOrEmpty(s) || !float.TryParse(s, out float dm))
                     {
                         field.SetTextColor(Color.red);
@@ -708,8 +758,9 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     }
                 },
                 InputField.ContentType.DecimalNumber, true);
-            AddField(Keys.Cost, "Required cost to purchase store item \n Format: [ItemID, Amount] : [ItemID, Amount]", $"{StoreManager.STORE_TOKEN}, 1 : Coins, 1", (s, field, data) =>
+            costField = AddField(Keys.Cost, "Required cost to purchase store item \n Format: [ItemID, Amount] : [ItemID, Amount]", $"{StoreManager.STORE_TOKEN}, 1 : Coins, 1", (s, field, data) =>
             {
+                HasChanged = true;
                 Cost.Clear();
                 if (string.IsNullOrEmpty(s))
                 {
@@ -761,8 +812,9 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     Cost.AddRange(validated);
                 }
             });
-            AddField("Token Reward", "Amount rewarded upon completion", "1", (s, field, data) =>
+            tokenField = AddField("Token Reward", "Amount rewarded upon completion", "1", (s, field, data) =>
                 {
+                    HasChanged = true;
                     if (string.IsNullOrEmpty(s) || !int.TryParse(s, out int reward))
                     {
                         field.SetTextColor(Color.red);
@@ -796,11 +848,11 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             }
             string fileName = bounty.UniqueID + ".yml";
             string data = BountyManager.serializer.Serialize(bounty);
-            BountyManager.BountyDir.WriteFile(fileName, data);
-            Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"Bounty '{bounty.UniqueID}' created successfully!");
+            BountyManager.BountyDir.WriteFile(string.IsNullOrEmpty(OverridePath) ? fileName : OverridePath, data);
+            Player.m_localPlayer.Message(MessageHud.MessageType.Center, !inEditMode ? $"Bounty '{bounty.UniqueID}' created successfully!" : $"Bounty `{bounty.UniqueID}` updated successfully!");
         }
     }
-    private class TreasureForm : FormData
+    public class TreasureForm : FormData
     {
         private string Name = string.Empty;
         private string Lore = string.Empty;
@@ -808,14 +860,25 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         private string Biome = string.Empty;
         private readonly List<CostForm> Costs = new();
         private readonly List<LootForm> Loot = new();
+
+        public readonly FormField nameField;
+        public readonly FormField loreField;
+        public readonly FormField iconField;
+        public readonly FormField biomeField;
+        public readonly FormField costField;
+        public readonly FormField lootField;
+
+        public bool inEditMode;
+        public string overridePath = string.Empty;
         public TreasureForm()
         {
             SetButtonText("Create Treasure Hunt");
             SetTopic("Create New Treasure");
             SetDescription("Create new treasure hunt");
-            AddField("Unique Name", "Must be a unique name", "...", (s, field, data) =>
+            nameField = AddField("Unique Name", "Must be a unique name", "...", (s, field, data) =>
             {
-                if (string.IsNullOrEmpty(s) || TreasureManager.Exists(s))
+                HasChanged = true;
+                if (string.IsNullOrEmpty(s) || (!inEditMode && TreasureManager.Exists(s)))
                 {
                     field.SetTextColor(Color.red);
                     data.isValid = false;
@@ -827,14 +890,16 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     Name = s;
                 }
             });
-            AddField("Lore", "Optional", "...", (s, field, data) =>
+            loreField = AddField("Lore", "Optional", "...", (s, field, data) =>
             {
+                HasChanged = true;
                 field.SetTextColor(Color.white);
                 data.isValid = true;
                 Lore = s;
             }, startsValid: true);
-            AddField("Icon", "Name of icon, can be items, pieces or almanac icons", "Coins", (s, field, data) =>
+            iconField = AddField("Icon", "Name of icon, can be items, pieces or almanac icons", "Coins", (s, field, data) =>
             {
+                HasChanged = true;
                 if (string.IsNullOrEmpty(s) || SpriteManager.GetSprite(s) is null)
                 {
                     field.SetTextColor(Color.red);
@@ -847,8 +912,9 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     data.isValid = true;
                 }
             });
-            AddField(Keys.Biome, "Biome treasure will spawn in", "Meadows", (s, field, data) =>
+            biomeField = AddField(Keys.Biome, "Biome treasure will spawn in", "Meadows", (s, field, data) =>
             {
+                HasChanged = true;
                 if (string.IsNullOrEmpty(s) || !Enum.TryParse(s, true, out Heightmap.Biome land))
                 {
                     field.SetTextColor(Color.red);
@@ -862,8 +928,9 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     field.SetWithoutNotify(Biome);
                 }
             });
-            AddField(Keys.Cost, "Required cost to purchase store item \n Format: [ItemID, Amount] : ...", $"{StoreManager.STORE_TOKEN}, 1 : Coins, 1", (s, field, data) =>
+            costField = AddField(Keys.Cost, "Required cost to purchase store item \n Format: [ItemID, Amount] : ...", $"{StoreManager.STORE_TOKEN}, 1 : Coins, 1", (s, field, data) =>
             {
+                HasChanged = true;
                 Costs.Clear();
                 if (string.IsNullOrEmpty(s))
                 {
@@ -912,9 +979,10 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     Costs.AddRange(validated);
                 }
             });
-            AddField("Loot", "Content inside treasure \n Format: [ItemID,Min,Max,Weight] : ...", "Stone, 25, 50, 1 : Coins, 10, 100, 0.5",
+            lootField = AddField("Loot", "Content inside treasure \n Format: [ItemID,Min,Max,Weight] : ...", "Stone, 25, 50, 1 : Coins, 10, 100, 0.5",
             (s, field, data) =>
             {
+                HasChanged = true;
                 Loot.Clear();
                 if (string.IsNullOrEmpty(s))
                 {
@@ -984,8 +1052,12 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
 
             string data = TreasureManager.serializer.Serialize(treasure);
             string fileName = treasure.Name + ".yml";
-            TreasureManager.TreasureDir.WriteFile(fileName, data);
-            Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"Treasure '{treasure.Name}' created successfully!");
+            TreasureManager.TreasureDir.WriteFile(string.IsNullOrEmpty(overridePath) ? fileName : overridePath, data);
+            if (inEditMode)
+            {
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"Treasure '{treasure.Name}' updated successfully!");
+            }
+            else Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"Treasure '{treasure.Name}' created successfully!");
         }
         protected override bool IsValid()
         {
@@ -1032,7 +1104,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             Variant = variant;
         }
     }
-    private class StoreForm : FormData
+    public class StoreForm : FormData
     {
         private string Name = string.Empty;
         private string Lore = string.Empty;
@@ -1042,14 +1114,28 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         private readonly List<CostForm> Costs = new List<CostForm>();
         private readonly List<ItemForm> Items = new List<ItemForm>();
         private string RequiredKey = string.Empty;
+        private string RequireAchievement = string.Empty;
+
+        public readonly FormField nameField;
+        public readonly FormField loreField;
+        public readonly FormField iconField;
+        public readonly FormField costField;
+        public readonly FormField keyField;
+        public readonly FormField achievementField;
+        public readonly FormField statusEffectField;
+        public readonly FormField itemsField;
+
+        public bool inEditMode;
+        public string overridePath = string.Empty;
         public StoreForm()
         {
             SetButtonText("Create Store Item");
             SetTopic("Create New Store Item");
             SetDescription("Create new store item");
-            AddField("Unique Name", "Must be a unique name", "...", (s, field, data) =>
+            nameField = AddField("Unique Name", "Must be a unique name", "...", (s, field, data) =>
             {
-                if (string.IsNullOrEmpty(s) || StoreManager.Exists(s))
+                HasChanged = true;
+                if (string.IsNullOrEmpty(s) || (!inEditMode && StoreManager.Exists(s)))
                 {
                     field.SetTextColor(Color.red);
                     data.isValid = false;
@@ -1061,14 +1147,16 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     Name = s;
                 }
             });
-            AddField("Lore", "Optional", "...", (s, field, data) =>
+            loreField = AddField("Lore", "Optional", "...", (s, field, data) =>
             {
+                HasChanged = true;
                 field.SetTextColor(Color.white);
                 data.isValid = true;
                 Lore = s;
             }, startsValid: true);
-            AddField("Icon", "Name of icon, can be items, pieces or almanac icons", "Coins", (s, field, data) =>
+            iconField = AddField("Icon", "Name of icon, can be items, pieces or almanac icons", "Coins", (s, field, data) =>
             {
+                HasChanged = true;
                 if (string.IsNullOrEmpty(s) || SpriteManager.GetSprite(s) is null)
                 {
                     field.SetTextColor(Color.red);
@@ -1081,8 +1169,9 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     data.isValid = true;
                 }
             });
-            AddField(Keys.Cost, "Required cost to purchase store item \n Format: [ItemID, Amount] : ...", $"{StoreManager.STORE_TOKEN}, 1 : Coins, 1", (s, field, data) =>
+            costField = AddField(Keys.Cost, "Required cost to purchase store item \n Format: [ItemID, Amount] : ...", $"{StoreManager.STORE_TOKEN}, 1 : Coins, 1", (s, field, data) =>
             {
+                HasChanged = true;
                 Costs.Clear();
                 if (string.IsNullOrEmpty(s))
                 {
@@ -1134,8 +1223,9 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     Costs.AddRange(validated);
                 }
             });
-            AddField("Required Key", "Optional", "defeated_eikthyr", (s, field, data) =>
+            keyField = AddField("Required Key", "Optional", "defeated_eikthyr", (s, field, data) =>
             {
+                HasChanged = true;
                 RequiredKey = string.Empty;
                 if (string.IsNullOrEmpty(s))
                 {
@@ -1143,7 +1233,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     data.isValid = true;
                     return;
                 }
-                if (!Enum.TryParse(s, true, out GlobalKeys key))
+                if (!CritterHelper.Exists(s))
                 {
                     field.SetTextColor(Color.red);
                     data.isValid = false;
@@ -1151,11 +1241,32 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                 }
                 field.SetTextColor(Color.white);
                 data.isValid = true;
-                RequiredKey = key.ToString();
-                field.SetWithoutNotify(key.ToString());
+                RequiredKey = s;
             }, startsValid: true);
-            AddField(Keys.StatusEffect, "Optional, Format: [ID,Duration]", "CE_MinorArmor, 1000.50", (s, field, _) =>
+            achievementField = AddField("Required Achievement", "Optional", "001.KillBoars", (s, field, data) =>
             {
+                HasChanged = true;
+                RequireAchievement = string.Empty;
+                if (string.IsNullOrEmpty(s))
+                {
+                    field.SetTextColor(Color.white);
+                    data.isValid = true;
+                    return;
+                }
+
+                if (!AchievementManager.Exists(s))
+                {
+                    field.SetTextColor(Color.red);
+                    data.isValid = false;
+                    return;
+                }
+                field.SetTextColor(Color.white);
+                data.isValid = true;
+                RequireAchievement = s;
+            }, startsValid: true);
+            statusEffectField = AddField(Keys.StatusEffect, "Optional, Format: [ID,Duration]", "CE_MinorArmor, 1000.50", (s, field, _) =>
+            {
+                HasChanged = true;
                 StatusEffectID = string.Empty;
                 StatusEffectDuration = 0f;
                 
@@ -1185,8 +1296,9 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                 StatusEffectDuration = duration;
                 field.SetTextColor(Color.white);
             }, startsValid: true);
-            AddField("Items", "Optional, Items received when purchasing \n Format: [ItemID,Amount,Quality,Variant] : [ItemID,Amount,quality,Variant]", "Flint, 10, 1, 0 : SwordIron, 1, 3, 0", (s, field, data) =>
+            itemsField = AddField("Items", "Optional, Items received when purchasing \n Format: [ItemID,Amount,Quality,Variant] : [ItemID,Amount,quality,Variant]", "Flint, 10, 1, 0 : SwordIron, 1, 3, 0", (s, field, data) =>
             {
+                HasChanged = true;
                 Items.Clear();
                 if (string.IsNullOrEmpty(s))
                 {
@@ -1255,14 +1367,15 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                 storeItem.Items.Add(item.PrefabID, item.Amount, item.Quality, item.Variant);
             }
             storeItem.RequiredDefeated = RequiredKey;
+            storeItem.RequiredAchievement = RequireAchievement;
             string serialized = StoreManager.serializer.Serialize(storeItem);
             string fileName = storeItem.Name + ".yml";
-            StoreManager.StoreDir.WriteFile(fileName, serialized);
-            Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"Store Item '{storeItem.Name}' created successfully!");
+            StoreManager.StoreDir.WriteFile(string.IsNullOrEmpty(overridePath) ? fileName : overridePath, serialized);
+            Player.m_localPlayer.Message(MessageHud.MessageType.Center, !inEditMode ? $"Store Item '{storeItem.Name}' created successfully!" : $"Store Item `{storeItem.Name}' updated successfully!");
         }
     }
 
-    private class AchievementForm : FormData
+    public class AchievementForm : FormData
     {
         private string UniqueID = string.Empty;
         private string Name = string.Empty;
@@ -1274,16 +1387,27 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         private string Group = string.Empty;
         private int threshold;
 
-        private readonly FormField PREFAB;
-        private readonly FormField GROUP;
+        public readonly FormField idField;
+        public readonly FormField nameField;
+        public readonly FormField loreField;
+        public readonly FormField iconField;
+        public readonly FormField rewardField;
+        public readonly FormField typeField;
+        public readonly FormField prefabField;
+        public readonly FormField groupField;
+        public readonly FormField thresholdField;
+
+        public bool inEditMode;
+        public string overridePath = string.Empty;
         public AchievementForm()
         {
             SetButtonText("Create Achievement");
             SetTopic("Create New Achievement");
             SetDescription("Create new achievement");
-            AddField("Unique ID", "Must be a unique identifier", "...", (s, field, data) =>
+            idField = AddField("Unique ID", "Must be a unique identifier", "...", (s, field, data) =>
             {
-                if (string.IsNullOrEmpty(s) || AchievementManager.Exists(s))
+                HasChanged = true;
+                if (string.IsNullOrEmpty(s) || (!inEditMode && AchievementManager.Exists(s)))
                 {
                     field.SetTextColor(Color.red);
                     data.isValid = false;
@@ -1295,8 +1419,9 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     UniqueID = s;
                 }
             });
-            AddField("Name", "Display name", "...", (s, field, data) =>
+            nameField = AddField("Name", "Display name", "...", (s, field, data) =>
             {
+                HasChanged = true;
                 if (string.IsNullOrEmpty(s))
                 {
                     field.SetTextColor(Color.red);
@@ -1309,15 +1434,17 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                     Name = s;
                 }
             });
-            AddField("Lore", "Optional", "...", (s, field, data) =>
+            loreField = AddField("Lore", "Optional", "...", (s, field, data) =>
             {
+                HasChanged = true;
                 field.SetTextColor(Color.white);
                 data.isValid = true;
                 Lore = s;
             }, startsValid: true);
-            AddField("Icon", "Name of icon, can be items, pieces or almanac icons", "TrophyBoar",
+            iconField = AddField("Icon", "Name of icon, can be items, pieces or almanac icons", "TrophyBoar",
                 (s, field, data) =>
                 {
+                    HasChanged = true;
                     if (string.IsNullOrEmpty(s) || SpriteManager.GetSprite(s) is null)
                     {
                         field.SetTextColor(Color.red);
@@ -1330,8 +1457,9 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                         data.isValid = true;
                     }
                 });
-            AddField("Reward", "Amount of almanac tokens", "1", (s, field, data) =>
+            rewardField = AddField("Reward", "Amount of almanac tokens", "1", (s, field, data) =>
             {
+                HasChanged = true;
                 if (string.IsNullOrEmpty(s) || !int.TryParse(s, out var amount) || amount <= 0)
                 {
                     field.SetTextColor(Color.red);
@@ -1345,8 +1473,9 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                 }
             }, InputField.ContentType.IntegerNumber);
             
-            FormField TYPE = AddField("Type", "Achievement type, Kill and Pickable require Prefab ID", "Kill", (s, field, data) =>
+            typeField = AddField("Type", "Achievement type, Kill and Pickable require Prefab ID", "Kill", (s, field, data) =>
             {
+                HasChanged = true;
                 if (string.IsNullOrEmpty(s) || !AchievementManager.IsValidType(s, out AchievementType achievementType))
                 {
                     field.SetTextColor(Color.red);
@@ -1369,7 +1498,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                             else
                             {
                                 data.isValid = true;
-                                PREFAB!.isValid = true;
+                                prefabField!.isValid = true;
                             }
                             break;
                         case AchievementType.Pickable:
@@ -1380,7 +1509,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                             else
                             {
                                 data.isValid = true;
-                                PREFAB!.isValid = true;
+                                prefabField!.isValid = true;
                             }
                             break;
                         case AchievementType.CreatureGroup:
@@ -1391,7 +1520,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                             else
                             {
                                 data.isValid = true;
-                                GROUP!.isValid = true;
+                                groupField!.isValid = true;
                             }
                             break;
                         default: data.isValid = true; break;
@@ -1399,8 +1528,9 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                 }
             });
             
-           PREFAB = AddField(Keys.PrefabID, "Optional, unless creating a kill or pickable achievement", "...", (s, field, data) =>
+            prefabField = AddField(Keys.PrefabID, "Optional, unless creating a kill or pickable achievement", "...", (s, field, data) =>
             {
+                HasChanged = true;
                 PrefabID = s.Trim();
                 switch (type)
                 {
@@ -1413,7 +1543,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                         else
                         {
                             data.isValid = true;
-                            TYPE.isValid = true;
+                            typeField.isValid = true;
                         }
                         break;
                     }
@@ -1425,7 +1555,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                         else
                         {
                             data.isValid = true;
-                            TYPE.isValid = true;
+                            typeField.isValid = true;
                         }
                         break;
                     default:
@@ -1434,8 +1564,9 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                 }
                 field.SetTextColor(!data.isValid ? Color.red : Color.white);
             }, startsValid: true);
-            GROUP = AddField(Keys.CreatureGroup, "Must be a registered group", "...", (s, field, data) =>
+            groupField = AddField(Keys.CreatureGroup, "Must be a registered group", "...", (s, field, data) =>
             {
+                HasChanged = true;
                 Group = s.Trim();
                 switch (type)
                 {
@@ -1444,7 +1575,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                         else
                         {
                             data.isValid = true;
-                            TYPE.isValid = true;
+                            typeField.isValid = true;
                         }
                         break;
                     default: 
@@ -1453,10 +1584,11 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
                 }
                 field.SetTextColor(!data.isValid ? Color.red : Color.white);
             }, startsValid: true);
-            AddField(Keys.Threshold, "If 0, uses max value of achievement type, ie. achievement type fish is all fish (12)", "0", (s, _, _) =>
-            {
-                threshold = int.TryParse(s, out int number) ? Math.Max(0, number) : 0;
-            }, 
+            thresholdField = AddField(Keys.Threshold, "If 0, uses max value of achievement type, ie. achievement type fish is all fish (12)", "0", (s, _, _) =>
+                {
+                    HasChanged = true;
+                    threshold = int.TryParse(s, out int number) ? Math.Max(0, number) : 0;
+                }, 
             InputField.ContentType.IntegerNumber, true);
         }
 
@@ -1474,8 +1606,8 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             achievement.TokenReward = rewardAmount;
             string serialized = AchievementManager.serializer.Serialize(achievement);
             string fileName = achievement.UniqueID + ".yml";
-            AchievementManager.AchievementDir.WriteFile(fileName, serialized);;
-            Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"Achievement '{achievement.Name}' created successfully!");
+            AchievementManager.AchievementDir.WriteFile(string.IsNullOrEmpty(overridePath) ? fileName : overridePath, serialized);;
+            Player.m_localPlayer.Message(MessageHud.MessageType.Center, !inEditMode ? $"Achievement '{achievement.Name}' created successfully!" : $"Achievement '{achievement.Name}' updated successfully!");
         }
     }
     public class FormData
@@ -1488,12 +1620,13 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
         public Sprite? elementIcon = SpriteManager.GetSprite(SpriteManager.IconOption.Almanac);
         public readonly List<FormField> fields = new List<FormField>();
         private bool isValid => IsValid();
-        private bool wasValid = false;
-        protected void SetButtonText(string text) => buttonText = text;
+        public bool wasValid;
+        public bool HasChanged;
+        public void SetButtonText(string text) => buttonText = text;
         protected void SetCancelText(string text) => cancelText = text;
-        protected void SetTopic(string text) => topic = text;
+        public void SetTopic(string text) => topic = text;
         protected void SetTitle(string text) => title = text;
-        protected void SetDescription(string text) => description = text;
+        public void SetDescription(string text) => description = text;
         protected void SetElementIcon(Sprite sprite) => elementIcon = sprite;
         protected FormField AddField(string label, string tooltip, string placeholder, Action<string, Field, FormField> callback,
             InputField.ContentType type = InputField.ContentType.Standard, bool startsValid = false)
@@ -1504,13 +1637,14 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             return field;
         }
         protected virtual bool IsValid() => fields.All(f => f.isValid);
-        public virtual void Update(Modal _modal, Action close)
+        public virtual void Update(FormPanel formPanel, Action close)
         {
+            if (!HasChanged) return;
             if (isValid == wasValid) return;
             if (isValid)
             {
-                _modal.SetButtonText(buttonText);
-                _modal.OnMainButton = () =>
+                formPanel.SetButtonText(buttonText);
+                formPanel.OnMainButton = () =>
                 {
                     Create();
                     close.Invoke();
@@ -1518,11 +1652,12 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             }
             else
             {
-                _modal.SetButtonText(cancelText);
-                _modal.OnMainButton = close.Invoke;
+                formPanel.SetButtonText(cancelText);
+                formPanel.OnMainButton = close.Invoke;
             }
             wasValid = isValid;
         }
+        
         protected virtual void Create(){}
         public class FormField
         {
@@ -1532,6 +1667,7 @@ public class Modal : MonoBehaviour, IDragHandler, IBeginDragHandler
             public readonly bool required;
             public readonly InputField.ContentType contentType;
             public readonly Action<string, Field, FormField> validationCallback;
+            public Field? input;
             public bool isValid;
             public FormField(string label, string tooltip, string placeholder, Action<string, Field, FormField> validation, bool required, InputField.ContentType contentType =  InputField.ContentType.Standard)
             {

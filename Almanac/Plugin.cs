@@ -9,8 +9,10 @@ using Almanac.Lottery;
 using Almanac.Managers;
 using Almanac.Marketplace;
 using Almanac.NPC;
+using Almanac.Quests;
 using Almanac.Store;
 using Almanac.TreasureHunt;
+using Almanac.UI;
 using Almanac.Utilities;
 using BepInEx;
 using BepInEx.Logging;
@@ -27,7 +29,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.5.16";
+        internal const string ModVersion = "3.5.17";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         public const string ConfigFileName = ModGUID + ".cfg";
@@ -47,6 +49,7 @@ namespace Almanac
         public static event Action? OnObjectDBAwake;
         public static event Action<GameObject>? OnZNetScenePrefabs;
         public static event Action<GameObject>? OnObjectDBPrefabs;
+        public static event Action? OnNewCharacterDone;
         public void Awake()
         {
             instance = this;
@@ -67,6 +70,7 @@ namespace Almanac
             Filters.Setup();
             LotteryManager.Setup();
             MarketManager.Setup();
+            QuestManager.Setup();
             
             Leaderboard.Setup();
             CritterHelper.Setup();
@@ -77,17 +81,19 @@ namespace Almanac
             RandomTalkManager.Setup();
             SetupCommands();
             
-            // Use to rebuild readmes 
-            
-            // AchievementReadMeBuilder.Write();
-            // StoreReadMeBuilder.Write();
-            // TreasureReadMeBuilder.Write();
-            // BountyReadMeBuilder.Write();
-            
             Assembly assembly = Assembly.GetExecutingAssembly();
             _harmony.PatchAll(assembly);
         }
         private void OnDestroy() => Config.Save();
+
+        private void Update()
+        {
+            if (QuestPanel.instance is not { } panel) return;
+            if (Time.time - panel.lastInputTime < QuestPanel.Input_Cooldown) return;
+            if (!ZInput.GetKeyDown(Configs.QuestKey)) return;
+            panel.lastInputTime = Time.time;
+            panel.Toggle();
+        }
         private void SetupCommands()
         {
             Terminal.ConsoleCommand main = new(CommandData.m_startCommand, "Use help to find commands", args =>
@@ -102,6 +108,8 @@ namespace Almanac
                 if (!Player.m_localPlayer) return false;
                 Player.m_localPlayer.ClearRecords();
                 Player.m_localPlayer.ClearTokens();
+                Player.m_localPlayer.ClearSavedQuests();
+                Player.m_localPlayer.ClearSavedDialogues();
                 return true;
             });
 
@@ -121,6 +129,8 @@ namespace Almanac
                     if (!Player.m_localPlayer) return false;
                     Player.m_localPlayer.ClearRecords();
                     Player.m_localPlayer.ClearTokens();
+                    Player.m_localPlayer.ClearSavedQuests();
+                    Player.m_localPlayer.ClearSavedDialogues();
                     Player.m_localPlayer.m_knownBiome.Clear();
                     Player.m_localPlayer.m_knownMaterial.Clear();
                     Player.m_localPlayer.m_knownRecipes.Clear();
@@ -138,6 +148,17 @@ namespace Almanac
                 Player.m_localPlayer.AddTokens(amount);
                 return true;
             }, adminOnly: true);
+
+
+            CommandData printQuests = new("quests", "prints saved quest information", args =>
+            {
+                if (!Player.m_localPlayer) return false;
+                foreach (var quest in QuestManager.GetActiveQuests())
+                {
+                    AlmanacLogger.LogInfo($"{quest.id}: {quest.name} [{quest.progress}/{quest.data?.Threshold}] Completed: {quest.isCompleted}");
+                }
+                return true;
+            });
         }
 
         [HarmonyPatch(typeof(PlayerProfile), nameof(PlayerProfile.SavePlayerData))]
@@ -207,6 +228,13 @@ namespace Almanac
                 }
                 OnObjectDBAwake?.Invoke();
             }
+        }
+        
+        [HarmonyPatch(typeof(FejdStartup), nameof(FejdStartup.OnNewCharacterDone))]
+        private static class FejdStartup_OnNewCharacterDone_Patch
+        {
+            [UsedImplicitly]
+            private static void Prefix() => OnNewCharacterDone?.Invoke();
         }
     }
 }

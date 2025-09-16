@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Almanac.Achievements;
 using Almanac.Bounties;
@@ -7,6 +8,7 @@ using Almanac.Data;
 using Almanac.Lottery;
 using Almanac.Managers;
 using Almanac.Marketplace;
+using Almanac.Quests;
 using Almanac.Store;
 using Almanac.TreasureHunt;
 using Almanac.Utilities;
@@ -31,15 +33,16 @@ public static class InventoryGui_Awake_Patch
         GameObject? trophyPanel = __instance.m_trophiesPanel;
         GameObject? sfx = craftingPanel.GetComponentInChildren<ButtonSfx>().m_sfxPrefab;
 
-        if (DialoguePanel._panel != null)
-        {
-            Text[] npcDialogueText = DialoguePanel._panel.GetComponentsInChildren<Text>(true);
-            foreach (var component in DialoguePanel._panel.GetComponentsInChildren<ButtonSfx>(true)) component.m_sfxPrefab = sfx;
-            FontManager.SetFont(npcDialogueText);
-            DialoguePanel._panel.AddComponent<DialoguePanel>();
-            GameObject dialoguePanel = Object.Instantiate(DialoguePanel._panel, __instance.transform.parent.Find("HUD"));
-            dialoguePanel.name = "Almanac NPC Dialogue";
-        }
+        Text[] npcDialogueText = DialoguePanel._panel.GetComponentsInChildren<Text>(true);
+        foreach (ButtonSfx? component in DialoguePanel._panel.GetComponentsInChildren<ButtonSfx>(true)) component.m_sfxPrefab = sfx;
+        FontManager.SetFont(npcDialogueText);
+        GameObject dialoguePanel = Object.Instantiate(DialoguePanel._panel, __instance.transform.parent.Find("HUD"));
+        dialoguePanel.name = "Almanac NPC Dialogue";
+        dialoguePanel.AddComponent<DialoguePanel>();
+        
+        GameObject questPanel = Object.Instantiate(DialoguePanel._panel, __instance.transform.parent.Find("HUD"));
+        questPanel.name = "Almanac Quest";
+        questPanel.AddComponent<QuestPanel>();
 
         Text[] npcTexts = NPCCustomization._Modal.GetComponentsInChildren<Text>(true);
         foreach (var component in NPCCustomization._Modal.GetComponentsInChildren<ButtonSfx>(true)) component.m_sfxPrefab = sfx;
@@ -56,23 +59,23 @@ public static class InventoryGui_Awake_Patch
         GameObject npc_modal = Object.Instantiate(NPCCustomization._Modal, __instance.transform.parent.Find("HUD"));
         npc_modal.name = "Almanac NPC UI";
         
-        Text[]? modalTexts = Modal._Modal.GetComponentsInChildren<Text>(true);
-        foreach (ButtonSfx? component in Modal._Modal.GetComponentsInChildren<ButtonSfx>(true)) component.m_sfxPrefab = sfx;
+        Text[]? modalTexts = FormPanel._Modal.GetComponentsInChildren<Text>(true);
+        foreach (ButtonSfx? component in FormPanel._Modal.GetComponentsInChildren<ButtonSfx>(true)) component.m_sfxPrefab = sfx;
         FontManager.SetFont(modalTexts);
         
-        Modal._Modal.CopySpriteAndMaterial(trophyPanel, "bkg", "TrophiesFrame/border (1)");
-        Modal._Modal.CopySpriteAndMaterial(craftingPanel, "ListView/Viewport/Title/TabBorder", "TabsButtons/TabBorder");
-        Modal._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Scrollbar", "TrophiesFrame/Trophies/TrophyListScroll");
-        Modal._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Scrollbar/Sliding Area/Handle", "TrophiesFrame/Trophies/TrophyListScroll/Sliding Area/Handle");
-        Modal._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Viewport", "TrophiesFrame/Trophies/TrophyList");
-        Modal._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Viewport/Button", "TrophiesFrame/Closebutton");
-        Modal._Modal.CopyButtonState(trophyPanel, "ListView/Viewport/Button", "TrophiesFrame/Closebutton");
-        Modal._Modal.CopySpriteAndMaterial(craftingPanel, "ListView/Viewport/InputField/Glow", "RepairButton/Glow");
+        FormPanel._Modal.CopySpriteAndMaterial(trophyPanel, "bkg", "TrophiesFrame/border (1)");
+        FormPanel._Modal.CopySpriteAndMaterial(craftingPanel, "ListView/Viewport/Title/TabBorder", "TabsButtons/TabBorder");
+        FormPanel._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Scrollbar", "TrophiesFrame/Trophies/TrophyListScroll");
+        FormPanel._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Scrollbar/Sliding Area/Handle", "TrophiesFrame/Trophies/TrophyListScroll/Sliding Area/Handle");
+        FormPanel._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Viewport", "TrophiesFrame/Trophies/TrophyList");
+        FormPanel._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Viewport/Button", "TrophiesFrame/Closebutton");
+        FormPanel._Modal.CopyButtonState(trophyPanel, "ListView/Viewport/Button", "TrophiesFrame/Closebutton");
+        FormPanel._Modal.CopySpriteAndMaterial(craftingPanel, "ListView/Viewport/InputField/Glow", "RepairButton/Glow");
 
-        Modal._Modal.CopySpriteAndMaterial(trophyPanel, "MainButton", "TrophiesFrame/Closebutton");
-        Modal._Modal.CopyButtonState(trophyPanel, "MainButton", "TrophiesFrame/Closebutton");
+        FormPanel._Modal.CopySpriteAndMaterial(trophyPanel, "MainButton", "TrophiesFrame/Closebutton");
+        FormPanel._Modal.CopyButtonState(trophyPanel, "MainButton", "TrophiesFrame/Closebutton");
     
-        Modal._Modal.AddComponent<Modal>();
+        FormPanel._Modal.AddComponent<FormPanel>();
         
         GameObject panel = AssetBundleManager.LoadAsset<GameObject>("almanac_ui", "AlmanacUI")!;
         GameObject go = Object.Instantiate(panel, __instance.transform.parent.Find("HUD"));
@@ -175,6 +178,8 @@ public static class InventoryGui_Awake_Patch
         go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/3/Icon", "Decription/requirements/res_bkg/res_icon");
         go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/4", "Decription/requirements/res_bkg");
         go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/4/Icon", "Decription/requirements/res_bkg/res_icon");
+        go.CopySpriteAndMaterial(trophyPanel, "Description/ListView/Viewport/Button", "TrophiesFrame/Closebutton");
+        go.CopyButtonState(trophyPanel, "Description/ListView/Viewport/Button", "TrophiesFrame/Closebutton");
 
         go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/1", "Decription/requirements/res_bkg");
         go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/2", "Decription/requirements/res_bkg");
@@ -351,8 +356,8 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
     public Action? OnMainButton;
     
     public static AlmanacPanel? instance;
-    private static Modal? modal;
-    private Modal.ModalBuilder modalBuilder = null!;
+    private static FormPanel? formPanel;
+    public FormPanel.FormBuilder formBuilder = null!;
     private const float Input_Cooldown = 0.1f;
     private float lastInputTime;
     public static bool isLocalAdminOrHostAndNoCost
@@ -408,9 +413,9 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         elementView.SetSelectedColor(Configs.OutlineColor);
         buttonView.SetSelectedColor(Configs.OutlineColor);
 
-        modal = Instantiate(Modal._Modal, transform).GetComponent<Modal>();
-        modal.SetActive(false);
-        modalBuilder = new Modal.ModalBuilder(modal, elementView);
+        formPanel = Instantiate(FormPanel._Modal, transform.parent).GetComponent<FormPanel>();
+        formPanel.SetActive(false);
+        formBuilder = new FormPanel.FormBuilder(formPanel, elementView);
         
         Tabs[Tab.TabOption.Trophies].SetLabel(Keys.Trophies);
         Tabs[Tab.TabOption.Pieces].SetLabel(Keys.Pieces);
@@ -527,6 +532,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
     {
         gameObject.SetActive(false);
         GridView.activeView = null;
+        formPanel?.SetActive(false);
     }
 
     private void Reset() => Reset(null);
@@ -548,7 +554,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         OnMainButton = null;
     }
 
-    public static bool InSearchField() => instance?.mainSearch.IsSearching() == true || instance?.sideSearch.IsSearching() == true || Modal.IsFocused() || NPCCustomization.IsVisible();
+    public static bool InSearchField() => instance?.mainSearch.IsSearching() == true || instance?.sideSearch.IsSearching() == true || FormPanel.IsFocused() || NPCCustomization.IsVisible();
 
     public void OnTrophyTab()
     {
@@ -642,7 +648,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
 
         if (isLocalAdminOrHostAndNoCost)
         {
-            modalBuilder.Build(Modal.ModalBuilder.FormType.StatusEffect);
+            formBuilder.Build(FormPanel.FormBuilder.FormType.StatusEffect);
         }
         
         foreach (StatusEffect? se in SEHelpers.statusEffects)
@@ -660,6 +666,31 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             {
                 elementView.SetSelected(item);
                 description.Reset();
+                if (se is CustomEffect ce && isLocalAdminOrHostAndNoCost)
+                {
+                    var edit = description.view.CreateEditButton();
+                    edit.SetLabel("Edit");
+                    edit.OnClick(() =>
+                    {
+                        if (ce.data == null) return;
+                        var form = new FormPanel.StatusEffectForm();
+                        form.SetTopic("Edit Status Effect");
+                        form.SetButtonText("Confirm Edit");
+                        form.SetDescription("Edit Status Effect");
+                        form.inEditMode = true;
+                        form.overridePath = ce.data.Path;
+                        formBuilder.Setup(form);
+                        form.idField.input?.Set(ce.data.UniqueID);
+                        form.nameField.input?.Set(ce.data.Name);
+                        form.iconField.input?.Set(ce.data.Icon);
+                        form.tooltipField.input?.Set(ce.data.Tooltip);
+                        form.durationField.input?.Set(ce.data.Duration.ToString(CultureInfo.InvariantCulture));
+                        form.modifiersField.input?.Set(string.Join(":", ce.data.Modifiers.Select(m => $"{m.Key},{m.Value}")));
+                        form.startMsgField.input?.Set(ce.data.StartMessage);
+                        form.stopMsgField.input?.Set(ce.data.StopMessage);
+                        form.HasChanged = false;
+                    });
+                }
                 if (isLocalAdminOrHostAndNoCost)
                 {
                     description.Interactable(true);
@@ -684,7 +715,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         elementView.SetActive(true);
         if (isLocalAdminOrHostAndNoCost)
         {
-            modalBuilder.Build(Modal.ModalBuilder.FormType.Achievement);
+            formBuilder.Build(FormPanel.FormBuilder.FormType.Achievement);
         }
         foreach (AchievementManager.Achievement achievement in AchievementManager.achievements.Values)
         {
@@ -705,7 +736,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         Tabs[Tab.TabOption.Bounties].SetSelected(true);
         Reset(bounties);
         elementView.SetActive(true);
-        if (isLocalAdminOrHostAndNoCost) modalBuilder.Build(Modal.ModalBuilder.FormType.Bounty);
+        if (isLocalAdminOrHostAndNoCost) formBuilder.Build(FormPanel.FormBuilder.FormType.Bounty);
         foreach (BountyManager.BountyData? bounty in BountyManager.bounties.Values)
         {
             bool hasReqs = bounty.HasRequirements(Player.m_localPlayer);
@@ -729,7 +760,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         elementView.SetActive(true);
         if (isLocalAdminOrHostAndNoCost)
         {
-            modalBuilder.Build(Modal.ModalBuilder.FormType.Treasure);
+            formBuilder.Build(FormPanel.FormBuilder.FormType.Treasure);
         }
         foreach (TreasureManager.TreasureData? treasure in TreasureManager.treasures.Values)
         {
@@ -756,7 +787,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         
         if (isLocalAdminOrHostAndNoCost)
         {
-            modalBuilder.Build(Modal.ModalBuilder.FormType.StoreItem);
+            formBuilder.Build(FormPanel.FormBuilder.FormType.StoreItem);
         }
 
         if (Configs.AllowConversion)
@@ -835,7 +866,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 description.SetIcon(itemData.GetIcon());
                 description.Interactable(true);
                 description.SetButtonText(Keys.SetupSale);
-                OnMainButton = () => modalBuilder.SetupSale(itemData);
+                OnMainButton = () => formBuilder.SetupSale(itemData);
                 description.view.CreateTextArea().SetText(Helpers.ReplacePositionTags(itemData.GetTooltip()) + "\n");
                 if (itemData.HasSockets())
                 {
@@ -860,6 +891,22 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         description.SetName(Player.m_localPlayer.GetPlayerName());
         PlayerInfo.GetEntries().Build(description.view);
         description.view.Resize();
+        ElementView.Element quests = elementView.Create();
+        quests.SetName("Quests");
+        var questCount = QuestManager.GetActiveQuests().Count;
+        quests.SetDescription(questCount.ToString());
+        quests.SetIcon(SpriteManager.GetSprite(SpriteManager.IconOption.BookRed));
+        quests.Interactable(questCount > 0);
+        quests.OnClick(() =>
+        {
+            elementView.SetSelected(quests);
+            description.Reset();
+            description.SetName(Player.m_localPlayer.GetPlayerName());
+            description.SetIcon(SpriteManager.GetSprite(SpriteManager.IconOption.BookRed));
+            description.Interactable(false);
+            QuestManager.ToEntries().Build(description.view);
+            description.view.Resize();
+        });
         foreach (PlayerInfo.MetricInfo metric in PlayerInfo.GetMetrics())
         {
             ElementView.Element item = elementView.Create();
@@ -1414,6 +1461,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         private readonly TextArea _textArea;
         private readonly KeyValue _keyValue;
         private readonly Icons _icons;
+        private readonly EditButton _edit;
         
         private readonly GameObject prefab;
         private readonly RectTransform root;
@@ -1436,6 +1484,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             _textArea = new TextArea(transform.Find("Viewport/TextArea"));
             _keyValue = new KeyValue(transform.Find("Viewport/KVP"));
             _icons = new Icons(transform.Find("Viewport/Icons"));
+            _edit = new EditButton(transform.Find("Viewport/Button"));
         }
         public void Resize()
         {
@@ -1478,6 +1527,13 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         public Icons CreateIcons()
         {
             Icons element = _icons.Create(root);
+            elements.Add(element);
+            return element;
+        }
+
+        public EditButton CreateEditButton()
+        {
+            EditButton element = _edit.Create(root);
             elements.Add(element);
             return element;
         }
@@ -1843,6 +1899,28 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 return element;
             }
             public override bool Contains(string query) => title.text.ToLower().Contains(query.ToLower());
+        }
+
+        public class EditButton : InfoElement
+        {
+            private readonly Button button;
+            private readonly Text label;
+            public EditButton(Transform transform) : base(transform)
+            {
+                button = transform.GetComponent<Button>();
+                label = transform.Find("Text").GetComponent<Text>();
+            }
+
+            public void OnClick(UnityAction action) => button.onClick.AddListener(action);
+            public void SetLabel(string text) => label.text = Localization.instance.Localize(text);
+
+            public EditButton Create(Transform parent)
+            {
+                GameObject? go = Instantiate(prefab, parent);
+                go.SetActive(true);
+                EditButton element = new EditButton(go.transform);
+                return element;
+            }
         }
 
         public class InfoElement

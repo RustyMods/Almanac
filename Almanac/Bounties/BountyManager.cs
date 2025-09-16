@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using Almanac.Data;
@@ -142,21 +143,6 @@ public class BountyManager : MonoBehaviour
             }
         }
     }
-    private static void ReturnCost(Player player, BountyData data)
-    {
-        if (player.NoCostCheat()) return;
-        foreach (StoreManager.StoreCost.Cost? item in data.Cost.Items)
-        {
-            if (item.isToken)
-            {
-                player.AddTokens(item.Amount);
-            }
-            else
-            {
-                player.GetInventory().AddItem(item.item?.m_itemData.m_shared.m_name ?? "Coins", item.Amount, 1, 0, 0L, string.Empty);
-            }
-        }
-    }
     public static void CancelBounty()
     {
         if (ActiveBountyLocation == null) return;
@@ -164,7 +150,7 @@ public class BountyManager : MonoBehaviour
         if (ActiveBountyLocation.pin != null) Minimap.instance.RemovePin(ActiveBountyLocation.pin);
         if (Configs.ReturnBountyCostWhenCancel)
         {
-            ReturnCost(Player.m_localPlayer, ActiveBountyLocation.data);
+            ActiveBountyLocation.data.ReturnCost(Player.m_localPlayer);
         }
         ActiveBountyLocation = null;
         Player.m_localPlayer.Message(MessageHud.MessageType.Center, Keys.BountyCanceled);
@@ -184,6 +170,7 @@ public class BountyManager : MonoBehaviour
                 string fileName = bounty.UniqueID + ".yml";
                 string path = BountyDir.WriteFile(fileName, data);
                 fileBounties[path] = bounty;
+                bounty.Path = path;
             }
         }
         else
@@ -195,6 +182,7 @@ public class BountyManager : MonoBehaviour
                 BountyData bounty = deserializer.Deserialize<BountyData>(data);
                 bounties[bounty.UniqueID] = bounty;
                 fileBounties[file] = bounty;
+                bounty.Path = file;
             }
         }
 
@@ -487,6 +475,8 @@ public class BountyManager : MonoBehaviour
         public int AlmanacTokenReward;
         public string Lore = string.Empty;
         public StoreManager.StoreCost Cost = new();
+
+        [YamlIgnore] public string Path = string.Empty;
         public BountyData(){}
         public void CopyFrom(BountyData data)
         {
@@ -562,6 +552,33 @@ public class BountyManager : MonoBehaviour
             panel.description.Reset();
             panel.description.SetName(character?.m_name ?? "<color=red>Invalid</color>");
             panel.description.SetIcon(icon);
+            if (AlmanacPanel.isLocalAdminOrHostAndNoCost)
+            {
+                AlmanacPanel.InfoView.EditButton edit = panel.description.view.CreateEditButton();
+                edit.SetLabel("Edit");
+                edit.OnClick(() =>
+                {
+                    var form = new FormPanel.BountyForm();
+                    form.SetTopic("Edit Bounty");
+                    form.SetButtonText("Confirm Edit");
+                    form.SetDescription("Edit bounty ledger");
+                    form.inEditMode = true;
+                    form.OverridePath = Path;
+                    panel.formBuilder.Setup(form);
+                    form.idField.input?.Set(UniqueID);
+                    form.creatureField.input?.Set(Creature);
+                    form.nameField.input?.Set(Name);
+                    form.loreField.input?.Set(Lore);
+                    form.iconField.input?.Set(Icon);
+                    form.biomeField.input?.Set(Biome);
+                    form.healthField.input?.Set(Health.ToString(CultureInfo.InvariantCulture));
+                    form.levelField.input?.Set(Level.ToString(CultureInfo.InvariantCulture));
+                    form.damageMultiplierField.input?.Set(DamageMultiplier.ToString(CultureInfo.InvariantCulture));
+                    form.costField.input?.Set(Cost.ToString());
+                    form.tokenField.input?.Set(AlmanacTokenReward.ToString());
+                    form.HasChanged = false;
+                });
+            }
             ToEntries().Build(panel.description.view);
             panel.description.view.Resize();
             bool isActive = ActiveBountyLocation != null;

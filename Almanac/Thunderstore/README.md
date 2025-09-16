@@ -164,6 +164,70 @@ RequiredKey: Charred_Melee_Dyrnwyn
 - You can reload or edit `.yml` files during runtime; the store updates automatically.
 - The Almanac panel will refresh when the store tab is selected.
 
+# Custom Status Effects
+You can create new status effects using Almanac Custom Status Effects Manager.
+
+Below are the available modifier types:
+```
+DamageModifier
+NoiseModifier
+CarryWeight
+Speed
+MaxFallSpeed
+FallDamageModifier
+WindMovementModifier
+WindRunStaminaModifier
+HealthRegenModifier
+StaminaRegenModifier
+EitrRegenModifier
+RaiseSkills
+DamageReduction
+Health
+Stamina
+Eitr
+LifeSteal
+Armor
+BluntDamage
+SlashDamage
+PierceDamage
+ChopDamage
+PickaxeDamage
+FireDamage
+FrostDamage
+LightningDamage
+PoisonDamage
+SpiritDamage
+BluntResistance
+SlashResistance
+PierceResistance
+ChopResistance
+PickaxeResistance
+FireResistance
+FrostResistance
+LightningResistance
+PoisonResistance
+SpiritResistance
+JumpStaminaModifier
+AttackStaminaModifier
+BlockStaminaModifier
+DodgeStaminaModifier
+SwimStaminaModifier
+HomeItemStaminaModifier
+SneakStaminaModifier
+RunStaminaModifier
+```
+
+Each modifier uses a `float` value to define the effect strength.
+- Some like `CarryWeight` are additive.
+- Most others are multipliers.
+
+### Tips
+- You can create, delete, or edit files while in-game to preview tooltips live.
+- Almanac also includes a built-in creation tool for admins.
+- Only the host can add status effects, everyone else gets the data from the host
+- If you are admin, you can use the creation tool to define your status effect file, then upload the file to your server.
+
+
 # Treasure Hunts
 Almanac lets you define custom treasure hunts using `.yml` files in the TreasureHunt folder.
 These treasures sync between server and client, and are dynamically reloaded when edited.
@@ -353,6 +417,104 @@ Requirements:
 Additionally, you can set each NPC with random talk that triggers whenever a player gets close or leaves, or every minute.
 
 The YML files are synced and can be reloaded during gameplay.
+
+## NPC Animations
+```
+InWater
+OnGround
+Blocking
+Crouching
+Equipping
+Encumbered
+AttachBed
+AttachThrone
+AttachSitShip
+AttachShip
+AttachMast
+AttachLox
+AttachAsksvin
+EquipHead
+EquipHip
+UnequipHip
+Stagger
+Dodge
+Eat
+Interact
+GPower
+KnockDown
+Axe
+AxeSecondary
+Pickaxe
+Sword
+SwordSecondary
+MaceSecondary
+Sledge
+Hammer
+Hoe
+BowFire
+BowAim
+Atgeir
+AtgeirSecondary
+Battleaxe
+BattleaxeSecondary
+ThrowSpear
+Spear
+Unarmed
+Kick
+ThrowBomb
+Knife
+KnifeSecondary
+FishingRodThrow
+FishingRod
+CrossbowFire
+Crossbow
+DualKnives
+DualKnivesSecondary
+StaffFireball
+StaffRapidFire
+StaffShield
+StaffSummon
+StaffCharging
+StaffChargeAttack
+Greatsword
+GreatswordSecondary
+DualAxes
+DualAxesSecondary
+RechargeLightningStaff
+StaffLightning
+StaffTrollSummon
+PlaceFeast
+Scything
+Work
+Forge
+Stir
+BlowKiss
+Bow
+Challenge
+Cheer
+ComeHere
+Cower
+Cry
+Dance
+Despair
+Drink
+Flex
+Headbang
+Kneel
+Laugh
+Nonono
+Point
+Relax
+Rest
+Roar
+Shrug
+Sit
+SitChair
+Stop
+ThumbsUp
+Toast
+Wave
+```
 
 ![](https://i.imgur.com/lJbEYvq.png)
 ![](https://i.imgur.com/oh1Y7D0.png)

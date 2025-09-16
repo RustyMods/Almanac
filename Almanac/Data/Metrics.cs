@@ -124,6 +124,8 @@ public static class PlayerInfo
             _ => 0
         };
     }
+
+    public static event Action<Character>? OnCharacterDeathByLocal;
     
     [HarmonyPatch(typeof(Character), nameof(Character.OnDeath))]
     private static class CharacterOnDeathPatch
@@ -136,6 +138,7 @@ public static class PlayerInfo
             if (attacker == Player.m_localPlayer)
             {
                 Records.kills.IncrementOrSet(__instance.m_name);
+                OnCharacterDeathByLocal?.Invoke(__instance);
             }
             else if (__instance == Player.m_localPlayer)
             {
@@ -193,22 +196,11 @@ public static class PlayerInfo
     }
     public static void Setup()
     {
-        AlmanacPlugin.OnPlayerProfileLoadPlayerDataPostfix += player =>
-        {
-            _cachedRecords = player.GetRecords();
-        };
-        AlmanacPlugin.OnPlayerProfileSavePlayerDataPrefix += player =>
-        {
-            Records.Save(player);
-        };
+        AlmanacPlugin.OnPlayerProfileLoadPlayerDataPostfix += player => _cachedRecords = player.GetRecords();
+        AlmanacPlugin.OnPlayerProfileSavePlayerDataPrefix += player => Records.Save(player);
+        AlmanacPlugin.OnNewCharacterDone += () => _cachedRecords = new PlayerRecords();
     }
-
-    [HarmonyPatch(typeof(FejdStartup), nameof(FejdStartup.OnNewCharacterDone))]
-    private static class FejdStartup_OnNewCharacterDone_Patch
-    {
-        [UsedImplicitly]
-        private static void Prefix() => _cachedRecords = new();
-    }
+    
     public static List<Entries.Entry> GetEntries()
     {
         Entries.EntryBuilder builder = new();

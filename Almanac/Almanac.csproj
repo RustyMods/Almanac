@@ -154,6 +154,7 @@
         <Compile Include="Marketplace\MarketManager.cs" />
         <Compile Include="NPC\Clone.cs" />
         <Compile Include="NPC\NPC.cs" />
+        <Compile Include="NPC\PlayerAnims.cs" />
         <Compile Include="NPC\VikingNameGenerator.cs" />
         <Compile Include="NPC\NPCTalk.cs" />
         <Compile Include="NPC\PieceManager.cs" />
@@ -162,6 +163,9 @@
         <Compile Include="NPC\RandomTalkManager.cs" />
         <Compile Include="Plugin.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
+        <Compile Include="Quests\QuestManager.cs" />
+        <Compile Include="Quests\QuestTrackers.cs" />
+        <Compile Include="Quests\QuestTypes.cs" />
         <Compile Include="Store\StatusEffectManager.cs" />
         <Compile Include="Store\StoreManager.cs" />
         <Compile Include="TreasureHunt\TreasureHunt.cs" />
@@ -169,8 +173,9 @@
         <Compile Include="Tutorials\Tutorial.cs" />
         <Compile Include="UI\AlmanacPanel.cs" />
         <Compile Include="UI\DialoguePanel.cs" />
-        <Compile Include="UI\Modal.cs" />
+        <Compile Include="UI\FormPanel.cs" />
         <Compile Include="UI\NPCCustomization.cs" />
+        <Compile Include="UI\QuestPanel.cs" />
         <Compile Include="Utilities\AlmanacDir.cs" />
         <Compile Include="Utilities\Entries.cs" />
         <Compile Include="Utilities\Filters.cs" />
@@ -186,7 +191,6 @@
         <Content Include=".gitignore" />
         <EmbeddedResource Include="assets\almanac_ui" />
         <Content Include="assets\almanac_ui.manifest" />
-        <Content Include="assets\almanac_ui.unitypackage" />
         <EmbeddedResource Include="assets\npc_ui" />
         <EmbeddedResource Include="assets\npc_dialogue" />
         <Content Include="assets\npc_dialogue.manifest" />

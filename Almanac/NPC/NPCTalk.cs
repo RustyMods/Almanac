@@ -76,13 +76,13 @@ public class NPCTalk : MonoBehaviour
                 if (!m_didGreet && distance < m_greetRange)
                 {
                     m_didGreet = true;
-                    QueueSay(m_randomGreets, m_nview.GetZDO().GetBool(ZDOVars.s_emoteOneshot) ? "wave" : "");
+                    QueueSay(m_randomGreets, "wave");
                 }
 
                 if (m_didGreet && !m_didGoodbye && distance > m_byeRange)
                 {
                     m_didGoodbye = true;
-                    QueueSay(m_randomGoodbye, m_nview.GetZDO().GetBool(ZDOVars.s_emoteOneshot) ? "wave" : "");
+                    QueueSay(m_randomGoodbye, "wave");
                 }
             }
         }

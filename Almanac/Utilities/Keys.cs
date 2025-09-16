@@ -101,6 +101,7 @@ public static class Keys
     public static readonly string Collect = new Key("$label_collect", "Collect").key;
     public static readonly string Reward = new Key("$label_reward", "Reward").key;
     public static readonly string InProgress = new Key("$label_in_progress", "In progress").key;
+    public static readonly string Progress = new Key("$label_progress", "Progress").key;
     public static readonly string Close = new Key("$label_close", "Close").key;
     public static readonly string Biome = new Key("$label_biome", "Biome").key;
     public static readonly string Health = "$se_health";
@@ -393,6 +394,7 @@ public static class Keys
     public const string StaminaHold = "$item_staminahold";
     public const string Knockback = "$item_knockback";
     public const string Backstab =  "$item_backstab";
+    public static readonly string Back = new Key("$label_back", "Back").key;
     public static readonly string Factor = new Key("$label_factor", "Factor").key;
     public static readonly string SpeedFactor = Speed + " " + Factor;
     public static readonly string Use = new Key("$label_use", "Use").key;
@@ -511,6 +513,7 @@ public static class Keys
     public static readonly string Amount = new Key("$label_amount", "Amount").key;
     public static readonly string Threshold = new Key("$label_threshold", "Threshold").key;
     public static readonly string Achievement = new Key("$label_achievement", "Achievement").key;
+    public static readonly string RequiredAchievement = Require + " " + Achievement;
     public static readonly string AchievementType = Achievement + " " + Type;
     public static readonly string Target = new Key("$label_target", "Target").key;
     public static readonly string CollectedAchievement = Collected + " " + Achievement;

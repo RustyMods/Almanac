@@ -122,6 +122,18 @@ public static class Helpers
         }
         return true;
     }
+
+    public static void AddOrSet<T, V>(this Dictionary<T, List<V>> dict, T key, V value)
+    {
+        if (!dict.ContainsKey(key)) dict.Add(key, new List<V>());
+        dict[key].Add(value);
+    }
+
+    public static void AddOrSet<T, V, K>(this Dictionary<T, Dictionary<V, K>> dict, T Key, V VKey, K value)
+    {
+        if (!dict.ContainsKey(Key)) dict.Add(Key, new Dictionary<V, K>());
+        dict[Key][VKey] = value;
+    }
     
     public static void CopySpriteAndMaterial(this GameObject prefab, GameObject source, string childName, string sourceChildName = "")
     {

@@ -49,6 +49,7 @@ public static class AchievementManager
                 string path = AchievementDir.WriteFile(fileName, data);
                 File.WriteAllText(path, data);
                 fileAchievements[path] = achievement;
+                achievement.Path = path;
             }
         }
         else
@@ -62,6 +63,7 @@ public static class AchievementManager
                     Achievement achievement = deserializer.Deserialize<Achievement>(data);
                     achievements[achievement.UniqueID] = achievement;
                     fileAchievements[file] = achievement;
+                    achievement.Path = file;
                 }
                 catch
                 {
@@ -160,6 +162,7 @@ public static class AchievementManager
         }
     }
     public static bool Exists(string id) => achievements.ContainsKey(id);
+    public static bool TryGetAchievement(string id, out Achievement achievement) => achievements.TryGetValue(id, out achievement);
     private static void LoadDefaults()
     {
         Achievement harvester = new Achievement();
@@ -597,6 +600,7 @@ public static class AchievementManager
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
         public AchievementRequirement Requirement = new();
         [YamlIgnore] public Sprite? icon => SpriteManager.GetSprite(Icon);
+        [YamlIgnore] public string Path = string.Empty;
         public void CopyFrom(Achievement other)
         {
             UniqueID = other.UniqueID;
@@ -785,6 +789,31 @@ public static class AchievementManager
             panel.description.Reset();
             panel.description.SetName(Name);
             panel.description.SetIcon(icon);
+            if (AlmanacPanel.isLocalAdminOrHostAndNoCost)
+            {
+                AlmanacPanel.InfoView.EditButton edit = panel.description.view.CreateEditButton();
+                edit.SetLabel("Edit");
+                edit.OnClick(() =>
+                {
+                    var form = new FormPanel.AchievementForm();
+                    form.SetTopic("Edit Achievement");
+                    form.SetButtonText("Confirm Edit");
+                    form.SetDescription("Edit achievement");
+                    form.inEditMode = true;
+                    form.overridePath = Path;
+                    panel.formBuilder.Setup(form);
+                    form.idField.input?.Set(UniqueID);
+                    form.nameField.input?.Set(Name);
+                    form.loreField.input?.Set(Lore);
+                    form.iconField.input?.Set(Icon);
+                    form.rewardField.input?.Set(TokenReward.ToString());
+                    form.typeField.input?.Set(Requirement.Type.ToString());
+                    form.prefabField.input?.Set(Requirement.PrefabName);
+                    form.groupField.input?.Set(Requirement.Group);
+                    form.thresholdField.input?.Set(Requirement.Threshold.ToString());
+                    form.HasChanged = false;
+                });
+            }
             ToEntries().Build(panel.description.view);
             panel.description.requirements.SetTokens(TokenReward);
             panel.description.view.Resize();

@@ -42,6 +42,8 @@ public static class Configs
     private static ConfigEntry<Toggle> _creaturesEnabled = null!;
     private static ConfigEntry<Toggle> _almanacEnabled = null!;
     private static ConfigEntry<Vector2> _elementViewGridSize = null!;
+    public static ConfigEntry<Vector3> _questPanelPos = null!;
+    private static ConfigEntry<KeyCode> _questKey = null!;
     
     private static ConfigEntry<Toggle> _allowConversion = null!;
     private static ConfigEntry<int> _conversionRate = null!;
@@ -80,11 +82,11 @@ public static class Configs
     public static bool ShowPieces => _piecesEnabled.Value is Toggle.On;
     public static bool ShowCreatures => _creaturesEnabled.Value is Toggle.On;
     public static bool ShowAlmanac => _almanacEnabled.Value is Toggle.On;
-    
+    public static Vector3 QuestPanelPos => _questPanelPos.Value;
     public static Vector2 ElementViewGridSize => _elementViewGridSize.Value;
-    
     public static Vector3 CustomizationPos => _customizationPos.Value;
     public static Vector3 DialoguePos => _dialoguePos.Value;
+    public static KeyCode QuestKey => _questKey.Value;
 
     public static AlmanacPanel.Background.BackgroundOption bkgOption => Transparent
         ? AlmanacPanel.Background.BackgroundOption.Transparent
@@ -141,29 +143,32 @@ public static class Configs
         _minFullHouse = config("4 - Lottery", "Min Full House", 10, "Set minimum full house reward");
 
         _HideUnknownEntries = config("5 - User Interface", "Hide Unknown", Toggle.Off, "If on, elements are not displayed instead of blacked out");
-        AlmanacPanel.panelPos = config("5 - User Interface", "Panel Position", new Vector3(410f, 200f, 0f), "Set position of panel");
+        AlmanacPanel.panelPos = config("5 - User Interface", "Panel Position", new Vector3(410f, 200f, 0f), "Set position of panel", false);
         AlmanacPanel.panelPos.SettingChanged += (_, _) => AlmanacPanel.instance?.SetPanelPosition(AlmanacPanel.panelPos.Value);
-        _OutlineColor = config("5 - User Interface", "Outline Color", Helpers._OrangeColor, "Set the color of the outline for selected items");
+        _OutlineColor = config("5 - User Interface", "Outline Color", Helpers._OrangeColor, "Set the color of the outline for selected items", false);
         _OutlineColor.SettingChanged += AlmanacPanel.OnSelectedColorChange;
-        _Transparent = config("5 - User Interface", "Transparent Panels", Toggle.Off, "If on, panels are transparent");
+        _Transparent = config("5 - User Interface", "Transparent Panels", Toggle.Off, "If on, panels are transparent", false);
         _Transparent.SettingChanged += (_, _) =>
         {
-            if (AlmanacPanel.instance == null || Modal.instance == null || NPCCustomization.instance == null) return;
+            if (AlmanacPanel.instance == null || FormPanel.instance == null || NPCCustomization.instance == null) return;
             AlmanacPanel.instance.background.SetBackground(bkgOption);
-            Modal.instance.background.SetBackground(bkgOption);
+            FormPanel.instance.background.SetBackground(bkgOption);
             NPCCustomization.instance.background.SetBackground(bkgOption);
         };
-        _scrollbarSensitivity = config("5 - User Interface", "Scroll Sensitivity", 700f, "High is more sensitive");
+        _scrollbarSensitivity = config("5 - User Interface", "Scroll Sensitivity", 700f, "High is more sensitive", false);
         _scrollbarSensitivity.SettingChanged += (_, _) =>
         {
             AlmanacPanel.OnScrollbarSensitivityChanged(ScrollbarSensitivity);
             NPCCustomization.View.OnScrollbarSensitivityChanged(ScrollbarSensitivity);
         };
-        _customizationPos = config("5 - User Interface", "NPC Customization", new Vector3(490f, 170f, 0f), "Set position of customization");
-        _dialoguePos = config("5 - User Interface", "NPC Dialogue", new Vector3(980f, 365f, 0f), "Set position of dialogue");
+        _customizationPos = config("5 - User Interface", "NPC Customization", new Vector3(490f, 170f, 0f), "Set position of customization", false);
+        _dialoguePos = config("5 - User Interface", "NPC Dialogue", new Vector3(980f, 365f, 0f), "Set position of dialogue", false);
         _dialoguePos.SettingChanged += DialoguePanel.OnPosChange;
         _elementViewGridSize = config("5 - User Interface", "Grid Element Size", new Vector2(180f, 180f), "");
         _elementViewGridSize.SettingChanged += (_, _) => AlmanacPanel.instance?.elementView.SetGridElementSize(ElementViewGridSize);
+        _questPanelPos = config("5 - User Interface", "Quest Panel", new Vector3(45f, 870f, 0f), "Set position of quest tooltips", false);
+        _questPanelPos.SettingChanged += QuestPanel.OnPosChange;
+        _questKey = config("5 - User Interface", "Quest Key", KeyCode.F6, "Set key to show / hide quest tooltips", false);
         SetupWatcher();
     }
     

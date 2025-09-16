@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Almanac.Bounties;
 using Almanac.Managers;
 using Almanac.NPC;
+using Almanac.Quests;
 using Almanac.TreasureHunt;
 using Almanac.Utilities;
 using BepInEx.Configuration;
@@ -87,7 +88,7 @@ public class DialoguePanel : MonoBehaviour
     private static string GetDescriptionText(DialogueManager.Dialogue dialogue, bool isInteractable)
     {
         if (!isInteractable) return dialogue.MissingRequirementsText;
-            
+        
         if (dialogue.Action?.Type == DialogueManager.Command.StartBounty)
         {
             if (BountyManager.TryGetBountyData(dialogue.Action.Parameters, out var bountyData) && !bountyData.HasRequirements(Player.m_localPlayer))
@@ -117,30 +118,38 @@ public class DialoguePanel : MonoBehaviour
                 return dialogue.CompletedText;
             }
         }
-        
+        else if (dialogue.Action?.Type == DialogueManager.Command.StartQuest)
+        {
+            if (dialogue.Action == null) return dialogue.Text;
+            if (dialogue.Action.TryGetQuestDialogue(out string id, out _))
+            {
+                if (QuestManager.IsActive(id))
+                {
+                    return dialogue.CompletedText;
+                }
+            }
+        }
+        else if (dialogue.Action?.Type == DialogueManager.Command.CompleteQuest)
+        {
+            if (dialogue.Action == null) return dialogue.Text;
+            if (dialogue.Action.TryGetQuestDialogue(out string id, out _))
+            {
+                if (QuestManager.IsActive(id) && !QuestManager.IsQuestComplete(id))
+                {
+                    return dialogue.MissingRequirementsText;
+                }
+            }
+        }
+                
         return dialogue.Text;
-    }
-
-    private static bool ShouldShowDialogueOption(DialogueManager.Dialogue dialogue)
-    {
-        if (dialogue.Action?.Type is DialogueManager.Command.CancelBounty)
-        {
-            if (BountyManager.ActiveBountyLocation == null) return false;
-        }
-
-        if (dialogue.Action?.Type == DialogueManager.Command.CancelTreasure)
-        {
-            if (TreasureManager.ActiveTreasureLocation == null) return false;
-        }
-
-        return true;
     }
     private void CreateDialogueOptions(DialogueManager.Dialogue dialogue)
     {
         foreach (string? option in dialogue.Dialogues)
         {
             if (!DialogueManager.TryGetDialogue(option, out DialogueManager.Dialogue talk) || !talk.isValid) continue;
-            if (!ShouldShowDialogueOption(talk)) continue;
+            if (!talk.ShouldShowDialogue()) continue;
+            
             talk.previous = dialogue;
             DialogueButton button = _button.Create(root);
             elements.Add(button);
@@ -152,7 +161,7 @@ public class DialoguePanel : MonoBehaviour
         {
             DialogueButton button = _button.Create(root);
             elements.Add(button);
-            button.SetText("Back");
+            button.SetText(Keys.Back);
             button.OnClick(() => Show(dialogue.previous));
         }
     }
@@ -172,15 +181,35 @@ public class DialoguePanel : MonoBehaviour
         if (dialogue.Action == null || dialogue.Action.Type == DialogueManager.Command.None || !isInteractable)
             return false;
             
-        // Hide button for commands that have already been completed
         return dialogue.Action.Type switch
         {
             DialogueManager.Command.Take when dialogue.HasTakenItems(Player.m_localPlayer) => false,
             DialogueManager.Command.Give when dialogue.HasReceivedItem(Player.m_localPlayer) => false,
             DialogueManager.Command.StartBounty when !CanStartBounty(dialogue.Action.Parameters) => false,
             DialogueManager.Command.StartTreasure when !CanStartTreasure(dialogue.Action.Parameters) => false,
+            DialogueManager.Command.StartQuest when !CanStartQuest(dialogue.Action) => false,
+            DialogueManager.Command.CompleteQuest when !CanCompleteQuest(dialogue.Action) => false,
+            DialogueManager.Command.CancelQuest when !CanCancelQuest(dialogue.Action) => false,
             _ => true
         };
+    }
+
+    private static bool CanCompleteQuest(DialogueManager.DialogueAction action)
+    {
+        if (!action.TryGetQuestDialogue(out string id, out _)) return false;
+        return !QuestManager.IsQuestCollected(id);
+    }
+
+    private static bool CanStartQuest(DialogueManager.DialogueAction action)
+    {
+        if (!action.TryGetQuestDialogue(out string id, out _)) return false;
+        return !QuestManager.IsActive(id);
+    }
+
+    private static bool CanCancelQuest(DialogueManager.DialogueAction action)
+    {
+        if (!action.TryGetQuestDialogue(out string id, out _)) return false;
+        return QuestManager.IsActive(id) && !QuestManager.IsQuestComplete(id);
     }
 
     private static bool CanStartBounty(string parameters)
@@ -217,6 +246,7 @@ public class DialoguePanel : MonoBehaviour
     public void Clear()
     {
         foreach(var element in elements) element.Destroy();
+        elements.Clear();
     }
 
     public static void OnPosChange(object sender, EventArgs args)
@@ -254,8 +284,8 @@ public class DialoguePanel : MonoBehaviour
 
         public void Load()
         {
-            prefab.AddComponent<ElementDragHandler>();
-            prefab.AddComponent<DialogueHover>();
+            prefab.AddComponent<DialogueDragHandler>();
+            prefab.AddComponent<ButtonHover>();
         }
 
         public DialogueButton Create(Transform root)
@@ -295,7 +325,7 @@ public class DialoguePanel : MonoBehaviour
         
         public void Load()
         {
-            prefab.AddComponent<ElementDragHandler>();
+            prefab.AddComponent<DialogueDragHandler>();
             area.alignment = TextAnchor.MiddleLeft;
         }
 
@@ -307,10 +337,10 @@ public class DialoguePanel : MonoBehaviour
         
         private void Resize()
         {
-            float newHeight = GetTextPreferredHeight(area, textRect);
-            rect.sizeDelta = new Vector2(rect.sizeDelta.x, newHeight + padding);
+            float newHeight = GetTextPreferredHeight(area, textRect) + padding;
+            rect.sizeDelta = new Vector2(rect.sizeDelta.x, newHeight);
             textRect.sizeDelta = new Vector2(textRect.sizeDelta.x, newHeight);
-            _height = newHeight + padding;
+            _height = newHeight;
         }
         private static float GetTextPreferredHeight(Text text, RectTransform rect)
         {
@@ -323,7 +353,7 @@ public class DialoguePanel : MonoBehaviour
     }
 }
 
-public class ElementDragHandler : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler
+public class DialogueDragHandler : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler
 {
     private Vector3 mouseDifference = Vector3.zero;
 
@@ -346,7 +376,7 @@ public class ElementDragHandler : MonoBehaviour, IDragHandler, IBeginDragHandler
     }
 }
 
-public class DialogueHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class ButtonHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     private Image background = null!;
     private Text label = null!;

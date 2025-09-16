@@ -1,3 +1,9 @@
+# 3.5.17
+- Fixed store item form text staying red even though required killed is correct
+- Added edit button to modify store item, custom effect, achievement, bounty and treasures
+- Updated readme to breakdown how to create custom status effects
+- Even more null checks for modded creatures
+
 # 3.5.16
 - Added null check when indexing ZNetScene and ObjectDB prefabs
 - Fixed bounty return cost default item from `$item_coins` to `Coins`, if prefab is not valid

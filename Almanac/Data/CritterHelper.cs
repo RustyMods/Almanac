@@ -142,7 +142,7 @@ public static class CritterHelper
         private static readonly EntryBuilder builder = new();
         public readonly GameObject prefab;
         public readonly Character character;
-        private readonly BaseAI ai;
+        private readonly BaseAI? ai;
         private readonly HashSet<ItemDrop> items = new();
         private readonly HashSet<Attack> attacks = new();
         public readonly HashSet<ItemDrop> consumeItems = new();
@@ -157,7 +157,7 @@ public static class CritterHelper
             this.prefab = prefab;
             character = prefab.GetComponent<Character>();
             ai = prefab.GetComponent<BaseAI>();
-            if (ai is MonsterAI monsterAI)
+            if (ai != null && ai is MonsterAI monsterAI)
             {
                 foreach (ItemDrop? item in monsterAI.m_consumeItems)
                 {
@@ -169,18 +169,55 @@ public static class CritterHelper
             trophy = drops?.m_drops.FindTrophy() ?? null;
             prefab.TryGetComponent(out tameable);
             growUp = prefab.GetComponent<Growup>();
+            
             if (character is Humanoid humanoid)
             {
-                foreach (GameObject? item in humanoid.m_defaultItems)
+                if (humanoid.m_defaultItems != null)
                 {
-                    if (item == null || !item.TryGetComponent(out ItemDrop itemDrop)) continue;
-                    items.Add(itemDrop);
+                    foreach (GameObject? item in humanoid.m_defaultItems)
+                    {
+                        if (item == null || !item.TryGetComponent(out ItemDrop itemDrop)) continue;
+                        items.Add(itemDrop);
+                    }
                 }
-                foreach (Humanoid.RandomItem? randomItem in humanoid.m_randomItems)
+
+                if (humanoid.m_randomWeapon != null)
                 {
-                    if (randomItem.m_prefab == null ||
-                        !randomItem.m_prefab.TryGetComponent(out ItemDrop itemDrop)) continue;
-                    items.Add(itemDrop);
+                    foreach (GameObject? item in humanoid.m_randomWeapon)
+                    {
+                        if (item == null || !item.TryGetComponent(out ItemDrop itemDrop)) continue;
+                        items.Add(itemDrop);
+                    }
+                }
+
+                if (humanoid.m_randomShield != null)
+                {
+                    foreach (GameObject? item in humanoid.m_randomShield)
+                    {
+                        if (item == null || !item.TryGetComponent(out ItemDrop itemDrop)) continue;
+                        items.Add(itemDrop);
+                    }
+                }
+
+                if (humanoid.m_randomItems != null)
+                {
+                    foreach (Humanoid.RandomItem? randomItem in humanoid.m_randomItems)
+                    {
+                        if (randomItem.m_prefab == null || !randomItem.m_prefab.TryGetComponent(out ItemDrop itemDrop)) continue;
+                        items.Add(itemDrop);
+                    }
+                }
+
+                if (humanoid.m_randomSets != null)
+                {
+                    foreach (var set in humanoid.m_randomSets)
+                    {
+                        foreach (var item in set.m_items)
+                        {
+                            if (item == null || !item.TryGetComponent(out ItemDrop itemDrop)) continue;
+                            items.Add(itemDrop);
+                        }
+                    }
                 }
 
                 foreach (ItemDrop? item in items)

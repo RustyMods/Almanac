@@ -45,6 +45,7 @@ public static class StoreManager
                 string fileName = item.Name + ".yml";
                 var path = StoreDir.WriteFile(fileName, data);
                 fileItems[path] = item;
+                item.Path = path;
             }
         }
         else
@@ -56,6 +57,7 @@ public static class StoreManager
                 StoreItem item = deserializer.Deserialize<StoreItem>(data);
                 items[item.Name] = item;
                 fileItems[file] = item;
+                item.Path = file;
             }
         }
 
@@ -298,11 +300,13 @@ public static class StoreManager
         public Sprite? icon => SpriteManager.GetSprite(Icon);
         public string name => $"{Keys.AlmanacToken} x{TokenAmount}";
         public string description => $"{Keys.Convert} {item.m_itemData.m_shared.m_name} x{Amount}";
-        public bool HasRequirements(Player player)
+
+        private bool HasRequirements(Player player)
         {
             return player.GetInventory().CountItems(item.m_itemData.m_shared.m_name) >= Amount;
         }
-        public void Purchase(Player player)
+
+        private void Purchase(Player player)
         {
             player.GetInventory().RemoveItem(item.m_itemData.m_shared.m_name, Amount);
             player.AddTokens(TokenAmount);
@@ -313,7 +317,8 @@ public static class StoreManager
             TokenAmount = amount;
             conversions.Add(this);
         }
-        public List<Entries.Entry> ToEntries()
+
+        private List<Entries.Entry> ToEntries()
         {
             builder.Clear();
             builder.Add(Keys.ConversionRate, Configs.ConversionRate);
@@ -354,9 +359,20 @@ public static class StoreManager
         public string RequiredAchievement = string.Empty;
         public StoreItem(){}
         [YamlIgnore] public Sprite? sprite => SpriteManager.GetSprite(Icon);
+        [YamlIgnore] public string Path = string.Empty;
 
         public bool HasRequirements(Player player) =>
-             player.NoCostCheat() || (Items.All(item => player.IsKnownMaterial(item.item?.m_itemData.m_shared.m_name)) && HasRequiredKey(out string _));
+             player.NoCostCheat() 
+             || (KnowsAllItems(player) && HasRequiredKey(out string _) && HasAchievement(player));
+
+        public bool KnowsAllItems(Player player) =>
+            Items.All(item => player.IsKnownMaterial(item.item?.m_itemData.m_shared.m_name));
+        public bool HasAchievement(Player player)
+        {
+            if (string.IsNullOrEmpty(RequiredAchievement)) return true;
+            if (!AchievementManager.TryGetAchievement(RequiredAchievement, out var achievement)) return true;
+            return achievement.IsCompleted(player);
+        }
         public bool HasRequiredKey(out string sharedName)
         {
             sharedName = string.Empty;
@@ -373,6 +389,11 @@ public static class StoreManager
             {
                 HasRequiredKey(out string sharedName);
                 builder.Add(Keys.RequiredDefeated, sharedName);
+            }
+
+            if (!string.IsNullOrEmpty(RequiredAchievement) && AchievementManager.TryGetAchievement(RequiredAchievement, out var achievement))
+            {
+                builder.Add(Keys.RequiredAchievement, achievement.Name);
             }
             if (StatusEffect != null)
             {
@@ -391,6 +412,30 @@ public static class StoreManager
             panel.description.SetIcon(sprite);
             bool canPurchase = Cost.CanPurchase(Player.m_localPlayer);
             panel.description.Interactable(canPurchase);
+            if (AlmanacPanel.isLocalAdminOrHostAndNoCost)
+            {
+                AlmanacPanel.InfoView.EditButton edit = panel.description.view.CreateEditButton();
+                edit.SetLabel("Edit");
+                edit.OnClick(() =>
+                {
+                    var form = new FormPanel.StoreForm();
+                    form.SetTopic("Edit Store Item");
+                    form.SetButtonText("Confirm Edit");
+                    form.SetDescription("Edit Store Item");
+                    form.inEditMode = true;
+                    form.overridePath = Path;
+                    panel.formBuilder.Setup(form);
+                    form.nameField.input?.Set(Name);
+                    form.loreField.input?.Set(Lore);
+                    form.iconField.input?.Set(Icon);
+                    if (StatusEffect != null) form.statusEffectField.input?.Set($"{StatusEffect.ID}, {StatusEffect.Duration}");
+                    form.costField.input?.Set(Cost.ToString());
+                    form.keyField.input?.Set(RequiredDefeated);
+                    form.achievementField.input?.Set(RequiredAchievement);
+                    form.itemsField.input?.Set(string.Join(":", Items.Select(itemInfo => itemInfo.ToString()).ToList()));
+                    form.HasChanged = false;
+                });
+            }
             ToEntries().Build(panel.description.view);
             if (Items.Count > 0)
             {
@@ -465,6 +510,8 @@ public static class StoreManager
                 Quality = quality;
                 Variant = variant;
             }
+
+            public override string ToString() => $"{PrefabName}, {Amount}, {Quality}, {Variant}";
         }
     }   
 
@@ -491,6 +538,11 @@ public static class StoreManager
                 }
             }
             return true;
+        }
+
+        public override string ToString()
+        {
+            return string.Join(":", Items.Select(item => $"{item.PrefabName}, {item.Amount}").ToList());
         }
 
         [Serializable]

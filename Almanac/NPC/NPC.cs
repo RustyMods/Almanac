@@ -12,7 +12,7 @@ public static class NPCVars
     public static readonly int Animation = nameof(Animation).GetStableHashCode();
     public static readonly int Dialogue = nameof(Dialogue).GetStableHashCode();
     public static readonly int RandomTalk = nameof(RandomTalk).GetStableHashCode();
-    public static readonly string DefaultName = "Almanac NPC";
+    public const string DefaultName = "Almanac NPC";
 }
 public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
 {
@@ -26,7 +26,6 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
     public string m_name = NPCVars.DefaultName;
     public string m_dialogueID = string.Empty;
     private DialogueManager.Dialogue? m_dialogue => DialogueManager.TryGetDialogue(m_dialogueID, out var dialogue) ? dialogue : null;
-    public string m_animation = string.Empty;
     public string m_rightItem => m_visEquipment?.m_rightItem ?? string.Empty;
     public string m_leftItem => m_visEquipment?.m_leftItem ?? string.Empty;
     public string m_chestItem => m_visEquipment?.m_chestItem ?? string.Empty;
@@ -43,19 +42,11 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
     public Vector3 m_hairColor => m_visEquipment?.m_hairColor ?? Vector3.one;
     public string m_randomTalk => m_talk?.m_randomTalkID ?? string.Empty;
     
-    private static readonly Dictionary<string, int> craftingIndices = new()
-    {
-        ["work"] = 1,
-        ["forge"] = 2,
-        ["stir"] = 3
-    };
-    
-    public string m_emoteState = "";
-    public int m_emoteID;
-    private bool m_oneshot;
-    
-    private Emotes? m_activeEmote;
-    public float m_timeSinceLastEmote;
+    public string m_animation = string.Empty;
+    public float m_timeSinceLastAnim;
+    public PlayerAnims m_currentAnim = PlayerAnims.None;
+    private readonly Queue<AnimChain> m_animQueue = new();
+    private readonly Queue<PlayerAnims> m_sequence = new();
     public void Awake()
     {
         m_nview = GetComponent<ZNetView>();
@@ -83,56 +74,107 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
         SetHelmetItem(GetPrefabFromHash(m_nview.GetZDO().GetInt(ZDOVars.s_helmetItem)));
         SetShoulderItem(GetPrefabFromHash(m_nview.GetZDO().GetInt(ZDOVars.s_shoulderItem)));
         SetUtilityItem(GetPrefabFromHash(m_nview.GetZDO().GetInt(ZDOVars.s_utilityItem)));
-        SetBeardItem(GetPrefabFromHash(m_nview.GetZDO().GetInt(ZDOVars.s_beardItem)));
-        SetHairItem(GetPrefabFromHash(m_nview.GetZDO().GetInt(ZDOVars.s_hairItem)));
         SetModel(m_nview.GetZDO().GetInt(ZDOVars.s_modelIndex, UnityEngine.Random.Range(0, 2)));
+        SetBeardItem("Beard" + m_nview.GetZDO().GetInt(ZDOVars.s_beardItem));
+        SetHairItem("Hair" + m_nview.GetZDO().GetInt(ZDOVars.s_hairItem));
         if (m_name == NPCVars.DefaultName)
         {
-            SetName(m_visEquipment.m_modelIndex == 0 ? VikingNameGenerator.GenerateMaleName() : VikingNameGenerator.GenerateFemaleName());
+            SetName(m_visEquipment.m_modelIndex == 0 ? 
+                VikingNameGenerator.GenerateMaleName() 
+                : VikingNameGenerator.GenerateFemaleName());
         }
         SetSkinColor(m_nview.GetZDO().GetVec3(ZDOVars.s_skinColor, Vector3.one));
-        SetHairColor(m_nview.GetZDO().GetVec3(ZDOVars.s_hairColor, Vector3.one));
+        SetHairColor(m_nview.GetZDO().GetVec3(ZDOVars.s_hairColor, Vector3.zero));
         SetRandomTalk(m_randomTalk);
         DoAnimation(m_animation);
     }
     public void Update()
     {
-        if (m_activeEmote == null || !m_oneshot) return;
         float dt = Time.deltaTime;
-        m_timeSinceLastEmote += dt;
-        if (m_timeSinceLastEmote < 10f) return;
-        m_timeSinceLastEmote = 0f;
-        DoEmote(m_activeEmote);
-    }
-    public void LateUpdate()
-    {
-        if (!m_nview.IsValid()) return;
-        m_oneshot = IsOneShot(m_activeEmote);
-        int emoteID = m_nview.GetZDO().GetInt(ZDOVars.s_emoteID);
-        string emote = m_nview.GetZDO().GetString(ZDOVars.s_emote);
-        if (emoteID == m_emoteID) return;
-        m_emoteID = emoteID;
-        if (!string.IsNullOrEmpty(m_emoteState))
+        m_timeSinceLastAnim += dt;
+        if (m_animQueue.Count > 0)
         {
-            m_animator.SetBool("emote_" + m_emoteState, false);
+            if (m_timeSinceLastAnim < m_currentAnim.GetAttributeOfType<AnimType>().chainInterval) return;
+            AnimChain chain = m_animQueue.Dequeue();
+            DoAnimation(chain.trigger, false, chain.index);
         }
-        m_emoteState = "";
-        m_animator.SetTrigger("emote_stop");
-        if (string.IsNullOrEmpty(emote)) return;
-        m_animator.ResetTrigger("emote_stop");
-        if (m_oneshot)
+        else if (m_sequence.Count > 0)
         {
-            m_animator.SetTrigger("emote_" + emote);
+            if (m_timeSinceLastAnim < m_currentAnim.GetAttributeOfType<AnimType>().chargeTime) return;
+            var next = m_sequence.Dequeue();
+            DoAnimation(next.ToString());
         }
         else
         {
-            m_emoteState = emote;
-            m_animator.SetBool("emote_" + emote, true);
+            if (m_timeSinceLastAnim < 10f) return;
+            DoAnimation(m_animation, false);
         }
     }
+    
+    public void StopAnimation()
+    {
+        if (m_currentAnim is PlayerAnims.None) return;
+        AnimType? type = m_currentAnim.GetAttributeOfType<AnimType>();
+        if (type == null) return;
+        if (type.isIndex)
+        {
+            m_zanim.SetInt(type.trigger, 0);
+        }
+        else if (type.isBool)
+        {
+            m_zanim.SetBool(type.trigger, false); // need to keep this, even if emoting
+            if (type.isEmote) m_zanim.SetTrigger("emote_stop"); // breaks the emote loop
+        }
+        
+        m_animQueue.Clear();
+        m_sequence.Clear();
+        m_currentAnim = PlayerAnims.None;
+    }
 
-    private bool InEmote() => !string.IsNullOrWhiteSpace(m_emoteState);
-
+    public void DoAnimation(string input, bool save = true, int chainIndex = 0)
+    {
+        if (!m_nview.IsValid() || !m_nview.IsOwner()) return;
+        if (save) m_nview.GetZDO().Set(NPCVars.Animation, input);
+        if (Enum.TryParse(input, true, out PlayerAnims anim) && anim.GetAttributeOfType<AnimType>() is {} type)
+        {
+            if (m_currentAnim == anim && (type.isBool || type.isIndex)) return;
+            StopAnimation();
+            if (type.isIndex)
+            {
+                m_zanim.SetInt(type.trigger, type.index);
+            }
+            else if (type.isBool)
+            {
+                if (type.isSequential)
+                {
+                    m_sequence.Enqueue(type.nextSequence);
+                    m_zanim.SetTrigger(type.trigger);
+                }
+                else m_zanim.SetBool(type.trigger, true);
+            }
+            else if (type.isChain)
+            {
+                if (chainIndex > type.chainMax) chainIndex = 0;
+                m_animQueue.Enqueue(new AnimChain(input, chainIndex + 1));
+                m_zanim.SetTrigger(type.trigger + chainIndex);
+            }
+            else if (type.isSequential)
+            {
+                m_sequence.Enqueue(type.nextSequence);
+                m_zanim.SetTrigger(type.trigger);
+            }
+            else
+            {
+                m_zanim.SetTrigger(type.trigger);
+            }
+            m_currentAnim = anim;
+            m_timeSinceLastAnim = 0f;
+        }
+        else
+        {
+            StopAnimation();
+        }
+    }
     public void SetName(string text)
     {
         if (string.IsNullOrEmpty(text)) return;
@@ -259,68 +301,6 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
     {
         if (m_visEquipment?.m_modelIndex == index) return;
         m_visEquipment?.SetModel(index);
-    }
-    
-    public static bool IsValidEmote(string input)
-    {
-        return !string.IsNullOrWhiteSpace(input) && (craftingIndices.ContainsKey(input) || Enum.TryParse(input, true, out Emotes _));
-    }
-
-    public void DoAnimation(string input, bool save = true)
-    {
-        if (!m_nview.IsValid()) return;
-        if (save) m_nview.GetZDO().Set(NPCVars.Animation, input);
-        if (string.IsNullOrEmpty(input))
-        {
-            StopEmote();
-            return;
-        }
-        if (craftingIndices.TryGetValue(input.ToLower(), out int craftIndex))
-        {
-            StopEmote();
-            StartCraft(input, craftIndex);
-        }
-        else if (!Enum.TryParse(input, true, out Emotes emote))
-        {
-            StopEmote();
-        }
-        else DoEmote(emote, save);
-    }
-
-    public void StartCraft(string input, int index) => m_zanim.SetInt("crafting", index);
-
-    private static bool IsOneShot(Emotes? emote) => emote switch
-    {
-        Emotes.Sit => false,
-        Emotes.Kneel => false,
-        Emotes.Dance => false,
-        Emotes.Headbang => false,
-        Emotes.Relax => false,
-        Emotes.Rest => false,
-        _ => true
-    };
-    public void DoEmote(Emotes? emote, bool save = true)
-    {
-        bool oneshot = IsOneShot(emote);
-        StartEmote(emote.ToString().ToLower(), oneshot);
-        if (save) m_activeEmote = emote;
-        m_oneshot = oneshot;
-        m_timeSinceLastEmote = 0f;
-    }
-    public void StartEmote(string emote, bool oneshot = true)
-    {
-        var num = m_nview.GetZDO().GetInt(ZDOVars.s_emoteID);
-        m_nview.GetZDO().Set(ZDOVars.s_emoteID, num + 1);
-        m_nview.GetZDO().Set(ZDOVars.s_emote, emote);
-        m_nview.GetZDO().Set(ZDOVars.s_emoteOneshot, oneshot);
-    }
-    public void StopEmote()
-    {
-        m_zanim.SetInt("crafting", 0);
-        if (m_nview.GetZDO().GetString(ZDOVars.s_emote) == string.Empty) return;
-        var num = m_nview.GetZDO().GetInt(ZDOVars.s_emoteID);
-        m_nview.GetZDO().Set(ZDOVars.s_emoteID, num + 1);
-        m_nview.GetZDO().Set(ZDOVars.s_emote, string.Empty);
     }
     private static string GetPrefabFromHash(int hash) => !ObjectDB.instance || ObjectDB.instance.GetItemPrefab(hash) is not { } prefab ? string.Empty : prefab.name;
     public bool Interact(Humanoid user, bool hold, bool alt)

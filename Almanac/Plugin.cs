@@ -29,7 +29,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.5.17";
+        internal const string ModVersion = "3.5.18";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         public const string ConfigFileName = ModGUID + ".cfg";
@@ -113,6 +113,21 @@ namespace Almanac
                 return true;
             });
 
+            CommandData reset_quests = new CommandData("reset_quests", "clears all quests from player file", _ =>
+            {
+                if (!Player.m_localPlayer) return false;
+                Player.m_localPlayer.ClearSavedQuests();
+                return true;
+            });
+
+            CommandData reset_dialogues = new CommandData("reset_dialogues", "clears all dialogues from player file",
+                _ =>
+                {
+                    if (!Player.m_localPlayer) return false;
+                    Player.m_localPlayer.ClearSavedDialogues();
+                    return true;
+                });
+
             CommandData size = new CommandData("size", "prints the kilobyte size of almanac data on player file",
                 _ =>
                 {
@@ -123,7 +138,7 @@ namespace Almanac
                     return true;
                 });
 
-            CommandData fullReset = new CommandData("full_reset", "clears all almanac data as well as valheim data",
+            CommandData fullReset = new CommandData("full_reset", "clears all almanac data as well as valheim player data",
                 _ =>
                 {
                     if (!Player.m_localPlayer) return false;

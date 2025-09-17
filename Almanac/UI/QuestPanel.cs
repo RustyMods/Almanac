@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Almanac.Managers;
 using Almanac.Quests;
 using Almanac.Utilities;
 using BepInEx.Configuration;
@@ -48,6 +47,11 @@ public class QuestPanel : MonoBehaviour
         {
             transform.position = offScreenPos;
         }
+    }
+
+    public void OnDestroy()
+    {
+        instance = null;
     }
 
     public void Toggle()

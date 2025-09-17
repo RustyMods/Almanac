@@ -87,7 +87,6 @@ public static class Configs
     public static Vector3 CustomizationPos => _customizationPos.Value;
     public static Vector3 DialoguePos => _dialoguePos.Value;
     public static KeyCode QuestKey => _questKey.Value;
-    
     public static Vector3 PanelPos => _panelPos.Value;
 
     public static AlmanacPanel.Background.BackgroundOption bkgOption => Transparent

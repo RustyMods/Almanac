@@ -42,9 +42,12 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
     private NPCSetting skin = null!;
     private NPCSetting hairColor = null!;
     private NPCSetting modelIndex = null!;
+    private NPCSetting scale = null!;
     
     private NPC.NPC? currentNPC;
     private Vector3 mouseDifference = Vector3.zero;
+    private const float Input_Cooldown = 0.1f;
+    private float lastInputTime;
     
     public void Awake()
     {
@@ -68,61 +71,60 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
         npcName = new NPCSetting(SettingType.Name);
         npcName.SetDescription("Name of the NPC");
         npcName.SetTitle(Keys.Name);
-        
         dialogueID = new NPCSetting(SettingType.Dialogue);
         dialogueID.SetDescription("Entry Dialogue ID");
-        
+        dialogueID.SetTitle(Keys.EntryDialogueID);
         randomTalk = new NPCSetting(SettingType.RandomTalk);
         randomTalk.SetDescription("Random Talk ID");
-        
+        randomTalk.SetTitle(Keys.RandomTalkID);
         helm = new NPCSetting(SettingType.Helmet);
         helm.SetTitle(Keys.Helmet);
         helm.SetDescription("Helmet ItemID, ex: HelmetIron");
-        
         chest = new NPCSetting(SettingType.Chest);
         chest.SetDescription("Chest ItemID, ex: ArmorIronChest");
-        
+        chest.SetTitle(Keys.ChestItem);
         legs = new NPCSetting(SettingType.Legs);
         legs.SetDescription("Legs ItemID, ex: ArmorIronLegs");
-        
+        legs.SetTitle(Keys.LegItem);
         right = new NPCSetting(SettingType.RightHand);
         right.SetDescription("Right Hand ItemID, ex: SwordIron");
-        
+        right.SetTitle(Keys.RightHandItem);
         left = new NPCSetting(SettingType.LeftHand);
         left.SetDescription("Left Hand ItemID, ex: KnifeChitin");
-        
+        left.SetTitle(Keys.LeftHandItem);
         shoulder =  new NPCSetting(SettingType.Shoulder);
         shoulder.SetDescription("Shoulder ItemID, ex: CapeLinen");
-        
+        shoulder.SetTitle(Keys.ShoulderItem);
         util = new NPCSetting(SettingType.Utility);
         util.SetDescription("Utility ItemID, ex: BeltStrength");
-        
+        util.SetTitle(Keys.UtilityItem);
         backRight = new NPCSetting(SettingType.BackRight);
         backRight.SetDescription("Back Right ItemID, ex: ShieldWood");
-        
+        backRight.SetTitle(Keys.BackRightItem);
         backLeft = new NPCSetting(SettingType.BackLeft);
         backLeft.SetDescription("Back Left ItemID, ex: AtgeirIron");
-        
+        backLeft.SetTitle(Keys.BackLeftItem);
         hair = new NPCSetting(SettingType.Hair);
         hair.SetDescription("Hair ItemID, ex: Hair20");
-        
+        hair.SetTitle(Keys.HairItem);
         beard = new NPCSetting(SettingType.Beard);
         beard.SetDescription("Beard ItemID, ex: Beard3");
-        beard.SetTitle(Keys.Beard);
-        
+        beard.SetTitle(Keys.BeardItem);
         anim = new NPCSetting(SettingType.Animation);
         anim.SetDescription("Animation ID, ex: work, stir, forge, dance");
         anim.SetTitle(Keys.Animation);
-        
         skin = new NPCSetting(SettingType.SkinColor);
         skin.SetDescription("Skin Color ex: 0.9 0.8 0.7");
-        
+        skin.SetTitle(Keys.SkinColor);
         hairColor = new NPCSetting(SettingType.HairColor);
         hairColor.SetDescription("Hair/Beard Color ex: 1 0.5 0");
-        
+        hairColor.SetTitle(Keys.HairColor);
         modelIndex = new NPCSetting(SettingType.ModelIndex, InputField.ContentType.DecimalNumber);
         modelIndex.SetDescription("Model Index, ex: 0 = male, 1 = female");
-        
+        modelIndex.SetTitle(Keys.ModelIndex);
+        scale = new NPCSetting(SettingType.Scale);
+        scale.SetDescription("Scale, ex: 1.5, 1.5 1.5");
+        scale.SetTitle("Scale");
         view?.Resize(view.Count);
         SetMainButton("Save");
         SetTopic("NPC Customization");
@@ -131,7 +133,21 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
     public void Update()
     {
         if (!IsVisible()) return;
-        foreach(var setting in settings) setting.Update();
+        
+        if (!Player.m_localPlayer || Player.m_localPlayer.IsDead())
+        {
+            Hide();
+            return;
+        }
+
+        if (Time.time - lastInputTime > Input_Cooldown && (ZInput.GetKeyDown(KeyCode.Escape) || ZInput.GetKeyDown(KeyCode.Tab)))
+        {
+            lastInputTime = Time.time;
+            Hide();
+            return;
+        }
+        
+        foreach(NPCSetting setting in settings) setting.Update();
     }
 
     public void Hide()
@@ -168,9 +184,10 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
         hair.SetPlaceholder(npc.m_hairItem);
         beard.SetPlaceholder(npc.m_beardItem);
         anim.SetPlaceholder(npc.m_animation);
-        skin.SetPlaceholder(Helpers.Vector3ToString(npc.m_skinColor));
-        hairColor.SetPlaceholder(Helpers.Vector3ToString(npc.m_hairColor));
+        skin.SetField(Helpers.Vector3ToString(npc.m_skinColor));
+        hairColor.SetField(Helpers.Vector3ToString(npc.m_hairColor));
         modelIndex.SetPlaceholder(npc.m_modelIndex.ToString());
+        scale.SetPlaceholder($"{npc.m_scale.x} {npc.m_scale.y} {npc.m_scale.z}");
     }
     
     private void SetTopic(string text) => topic.text = text;
@@ -199,6 +216,7 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
             currentNPC.SetAnimation(anim.input);
             currentNPC.SetHairColor(Helpers.StringToVector3(hairColor.input, Vector3.one));
             currentNPC.SetModel(int.Parse(modelIndex.input));
+            currentNPC.SetScale(Helpers.StringToVector3(scale.input, Vector3.one, false));
         }
         Hide();
     }
@@ -207,7 +225,7 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
     {
         Helmet, Chest, Legs, RightHand, LeftHand, Shoulder, Utility, 
         BackRight, BackLeft, Hair, Beard, Animation, SkinColor, Name, 
-        HairColor, Dialogue, ModelIndex, RandomTalk
+        HairColor, Dialogue, ModelIndex, RandomTalk, Scale
     }
     
     private class NPCSetting
@@ -216,12 +234,11 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
         private readonly ViewElement element;
         public string input => element.GetInput();
         private bool wasFocused;
-
         public void SetPlaceholder(string text) => element.SetFieldWithoutNotify(text);
+        public void SetField(string text) => element.SetField(text);
         public void SetTitle(string text) => element.SetTitle(text);
-        
         public void SetGlowColor(Color color) => element.SetGlowColor(color);
-        
+        private void SetColor(Color color) => element.SetColorBlock(color);
         public void SetDescription(string text) => element.SetDescription(text);
         public void Update()
         {
@@ -286,8 +303,7 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
                     element.OnValueChanged(s => element.SetFieldColor(!Enum.TryParse(s, true, out PlayerAnims _) ? Color.red : Color.white));
                     break;
                 case SettingType.SkinColor or SettingType.HairColor:
-                    element.OnValueChanged(s =>
-                        element.SetGlowColor(Utils.Vec3ToColor(Helpers.StringToVector3(s, Vector3.one))));
+                    element.OnValueChanged(s => SetColor(Utils.Vec3ToColor(Helpers.StringToVector3(s, Vector3.one))));
                     break;
                 case SettingType.Dialogue:
                     element.OnValueChanged(s => element.SetFieldColor(!DialogueManager.Exists(s) ? Color.red : Color.white));
@@ -302,7 +318,7 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
         {
             element.SetPlaceholder(string.Empty);
             element.SetFieldWithoutNotify(string.Empty);
-            element.SetGlowColor(element._originalGlowColor);
+            element.SetColorBlock(Color.clear);
         }
     }
 
@@ -352,9 +368,8 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
         private readonly InputField field;
         private readonly Text placeholder;
         private readonly Image glow;
-        
+        private readonly Image colorBlock;
         public bool isFocused => field.isFocused;
-        public readonly Color _originalGlowColor;
     
         public ViewElement(Transform transform)
         {
@@ -364,8 +379,9 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
             field = transform.Find("InputField").GetComponent<InputField>();
             placeholder = transform.Find("InputField/Placeholder").GetComponent<Text>();
             glow = transform.Find("InputField/Glow").GetComponent<Image>();
+            colorBlock = transform.Find("InputField/Color").GetComponent<Image>();
             field.contentType = InputField.ContentType.Custom;
-            _originalGlowColor = glow.color;
+            SetColorBlock(Color.clear);
         }
 
         public ViewElement Create(Transform root)
@@ -374,7 +390,11 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
             go.SetActive(true);
             return new ViewElement(go.transform);
         }
-        
+
+        public void SetColorBlock(Color color)
+        {
+            colorBlock.color = color;
+        }
         public void Destroy() => Object.Destroy(prefab);
         public void SetTitle(string text) => title.text = Localization.instance.Localize(text);
         public void SetDescription(string text) => description.text = Localization.instance.Localize(text);
@@ -385,6 +405,7 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
         public void OnValueChanged(UnityAction<string> action) => field.onValueChanged.AddListener(action);
         public void SetContentType(InputField.ContentType type) => field.contentType = type;
         public void SetFieldWithoutNotify(string text) => field.SetTextWithoutNotify(text);
+        public void SetField(string text) => field.text = text;
         public void SetFieldColor(Color color) => field.textComponent.color = color; 
         public void SetGlowColor(Color color) => glow.color = color;
     }

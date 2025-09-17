@@ -148,17 +148,7 @@ namespace Almanac
                 Player.m_localPlayer.AddTokens(amount);
                 return true;
             }, adminOnly: true);
-
-
-            CommandData printQuests = new("quests", "prints saved quest information", args =>
-            {
-                if (!Player.m_localPlayer) return false;
-                foreach (var quest in QuestManager.GetActiveQuests())
-                {
-                    AlmanacLogger.LogInfo($"{quest.id}: {quest.name} [{quest.progress}/{quest.data?.Threshold}] Completed: {quest.isCompleted}");
-                }
-                return true;
-            });
+            
         }
 
         [HarmonyPatch(typeof(PlayerProfile), nameof(PlayerProfile.SavePlayerData))]

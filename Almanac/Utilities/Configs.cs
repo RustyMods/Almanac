@@ -1,12 +1,11 @@
 ﻿using System.IO;
 using Almanac.UI;
-using Almanac.Utilities;
 using BepInEx;
 using BepInEx.Configuration;
 using ServerSync;
 using UnityEngine;
 
-namespace Almanac.Managers;
+namespace Almanac.Utilities;
 
 public enum Toggle { On = 1, Off = 0 }
 
@@ -21,7 +20,8 @@ public static class Configs
     private static ConfigEntry<Toggle> _HideUnknownEntries = null!;
     public static ConfigEntry<Vector3> _customizationPos = null!;
     public static ConfigEntry<Vector3> _dialoguePos = null!;
-    
+    public static ConfigEntry<Vector3> _panelPos = null!;
+
     private static ConfigEntry<int> _TreasureCooldown = null!;
     private static ConfigEntry<int> _BountyCooldown = null!;
     private static ConfigEntry<int> _lotteryCost = null!;
@@ -87,6 +87,8 @@ public static class Configs
     public static Vector3 CustomizationPos => _customizationPos.Value;
     public static Vector3 DialoguePos => _dialoguePos.Value;
     public static KeyCode QuestKey => _questKey.Value;
+    
+    public static Vector3 PanelPos => _panelPos.Value;
 
     public static AlmanacPanel.Background.BackgroundOption bkgOption => Transparent
         ? AlmanacPanel.Background.BackgroundOption.Transparent
@@ -143,8 +145,8 @@ public static class Configs
         _minFullHouse = config("4 - Lottery", "Min Full House", 10, "Set minimum full house reward");
 
         _HideUnknownEntries = config("5 - User Interface", "Hide Unknown", Toggle.Off, "If on, elements are not displayed instead of blacked out");
-        AlmanacPanel.panelPos = config("5 - User Interface", "Panel Position", new Vector3(410f, 200f, 0f), "Set position of panel", false);
-        AlmanacPanel.panelPos.SettingChanged += (_, _) => AlmanacPanel.instance?.SetPanelPosition(AlmanacPanel.panelPos.Value);
+        _panelPos = config("5 - User Interface", "Panel Position", new Vector3(410f, 200f, 0f), "Set position of panel", false);
+        _panelPos.SettingChanged += (_, _) => AlmanacPanel.instance?.SetPanelPosition(PanelPos);
         _OutlineColor = config("5 - User Interface", "Outline Color", Helpers._OrangeColor, "Set the color of the outline for selected items", false);
         _OutlineColor.SettingChanged += AlmanacPanel.OnSelectedColorChange;
         _Transparent = config("5 - User Interface", "Transparent Panels", Toggle.Off, "If on, panels are transparent", false);

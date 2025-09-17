@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Almanac.Achievements;
+using Almanac.API;
 using Almanac.Bounties;
 using Almanac.Data;
 using Almanac.Managers;
@@ -11,6 +12,7 @@ using Almanac.Store;
 using Almanac.TreasureHunt;
 using Almanac.UI;
 using Almanac.Utilities;
+using API;
 using BepInEx;
 using PieceManager;
 using ServerSync;
@@ -94,12 +96,12 @@ public class DialogueManager : MonoBehaviour
             prefab.GetComponent<ZNetView>().m_persistent = true;
             if (prefab.GetComponentInChildren<CharacterAnimEvent>(true) is { } characterAnimEvent) characterAnimEvent.gameObject.Remove<CharacterAnimEvent>();
             prefab.layer = 10;
-            var component = prefab.AddComponent<NPC>();
+            NPC? component = prefab.AddComponent<NPC>();
             component.m_hitEffects = hitEffects;
             prefab.AddComponent<NPCTalk>();
             
             Piece? piece = prefab.AddComponent<Piece>();
-            piece.m_icon = SpriteManager.GetSprite(SpriteManager.IconOption.Almanac);
+            piece.m_icon = SpriteManager.GetSprite("blacksmith");
             BuildPiece buildPiece = new BuildPiece(prefab);
             buildPiece.Name.English("Almanac NPC");
             buildPiece.Description.English("Placeable human NPC [admin only]");
@@ -1194,7 +1196,7 @@ public class DialogueManager : MonoBehaviour
                             instance.Hide();
                             break;
                         case Command.MapPin:
-                            if (!Minimap.instance || !ZNet.instance || !Player.m_localPlayer)
+                            if (!Minimap.instance || !ZNet.instance || !Player.m_localPlayer || Game.m_noMap)
                             {
                                 instance.Hide();
                             }
@@ -1250,6 +1252,16 @@ public class DialogueManager : MonoBehaviour
                             break;
                     }
                     break;
+                case Command.GiveAlmanacXP:
+                    if (!int.TryParse(Action.Parameters, out int almanacXP)) return;
+                    ClassesAPI.AddEXP(almanacXP);
+                    player.SaveDialogueID(UniqueID);
+                    break;
+                case Command.GiveWackyXP:
+                    if (!int.TryParse(Action.Parameters, out int wackyXP)) return;
+                    EpicMMOSystem_API.AddExp(wackyXP);
+                    player.SaveDialogueID(UniqueID);
+                    break;
 
             }
         }
@@ -1273,7 +1285,8 @@ public class DialogueManager : MonoBehaviour
         StartBounty, CancelBounty, CompleteBounty, 
         StartTreasure, CancelTreasure,
         OpenAlmanac, OpenItems, OpenPieces, OpenCreatures, OpenAchievements, OpenStore, OpenLeaderboard, OpenBounties, OpenTreasures, OpenMetrics, OpenLottery,
-        MapPin
+        MapPin,
+        GiveAlmanacXP, GiveWackyXP
     }
 
     [Serializable]
@@ -1294,6 +1307,8 @@ public class DialogueManager : MonoBehaviour
                 Command.StartBounty => TryGetBounty(out _),
                 Command.StartTreasure => TryGetTreasure(out _),
                 Command.StartQuest or Command.CancelQuest or Command.CompleteQuest => TryGetQuestDialogue(out _, out _),
+                Command.GiveWackyXP => EpicMMOSystem_API.IsLoaded(),
+                Command.GiveAlmanacXP => ClassesAPI.IsLoaded(),
                 _ => true
             };
         }

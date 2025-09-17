@@ -331,6 +331,10 @@ Each dialogue is defined as a YAML file with properties like:
 - `StartTreasure`: Begins treasure hunt. Parameters: `TreasureID`
 - `CancelBounty`/`CancelTreasure`: Cancels active hunts. (Will not be displayed if no active hunts)
 
+**API Commands**
+- `GiveAlmanacXP`: Gives almanac xp. Parameters `amount` - Recorded dialogue
+- `GiveWackyXP`: Gives EpicMMO xp. Parameters `amount` - Recorded dialogue
+
 ### Requirements System
 Control when dialogues are available using:
 - `Keys`: Player must have specific game keys (boss defeats, etc.)
@@ -341,6 +345,10 @@ Control when dialogues are available using:
 - `NotAchievements`: Achievements player must NOT have
 - `Dialogues`: Required Dialogue IDs (recorded by `Give` or `Take` Actions)
 - `NotDialogues`: Required NOT Dialogue IDs
+- `Quests`: Required accepted Quests. Format: `Quest1,Quest2`
+- `NotQuests`: Required Quest never taken
+- `CompletedQuests`: Required Quest fully completed
+- `NotCompletedQuests`: Required Quest NOT fully completed
 
 ### Text Features
 **Alternative Text**: Use `AltText` to show different messages when requirements aren't met.
@@ -387,7 +395,7 @@ Text: There's a cave system to the north. Let me mark it for you.
 Action:
   Type: MapPin
   Label: Mark Cave
-  Parameters: 100, 25, -150, Mysterious Cave, 180 (3min)
+  Parameters: 100, 25, -150, Mysterious Cave, 180 // (3min)
 ```
 
 **Requirement-Based Dialogue**:
@@ -409,9 +417,13 @@ Requirements:
 ### Technical Notes
 - Files can be added, changed, or deleted while the server is running
 - Server automatically syncs dialogues to clients
-- Map pins disappear after 100 seconds
+- Map pins disappear after set delay seconds
 - Give/Take commands automatically prevent duplicate transactions
 - Requirements are checked in real-time
+
+## NPC
+
+NPC can be customized by being an `admin` in `no cost` mode
 
 ## Random Talk
 Additionally, you can set each NPC with random talk that triggers whenever a player gets close or leaves, or every minute.
@@ -426,7 +438,6 @@ Blocking
 Crouching
 Equipping
 Encumbered
-AttachBed
 AttachThrone
 AttachSitShip
 AttachShip
@@ -515,6 +526,64 @@ ThumbsUp
 Toast
 Wave
 ```
+
+# Quest System
+The Almanac Quest System allows players to take on custom quests that track progress across various activities in Valheim.  
+Quests are defined in `.yml` files inside the **Quests** folder, and sync between server and client. Changes are dynamically reloaded when files are added, edited, or removed.
+
+Quest system is designed to work along with dialogue system, use the command: `StartQuest`, `CancelQuest`, `CompleteQuest` to interact with the quests.
+
+### Notes
+- Quests can only be started if player has never started said quest
+- Quests can only be cancelled if quest is active
+- Quests remain active after completion (that is to keep record of completion), meaning when using dialogue requirements: `Quests` or `NotQuests` it is checking if quest has ever been taken.
+- Quests can only be completed if progress has met threshold
+- All these behaviors are reflected in the dialogue system. If those conditions are not met, the interactable button, will not be displayed as an option.
+
+## Core Properties
+Each quest file can define:
+- **UniqueID**: A unique identifier string (e.g., `001.Dandelion`).
+- **Name**: Display name for the quest.
+- **Type**: The quest type (see list below).
+- **PrefabName**: Target prefab for the quest (e.g., `Boar`, `Pickable_Dandelion`, `SurtlingCore`).
+- **PrefabNames** *(optional)*: A list of prefabs for collection or learning quests.
+- **Threshold**: Amount required to complete the quest.
+
+### Quest Types
+```
+Collect
+Harvest
+Farm
+Kill
+Mine
+LearnItems
+```
+### Example Quest
+```yml
+UniqueID: 001.BoarHunt
+Name: Hunt Boars
+Type: Kill
+PrefabName: Boar
+Threshold: 10
+```
+This quest requires players to hunt 10 Boars. Progress is tracked automatically when players kill the target prefab.
+
+### Notes
+
+- Quests can be started, canceled, or completed dynamically in-game.
+- Progress is saved to the player profile and restored on reconnect.
+- Quests are synchronized from server to client.
+- Multiple quests can be active at once.
+- UI will display quests-in-progress, can be hidden using configured hotkey
+- Quest history can be viewed in the metrics tab
+
+### Tips
+
+- Use Collect for item-based quests (e.g., `SurtlingCore`).
+- Use Harvest for pickable quests like dandelions or mushrooms (e.g., `Pickable_Dandelion`).
+- Use Farm for planted crops (e.g., `sapling_seedcarrot`).
+- Use LearnItems to create discovery quests where players must learn recipes from multiple items.
+- Thresholds define how much progress is needed (kills, items, harvests, etc.).
 
 ![](https://i.imgur.com/lJbEYvq.png)
 ![](https://i.imgur.com/oh1Y7D0.png)

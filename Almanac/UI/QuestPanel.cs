@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Almanac.Managers;
 using Almanac.Quests;
+using Almanac.Utilities;
 using BepInEx.Configuration;
 using UnityEngine;
 using UnityEngine.Events;
@@ -20,7 +21,7 @@ public class QuestPanel : MonoBehaviour
     public static QuestPanel? instance;
     private readonly List<QuestElement> elements = new();
     private static bool ShouldShow => Player.m_localPlayer && !Player.m_localPlayer.IsDead() && !Player.m_localPlayer.IsTeleporting() && !Player.m_localPlayer.InCutscene();
-    private Vector3 offScreenPos = new Vector3(5000f, 5000f, 0f);
+    private readonly Vector3 offScreenPos = new Vector3(5000f, 5000f, 0f);
     public void Awake()
     {
         instance = this;

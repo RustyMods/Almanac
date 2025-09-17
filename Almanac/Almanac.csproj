@@ -146,7 +146,6 @@
         <Compile Include="Lottery\LotteryManager.cs" />
         <Compile Include="Managers\AssetBundleManager.cs" />
         <Compile Include="Managers\CommandData.cs" />
-        <Compile Include="Managers\Configs.cs" />
         <Compile Include="Managers\FontManager.cs" />
         <Compile Include="Managers\LocalizationManager.cs" />
         <Compile Include="Managers\SpriteManager.cs" />
@@ -177,6 +176,7 @@
         <Compile Include="UI\NPCCustomization.cs" />
         <Compile Include="UI\QuestPanel.cs" />
         <Compile Include="Utilities\AlmanacDir.cs" />
+        <Compile Include="Utilities\Configs.cs" />
         <Compile Include="Utilities\Entries.cs" />
         <Compile Include="Utilities\Filters.cs" />
         <Compile Include="Utilities\Helpers.cs" />
@@ -223,6 +223,7 @@
         <EmbeddedResource Include="icons\sword_basic_blue.png" />
         <EmbeddedResource Include="icons\wood_log.png" />
         <EmbeddedResource Include="icons\wood_logs_three.png" />
+        <EmbeddedResource Include="icons\blacksmith_03.png" />
         <Content Include="ILRepack.targets" />
         <Content Include="Libs\GroupsAPI.dll" />
         <Content Include="Thunderstore\Almanac.dll" />

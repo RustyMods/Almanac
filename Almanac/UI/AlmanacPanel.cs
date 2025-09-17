@@ -338,7 +338,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
     private static readonly Tutorials.Tutorial store = new(Keys.AlmanacStore, "Store.md");
     private static readonly Tutorials.Tutorial treasures = new (Keys.Treasures, "Treasures.md");
     
-    public static ConfigEntry<Vector3> panelPos = null!;
     public Background background = null!;
     public Text topic = null!;
     public readonly Dictionary<Tab.TabOption, Tab> Tabs = new();
@@ -400,7 +399,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
 
     public void Start()
     {
-        transform.position = panelPos.Value;
+        transform.position = Configs.PanelPos;
         mainSearch.OnValueChanged(input => GridView.activeView?.OnSearch(input));
         mainSearch.SetPlaceholder(Keys.SearchPlaceholder);
         sideSearch.OnValueChanged(input => description.view.OnSearch(input));
@@ -893,7 +892,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         description.view.Resize();
         ElementView.Element quests = elementView.Create();
         quests.SetName("Quests");
-        var questCount = QuestManager.GetActiveQuests().Count;
+        int questCount = QuestManager.GetActiveQuests().Count;
         quests.SetDescription(questCount.ToString());
         quests.SetIcon(SpriteManager.GetSprite(SpriteManager.IconOption.BookRed));
         quests.Interactable(questCount > 0);
@@ -984,7 +983,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         Vector2 pos = eventData.position;
         mouseDifference = transform.position - new Vector3(pos.x, pos.y, 0);
     }
-    public void OnEndDrag(PointerEventData eventData) => panelPos.Value = transform.position;
+    public void OnEndDrag(PointerEventData eventData) => Configs._panelPos.Value = transform.position;
     public static void OnSelectedColorChange(object sender, EventArgs e)
     {
         if (sender is not ConfigEntry<Color> config) return;

@@ -21,6 +21,8 @@ public static class EpicMMOSystem_API
         Strength = 0, Agility = 1, Intellect = 2, Body = 3, Vigour = 4, Special = 5,
     }
 
+    public static bool IsLoaded() => state == API_State.Ready;
+
     public static int GetLevel()
     {
         int result = 0;
@@ -55,7 +57,12 @@ public static class EpicMMOSystem_API
     {
         Init();
         eSetSingleRate?.Invoke(null, new object[] { rate });
-    }  
+    }
+
+    static EpicMMOSystem_API()
+    {
+        Init();
+    }
  
     private static void Init()
     { 

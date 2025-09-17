@@ -44,7 +44,7 @@ public static class Helpers
 
     public static string Vector3ToString(Vector3 vector3) => $"{vector3.x:0.00} {vector3.y:0.00} {vector3.z:0.00}";
 
-    public static Vector3 StringToVector3(string value, Vector3 defaultValue)
+    public static Vector3 StringToVector3(string value, Vector3 defaultValue, bool clamp01 = true)
     {
         if (string.IsNullOrWhiteSpace(value)) return defaultValue;
         
@@ -85,8 +85,15 @@ public static class Helpers
         if (!float.TryParse(parts[0].Trim(), out var x)) return defaultValue;
         if (!float.TryParse(parts[1].Trim(), out var y)) return defaultValue;
         if (!float.TryParse(parts[2].Trim(), out var z)) return defaultValue;
+        if (!clamp01) return new Vector3(x, y, z);
         return new Vector3(x, y, z).Clamp01();
     }
+    
+    public static bool AllNegative(this Vector3 v) =>
+        v is { x: < 0, y: < 0, z: < 0 };
+
+    public static bool AnyNegative(this Vector3 v) =>
+        v.x < 0 || v.y < 0 || v.z < 0;
     private static Vector3 Clamp01(this Vector3 color) => new (Mathf.Clamp01(color.x), Mathf.Clamp01(color.y), Mathf.Clamp01(color.z));
     public static void AddRange<T, V>(this Dictionary<T, V> dict, Dictionary<T, V> other)
     {

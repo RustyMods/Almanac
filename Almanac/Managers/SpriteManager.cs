@@ -12,8 +12,19 @@ namespace Almanac.Managers;
 
 public static class SpriteManager
 {
-    public static readonly AlmanacDir IconsDir = new (AlmanacPlugin.AlmanacDir.Path, "Icons");
+    private static readonly AlmanacDir IconsDir = new (AlmanacPlugin.AlmanacDir.Path, "Icons");
 
+    [HarmonyPatch(typeof(Minimap), nameof(Minimap.Awake))]
+    private static class Minimap_Awake_Patch
+    {
+        [UsedImplicitly]
+        private static void Postfix(Minimap __instance)
+        {
+            icons["player"] = __instance.GetSprite(Minimap.PinType.Player);
+            icons["question"] = __instance.GetSprite(Minimap.PinType.Hildir1);
+            icons["bed"] = __instance.GetSprite(Minimap.PinType.Bed);
+        }
+    }
     public static void OnObjectDBStatusEffects(StatusEffect se)
     {
         icons[se.name] = se.m_icon;
@@ -56,6 +67,7 @@ public static class SpriteManager
     private static readonly Sprite woodLogIcon = RegisterSprite("wood_log.png")!;
     private static readonly Sprite woodLogsIcon = RegisterSprite("wood_logs_three.png")!;
     private static readonly Sprite ringGoldMagic = RegisterSprite("ring_gold_magic.png")!;
+    private static readonly Sprite blacksmith = RegisterSprite("blacksmith_03.png")!;
 
     public enum IconOption
     {
@@ -129,6 +141,7 @@ public static class SpriteManager
             "log" => woodLogIcon,
             "log_stack" => woodLogsIcon,
             "ring" => ringGoldMagic,
+            "blacksmith" => blacksmith,
             _ => icons.TryGetValue(name, out var icon) ? icon : null
         };
     }

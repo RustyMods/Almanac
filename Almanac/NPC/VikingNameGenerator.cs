@@ -106,7 +106,6 @@ public static class VikingNameGenerator
         return $"{baseName} {postfix}";
     }
 
-    // Get total possible unique combinations (approximate)
     public static int GetMaxUniqueNames()
     {
         int baseNames = MaleBaseNames.Length + FemaleBaseNames.Length;

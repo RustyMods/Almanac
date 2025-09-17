@@ -1,3 +1,9 @@
+# 3.5.18
+- Improved NPC animations
+- Quest System - to work in conjunction with Dialogue system
+- Quest UI
+- Reminder: All UI can be dragged around using L.Alt + drag
+
 # 3.5.17
 - Fixed store item form text staying red even though required killed is correct
 - Added edit button to modify store item, custom effect, achievement, bounty and treasures

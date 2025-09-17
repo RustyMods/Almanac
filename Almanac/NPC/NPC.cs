@@ -3,15 +3,29 @@ using System.Collections.Generic;
 using Almanac.UI;
 using Almanac.Utilities;
 using BepInEx;
+using HarmonyLib;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Almanac.NPC;
+
+[HarmonyPatch(typeof(Piece),nameof(Piece.CanBeRemoved))]
+public static class Piece_CanBeRemoved_Patch
+{
+    [UsedImplicitly]
+    private static void Postfix(Piece __instance, ref bool __result)
+    {
+        if (!__result || !__instance.GetComponent<NPC>()) return;
+        __result = AlmanacPanel.isLocalAdminOrHostAndNoCost;
+    }
+}
 
 public static class NPCVars
 {
     public static readonly int Animation = nameof(Animation).GetStableHashCode();
     public static readonly int Dialogue = nameof(Dialogue).GetStableHashCode();
     public static readonly int RandomTalk = nameof(RandomTalk).GetStableHashCode();
+    public static readonly int Scale =  nameof(Scale).GetStableHashCode();
     public const string DefaultName = "Almanac NPC";
 }
 public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
@@ -19,12 +33,12 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
     public ZNetView m_nview = null!;
     public VisEquipment? m_visEquipment;
     public ZSyncAnimation m_zanim = null!;
-    public Animator m_animator = null!;
     public NPCTalk? m_talk;
     public EffectList m_hitEffects = new();
 
     public string m_name = NPCVars.DefaultName;
     public string m_dialogueID = string.Empty;
+    public Vector3 m_scale = Vector3.one;
     private DialogueManager.Dialogue? m_dialogue => DialogueManager.TryGetDialogue(m_dialogueID, out var dialogue) ? dialogue : null;
     public string m_rightItem => m_visEquipment?.m_rightItem ?? string.Empty;
     public string m_leftItem => m_visEquipment?.m_leftItem ?? string.Empty;
@@ -52,7 +66,6 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
         m_nview = GetComponent<ZNetView>();
         m_visEquipment = GetComponent<VisEquipment>();
         m_zanim = GetComponent<ZSyncAnimation>();
-        m_animator = GetComponentInChildren<Animator>();
         m_talk = GetComponent<NPCTalk>();
         if (!m_nview.IsValid()) return;
         m_nview.Register<HitData>(nameof(RPC_Damage), RPC_Damage);
@@ -60,13 +73,14 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
         m_nview.Register<string>(nameof(RPC_SetName), RPC_SetName);
         m_nview.Register<string>(nameof(RPC_SetDialogue), RPC_SetDialogue);
         m_nview.Register<string>(nameof(RPC_SetAnimation),RPC_SetAnimation);
-        m_name = m_nview.GetZDO().GetString(ZDOVars.s_tamedName, m_name);
-        m_animation = m_nview.GetZDO().GetString(NPCVars.Animation);
-        m_dialogueID = m_nview.GetZDO().GetString(NPCVars.Dialogue);
+        m_nview.Register<Vector3>(nameof(RPC_SetScale), RPC_SetScale);
     }
     public void Start()
     {
         if (m_visEquipment == null || m_nview.GetZDO() == null || !m_nview.IsOwner()) return;
+        SetName(m_nview.GetZDO().GetString(ZDOVars.s_tamedName, m_name));
+        SetAnimation(m_nview.GetZDO().GetString(NPCVars.Animation));
+        SetDialogue(m_nview.GetZDO().GetString(NPCVars.Dialogue));
         SetLeftItem(GetPrefabFromHash(m_nview.GetZDO().GetInt(ZDOVars.s_leftItem)));
         SetRightItem(GetPrefabFromHash(m_nview.GetZDO().GetInt(ZDOVars.s_rightItem)));
         SetChestItem(GetPrefabFromHash(m_nview.GetZDO().GetInt(ZDOVars.s_chestItem)));
@@ -75,11 +89,11 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
         SetShoulderItem(GetPrefabFromHash(m_nview.GetZDO().GetInt(ZDOVars.s_shoulderItem)));
         SetUtilityItem(GetPrefabFromHash(m_nview.GetZDO().GetInt(ZDOVars.s_utilityItem)));
         SetModel(m_nview.GetZDO().GetInt(ZDOVars.s_modelIndex, UnityEngine.Random.Range(0, 2)));
-        SetBeardItem("Beard" + m_nview.GetZDO().GetInt(ZDOVars.s_beardItem));
-        SetHairItem("Hair" + m_nview.GetZDO().GetInt(ZDOVars.s_hairItem));
+        SetBeardItem(GetPrefabFromHash(m_nview.GetZDO().GetInt(ZDOVars.s_beardItem)));
+        SetHairItem(GetPrefabFromHash(m_nview.GetZDO().GetInt(ZDOVars.s_hairItem)));
         if (m_name == NPCVars.DefaultName)
         {
-            SetName(m_visEquipment.m_modelIndex == 0 ? 
+            SetName(m_modelIndex == 0 ? 
                 VikingNameGenerator.GenerateMaleName() 
                 : VikingNameGenerator.GenerateFemaleName());
         }
@@ -87,6 +101,7 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
         SetHairColor(m_nview.GetZDO().GetVec3(ZDOVars.s_hairColor, Vector3.zero));
         SetRandomTalk(m_randomTalk);
         DoAnimation(m_animation);
+        SetScale(m_nview.GetZDO().GetVec3(NPCVars.Scale, transform.localScale));
     }
     public void Update()
     {
@@ -217,6 +232,20 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
     {
         DoAnimation(text);
         m_animation = text;
+    }
+
+    public void SetScale(Vector3 scale)
+    {
+        if (m_scale == scale) return;
+        if (scale.AnyNegative()) return;
+        if (m_nview.IsOwner()) RPC_SetScale(0L, scale);
+        else m_nview.InvokeRPC(nameof(RPC_SetScale), scale);
+    }
+    public void RPC_SetScale(long sender, Vector3 scale)
+    {
+        m_scale = scale;
+        transform.localScale = scale;
+        m_nview.GetZDO().Set(NPCVars.Scale, scale);
     }
 
     public void SetLeftItem(string item, int variant = 0)

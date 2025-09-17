@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Almanac.Achievements;
-using Almanac.API;
 using Almanac.Bounties;
 using Almanac.Data;
+using Almanac.ExternalAPIs;
 using Almanac.Managers;
 using Almanac.Quests;
 using Almanac.Store;
@@ -14,6 +14,8 @@ using Almanac.UI;
 using Almanac.Utilities;
 using API;
 using BepInEx;
+using HarmonyLib;
+using JetBrains.Annotations;
 using PieceManager;
 using ServerSync;
 using UnityEngine;
@@ -65,10 +67,12 @@ public class DialogueManager : MonoBehaviour
 
     private static readonly Dictionary<Minimap.PinData, float> tempPins = new();
     private float pinTimer;
+    private static FlightRef? m_flightRef;
 
     public void Update()
     {
         float dt = Time.deltaTime;
+        UpdateFlight(dt);
         pinTimer += dt;
         if (pinTimer < 10f) return;
         pinTimer = 0.0f;
@@ -79,7 +83,57 @@ public class DialogueManager : MonoBehaviour
             tempPins.Remove(pin.Key);
         }
     }
-    
+
+    public void UpdateFlight(float dt)
+    {
+        if (m_flightRef == null) return;
+        m_flightRef.timer += dt;
+        if (m_flightRef.timer > 5f)
+        {
+            m_flightRef.Start();
+        }
+    }
+
+    private class FlightRef
+    {
+        public readonly Player player;
+        private readonly Vector3 pos;
+        public float timer;
+
+        public FlightRef(Player player, Vector3 pos)
+        {
+            this.player = player;
+            this.pos = pos;
+        }
+
+        public void Start()
+        {
+            player.transform.position = pos;
+            player.OnSpawned(true);
+            m_flightRef = null;
+        }
+    }
+
+    [HarmonyPatch(typeof(Player), nameof(Player.IsTeleporting))]
+    private static class Player_IsTeleporting_Patch
+    {
+        [UsedImplicitly]
+        private static void Postfix(Player __instance, ref bool __result)
+        {
+            if (m_flightRef == null || m_flightRef.player != __instance) return;
+            __result = true;
+        }
+    }
+
+    [HarmonyPatch(typeof(Game), nameof(Game.WaitingForRespawn))]
+    private static class Game_WaitingForRespawn_Patch
+    {
+        [UsedImplicitly]
+        private static void Postfix(ref bool __result)
+        {
+            if (m_flightRef != null) __result = true;
+        }
+    }
     public static void Setup()
     {
         AlmanacPlugin.instance.gameObject.AddComponent<DialogueManager>();
@@ -450,6 +504,18 @@ public class DialogueManager : MonoBehaviour
             Parameters = "0, 50, 0"  // X, Y, Z coordinates
         };
         dialogues[teleportExample.UniqueID] = teleportExample;
+        
+        Dialogue flyExample = new Dialogue();
+        flyExample.UniqueID = "npc.fly_example";
+        flyExample.Label = "Can you transport me?";
+        flyExample.Text = "I know the ancient ways of travel. I can send you to a safe location if you need quick transport.";
+        flyExample.Action = new DialogueAction
+        {
+            Type = Command.FlyTo,
+            Label = "Transport me",
+            Parameters = "100, 50, 0"  // X, Y, Z coordinates
+        };
+        dialogues[flyExample.UniqueID] = flyExample;
 
         // Other panel access examples
         Dialogue achievements = new Dialogue();
@@ -1187,7 +1253,7 @@ public class DialogueManager : MonoBehaviour
                     player.SaveDialogueID(UniqueID);
                     instance.Hide();
                     break;
-                case Command.Teleport or Command.MapPin:
+                case Command.Teleport or Command.MapPin or Command.FlyTo:
                     if (!Action.TryGetVector(out Vector3 pos, out string label, out float duration)) return;
                     switch (Action.Type)
                     {
@@ -1209,6 +1275,10 @@ public class DialogueManager : MonoBehaviour
                                 instance.Hide();
                                 Minimap.instance.ShowPointOnMap(pos);
                             }
+                            break;
+                        case Command.FlyTo:
+                            instance.Hide();
+                            m_flightRef = new FlightRef(player, pos);
                             break;
                     }
                     break;
@@ -1286,7 +1356,7 @@ public class DialogueManager : MonoBehaviour
         StartTreasure, CancelTreasure,
         OpenAlmanac, OpenItems, OpenPieces, OpenCreatures, OpenAchievements, OpenStore, OpenLeaderboard, OpenBounties, OpenTreasures, OpenMetrics, OpenLottery,
         MapPin,
-        GiveAlmanacXP, GiveWackyXP
+        GiveAlmanacXP, GiveWackyXP, FlyTo
     }
 
     [Serializable]
@@ -1303,7 +1373,7 @@ public class DialogueManager : MonoBehaviour
             return Type switch
             {
                 Command.Give or Command.Take => TryGetItemPrefab(out _,out _,out _,out _),
-                Command.Teleport or Command.MapPin => TryGetVector(out _, out _, out _),
+                Command.Teleport or Command.MapPin or Command.FlyTo => TryGetVector(out _, out _, out _),
                 Command.StartBounty => TryGetBounty(out _),
                 Command.StartTreasure => TryGetTreasure(out _),
                 Command.StartQuest or Command.CancelQuest or Command.CompleteQuest => TryGetQuestDialogue(out _, out _),

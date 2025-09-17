@@ -77,7 +77,7 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
     }
     public void Start()
     {
-        if (m_visEquipment == null || m_nview.GetZDO() == null || !m_nview.IsOwner()) return;
+        if (!m_nview.IsValid()) return;
         SetName(m_nview.GetZDO().GetString(ZDOVars.s_tamedName, m_name));
         SetAnimation(m_nview.GetZDO().GetString(NPCVars.Animation));
         SetDialogue(m_nview.GetZDO().GetString(NPCVars.Dialogue));
@@ -117,7 +117,7 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
         {
             if (m_timeSinceLastAnim < m_currentAnim.GetAttributeOfType<AnimType>().chargeTime) return;
             var next = m_sequence.Dequeue();
-            DoAnimation(next.ToString());
+            DoAnimation(next.ToString(), false);
         }
         else
         {
@@ -340,7 +340,7 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
         }
         else
         {
-            DialoguePanel.instance?.Show(m_dialogue);
+            DialoguePanel.instance?.Show(m_dialogue, this);
         }
         return false;
     }

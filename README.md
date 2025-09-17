@@ -14,47 +14,21 @@ Almanac lets you define custom achievements using `.yml` files in the Achievemen
 These achievements sync between server and client, and are dynamically reloaded when edited.
 
 Below are the available **Achievement Types** you can use:
-```
-None
-Deaths
-Fish
-Materials
-Consumables
-Weapons
-Swords
-Axes
-PoleArms
-Spears
-Maces
-Knives
-Shields
-Staves
-Arrows
-Bows
-Valuables
-Potions
-Trophies
-EnemyKills
-TreesChopped
-TimeInBase
-TimeOutOfBase
-ArrowsShot
-TotalJumps
-PlayerKills
-ItemsPicked
-DistanceWalked
-DistanceRan
-DistanceSailed
-DistanceInAir
-MineHits
-TotalMined
-CreatureTamed
-FoodEaten
-Recipes
-CreatureGroup
-Pickable
-Kill
-```
+
+|                       |                       |                       |                       |
+|-----------------------|-----------------------|-----------------------|-----------------------|
+| `Arrows`              | `ArrowsShot`          | `Axes`                | `Bows`                |
+| `Consumables`         | `CreatureGroup`       | `CreatureTamed`       | `Deaths`              |
+| `DistanceInAir`       | `DistanceRan`         | `DistanceSailed`      | `DistanceWalked`      |
+| `EnemyKills`          | `Fish`                | `FoodEaten`           | `ItemsPicked`         |
+| `Kill`                | `Knives`              | `Maces`               | `Materials`           |
+| `MineHits`            | `Pickable`            | `PlayerKills`         | `PoleArms`            |
+| `Potions`             | `Recipes`             | `Shields`             | `Spears`              |
+| `Staves`              | `Swords`              | `TimeInBase`          | `TimeOutOfBase`       |
+| `TotalJumps`          | `TotalMined`          | `Trophies`            | `Valuables`           |
+| `Weapons`             |                       |                       |                       |
+
+
 ### Achievement File Structure
 Each achievement is defined as a YAML file with properties like:
 - `UniqueID`: A unique identifier string (e.g., `Weapons.001`).
@@ -164,6 +138,37 @@ RequiredKey: Charred_Melee_Dyrnwyn
 - You can reload or edit `.yml` files during runtime; the store updates automatically.
 - The Almanac panel will refresh when the store tab is selected.
 
+# Custom Status Effects
+You can create new status effects using Almanac Custom Status Effects Manager.
+
+Below are the available modifier types:
+
+|                       |                       |                       |                       |
+|-----------------------|-----------------------|-----------------------|-----------------------|
+| `Armor`               | `AttackStaminaModifier` | `BlockStaminaModifier` | `BluntDamage`         |
+| `BluntResistance`     | `CarryWeight`         | `ChopDamage`           | `ChopResistance`      |
+| `DamageModifier`      | `DamageReduction`     | `DodgeStaminaModifier` | `Eitr`                |
+| `EitrRegenModifier`   | `FallDamageModifier`  | `FireDamage`           | `FireResistance`      |
+| `FrostDamage`         | `FrostResistance`     | `Health`               | `HealthRegenModifier` |
+| `HomeItemStaminaModifier` | `JumpStaminaModifier` | `LifeSteal`        | `LightningDamage`     |
+| `LightningResistance` | `MaxFallSpeed`        | `NoiseModifier`        | `PickaxeDamage`       |
+| `PickaxeResistance`   | `PierceDamage`        | `PierceResistance`     | `PoisonDamage`        |
+| `PoisonResistance`    | `RaiseSkills`         | `RunStaminaModifier`   | `SlashDamage`         |
+| `SlashResistance`     | `SneakStaminaModifier`| `Speed`                | `SpiritDamage`        |
+| `SpiritResistance`    | `Stamina`             | `StaminaRegenModifier` | `SwimStaminaModifier` |
+| `WindMovementModifier`| `WindRunStaminaModifier` |                       |                       |
+
+Each modifier uses a `float` value to define the effect strength.
+- Some like `CarryWeight` are additive.
+- Most others are multipliers.
+
+### Tips
+- You can create, delete, or edit files while in-game to preview tooltips live.
+- Almanac also includes a built-in creation tool for admins.
+- Only the host can add status effects, everyone else gets the data from the host
+- If you are admin, you can use the creation tool to define your status effect file, then upload the file to your server.
+
+
 # Treasure Hunts
 Almanac lets you define custom treasure hunts using `.yml` files in the TreasureHunt folder.
 These treasures sync between server and client, and are dynamically reloaded when edited.
@@ -211,6 +216,242 @@ Loot:
     Max: 1
     Weight: 1.0
 ```
+
+# Dialogue System
+Almanac provides a comprehensive NPC dialogue system using `.yml` files in the Dialogues folder.
+These dialogues sync between server and client, and are dynamically reloaded when files are edited.
+
+Below are the available **Command Types** you can use:
+- `Exit`: closes dialogue
+- `Give`: adds item into player inventory
+- `Take`: removes item from player inventory
+- `Teleport`: teleports player to position
+- `FlyTo`: Valkyrie flies player to position
+- `MapPin`: adds temporary pin on the map
+- `StartBounty`: starts a bounty
+- `CancelBounty`: cancels active bounty
+- `CompleteBounty`: rewards bounty
+- `StartTreasure`: starts a treasure hunt
+- `CancelTreasure`: cancels active treasure hunt
+- `OpenAlmanac`: opens almanac panel
+- `OpenItems`: opens almanac item tab
+- `OpenPieces`: opens almanac pieces tab
+- `OpenCreatures`: etc.
+- `OpenAchievements`
+- `OpenStore`
+- `OpenLeaderboard`
+- `OpenBounties`
+- `OpenTreasures`
+- `OpenMetrics`
+- `OpenLottery`
+### Dialogue File Structure
+Each dialogue is defined as a YAML file with properties like:
+- `UniqueID`: A unique identifier string (e.g., `npc.intro.001`).
+- `Label`: Button text that appears for this dialogue option.
+- `Text`: Main dialogue text displayed when requirements are met.
+- `AltText`: Alternative text shown when requirements are not met.
+- `Dialogues`: List of dialogue IDs that become available as options.
+- `Action`: Command to execute with label and parameters.
+- `Requirements`: Conditions that must be met to interact with this dialogue.
+
+### Action Commands
+**Panel Commands**: `OpenAlmanac`, `OpenItems`, `OpenCreatures`, etc. open specific UI panels.
+
+**Item Commands**:
+- `Give`: Gives items to player. Parameters: `ItemName, Amount, Quality?, Variant?` `? = optional`
+- `Take`: Takes items from player. Same parameter format.
+
+**Location Commands**:
+- `Teleport`: Instantly transports player. Parameters: `X, Y, Z`
+- `MapPin`: Adds temporary map marker. Parameters: `X, Y, Z, Label, Duration (seconds)`
+
+**Activity Commands**:
+- `StartBounty`: Begins bounty hunt. Parameters: `BountyID`
+- `StartTreasure`: Begins treasure hunt. Parameters: `TreasureID`
+- `CancelBounty`/`CancelTreasure`: Cancels active hunts. (Will not be displayed if no active hunts)
+
+**API Commands**
+- `GiveAlmanacXP`: Gives almanac xp. Parameters `amount` - Recorded dialogue
+- `GiveWackyXP`: Gives EpicMMO xp. Parameters `amount` - Recorded dialogue
+
+### Requirements System
+Control when dialogues are available using:
+- `Keys`: Player must have specific game keys (boss defeats, etc.)
+- `NotKeys`: Player must NOT have specific keys
+- `Killed`: Required creature kills. Format: `CreatureName, Count; AnotherCreature, Count`
+- `NotKilled`: Creatures player must NOT have killed
+- `Achievements`: Required achievement IDs (comma-separated)
+- `NotAchievements`: Achievements player must NOT have
+- `Dialogues`: Required Dialogue IDs (recorded by `Give` or `Take` Actions)
+- `NotDialogues`: Required NOT Dialogue IDs
+- `Quests`: Required accepted Quests. Format: `Quest1,Quest2`
+- `NotQuests`: Required Quest never taken
+- `CompletedQuests`: Required Quest fully completed
+- `NotCompletedQuests`: Required Quest NOT fully completed
+
+### Text Features
+**Alternative Text**: Use `AltText` to show different messages when requirements aren't met.
+
+**Conditional Display**: Dialogues automatically show different text based on:
+- Whether player has required items (for Take commands)
+- Whether player already received rewards (for Give commands)
+- Whether requirements are satisfied
+
+### Examples
+
+**Basic Conversation**:
+```yaml
+UniqueID: npc.greeting
+Label: Hello there
+Text: Welcome to our village, traveler!
+Dialogues:
+  - npc.ask_directions
+  - npc.ask_trade
+Action:
+  Type: Exit
+  Label: Farewell
+```
+
+**Item Trading**:
+```yaml
+UniqueID: npc.trade_sword
+Label: I need a weapon
+Text: Here, take this iron sword for your journey.
+AltText: I already gave you a sword, remember?
+Action:
+  Type: Give
+  Label: Take Sword
+  Parameters: SwordIron, 1, 2, 0
+Requirements:
+  Killed: Eikthyr, 1
+```
+
+**Location Marking**:
+```yaml
+UniqueID: npc.mark_cave
+Label: Where's the nearest cave?
+Text: There's a cave system to the north. Let me mark it for you.
+Action:
+  Type: MapPin
+  Label: Mark Cave
+  Parameters: 100, 25, -150, Mysterious Cave, 180 // (3min)
+```
+
+**Requirement-Based Dialogue**:
+```yaml
+UniqueID: npc.veteran_talk
+Label: Tell me about the bosses
+Text: You've proven yourself against the ancient evils!
+Requirements:
+  Killed: Eikthyr, 1; gd_king, 1
+  Keys: defeated_bonemass
+```
+
+### Organization Tips
+- Use descriptive UniqueIDs like `merchant.weapons.intro`
+- Organize files by NPC type or location
+- Create conversation trees using the `Dialogues` list
+- Use folders to separate different areas or storylines
+
+### Technical Notes
+- Files can be added, changed, or deleted while the server is running
+- Server automatically syncs dialogues to clients
+- Map pins disappear after set delay seconds
+- Give/Take commands automatically prevent duplicate transactions
+- Requirements are checked in real-time
+
+## NPC
+
+NPC can be customized by being an `admin` in `no cost` mode
+
+## Random Talk
+Additionally, you can set each NPC with random talk that triggers whenever a player gets close or leaves, or every minute.
+
+The YML files are synced and can be reloaded during gameplay.
+
+## NPC Animations
+|                       |                       |                       |                       |
+|-----------------------|-----------------------|-----------------------|-----------------------|
+| `Atgeir`              | `AtgeirSecondary`     | `AttachAsksvin`       | `AttachLox`              |
+| `AttachMast`          | `AttachShip`          | `AttachSitShip`       | `AttachThrone`           |
+| `Axe`                 | `AxeSecondary`        | `Battleaxe`           | `BattleaxeSecondary`     |
+| `BlowKiss`            | `Blocking`            | `Bow`                 | `BowAim`                 |
+| `BowFire`             | `Challenge`           | `Cheer`               | `ComeHere`               |
+| `Cower`               | `Crouching`           | `Crossbow`            | `CrossbowFire`           |
+| `Cry`                 | `Dance`               | `Despair`             | `Dodge`                  |
+| `Drink`               | `DualAxes`            | `DualAxesSecondary`   | `DualKnives`             |
+| `DualKnivesSecondary` | `Eat`                 | `Encumbered`          | `EquipHead`              |
+| `EquipHip`            | `Equipping`           | `Flex`                | `FishingRod`             |
+| `FishingRodThrow`     | `Forge`               | `GPower`              | `Greatsword`             |
+| `GreatswordSecondary` | `Hammer`              | `Headbang`            | `Hoe`                    |
+| `InWater`             | `Interact`            | `Kick`                | `Knife`                  |
+| `KnifeSecondary`      | `Kneel`               | `KnockDown`           | `Laugh`                  |
+| `MaceSecondary`       | `Nonono`              | `Pickaxe`             | `PlaceFeast`             |
+| `Point`               | `Relax`               | `RechargeLightningStaff` | `Rest`                 |
+| `Roar`                | `Scything`            | `Shrug`               | `Sit`                    |
+| `SitChair`            | `Sledge`              | `StaffChargeAttack`   | `StaffCharging`          |
+| `StaffFireball`       | `StaffLightning`      | `StaffRapidFire`      | `StaffShield`            |
+| `StaffSummon`         | `StaffTrollSummon`    | `Stagger`             | `Stir`                   |
+| `Stop`                | `Sword`               | `SwordSecondary`      | `ThumbsUp`               |
+| `ThrowBomb`           | `ThrowSpear`          | `Toast`               | `UnequipHip`             |
+| `Unarmed`             | `Wave`                |                       |                          |
+
+
+# Quest System
+The Almanac Quest System allows players to take on custom quests that track progress across various activities in Valheim.
+Quests are defined in `.yml` files inside the **Quests** folder, and sync between server and client. Changes are dynamically reloaded when files are added, edited, or removed.
+
+Quest system is designed to work along with dialogue system, use the command: `StartQuest`, `CancelQuest`, `CompleteQuest` to interact with the quests.
+
+### Notes
+- Quests can only be started if player has never started said quest
+- Quests can only be cancelled if quest is active
+- Quests remain active after completion (that is to keep record of completion), meaning when using dialogue requirements: `Quests` or `NotQuests` it is checking if quest has ever been taken.
+- Quests can only be completed if progress has met threshold
+- All these behaviors are reflected in the dialogue system. If those conditions are not met, the interactable button, will not be displayed as an option.
+
+## Core Properties
+Each quest file can define:
+- **UniqueID**: A unique identifier string (e.g., `001.Dandelion`).
+- **Name**: Display name for the quest.
+- **Type**: The quest type (see list below).
+- **PrefabName**: Target prefab for the quest (e.g., `Boar`, `Pickable_Dandelion`, `SurtlingCore`).
+- **PrefabNames** *(optional)*: A list of prefabs for collection or learning quests.
+- **Threshold**: Amount required to complete the quest.
+
+### Quest Types
+
+|                       |                       |                       |                       |
+|-----------------------|-----------------------|-----------------------|-----------------------|
+| `Collect`             | `Farm`                | `Harvest`             | `Kill`                |
+| `LearnItems`          | `Mine`                |                       |                       |
+
+### Example Quest
+```yml
+UniqueID: 001.BoarHunt
+Name: Hunt Boars
+Type: Kill
+PrefabName: Boar
+Threshold: 10
+```
+This quest requires players to hunt 10 Boars. Progress is tracked automatically when players kill the target prefab.
+
+### Notes
+
+- Quests can be started, canceled, or completed dynamically in-game.
+- Progress is saved to the player profile and restored on reconnect.
+- Quests are synchronized from server to client.
+- Multiple quests can be active at once.
+- UI will display quests-in-progress, can be hidden using configured hotkey
+- Quest history can be viewed in the metrics tab
+
+### Tips
+
+- Use Collect for item-based quests (e.g., `SurtlingCore`).
+- Use Harvest for pickable quests like dandelions or mushrooms (e.g., `Pickable_Dandelion`).
+- Use Farm for planted crops (e.g., `sapling_seedcarrot`).
+- Use LearnItems to create discovery quests where players must learn recipes from multiple items.
+- Thresholds define how much progress is needed (kills, items, harvests, etc.).
 
 ![](https://i.imgur.com/lJbEYvq.png)
 ![](https://i.imgur.com/oh1Y7D0.png)

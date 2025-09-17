@@ -163,7 +163,6 @@ namespace Almanac
                 Player.m_localPlayer.AddTokens(amount);
                 return true;
             }, adminOnly: true);
-            
         }
 
         [HarmonyPatch(typeof(PlayerProfile), nameof(PlayerProfile.SavePlayerData))]

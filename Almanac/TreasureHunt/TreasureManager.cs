@@ -113,9 +113,17 @@ public class TreasureManager : MonoBehaviour
     {
         if (!ZNet.instance || ZNet.instance.IsServer()) return;
         if (string.IsNullOrEmpty(SyncedTreasures.Value)) return;
-        Dictionary<string, TreasureData> data = deserializer.Deserialize<Dictionary<string, TreasureData>>(SyncedTreasures.Value);
-        ActiveTreasureLocation = null;
-        treasures = data;
+        try
+        {
+            Dictionary<string, TreasureData> data = deserializer.Deserialize<Dictionary<string, TreasureData>>(SyncedTreasures.Value);
+            ActiveTreasureLocation = null;
+            treasures.Clear();
+            treasures.AddRange(data);
+        }
+        catch
+        {
+            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server treasures");
+        }
     }
     private static void OnCreated(object? sender, FileSystemEventArgs e)
     {

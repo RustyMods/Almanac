@@ -1,8 +1,13 @@
+# 3.5.19
+- Fixed NPC settings not being applied when leave / return to scene
+- Added dialogue command: `FlyTo`
+- Tweaked README.md
+
 # 3.5.18
 - Improved NPC animations
 - Quest System - to work in conjunction with Dialogue system
 - Quest UI
-- Reminder: All UI can be dragged around using L.Alt + drag
+- Reminder: All UI can be dragged around using `L.Alt + drag`
 
 # 3.5.17
 - Fixed store item form text staying red even though required killed is correct

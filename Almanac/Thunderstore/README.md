@@ -14,47 +14,21 @@ Almanac lets you define custom achievements using `.yml` files in the Achievemen
 These achievements sync between server and client, and are dynamically reloaded when edited.
 
 Below are the available **Achievement Types** you can use:
-```
-None
-Deaths
-Fish
-Materials
-Consumables
-Weapons
-Swords
-Axes
-PoleArms
-Spears
-Maces
-Knives
-Shields
-Staves
-Arrows
-Bows
-Valuables
-Potions
-Trophies
-EnemyKills
-TreesChopped
-TimeInBase
-TimeOutOfBase
-ArrowsShot
-TotalJumps
-PlayerKills
-ItemsPicked
-DistanceWalked
-DistanceRan
-DistanceSailed
-DistanceInAir
-MineHits
-TotalMined
-CreatureTamed
-FoodEaten
-Recipes
-CreatureGroup
-Pickable
-Kill
-```
+
+|                       |                       |                       |                       |
+|-----------------------|-----------------------|-----------------------|-----------------------|
+| `Arrows`              | `ArrowsShot`          | `Axes`                | `Bows`                |
+| `Consumables`         | `CreatureGroup`       | `CreatureTamed`       | `Deaths`              |
+| `DistanceInAir`       | `DistanceRan`         | `DistanceSailed`      | `DistanceWalked`      |
+| `EnemyKills`          | `Fish`                | `FoodEaten`           | `ItemsPicked`         |
+| `Kill`                | `Knives`              | `Maces`               | `Materials`           |
+| `MineHits`            | `Pickable`            | `PlayerKills`         | `PoleArms`            |
+| `Potions`             | `Recipes`             | `Shields`             | `Spears`              |
+| `Staves`              | `Swords`              | `TimeInBase`          | `TimeOutOfBase`       |
+| `TotalJumps`          | `TotalMined`          | `Trophies`            | `Valuables`           |
+| `Weapons`             |                       |                       |                       |
+
+
 ### Achievement File Structure
 Each achievement is defined as a YAML file with properties like:
 - `UniqueID`: A unique identifier string (e.g., `Weapons.001`).
@@ -168,54 +142,21 @@ RequiredKey: Charred_Melee_Dyrnwyn
 You can create new status effects using Almanac Custom Status Effects Manager.
 
 Below are the available modifier types:
-```
-DamageModifier
-NoiseModifier
-CarryWeight
-Speed
-MaxFallSpeed
-FallDamageModifier
-WindMovementModifier
-WindRunStaminaModifier
-HealthRegenModifier
-StaminaRegenModifier
-EitrRegenModifier
-RaiseSkills
-DamageReduction
-Health
-Stamina
-Eitr
-LifeSteal
-Armor
-BluntDamage
-SlashDamage
-PierceDamage
-ChopDamage
-PickaxeDamage
-FireDamage
-FrostDamage
-LightningDamage
-PoisonDamage
-SpiritDamage
-BluntResistance
-SlashResistance
-PierceResistance
-ChopResistance
-PickaxeResistance
-FireResistance
-FrostResistance
-LightningResistance
-PoisonResistance
-SpiritResistance
-JumpStaminaModifier
-AttackStaminaModifier
-BlockStaminaModifier
-DodgeStaminaModifier
-SwimStaminaModifier
-HomeItemStaminaModifier
-SneakStaminaModifier
-RunStaminaModifier
-```
+
+|                       |                       |                       |                       |
+|-----------------------|-----------------------|-----------------------|-----------------------|
+| `Armor`               | `AttackStaminaModifier` | `BlockStaminaModifier` | `BluntDamage`         |
+| `BluntResistance`     | `CarryWeight`         | `ChopDamage`           | `ChopResistance`      |
+| `DamageModifier`      | `DamageReduction`     | `DodgeStaminaModifier` | `Eitr`                |
+| `EitrRegenModifier`   | `FallDamageModifier`  | `FireDamage`           | `FireResistance`      |
+| `FrostDamage`         | `FrostResistance`     | `Health`               | `HealthRegenModifier` |
+| `HomeItemStaminaModifier` | `JumpStaminaModifier` | `LifeSteal`        | `LightningDamage`     |
+| `LightningResistance` | `MaxFallSpeed`        | `NoiseModifier`        | `PickaxeDamage`       |
+| `PickaxeResistance`   | `PierceDamage`        | `PierceResistance`     | `PoisonDamage`        |
+| `PoisonResistance`    | `RaiseSkills`         | `RunStaminaModifier`   | `SlashDamage`         |
+| `SlashResistance`     | `SneakStaminaModifier`| `Speed`                | `SpiritDamage`        |
+| `SpiritResistance`    | `Stamina`             | `StaminaRegenModifier` | `SwimStaminaModifier` |
+| `WindMovementModifier`| `WindRunStaminaModifier` |                       |                       |
 
 Each modifier uses a `float` value to define the effect strength.
 - Some like `CarryWeight` are additive.
@@ -276,35 +217,33 @@ Loot:
     Weight: 1.0
 ```
 
-# Dialogue System [ALPHA]
+# Dialogue System
 Almanac provides a comprehensive NPC dialogue system using `.yml` files in the Dialogues folder.
 These dialogues sync between server and client, and are dynamically reloaded when files are edited.
 
 Below are the available **Command Types** you can use:
-```
-Exit: closes dialogue
-Give: adds item into player inventory
-Take: removes item from player inventory
-Teleport: teleports player to position 
-MapPin: adds temporary pin on the map
-StartBounty: starts a bounty
-CancelBounty: cancels active bounty
-CompleteBounty: rewards bounty
-StartTreasure: starts a treasure hunt
-CancelTreasure: cancels active treasure hunt
-OpenAlmanac: opens almanac panel
-OpenItems: opens almanac item tab
-OpenPieces: opens almanac pieces tab
-OpenCreatures: etc.
-OpenAchievements
-OpenStore
-OpenLeaderboard
-OpenBounties
-OpenTreasures
-OpenMetrics
-OpenLottery
-```
-
+- `Exit`: closes dialogue
+- `Give`: adds item into player inventory
+- `Take`: removes item from player inventory
+- `Teleport`: teleports player to position
+- `FlyTo`: Valkyrie flies player to position
+- `MapPin`: adds temporary pin on the map
+- `StartBounty`: starts a bounty
+- `CancelBounty`: cancels active bounty
+- `CompleteBounty`: rewards bounty
+- `StartTreasure`: starts a treasure hunt
+- `CancelTreasure`: cancels active treasure hunt
+- `OpenAlmanac`: opens almanac panel
+- `OpenItems`: opens almanac item tab
+- `OpenPieces`: opens almanac pieces tab
+- `OpenCreatures`: etc.
+- `OpenAchievements`
+- `OpenStore`
+- `OpenLeaderboard`
+- `OpenBounties`
+- `OpenTreasures`
+- `OpenMetrics`
+- `OpenLottery`
 ### Dialogue File Structure
 Each dialogue is defined as a YAML file with properties like:
 - `UniqueID`: A unique identifier string (e.g., `npc.intro.001`).
@@ -431,101 +370,32 @@ Additionally, you can set each NPC with random talk that triggers whenever a pla
 The YML files are synced and can be reloaded during gameplay.
 
 ## NPC Animations
-```
-InWater
-OnGround
-Blocking
-Crouching
-Equipping
-Encumbered
-AttachThrone
-AttachSitShip
-AttachShip
-AttachMast
-AttachLox
-AttachAsksvin
-EquipHead
-EquipHip
-UnequipHip
-Stagger
-Dodge
-Eat
-Interact
-GPower
-KnockDown
-Axe
-AxeSecondary
-Pickaxe
-Sword
-SwordSecondary
-MaceSecondary
-Sledge
-Hammer
-Hoe
-BowFire
-BowAim
-Atgeir
-AtgeirSecondary
-Battleaxe
-BattleaxeSecondary
-ThrowSpear
-Spear
-Unarmed
-Kick
-ThrowBomb
-Knife
-KnifeSecondary
-FishingRodThrow
-FishingRod
-CrossbowFire
-Crossbow
-DualKnives
-DualKnivesSecondary
-StaffFireball
-StaffRapidFire
-StaffShield
-StaffSummon
-StaffCharging
-StaffChargeAttack
-Greatsword
-GreatswordSecondary
-DualAxes
-DualAxesSecondary
-RechargeLightningStaff
-StaffLightning
-StaffTrollSummon
-PlaceFeast
-Scything
-Work
-Forge
-Stir
-BlowKiss
-Bow
-Challenge
-Cheer
-ComeHere
-Cower
-Cry
-Dance
-Despair
-Drink
-Flex
-Headbang
-Kneel
-Laugh
-Nonono
-Point
-Relax
-Rest
-Roar
-Shrug
-Sit
-SitChair
-Stop
-ThumbsUp
-Toast
-Wave
-```
+|                       |                       |                       |                       |
+|-----------------------|-----------------------|-----------------------|-----------------------|
+| `Atgeir`              | `AtgeirSecondary`     | `AttachAsksvin`       | `AttachLox`              |
+| `AttachMast`          | `AttachShip`          | `AttachSitShip`       | `AttachThrone`           |
+| `Axe`                 | `AxeSecondary`        | `Battleaxe`           | `BattleaxeSecondary`     |
+| `BlowKiss`            | `Blocking`            | `Bow`                 | `BowAim`                 |
+| `BowFire`             | `Challenge`           | `Cheer`               | `ComeHere`               |
+| `Cower`               | `Crouching`           | `Crossbow`            | `CrossbowFire`           |
+| `Cry`                 | `Dance`               | `Despair`             | `Dodge`                  |
+| `Drink`               | `DualAxes`            | `DualAxesSecondary`   | `DualKnives`             |
+| `DualKnivesSecondary` | `Eat`                 | `Encumbered`          | `EquipHead`              |
+| `EquipHip`            | `Equipping`           | `Flex`                | `FishingRod`             |
+| `FishingRodThrow`     | `Forge`               | `GPower`              | `Greatsword`             |
+| `GreatswordSecondary` | `Hammer`              | `Headbang`            | `Hoe`                    |
+| `InWater`             | `Interact`            | `Kick`                | `Knife`                  |
+| `KnifeSecondary`      | `Kneel`               | `KnockDown`           | `Laugh`                  |
+| `MaceSecondary`       | `Nonono`              | `Pickaxe`             | `PlaceFeast`             |
+| `Point`               | `Relax`               | `RechargeLightningStaff` | `Rest`                 |
+| `Roar`                | `Scything`            | `Shrug`               | `Sit`                    |
+| `SitChair`            | `Sledge`              | `StaffChargeAttack`   | `StaffCharging`          |
+| `StaffFireball`       | `StaffLightning`      | `StaffRapidFire`      | `StaffShield`            |
+| `StaffSummon`         | `StaffTrollSummon`    | `Stagger`             | `Stir`                   |
+| `Stop`                | `Sword`               | `SwordSecondary`      | `ThumbsUp`               |
+| `ThrowBomb`           | `ThrowSpear`          | `Toast`               | `UnequipHip`             |
+| `Unarmed`             | `Wave`                |                       |                          |
+
 
 # Quest System
 The Almanac Quest System allows players to take on custom quests that track progress across various activities in Valheim.  
@@ -550,14 +420,12 @@ Each quest file can define:
 - **Threshold**: Amount required to complete the quest.
 
 ### Quest Types
-```
-Collect
-Harvest
-Farm
-Kill
-Mine
-LearnItems
-```
+
+|                       |                       |                       |                       |
+|-----------------------|-----------------------|-----------------------|-----------------------|
+| `Collect`             | `Farm`                | `Harvest`             | `Kill`                |
+| `LearnItems`          | `Mine`                |                       |                       |
+
 ### Example Quest
 ```yml
 UniqueID: 001.BoarHunt

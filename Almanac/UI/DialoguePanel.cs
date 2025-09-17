@@ -25,6 +25,7 @@ public class DialoguePanel : MonoBehaviour
     private float lastInputTime;
     public static DialoguePanel? instance;
     private readonly List<DialogueElement> elements = new();
+    private NPC.NPC? m_currentNPC;
     
     public void Awake()
     {
@@ -63,10 +64,10 @@ public class DialoguePanel : MonoBehaviour
     }
     public static bool IsVisible() => instance?.gameObject.activeInHierarchy ?? false;
 
-    public void Show(DialogueManager.Dialogue? dialogue)
+    public void Show(DialogueManager.Dialogue? dialogue, NPC.NPC? npc = null)
     {
         if (dialogue is not { isValid: true }) return;
-        
+        if (npc != null) m_currentNPC = npc;
         Clear();
         gameObject.SetActive(true);
         
@@ -82,6 +83,10 @@ public class DialoguePanel : MonoBehaviour
         elements.Add(description);
         
         string text = GetDescriptionText(dialogue, isInteractable);
+        if (m_currentNPC != null)
+        {
+            text = $"<color=orange>{m_currentNPC.m_name}</color>\n{text}";
+        }
         description.SetText(text);
     }
 
@@ -296,7 +301,7 @@ public class DialoguePanel : MonoBehaviour
         }
         
         public void OnClick(UnityAction action) => button.onClick.AddListener(action);
-        public void SetText(string text) => label.text = text;
+        public void SetText(string text) => label.text = Localization.instance.Localize(text);
         public void Interactable(bool enable) => button.interactable = enable;
     }
 

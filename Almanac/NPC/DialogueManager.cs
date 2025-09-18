@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Almanac.Achievements;
 using Almanac.Bounties;
 using Almanac.Data;
@@ -49,6 +50,13 @@ public static class DialogueExtensions
     {
         player.m_customData.Remove(DialogueManager.DIALOGUE_PLAYER_KEY);
     }
+    
+    public static int GetDialogueByteCount(this Player player)
+    {
+        if (!player.m_customData.TryGetValue(DialogueManager.DIALOGUE_PLAYER_KEY, out var data)) return 0;
+        int size = Encoding.UTF8.GetByteCount(data);
+        return size;
+    }
 }
 public class DialogueManager : MonoBehaviour
 {
@@ -68,6 +76,7 @@ public class DialogueManager : MonoBehaviour
     private static readonly Dictionary<Minimap.PinData, float> tempPins = new();
     private float pinTimer;
     private static FlightRef? m_flightRef;
+    
 
     public void Update()
     {

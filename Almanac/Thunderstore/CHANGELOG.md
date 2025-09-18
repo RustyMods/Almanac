@@ -2,6 +2,7 @@
 - Fixed NPC settings not being applied when leave / return to scene
 - Added dialogue command: `FlyTo`
 - Tweaked README.md
+- Added color box to NPC customization to preview skin/hair color input
 
 # 3.5.18
 - Improved NPC animations

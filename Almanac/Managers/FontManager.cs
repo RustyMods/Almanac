@@ -10,33 +10,31 @@ public static class FontManager
 {
     private enum FontOptions
     {
-        Norse, 
-        NorseBold, 
-        AveriaSerifLibre,
-        AveriaSerifLibreBold,
-        AveriaSerifLibreLight,
-        LegacyRuntime
+        [InternalName("Norse")] Norse, 
+        [InternalName("Norsebold") ]NorseBold, 
+        [InternalName("AveriaSerifLibre-Regular")] AveriaSerifLibre,
+        [InternalName("AveriaSerifLibre-Bold")] AveriaSerifLibreBold,
+        [InternalName("AveriaSerifLibre-Light")] AveriaSerifLibreLight,
+        [InternalName("LegacyRuntime")] LegacyRuntime
+    }
+
+    private class InternalName : Attribute
+    {
+        public readonly string internalName;
+        public InternalName(string internalName)
+        {
+            this.internalName = internalName;
+        }
     }
     
     private static readonly Dictionary<FontOptions, Font?> m_fonts = new();
     private static readonly List<TextFont> m_allTexts = new();
-    
-    private static string GetFontName(FontOptions option) => option switch
-    {
-        FontOptions.Norse => "Norse",
-        FontOptions.AveriaSerifLibre => "AveriaSerifLibre-Regular",
-        FontOptions.AveriaSerifLibreBold => "AveriaSerifLibre-Bold",
-        FontOptions.AveriaSerifLibreLight => "AveriaSerifLibre-Light",
-        FontOptions.NorseBold => "Norsebold",
-        FontOptions.LegacyRuntime => "LegacyRuntime",
-        _ => "AveriaSerifLibre-Regular"
-    };
 
     private static Font? GetFont(FontOptions option)
     {
         if (m_fonts.TryGetValue(option, out Font? font)) return font;
         Font[]? fonts = Resources.FindObjectsOfTypeAll<Font>();
-        var match = fonts.FirstOrDefault(x => x.name == GetFontName(option));
+        Font? match = fonts.FirstOrDefault(x => x.name == option.GetAttributeOfType<InternalName>().internalName);
         m_fonts[option] = match;
         return match;
     }

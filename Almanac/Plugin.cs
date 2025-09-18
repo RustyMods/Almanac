@@ -132,7 +132,10 @@ namespace Almanac
                 _ =>
                 {
                     if (!Player.m_localPlayer) return false;
-                    int total = Player.m_localPlayer.GetTokensByteCount() + Player.m_localPlayer.GetRecordByteCount();
+                    int total = Player.m_localPlayer.GetTokensByteCount()
+                                + Player.m_localPlayer.GetRecordByteCount()
+                                + Player.m_localPlayer.GetQuestByteCount()
+                                + Player.m_localPlayer.GetDialogueByteCount();
                     double kilobytes = total / 1024.0;
                     Logger.LogInfo($"Almanac Data Size: {kilobytes} kilobytes");
                     return true;

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -71,7 +72,8 @@ public static class SpriteManager
 
     public enum IconOption
     {
-        Almanac, Skull, SwordBlue, SwordBrown, Arrow, Hood, EmptyBottle, BottleBlue,
+        Almanac, 
+        Skull, SwordBlue, SwordBrown, Arrow, Hood, EmptyBottle, BottleBlue,
         Fish, Bow, NecklaceRed, MushroomRed, GoldCoins, SilverKey, BoneWhite, BookRed, 
         BottleGreen, CrownGold, Gem, GoldBar, Map, Shield, SilverBar, SilverCoins, 
         WoodLog, WoodStack, GoldRing

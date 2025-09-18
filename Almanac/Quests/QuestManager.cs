@@ -221,6 +221,12 @@ public static class QuestManager
         quests.Remove(quest.UniqueID);
     }
 
+    public static int GetQuestByteCount(this Player player)
+    {
+        if (!player.m_customData.TryGetValue(PlayerQuestKey, out var data)) return 0;
+        int size = Encoding.UTF8.GetByteCount(data);
+        return size;
+    }
     private static void LoadDefaults()
     {
         QuestData harvest = new  QuestData();

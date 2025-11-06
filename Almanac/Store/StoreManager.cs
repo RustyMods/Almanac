@@ -290,7 +290,7 @@ public static class StoreManager
     public class ConversionItem
     {
         private static readonly Entries.EntryBuilder builder = new();
-        public ItemDrop item =>
+        public static ItemDrop item =>
             ObjectDB.instance.GetItemPrefab(Configs.ConversionItem)?.GetComponent<ItemDrop>() 
             ?? ObjectDB.instance.GetItemPrefab("Coins").GetComponent<ItemDrop>();
         
@@ -308,6 +308,7 @@ public static class StoreManager
 
         private void Purchase(Player player)
         {
+            if (!HasRequirements(player)) return;
             player.GetInventory().RemoveItem(item.m_itemData.m_shared.m_name, Amount);
             player.AddTokens(TokenAmount);
         }
@@ -604,7 +605,8 @@ public static class StoreHelpers
         foreach (StoreManager.StoreItem.ItemInfo? item in storeItem.Items)
         {
             if (item.item is not { } itemDrop) continue;
-            player.GetInventory().AddItem(itemDrop.name, item.Amount, item.Quality, item.Variant, 0L, string.Empty);
+            var variant = item.Variant > itemDrop.m_itemData.m_shared.m_variants ? 0 : item.Variant;
+            player.GetInventory().AddItem(itemDrop.name, item.Amount, item.Quality, variant, 0L, string.Empty);
         }
 
         foreach (StoreManager.StoreCost.Cost? cost in storeItem.Cost.Items)

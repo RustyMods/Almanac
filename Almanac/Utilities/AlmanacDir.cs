@@ -67,6 +67,12 @@ public class AlmanacDir
         return ExecuteWithRetry(() => File.ReadAllLines(fullPath));
     }
 
+    public byte[] ReadAllBytes(string fileName)
+    {
+        var fullPath = System.IO.Path.Combine(Path, fileName);
+        return ExecuteWithRetry(() => File.ReadAllBytes(fullPath));
+    }
+
     public bool FileExists(string fileName)
     {
         var fullPath = System.IO.Path.Combine(Path, fileName);

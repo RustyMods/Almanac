@@ -167,10 +167,10 @@ public class DialogueManager : MonoBehaviour
             piece.m_icon = SpriteManager.GetSprite("blacksmith");
             BuildPiece buildPiece = new BuildPiece(prefab);
             buildPiece.Name.English("Almanac NPC");
-            buildPiece.Description.English("Placeable human NPC [admin only]");
+            buildPiece.Description.English("Placeable human NPC");
             buildPiece.Category.Set("Almanac");
             buildPiece.SpecialProperties.NoConfig = true;
-            buildPiece.SpecialProperties.AdminOnly = true;
+            // buildPiece.SpecialProperties.AdminOnly = true;
         };
         SyncedDialogue.ValueChanged += OnSyncedDialogueChange;
         AlmanacPlugin.OnZNetAwake += UpdateSyncedDialogues;

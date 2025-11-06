@@ -336,7 +336,8 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
     {
         if (alt)
         {
-            if (AlmanacPanel.isLocalAdminOrHostAndNoCost) NPCCustomization.instance?.Show(this);
+            // if (AlmanacPanel.isLocalAdminOrHostAndNoCost) NPCCustomization.instance?.Show(this);
+            NPCCustomization.instance?.Show(this);
         }
         else
         {
@@ -352,10 +353,12 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
         {
             text += $"\n[<color=yellow><b>$KEY_Use</b></color>] {Keys.Talk}";
         }
-        if (AlmanacPanel.isLocalAdminOrHostAndNoCost)
-        {
-            text += $"\n[<color=yellow><b>L.Shift + $KEY_Use</b></color>] {Keys.Customize}";
-        }
+        // if (AlmanacPanel.isLocalAdminOrHostAndNoCost)
+        // {
+        //     text += $"\n[<color=yellow><b>L.Shift + $KEY_Use</b></color>] {Keys.Customize}";
+        // }
+        text += $"\n[<color=yellow><b>L.Shift + $KEY_Use</b></color>] {Keys.Customize}";
+
         return Localization.instance.Localize(text);
     }
     public string GetHoverName() => m_name;

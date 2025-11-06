@@ -1,10 +1,10 @@
 {
   "name": "Almanac",
-  "version_number": "3.5.19",
+  "version_number": "3.6.1",
   "website_url": "https://github.com/RustyMods/Almanac",
   "description": "Achievements, Bounties, Treasure Hunt, Player Metrics, Leaderboard, Indexing, Marketplace, Lottery",
   "dependencies": [
-    "denikson-BepInExPack_Valheim-5.4.2105",
+    "denikson-BepInExPack_Valheim-5.4.2333",
     "ValheimModding-YamlDotNet-16.3.1"
   ]
 }

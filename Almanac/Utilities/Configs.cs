@@ -26,6 +26,7 @@ public static class Configs
     private static ConfigEntry<int> _BountyCooldown = null!;
     private static ConfigEntry<int> _lotteryCost = null!;
     private static ConfigEntry<int> _minFullHouse = null!;
+    private static ConfigEntry<Toggle> _generateBounties = null!;
     
     private static ConfigEntry<Toggle> _TreasureEnabled = null!;
     private static ConfigEntry<Toggle> _BountyEnabled = null!;
@@ -51,6 +52,8 @@ public static class Configs
     private static ConfigEntry<float> _scrollbarSensitivity = null!;
     private static ConfigEntry<Toggle> _returnBountyCostWhenCancel = null!;
     private static ConfigEntry<Toggle> _returnTreasureCostWhenCancel = null!;
+
+    private static ConfigEntry<Toggle> _checkNoCost = null!;
     
     public static bool UseIgnoreList => _UseIgnoreList.Value is Toggle.On;
     public static bool ShowBounties => _BountyEnabled.Value is Toggle.On;
@@ -88,7 +91,9 @@ public static class Configs
     public static Vector3 DialoguePos => _dialoguePos.Value;
     public static KeyCode QuestKey => _questKey.Value;
     public static Vector3 PanelPos => _panelPos.Value;
+    public static bool GenerateBounties => _generateBounties.Value is Toggle.On;
 
+    public static bool CheckNoCost => _checkNoCost.Value is Toggle.On;
     public static AlmanacPanel.Background.BackgroundOption bkgOption => Transparent
         ? AlmanacPanel.Background.BackgroundOption.Transparent
         : AlmanacPanel.Background.BackgroundOption.Opaque;
@@ -106,6 +111,7 @@ public static class Configs
         _conversionRate = config("1 - General", "Conversion Rate", 50, "Set conversion ratio, ie. 50 coins for 1 token");
         _conversionItem = config("1 - General", "Conversion Item", "Coins", "Set item to use to convert into almanac tokens");
         _almanacEnabled = config("1 - General", "Almanac Button", Toggle.On, "If on, almanac button replaces trophies button");
+        _checkNoCost = config("1 - General", "Admin Tools Check No Cost", Toggle.Off, "If on, no cost must be enabled to use admin tools");
         _almanacEnabled.SettingChanged += (_, _) => AlmanacPanel.inventoryButton?.Show(ShowAlmanac);
         _lotteryEnabled = config("2 - Tabs", "Lottery", Toggle.On, "If on, lottery feature is enabled");
         _lotteryEnabled.SettingChanged += (_, _) => AlmanacPanel.instance?.Tabs[AlmanacPanel.Tab.TabOption.Lottery].SetActive(ShowLottery);
@@ -139,7 +145,7 @@ public static class Configs
         
         _BountyCooldown = config("3 - Bounties", "Cooldown", 30, "Set cooldown between bounty hunts, in minutes");
         _returnBountyCostWhenCancel = config("3 - Bounties", "Cancel Return Cost", Toggle.Off, "If on, cost will be reimbursed when canceled");
-        
+        _generateBounties = config("3 - Bounties", "Generate", Toggle.Off, "If on, will generate random bounties");
         _lotteryCost = config("4 - Lottery", "Cost to Roll", 1, "Set cost to roll");
         _minFullHouse = config("4 - Lottery", "Min Full House", 10, "Set minimum full house reward");
 

@@ -18,7 +18,7 @@ namespace Almanac;
 
 public static class Leaderboard
 {
-    private static string? LeaderboardFilePath;
+    private static string? LeaderboardFileName;
     private static readonly CustomSyncedValue<string> SyncedLeaderboard = new(AlmanacPlugin.ConfigSync, "Almanac_Server_Synced_Leaderboard", "");
     private static readonly Dictionary<string, LeaderboardInfo> players = new();
     public static readonly AlmanacDir LeaderboardDir = new (AlmanacPlugin.AlmanacDir.Path, "Leaderboards");
@@ -34,7 +34,7 @@ public static class Leaderboard
     }
     private static void Initialize()
     {
-        LeaderboardFilePath = ZNet.instance.GetWorldName() + ".Leaderboard.dat";
+        LeaderboardFileName = ZNet.instance.GetWorldName() + ".Leaderboard.dat";
 
         ZRoutedRpc.instance.Register<ZPackage>(nameof(RPC_Leaderboard), RPC_Leaderboard);
         Read();
@@ -98,19 +98,19 @@ public static class Leaderboard
     }
     private static void Save()
     {
-        if (!ZNet.instance || !ZNet.instance.IsServer() || LeaderboardFilePath == null) return;
+        if (!ZNet.instance || !ZNet.instance.IsServer() || LeaderboardFileName == null) return;
         string data = serializer.Serialize(players);
         byte[] compressedData = CompressAndEncode(data);
-        LeaderboardDir.WriteAllBytes(LeaderboardFilePath, compressedData);
+        LeaderboardDir.WriteAllBytes(LeaderboardFileName, compressedData);
     }
     private static void Read()
     {
-        if (!ZNet.instance || !ZNet.instance.IsServer()  || LeaderboardFilePath == null) return;
-        if (!File.Exists(LeaderboardFilePath)) return;
+        if (!ZNet.instance || !ZNet.instance.IsServer()  || LeaderboardFileName == null) return;
+        if (!LeaderboardDir.FileExists(LeaderboardFileName)) return;
     
         try
         {
-            byte[] compressedData = File.ReadAllBytes(LeaderboardFilePath);
+            byte[] compressedData = LeaderboardDir.ReadAllBytes(LeaderboardFileName);
             string data = DecompressAndDecode(compressedData);
         
             Dictionary<string, LeaderboardInfo> deserializedData = deserializer.Deserialize<Dictionary<string, LeaderboardInfo>>(data);
@@ -119,7 +119,7 @@ public static class Leaderboard
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server leaderboard: " + Path.GetFileName(LeaderboardFilePath));
+            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server leaderboard: " + Path.GetFileName(LeaderboardFileName));
         }
     }
     private static byte[] CompressAndEncode(string text)

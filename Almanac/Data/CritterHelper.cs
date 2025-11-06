@@ -11,8 +11,9 @@ public static class CritterHelper
 {
     private static ItemDrop.ItemData? FindTrophy(this List<CharacterDrop.Drop> list)
     {
-        foreach (var drop in list)
+        foreach (CharacterDrop.Drop? drop in list)
         {
+            if (drop.m_prefab == null) continue;
             if (!drop.m_prefab.TryGetComponent(out ItemDrop itemDrop)) continue;
             if (itemDrop.m_itemData.m_shared.m_itemType is ItemDrop.ItemData.ItemType.Trophy) return itemDrop.m_itemData;
         }
@@ -130,7 +131,7 @@ public static class CritterHelper
         ["Unbjorn"] = Heightmap.Biome.Plains,
         ["Wolf_cub"] = Heightmap.Biome.Mountain,
     };
-    private static Heightmap.Biome GetBiome(string name) => creatureBiomes.TryGetValue(name, out var biome) ? biome : Heightmap.Biome.None;
+    public static Heightmap.Biome GetBiome(string name) => creatureBiomes.TryGetValue(name, out var biome) ? biome : Heightmap.Biome.None;
     public static List<CritterInfo> GetCritters() => critters.FindAll(c => !Filters.Ignore(c.prefab.name));
     public static CritterInfo? GetInfo(this Character character) => namedCritters.TryGetValue(character.name, out var info) ? info : null;
     private static readonly List<CritterInfo> critters = new();

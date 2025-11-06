@@ -477,6 +477,7 @@ public class BountyManager : MonoBehaviour
         public StoreManager.StoreCost Cost = new();
 
         [YamlIgnore] public string Path = string.Empty;
+        [YamlIgnore] public bool generated;
         public BountyData(){}
         public void CopyFrom(BountyData data)
         {
@@ -594,6 +595,7 @@ public class BountyManager : MonoBehaviour
                     {
                         Player.m_localPlayer.AddTokens(activeBountyLocation.data.AlmanacTokenReward);
                         activeBountyLocation.data.completed = false;
+                        if (generated) this.OnCompleted();
                         ActiveBountyLocation = null;
                     }
                     else
@@ -607,6 +609,7 @@ public class BountyManager : MonoBehaviour
                     if (AcceptBounty(this))
                     {
                         panel.description.SetButtonText(Keys.CancelBounty);
+                        if (generated) this.OnAccepted();
                     }
                 }
             };

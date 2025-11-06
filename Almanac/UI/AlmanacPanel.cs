@@ -365,6 +365,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         {
             if (!Player.m_localPlayer || !ZNet.instance) return false;
             bool isAdmin = ZNet.instance?.LocalPlayerIsAdminOrHost() ?? false;
+            if (!Configs.CheckNoCost) return isAdmin;
             return isAdmin && Player.m_localPlayer.NoCostCheat();
         }
     }
@@ -736,7 +737,9 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         Reset(bounties);
         elementView.SetActive(true);
         if (isLocalAdminOrHostAndNoCost) formBuilder.Build(FormPanel.FormBuilder.FormType.Bounty);
-        foreach (BountyManager.BountyData? bounty in BountyManager.bounties.Values)
+        List<BountyManager.BountyData> list = BountyManager.bounties.Values.ToList();
+        if (Configs.GenerateBounties) list.AddRange(BountyGenerator.GetRandomBounties(list, 5));
+        foreach (BountyManager.BountyData? bounty in list)
         {
             bool hasReqs = bounty.HasRequirements(Player.m_localPlayer);
             if (Configs.HideUnknownEntries && !hasReqs) continue;

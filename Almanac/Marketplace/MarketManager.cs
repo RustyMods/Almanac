@@ -47,11 +47,11 @@ public static class MarketManager
     private static void Read()
     {
         if (!ZNet.instance || !ZNet.instance.IsServer()  || MarketFileName == null || RevenueFileName == null) return;
-        if (File.Exists(MarketFileName))
+        if (MarketplaceDir.FileExists(MarketFileName))
         {
             try
             {
-                byte[] compressedData = File.ReadAllBytes(MarketFileName);
+                byte[] compressedData = MarketplaceDir.ReadAllBytes(MarketFileName);
                 string data = DecompressAndDecode(compressedData);
             
                 Dictionary<string, Market> deserializedData = deserializer.Deserialize<Dictionary<string, Market>>(data);
@@ -63,12 +63,11 @@ public static class MarketManager
                 AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server marketplace: " + Path.GetFileName(MarketFileName));
             }
         }
-
-        if (File.Exists(RevenueFileName))
+        if (MarketplaceDir.FileExists(RevenueFileName))
         {
             try
             {
-                byte[] compressedData = File.ReadAllBytes(RevenueFileName);
+                byte[] compressedData = MarketplaceDir.ReadAllBytes(RevenueFileName);
                 string data = DecompressAndDecode(compressedData);
                 Dictionary<string, int> deserializedData = deserializer.Deserialize<Dictionary<string, int>>(data);
                 revenues.Clear();

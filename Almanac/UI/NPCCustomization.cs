@@ -169,6 +169,11 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
     {
         currentNPC = npc;
         gameObject.SetActive(true);
+
+        dialogueID.Enable(AlmanacPanel.isLocalAdminOrHostAndNoCost);
+        randomTalk.Enable(AlmanacPanel.isLocalAdminOrHostAndNoCost);
+        scale.Enable(AlmanacPanel.isLocalAdminOrHostAndNoCost);
+        
         npcName.SetPlaceholder(npc.m_name);
         dialogueID.SetPlaceholder(npc.m_dialogueID);
         randomTalk.SetPlaceholder(npc.m_randomTalk);
@@ -234,6 +239,8 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
         private readonly ViewElement element;
         public string input => element.GetInput();
         private bool wasFocused;
+
+        public void Enable(bool enable) => element.Enable(enable);
         public void SetPlaceholder(string text) => element.SetFieldWithoutNotify(text);
         public void SetField(string text) => element.SetField(text);
         public void SetTitle(string text) => element.SetTitle(text);
@@ -396,6 +403,8 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
             colorBlock.color = color;
         }
         public void Destroy() => Object.Destroy(prefab);
+
+        public void Enable(bool enable) => prefab.SetActive(enable);
         public void SetTitle(string text) => title.text = Localization.instance.Localize(text);
         public void SetDescription(string text) => description.text = Localization.instance.Localize(text);
         public void SetPlaceholder(string text) => placeholder.text = text;

@@ -906,7 +906,7 @@ public static class AchievementManager
                     AchievementType.TotalMined => PlayerInfo.GetPlayerStat(PlayerStatType.Mines).Floor(),
                     AchievementType.CreatureTamed => PlayerInfo.GetPlayerStat(PlayerStatType.CreatureTamed).Floor(),
                     AchievementType.Pickable => PlayerInfo.GetPlayerStat(PlayerInfo.RecordType.Pickable, PrefabName),
-                    AchievementType.Kill => PlayerInfo.GetPlayerStat(PlayerInfo.RecordType.Kill, PrefabName),
+                    AchievementType.Kill => PlayerInfo.GetEnemyKill(PrefabName, false),
                     AchievementType.CreatureGroup => CreatureGroup.GetProgress(Group, Threshold),
                     _ => 0,
                 };

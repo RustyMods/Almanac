@@ -1,3 +1,19 @@
+# 3.6.1
+- Added null check on character drop prefabs when searching for creature trophies
+- Added variant check on store items
+- Made Almanac NPC available to all players but dialogue and random talk settings admin only
+- Added random bounty generator [beta]
+- Fixed marketplace not loading saved marketplace items
+
+# 3.6.0
+- Added config toggle to check no cost for admin tools
+
+# 3.5.3
+- Fixed kill achievement not tracking correctly
+
+# 3.5.2
+- Fixed store conversion to token allowing to continually convert even without requirements
+
 # 3.5.19
 - Fixed NPC settings not being applied when leave / return to scene
 - Added dialogue command: `FlyTo`

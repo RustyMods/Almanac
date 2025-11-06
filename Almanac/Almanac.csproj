@@ -133,7 +133,9 @@
         <Compile Include="Achievements\AchievementTypes.cs" />
         <Compile Include="Achievements\CreatureGroup.cs" />
         <Compile Include="API.cs" />
+        <Compile Include="Bounties\BountyGenerator.cs" />
         <Compile Include="ExternalAPIs\ClassesAPI.cs" />
+        <Compile Include="ExternalAPIs\DiscordBot_API.cs" />
         <Compile Include="ExternalAPIs\EpicMMOSystem_API.cs" />
         <Compile Include="Bounties\Bounty.cs" />
         <Compile Include="Bounties\BountyManager.cs" />

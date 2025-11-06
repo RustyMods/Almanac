@@ -125,6 +125,12 @@ public static class PlayerInfo
         };
     }
 
+    public static int GetEnemyKill(string name, bool shared = true)
+    {
+        if (!shared && CritterHelper.namedCritters.TryGetValue(name, out var info)) name = info.character.m_name;
+        return Records.GetKills(name);
+    }
+
     public static event Action<Character>? OnCharacterDeathByLocal;
     
     [HarmonyPatch(typeof(Character), nameof(Character.OnDeath))]

@@ -5,6 +5,7 @@ using System.Reflection;
 using Almanac.Achievements;
 using Almanac.Bounties;
 using Almanac.Data;
+using Almanac.ExternalAPIs;
 using Almanac.Lottery;
 using Almanac.Managers;
 using Almanac.Marketplace;
@@ -23,13 +24,12 @@ using UnityEngine;
 
 namespace Almanac
 {
-    
     [BepInPlugin(ModGUID, ModName, ModVersion)]
     [BepInIncompatibility("randyknapp.mods.auga")]
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.5.18";
+        internal const string ModVersion = "3.6.1";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         public const string ConfigFileName = ModGUID + ".cfg";
@@ -93,6 +93,36 @@ namespace Almanac
             if (!ZInput.GetKeyDown(Configs.QuestKey)) return;
             panel.lastInputTime = Time.time;
             panel.Toggle();
+        }
+
+        private void SetupDiscordCommands()
+        {
+            if (!DiscordBot_API.IsLoaded()) return;
+            DiscordBot_API.RegisterCommand("!almanactokens", "give player tokens, `player name` `amount`", args => 
+            {
+                if (args.Length < 2) return;
+                string playerName = args[1].Trim();
+                if (!int.TryParse(args[2].Trim(), out int amount)) return;
+                if (Player.m_localPlayer && Player.m_localPlayer.GetPlayerName() == playerName)
+                {
+                    Player.m_localPlayer.AddTokens(amount);
+                }
+                else if (ZNet.instance.GetPeerByPlayerName(playerName) is { } peer)
+                {
+                    var pkg = new ZPackage();
+                    pkg.Write("!almanactokens");
+                    pkg.Write(amount);
+                    peer.m_rpc.Invoke("RPC_BotToClient", pkg);
+                }
+            }, pkg =>
+            {
+                int amount = pkg.ReadInt();
+                Player.m_localPlayer.AddTokens(amount);
+            }, 
+            adminOnly:true, 
+            isSecret:false,
+            emoji:"fries");
+
         }
         private void SetupCommands()
         {

@@ -72,6 +72,7 @@ public class FormPanel : MonoBehaviour, IDragHandler, IBeginDragHandler
         background = new  Background(transform);
         minHeight = root.sizeDelta.y;
         topic.alignment = TextAnchor.MiddleCenter;
+        GetComponentInChildren<ScrollRect>(true).scrollSensitivity = Configs.ScrollbarSensitivity;
     }
 
     public void Start()

@@ -25,64 +25,17 @@ public static class DiscordBot_API
     public static bool IsLoaded() => isLoaded;
 
     private static readonly Method _RegisterCommand = new("RegisterCommand");
+    private static readonly Method _SendWebhookMessage = new("SendWebhookMessage");
+    private static readonly Method _SendWebhookTable = new("SendWebhookTable");
 
-    /// <summary>
-    /// Serializes command into json object to send to discord bot plugin
-    /// </summary>
-    /// <param name="command">commands saved into a dictionary, must be unique, example: !mycommand</param>
-    /// <param name="description">description of command sent to discord when using !help</param>
-    /// <param name="action">delegate invoked to run command</param>
-    /// <param name="reaction">if action requires to send to peers to run of the client, this is the delegate the client runs</param>
-    /// <param name="adminOnly">if true, only discord username registered to config file are allowed to run command</param>
-    /// <param name="isSecret">if false, command description is not sent to discord when command !help is called</param>
-    /// <param name="emoji">name of emoji to be displayed when description is sent to discord</param>
-    [Description("Json serializes command and sends to discord bot plugin using reflection")]
-    public static void RegisterCommand(string command, string description, 
-        Action<string[]> action, Action<ZPackage>? reaction = null, 
-        bool adminOnly = false, bool isSecret = false, string emoji = "")
+    [PublicAPI]
+    public enum Channel { Notifications, Chat, Commands, }
+    public static void SendWebhookTable(Channel channel, string title, Dictionary<string, string> tableData) => _SendWebhookTable.Invoke(channel.ToString(), title, tableData);
+    public static void SendWebhookMessage(Channel channel, string message) => _SendWebhookMessage.Invoke(channel.ToString(), message);
+    public static void RegisterCommand(string command, string description, Action<string[]> action, Action<ZPackage>? reaction = null, bool adminOnly = false, bool isSecret = false, string emoji = "")
     {
         _RegisterCommand.Invoke(command, description, action, reaction, adminOnly, isSecret, emoji);
     }
-    
-    /// <summary>
-    /// List of emoji's discord plugin recognizes, send key as value
-    /// </summary>
-    private static readonly Dictionary<string, string> Emojis = new ()
-    {
-        { "smile", "😊" }, { "grin", "😁" }, { "laugh", "😂" }, { "wink", "😉" },
-        { "wave", "👋" }, { "clap", "👏" }, { "thumbsup", "👍" }, { "thumbsdown", "👎" },
-        { "ok", "👌" }, { "pray", "🙏" }, { "muscle", "💪" }, { "facepalm", "🤦" },
-        
-        { "dog", "🐶" }, { "cat", "🐱" }, { "mouse", "🐭" }, { "fox", "🦊" },
-        { "bear", "🐻" }, { "panda", "🐼" }, { "koala", "🐨" }, { "lion", "🦁" },
-        { "tiger", "🐯" }, { "monkey", "🐵" }, { "unicorn", "🦄" }, { "dragon", "🐉" },
-
-        { "tree", "🌳" }, { "palm", "🌴" }, { "flower", "🌸" }, { "rose", "🌹" },
-        { "sun", "☀️" }, { "moon", "🌙" }, { "star", "⭐" }, { "rain", "🌧️" },
-        { "snow", "❄️" }, { "fire", "🔥" }, { "lightning", "⚡" },
-
-        { "pizza", "🍕" }, { "burger", "🍔" }, { "fries", "🍟" }, { "taco", "🌮" },
-        { "cake", "🍰" }, { "donut", "🍩" }, { "coffee", "☕" }, { "tea", "🍵" },
-        { "beer", "🍺" }, { "wine", "🍷" },
-
-        { "rocket", "🚀" }, { "car", "🚗" }, { "bike", "🚲" }, { "airplane", "✈️" },
-        { "train", "🚆" }, { "bus", "🚌" }, { "ship", "🚢" },
-        { "book", "📖" }, { "pencil", "✏️" }, { "pen", "🖊️" }, { "paint", "🎨" },
-        { "camera", "📷" }, { "phone", "📱" }, { "computer", "💻" },
-        { "gift", "🎁" }, { "balloon", "🎈" }, { "key", "🔑" }, { "lock", "🔒" },
-
-        { "soccer", "⚽" }, { "basketball", "🏀" }, { "football", "🏈" }, { "tennis", "🎾" },
-        { "golf", "⛳" }, { "run", "🏃" }, { "swim", "🏊" }, { "ski", "⛷️" },
-        { "game", "🎮" }, { "music", "🎵" }, { "guitar", "🎸" }, { "drum", "🥁" },
-
-        { "check", "✅" }, { "x", "❌" }, { "warning", "⚠️" }, { "question", "❓" },
-        { "exclamation", "❗" }, { "infinity", "♾️" }, { "heart", "❤️" },
-        { "brokenheart", "💔" }, { "sparkle", "✨" }, { "starstruck", "🤩" },
-        
-        { "plus", "✚" }, { "minus", "━" }, { "tornado", "🌪️" }, { "storm", "⛈️" },
-        { "save", "💾" }, { "stop", "🔴" } 
-    };
-    
     internal class Method
     {
         private const string Namespace = "DiscordBot";

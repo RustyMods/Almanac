@@ -1,7 +1,11 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Almanac.UI;
 using BepInEx;
 using BepInEx.Configuration;
+using JetBrains.Annotations;
 using ServerSync;
 using UnityEngine;
 
@@ -54,6 +58,7 @@ public static class Configs
     private static ConfigEntry<Toggle> _returnTreasureCostWhenCancel = null!;
 
     private static ConfigEntry<Toggle> _checkNoCost = null!;
+    private static ConfigEntry<string> _adminList = null!;
     
     public static bool UseIgnoreList => _UseIgnoreList.Value is Toggle.On;
     public static bool ShowBounties => _BountyEnabled.Value is Toggle.On;
@@ -92,7 +97,8 @@ public static class Configs
     public static KeyCode QuestKey => _questKey.Value;
     public static Vector3 PanelPos => _panelPos.Value;
     public static bool GenerateBounties => _generateBounties.Value is Toggle.On;
-
+    private static string AdminList => _adminList.Value;
+    public static bool IsAdmin(string name) => new StringListConfig(AdminList).list.Select(x => x.ToLower()).Contains(name.ToLower());
     public static bool CheckNoCost => _checkNoCost.Value is Toggle.On;
     public static AlmanacPanel.Background.BackgroundOption bkgOption => Transparent
         ? AlmanacPanel.Background.BackgroundOption.Transparent
@@ -112,6 +118,9 @@ public static class Configs
         _conversionItem = config("1 - General", "Conversion Item", "Coins", "Set item to use to convert into almanac tokens");
         _almanacEnabled = config("1 - General", "Almanac Button", Toggle.On, "If on, almanac button replaces trophies button");
         _checkNoCost = config("1 - General", "Admin Tools Check No Cost", Toggle.Off, "If on, no cost must be enabled to use admin tools");
+        _adminList = config("1 - General", "Admin List", "",
+            new ConfigDescription("Almanac admin list, names seperated by a comma", null,
+                new ConfigurationManagerAttributes() { CustomDrawer = StringListConfig.Draw }));
         _almanacEnabled.SettingChanged += (_, _) => AlmanacPanel.inventoryButton?.Show(ShowAlmanac);
         _lotteryEnabled = config("2 - Tabs", "Lottery", Toggle.On, "If on, lottery feature is enabled");
         _lotteryEnabled.SettingChanged += (_, _) => AlmanacPanel.instance?.Tabs[AlmanacPanel.Tab.TabOption.Lottery].SetActive(ShowLottery);
@@ -222,5 +231,64 @@ public static class Configs
         bool synchronizedSetting = true)
     {
         return config(group, name, value, new ConfigDescription(description), synchronizedSetting);
+    }
+    
+    public class ConfigurationManagerAttributes
+    {
+        [UsedImplicitly] public int? Order = null!;
+        [UsedImplicitly] public bool? Browsable = null!;
+        [UsedImplicitly] public string? Category = null!;
+        [UsedImplicitly] public Action<ConfigEntryBase>? CustomDrawer = null!;
+    }
+    public class StringListConfig
+    {
+        public readonly List<string> list;
+        public StringListConfig(List<string> items) => list = items;
+        public StringListConfig(string items) => list = items.Split(',').ToList();
+        public static void Draw(ConfigEntryBase cfg)
+        {
+            bool locked = cfg.Description.Tags
+                .Select(a =>
+                    a.GetType().Name == "ConfigurationManagerAttributes"
+                        ? (bool?)a.GetType().GetField("ReadOnly")?.GetValue(a)
+                        : null).FirstOrDefault(v => v != null) ?? false;
+            bool wasUpdated = false;
+            List<string> strings = new();
+            GUILayout.BeginVertical();
+            foreach (var prefab in new StringListConfig((string)cfg.BoxedValue).list)
+            {
+                GUILayout.BeginHorizontal();
+                var prefabName = prefab;
+                var nameField = GUILayout.TextField(prefab);
+                if (nameField != prefab && !locked)
+                {
+                    wasUpdated = true;
+                    prefabName = nameField;
+                }
+
+                if (GUILayout.Button("x", new GUIStyle(GUI.skin.button) { fixedWidth = 21 }) && !locked)
+                {
+                    wasUpdated = true;
+                }
+                else
+                {
+                    strings.Add(prefabName);
+                }
+
+                if (GUILayout.Button("+", new GUIStyle(GUI.skin.button) { fixedWidth = 21 }) && !locked)
+                {
+                    strings.Add("");
+                    wasUpdated = true;
+                }
+                GUILayout.EndHorizontal();
+            }
+            GUILayout.EndVertical();
+            if (wasUpdated)
+            {
+                cfg.BoxedValue = new StringListConfig(strings).ToString();
+            }
+        }
+
+        public override string ToString() => string.Join(",", list);
     }
 }

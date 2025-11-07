@@ -16,7 +16,7 @@ public static class BountyGenerator
         List<BountyManager.BountyData> output = new  List<BountyManager.BountyData>();
         output.AddRange(TempAcceptedBounties);
         List<CritterHelper.CritterInfo> knownCritters = CritterHelper.GetCritters().Where(x => x.isKnown()).ToList();
-        knownCritters.RemoveAll(x => list.Any(y => y.Creature == x.prefab.name));
+        knownCritters.RemoveAll(x => list.Any(y => y.Creature == x.prefab.name || y.Creature == "TentaRoot"));
         if (knownCritters.Count == 0) return output;
         List<string> availableBiomes = Player.m_localPlayer.m_knownBiome.Select(x => x.ToString()).ToList();
         availableBiomes.Remove("Ocean");

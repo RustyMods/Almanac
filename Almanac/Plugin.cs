@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using Almanac.Achievements;
 using Almanac.Bounties;
 using Almanac.Data;
@@ -26,10 +28,11 @@ namespace Almanac
 {
     [BepInPlugin(ModGUID, ModName, ModVersion)]
     [BepInIncompatibility("randyknapp.mods.auga")]
+    [BepInDependency("RustyMods.DiscordBot", BepInDependency.DependencyFlags.SoftDependency)]
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.6.1";
+        internal const string ModVersion = "3.6.2";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         public const string ConfigFileName = ModGUID + ".cfg";
@@ -80,7 +83,7 @@ namespace Almanac
             DialogueManager.Setup();
             RandomTalkManager.Setup();
             SetupCommands();
-            
+            SetupDiscordCommands();
             Assembly assembly = Assembly.GetExecutingAssembly();
             _harmony.PatchAll(assembly);
         }
@@ -95,7 +98,7 @@ namespace Almanac
             panel.Toggle();
         }
 
-        private void SetupDiscordCommands()
+        private static void SetupDiscordCommands()
         {
             if (!DiscordBot_API.IsLoaded()) return;
             DiscordBot_API.RegisterCommand("!almanactokens", "give player tokens, `player name` `amount`", args => 
@@ -122,7 +125,29 @@ namespace Almanac
             adminOnly:true, 
             isSecret:false,
             emoji:"fries");
-
+            
+            DiscordBot_API.RegisterCommand("!almanacleaderboard", "show almanac leaderboard", _ =>
+            {
+                List<Leaderboard.LeaderboardInfo> leaderboard = Leaderboard.GetLeaderboard();
+                if (leaderboard.Count == 0)
+                {
+                    DiscordBot_API.SendWebhookMessage(DiscordBot_API.Channel.Commands, "Leaderboard is empty");
+                    return;
+                }
+                Dictionary<string, string> table = new Dictionary<string, string>();
+                foreach (var info in leaderboard)
+                {
+                    table[info.PlayerName] = "```" + string.Join("\n",
+                        new List<string>()
+                        {
+                            $"Achievements: {info.CollectedAchievements}", 
+                            $"Kills: {info.Kills}",
+                            $"Deaths: {info.Deaths}",
+                            $"Rank: {info.GetRank()}"
+                        }) + "```";
+                }
+                DiscordBot_API.SendWebhookTable(DiscordBot_API.Channel.Commands, "Leaderboard", table);
+            }, emoji:"brokenheart");
         }
         private void SetupCommands()
         {

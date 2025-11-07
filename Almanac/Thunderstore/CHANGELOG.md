@@ -1,3 +1,9 @@
+# 3.6.2
+- NPC can be removed by creator
+- added new config: `admin list`
+- removed `TentaRoot` from bounty generation list
+- added `DiscordBot` almanac commands
+
 # 3.6.1
 - Added null check on character drop prefabs when searching for creature trophies
 - Added variant check on store items

@@ -16,7 +16,7 @@ public static class Piece_CanBeRemoved_Patch
     private static void Postfix(Piece __instance, ref bool __result)
     {
         if (!__result || !__instance.GetComponent<NPC>()) return;
-        __result = AlmanacPanel.isLocalAdminOrHostAndNoCost;
+        __result = AlmanacPanel.isLocalAdminOrHostAndNoCost || __instance.IsCreator();
     }
 }
 

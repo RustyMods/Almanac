@@ -289,7 +289,7 @@ public class TreasureManager : MonoBehaviour
             znv.ClaimOwnership();
             znv.Destroy();
         }
-        Player.m_localPlayer.Message(MessageHud.MessageType.Center, Keys.BountyCanceled);
+        Player.m_localPlayer.Message(MessageHud.MessageType.Center, Keys.TreasureCanceled);
         if (Configs.ReturnTreasureCostWhenCancel)
         {
             ReturnCost(Player.m_localPlayer, ActiveTreasureLocation.data);
@@ -572,12 +572,14 @@ public class TreasureManager : MonoBehaviour
                 {
                     CancelTreasure();
                     panel.description.SetButtonText(Keys.StartTreasureHunt);
+                    item.ShowNotice(false);
                 }
                 else
                 {
                     if (AcceptTreasure(this))
                     {
                         panel.description.SetButtonText(Keys.CancelHunt);
+                        item.ShowNotice(true);
                     }
                 }
                 isActive = IsActive;

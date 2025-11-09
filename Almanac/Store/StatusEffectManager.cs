@@ -24,7 +24,7 @@ public static class CustomEffectManager
         .Build();
     private static readonly IDeserializer deserializer = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
     private static readonly CustomSyncedValue<string> SyncedEffectData = new(AlmanacPlugin.ConfigSync, "ServerSynced_Almanac_CustomEffect_Data", "");
-    private static Dictionary<string, CustomEffect.Data> effects = new();
+    public static Dictionary<string, CustomEffect.Data> effects = new();
     private static readonly Dictionary<string, CustomEffect.Data> fileEffects = new();
     private static readonly Dictionary<CustomEffect.Data, CustomEffect> registeredEffects = new();
     public static readonly AlmanacDir CustomEffectDir = new (AlmanacPlugin.AlmanacDir.Path, "CustomEffects");
@@ -255,6 +255,8 @@ public static class CustomEffectManager
     
     public static bool Exists(string name) => ObjectDB.instance.GetStatusEffect(name.GetStableHashCode()) != null;
 
+    public static CustomEffect.Data? GetData(string id) => effects.TryGetValue(id, out var data) ? data : null;
+
     public static void ApplyModifier(this HitData hit, HitData.DamageType type, float multiplier)
     {
         switch (type)
@@ -314,6 +316,7 @@ public class CustomEffect : SE_Stats
 
     public void Load()
     {
+        // data ??= CustomEffectManager.GetData(name);
         if (data == null) return;
         m_name = data.Name;
         m_tooltip = data.Tooltip;

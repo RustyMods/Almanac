@@ -147,7 +147,7 @@ public class BountyManager : MonoBehaviour
     {
         if (ActiveBountyLocation == null) return;
         ActiveBountyLocation.data.completed = false;
-        if (ActiveBountyLocation.pin != null) Minimap.instance.RemovePin(ActiveBountyLocation.pin);
+        ActiveBountyLocation.RemovePin();
         if (Configs.ReturnBountyCostWhenCancel)
         {
             ActiveBountyLocation.data.ReturnCost(Player.m_localPlayer);
@@ -396,7 +396,7 @@ public class BountyManager : MonoBehaviour
         public readonly BountyData data;
         public Vector3 position;
         public bool isSpawned;
-        public Minimap.PinData? pin;
+        public readonly List<Minimap.PinData> pins = new();
         public BountyLocation(BountyData data)
         {
             this.data = data;
@@ -412,13 +412,18 @@ public class BountyManager : MonoBehaviour
         public void AddPin()
         {
             RemovePin();
-            pin = Minimap.instance.AddPin(position, Minimap.PinType.Boss, data.Name, false, false);
+            Minimap.PinData? area = Minimap.instance.AddPin(position, Minimap.PinType.EventArea, "", false, false);
+            area.m_doubleSize = true;
+            Minimap.PinData? pin = Minimap.instance.AddPin(position, Minimap.PinType.Boss, data.Name, false, false);
             pin.m_icon = data.icon ?? SpriteManager.GetSprite(SpriteManager.IconOption.Map);
+            pins.Add(pin);
+            pins.Add(area);
         }
         public void RemovePin()
         {
-            if (pin == null || !Minimap.instance) return;
-            Minimap.instance.RemovePin(pin);
+            if (!Minimap.instance) return;
+            foreach(var pin in pins) Minimap.instance.RemovePin(pin);
+            pins.Clear();
         }
         public bool Spawn()
         {
@@ -473,6 +478,7 @@ public class BountyManager : MonoBehaviour
         public int Level = 1;
         public float DamageMultiplier;
         public int AlmanacTokenReward;
+        public List<StoreManager.StoreItem.ItemInfo> Items = new();
         public string Lore = string.Empty;
         public StoreManager.StoreCost Cost = new();
 
@@ -488,6 +494,7 @@ public class BountyManager : MonoBehaviour
             Health = data.Health;
             DamageMultiplier = data.DamageMultiplier;
             AlmanacTokenReward = data.AlmanacTokenReward;
+            Items = data.Items;
             Cost = data.Cost;
             _prefab = null;
         }
@@ -547,6 +554,22 @@ public class BountyManager : MonoBehaviour
             }
         }
 
+        public void CollectLoot()
+        {
+            if (Items.Count <= 0) return;
+            foreach (StoreManager.StoreItem.ItemInfo? loot in Items)
+            {
+                if (ObjectDB.instance.GetItemPrefab(loot.PrefabName) is not { } itemPrefab) continue;
+                var variants = itemPrefab.GetComponent<ItemDrop>().m_itemData.m_shared.m_variants;
+                int variant = loot.Variant > variants ? 0 : loot.Variant;
+                if (Player.m_localPlayer.GetInventory().AddItem(loot.PrefabName, loot.Amount, loot.Quality, variant, 0L, "") is not null) continue;
+                GameObject? clone = Instantiate(itemPrefab, Player.m_localPlayer.transform.position, Quaternion.identity);
+                if (!clone.TryGetComponent(out ItemDrop itemDrop)) continue;
+                itemDrop.m_itemData.m_stack = loot.Amount;
+                itemDrop.m_itemData.m_quality = loot.Quality;
+                itemDrop.m_itemData.m_variant = loot.Variant;
+            }
+        }
         public void OnClick(AlmanacPanel panel, AlmanacPanel.ElementView.Element item)
         {
             panel.elementView.SetSelected(item);
@@ -577,10 +600,27 @@ public class BountyManager : MonoBehaviour
                     form.damageMultiplierField.input?.Set(DamageMultiplier.ToString(CultureInfo.InvariantCulture));
                     form.costField.input?.Set(Cost.ToString());
                     form.tokenField.input?.Set(AlmanacTokenReward.ToString());
+                    form.itemField.input?.Set(string.Join(":", Items.Select(itemInfo => itemInfo.ToString()).ToList()));
                     form.HasChanged = false;
                 });
             }
             ToEntries().Build(panel.description.view);
+            if (Items.Count > 0)
+            {
+                panel.description.view.CreateTitle().SetTitle(Keys.Items);
+                if (Items.Count > 4)
+                {
+                    IEnumerable<List<StoreManager.StoreItem.ItemInfo>> batches = Items.Batch(4);
+                    foreach (List<StoreManager.StoreItem.ItemInfo> batch in batches)
+                    {
+                        panel.description.view.CreateIcons().SetIcons(batch.ToArray());
+                    }
+                }
+                else
+                {
+                    panel.description.view.CreateIcons().SetIcons(Items.ToArray());
+                }
+            }
             panel.description.view.Resize();
             bool isActive = ActiveBountyLocation != null;
             bool isCompleted = ActiveBountyLocation?.data.completed ?? false;
@@ -594,9 +634,11 @@ public class BountyManager : MonoBehaviour
                     if (isCompleted)
                     {
                         Player.m_localPlayer.AddTokens(activeBountyLocation.data.AlmanacTokenReward);
+                        CollectLoot();
                         activeBountyLocation.data.completed = false;
                         if (generated) this.OnCompleted();
                         ActiveBountyLocation = null;
+                        item.ShowNotice(false);
                     }
                     else
                     {
@@ -612,6 +654,7 @@ public class BountyManager : MonoBehaviour
                         if (generated) this.OnAccepted();
                     }
                 }
+                panel.OnBountyTab();
             };
             panel.description.requirements.Set(Cost);
             panel.description.requirements.SetLevel(Level);

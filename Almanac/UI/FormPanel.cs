@@ -625,6 +625,7 @@ public class FormPanel : MonoBehaviour, IDragHandler, IBeginDragHandler
         private float DamageMultiplier = 1f;
         private int TokenReward;
         private readonly List<CostForm> Cost = new();
+        private readonly List<ItemForm> Items = new();
 
         public readonly FormField idField;
         public readonly FormField creatureField;
@@ -637,6 +638,7 @@ public class FormPanel : MonoBehaviour, IDragHandler, IBeginDragHandler
         public readonly FormField damageMultiplierField;
         public readonly FormField costField;
         public readonly FormField tokenField;
+        public readonly FormField itemField;
 
         public bool inEditMode;
         public string OverridePath = string.Empty;
@@ -828,7 +830,56 @@ public class FormPanel : MonoBehaviour, IDragHandler, IBeginDragHandler
                         data.isValid = true;
                     }
                 },
-                InputField.ContentType.IntegerNumber);
+                InputField.ContentType.IntegerNumber, startsValid: true);
+            itemField = AddField("Item Reward", "List of items rewarded upon completion", "Iron, 1, 1, 0",
+                (s, field, data) =>
+                {
+                    HasChanged = true;
+                    Items.Clear();
+                    if (string.IsNullOrEmpty(s))
+                    {
+                        field.SetTextColor(Color.white);
+                        return;
+                    }
+                    string[] items = s.Trim().Split(':');
+                    foreach (string item in items)
+                    {
+                        string[] parts = item.Trim().Split(',');
+                        if (parts.Length != 4)
+                        {
+                            field.SetTextColor(Color.red);
+                            return;
+                        }
+
+                        string id = parts[0].Trim();
+                        if (ObjectDB.instance.GetItemPrefab(id) is null)
+                        {
+                            field.SetTextColor(Color.red);
+                            return;
+                        }
+
+                        if (!int.TryParse(parts[1].Trim(), out int amount))
+                        {
+                            field.SetTextColor(Color.red);
+                            return;
+                        }
+
+                        if (!int.TryParse(parts[2].Trim(), out int quality))
+                        {
+                            field.SetTextColor(Color.red);
+                            return;
+                        }
+
+                        if (!int.TryParse(parts[3].Trim(), out int variant))
+                        {
+                            field.SetTextColor(Color.red);
+                            return;
+                        }
+
+                        field.SetTextColor(Color.white);
+                        Items.Add(new ItemForm(id, amount, quality, variant));
+                    }
+                }, startsValid: true);
         }
         protected override void Create()
         {
@@ -846,6 +897,10 @@ public class FormPanel : MonoBehaviour, IDragHandler, IBeginDragHandler
             foreach (CostForm? cost in Cost)
             {
                 bounty.Cost.Add(cost.PrefabID, cost.Amount);
+            }
+            foreach (ItemForm item in Items)
+            {
+                bounty.Items.Add(item.PrefabID, item.Amount, item.Quality, item.Variant);
             }
             string fileName = bounty.UniqueID + ".yml";
             string data = BountyManager.serializer.Serialize(bounty);
@@ -1224,7 +1279,7 @@ public class FormPanel : MonoBehaviour, IDragHandler, IBeginDragHandler
                     Costs.AddRange(validated);
                 }
             });
-            keyField = AddField("Required Key", "Optional", "defeated_eikthyr", (s, field, data) =>
+            keyField = AddField("Required Defeated", "Optional", "Eikthyr", (s, field, data) =>
             {
                 HasChanged = true;
                 RequiredKey = string.Empty;
@@ -1383,6 +1438,7 @@ public class FormPanel : MonoBehaviour, IDragHandler, IBeginDragHandler
         private string Lore = string.Empty;
         private string Icon = string.Empty;
         private int rewardAmount;
+        private string StatusEffect = string.Empty;
         private AchievementType type;
         private string PrefabID = string.Empty;
         private string Group = string.Empty;
@@ -1393,6 +1449,7 @@ public class FormPanel : MonoBehaviour, IDragHandler, IBeginDragHandler
         public readonly FormField loreField;
         public readonly FormField iconField;
         public readonly FormField rewardField;
+        public readonly FormField statusField;
         public readonly FormField typeField;
         public readonly FormField prefabField;
         public readonly FormField groupField;
@@ -1464,15 +1521,27 @@ public class FormPanel : MonoBehaviour, IDragHandler, IBeginDragHandler
                 if (string.IsNullOrEmpty(s) || !int.TryParse(s, out var amount) || amount <= 0)
                 {
                     field.SetTextColor(Color.red);
-                    data.isValid = false;
                 }
                 else
                 {
                     rewardAmount = amount;
-                    data.isValid = true;
                     field.SetTextColor(Color.white);
                 }
-            }, InputField.ContentType.IntegerNumber);
+            }, InputField.ContentType.IntegerNumber, startsValid: true);
+            
+            statusField = AddField("Status Effect", "Custom Effect ID", "CE_Speed", (s, field, data) =>
+            {
+                HasChanged = true;
+                if (string.IsNullOrEmpty(s) || ObjectDB.instance.GetStatusEffect(s.GetStableHashCode()) is null)
+                {
+                    field.SetTextColor(Color.red);
+                }
+                else
+                {
+                    field.SetTextColor(Color.white);
+                    StatusEffect = s;
+                }
+            }, startsValid: true);
             
             typeField = AddField("Type", "Achievement type, Kill and Pickable require Prefab ID", "Kill", (s, field, data) =>
             {
@@ -1605,6 +1674,7 @@ public class FormPanel : MonoBehaviour, IDragHandler, IBeginDragHandler
             achievement.Requirement.PrefabName = PrefabID;
             achievement.Requirement.Threshold = threshold;
             achievement.TokenReward = rewardAmount;
+            achievement.StatusEffect = StatusEffect;
             string serialized = AchievementManager.serializer.Serialize(achievement);
             string fileName = achievement.UniqueID + ".yml";
             AchievementManager.AchievementDir.WriteFile(string.IsNullOrEmpty(overridePath) ? fileName : overridePath, serialized);;

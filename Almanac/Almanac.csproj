@@ -130,6 +130,7 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="Achievements\AchievementManager.cs" />
+        <Compile Include="Achievements\AchievementNotifier.cs" />
         <Compile Include="Achievements\AchievementTypes.cs" />
         <Compile Include="Achievements\CreatureGroup.cs" />
         <Compile Include="API.cs" />

@@ -43,8 +43,8 @@ public class TreasureHunt : MonoBehaviour
             }
 
             m_destructible.m_dropWhenDestroyed.m_dropChance = 1f;
-            m_destructible.m_dropWhenDestroyed.m_dropMin = 1;
-            m_destructible.m_dropWhenDestroyed.m_dropMax = count - 1;
+            m_destructible.m_dropWhenDestroyed.m_dropMin = count;
+            m_destructible.m_dropWhenDestroyed.m_dropMax = count;
         }
     }
     public void OnDestroy()

@@ -717,8 +717,12 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         {
             formBuilder.Build(FormPanel.FormBuilder.FormType.Achievement);
         }
-        foreach (AchievementManager.Achievement achievement in AchievementManager.achievements.Values)
+        
+        List<AchievementManager.Achievement> list = AchievementManager.achievements.Values.ToList().OrderBy(x => !x.IsCompleted(Player.m_localPlayer)).ToList();
+
+        for (int i = 0; i < list.Count; ++i)
         {
+            AchievementManager.Achievement? achievement = list[i];
             ElementView.Element item = elementView.Create();
             bool isCompleted = achievement.IsCompleted(Player.m_localPlayer);
             item.SetName(achievement.Name);
@@ -726,6 +730,12 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             item.SetIconColor(isCompleted ? Color.white : Color.black);
             item.SetDescription(achievement.Lore);
             item.Interactable(true);
+            Sprite? sprite = string.IsNullOrEmpty(achievement.StatusEffect)
+                ? null
+                : ObjectDB.instance.GetStatusEffect(achievement.StatusEffect.GetStableHashCode())?.m_icon;
+            item.ShowNotice(
+                (achievement.IsCompleted(Player.m_localPlayer) && !achievement.IsCollected(Player.m_localPlayer)) || !string.IsNullOrEmpty(achievement.StatusEffect), 
+                sprite);
             item.OnClick(() => achievement.OnClick(this, item));
         }
         elementView.Resize(elementView.Count);
@@ -739,6 +749,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         if (isLocalAdminOrHostAndNoCost) formBuilder.Build(FormPanel.FormBuilder.FormType.Bounty);
         List<BountyManager.BountyData> list = BountyManager.bounties.Values.ToList();
         if (Configs.GenerateBounties) list.AddRange(BountyGenerator.GetRandomBounties(list, 5));
+        
         foreach (BountyManager.BountyData? bounty in list)
         {
             bool hasReqs = bounty.HasRequirements(Player.m_localPlayer);
@@ -749,7 +760,8 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             item.SetDescription(bounty.GetNameOverride());
             item.SetIcon(bounty.icon);
             item.SetIconColor(hasReqs ? Color.white : Color.black);
-            item.Interactable(hasReqs);
+            item.Interactable(hasReqs && (BountyManager.ActiveBountyLocation is null || BountyManager.ActiveBountyLocation.data == bounty));
+            item.ShowNotice(bounty.completed || BountyManager.ActiveBountyLocation?.data == bounty);
             item.OnClick(() => bounty.OnClick(this, item));
         }
         elementView.Resize(elementView.Count);
@@ -775,6 +787,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             item.SetDescription(string.Empty);
             item.SetIconColor(isKnown ? Color.white : Color.black);
             item.Interactable(isKnown);
+            item.ShowNotice(TreasureManager.ActiveTreasureLocation?.data == treasure);
             item.OnClick(() => treasure.OnClick(this, item));
         }
         elementView.Resize(elementView.Count);
@@ -873,6 +886,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 if (itemData.HasSockets())
                 {
                     List<string> jewels = itemData.GetSocketedGemSharedNames();
+                    //TODO: localize
                     description.view.CreateTitle().SetTitle($"Sockets ({jewels.Count})");
                     foreach (string? jewel in jewels)
                     {
@@ -1268,6 +1282,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             private readonly Image selected;
             private readonly Button button;
             private readonly Image icon;
+            private readonly Image notice;
             private readonly Text name;
             private readonly Text description;
             private readonly Sprite defaultSprite;
@@ -1282,6 +1297,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 selected = transform.Find("Selected").GetComponent<Image>();
                 button = transform.Find("Background").GetComponent<Button>();
                 icon = transform.Find("Background/Icon").GetComponent<Image>();
+                notice = transform.Find("Notice").GetComponent<Image>();
                 defaultSprite = icon.sprite;
                 name = transform.Find("Name").GetComponent<Text>();
                 description = transform.Find("Description").GetComponent<Text>();
@@ -1302,6 +1318,13 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             public void Interactable(bool enable) => button.interactable = enable;
             public void SetSelected(bool enable) => selected.gameObject.SetActive(enable);
             public void SetSelectedColor(Color color) => selected.color = color;
+            public void ShowNotice(bool enable, Sprite? sprite = null)
+            {
+                notice.gameObject.SetActive(enable);
+                if (enable) notice.sprite = sprite;
+                if (notice.sprite != null) notice.rectTransform.eulerAngles = Vector3.zero;
+                if (enable) notice.sprite ??= Minimap.instance.GetSprite(Minimap.PinType.RandomEvent);
+            }
             public void SetItemInfo(ItemHelper.ItemInfo info)
             {
                 itemInfo = info;

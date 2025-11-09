@@ -576,6 +576,7 @@ public static class StoreHelpers
 
     public static void AddTokens(this Player player, int amount, bool message = true)
     {
+        if (amount == 0) return;
         int newAmount = player.GetTokens() + amount;
         player.m_customData[StoreManager.STORE_TOKEN] = newAmount.ToString();
         AlmanacPanel.instance?.currency.SetAmount(newAmount);

@@ -80,6 +80,7 @@ public static class Keys
     public static readonly string BountyStolen = new Key("$msg_bountystolen", "Bounty stolen by").key;
     public static readonly string Bounties = new Key("$label_bounties", "Bounties").key;
     public static readonly string Treasures = new Key("$label_treasures", "Treasures").key;
+    public static readonly string Vanquished = new Key("$msg_vanquished", "Vanquished").key;
     public static readonly string CancelTreasure = new Key("$label_cancel_treasure", "Cancel treasure hunt").key;
     public static readonly string Store = new Key("$label_store", "Store").key;
     public static readonly string AlmanacStore = Almanac + " " + Store;
@@ -94,7 +95,9 @@ public static class Keys
     public static readonly string Character = new Key("$label_character", "Character").key;
     public static readonly string Drops = new Key("$label_drops", "Drops").key;
     public static readonly string Added = new Key("$label_added", "Added").key;
+    public static readonly string ApplyEffect = new Key("$label_apply_effect", "Apply Effect").key;
     public static readonly string Removed = new Key("$label_removed", "Removed").key;
+    public static readonly string RemoveEffect = new Key("$label_remove_effect", "Remove Effect").key;
     public static readonly string CharacterDrops = Character + " " + Drops;
     public static readonly string Collected = new Key("$label_collected", "Collected").key;
     public static readonly string Picked = new Key("$label_picked", "Picked").key;
@@ -107,6 +110,7 @@ public static class Keys
     public static readonly string Health = "$se_health";
     public static readonly string CancelBounty = new Key("$label_cancel_bounty", "Cancel bounty").key;
     public static readonly string BountyCanceled = new Key("$msg_bounty_canceled", "Bounty has been canceled").key;
+    public static readonly string TreasureCanceled = new Key("$msg_treasure_canceled", "Treasure has been canceled").key;
     public static readonly string FailedToSpawnBounty = new Key("$msg_failed_to_spawn_bounty", "Failed to spawn bounty").key;
     public static readonly string ReturningCost = new Key("$msg_returning_cost", "Returning cost").key;
     public static readonly string Recipes = new Key("$label_recipes", "Recipes").key;
@@ -119,6 +123,9 @@ public static class Keys
     public static readonly string Purchased = new Key("$label_purchased", "Purchased").key;
     public static readonly string Lottery = new Key("$label_lottery", "Lottery").key;
     public static readonly string Turret = new Key("$label_turret", "Turret").key;
+
+    public static readonly string TooManyAchievements =
+        new Key("$msg_too_many_achievements", "Too many achievement effects active").key;
     public static readonly string LotteryLore = new Key("$lore_lottery",
             "Step up to the reels, warrior! Test your luck in a game of chance where your hard-earned spoils are on the line. Match enough symbols and you could walk away with riches beyond measure—or lose it all in the gods’ cruel jest. Risk it, and let fate decide!")
         .key;
@@ -162,6 +169,7 @@ public static class Keys
     public static readonly string XP = new Key("$label_xp", "XP").key;
     public static readonly string Resistances = new Key("$label_resistances", "Resistances").key;
     public static readonly string Combat = new Key("$label_combat", "Combat").key;
+    public static readonly string Completed = new Key("$label_completed", "Completed").key;
     public static readonly string Forsaken = new Key("$label_forsaken", "Forsaken").key;
     public static readonly string Mortality = new Key("$label_mortality", "Mortality").key;
     public static readonly string Miscellaneous = new Key("$label_miscellaneous", "Miscellaneous").key;

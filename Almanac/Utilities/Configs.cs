@@ -59,6 +59,10 @@ public static class Configs
 
     private static ConfigEntry<Toggle> _checkNoCost = null!;
     private static ConfigEntry<string> _adminList = null!;
+    private static ConfigEntry<Toggle> _enableAchievementNotices = null!;
+
+    private static ConfigEntry<Toggle> _enableAchievementEffects = null!;
+    private static ConfigEntry<int> _maxAchievementEffects = null!;
     
     public static bool UseIgnoreList => _UseIgnoreList.Value is Toggle.On;
     public static bool ShowBounties => _BountyEnabled.Value is Toggle.On;
@@ -66,6 +70,11 @@ public static class Configs
     public static bool ShowTreasures => _TreasureEnabled.Value is Toggle.On;
     public static bool ShowAllData => _ShowAllData.Value is Toggle.On;
     public static bool UseKnowledgeWall => _KnowledgeWall.Value is Toggle.On;
+    
+    public static bool AchievementEffectsEnabled => _enableAchievementEffects.Value is Toggle.On;
+    public static int MaxAchievementEffects => _maxAchievementEffects.Value;
+    
+    public static bool ShowAchievementNotices => _enableAchievementNotices.Value is Toggle.On;
     public static bool Transparent => _Transparent.Value is Toggle.On;
     public static Color OutlineColor => _OutlineColor.Value;
     public static int BountyCooldown => _BountyCooldown.Value;
@@ -118,6 +127,8 @@ public static class Configs
         _conversionItem = config("1 - General", "Conversion Item", "Coins", "Set item to use to convert into almanac tokens");
         _almanacEnabled = config("1 - General", "Almanac Button", Toggle.On, "If on, almanac button replaces trophies button");
         _checkNoCost = config("1 - General", "Admin Tools Check No Cost", Toggle.Off, "If on, no cost must be enabled to use admin tools");
+        _enableAchievementNotices = config("1 - General", "Achievement Notices", Toggle.Off,
+            "If on, will show notifications of achievement completion");
         _adminList = config("1 - General", "Admin List", "",
             new ConfigDescription("Almanac admin list, names seperated by a comma", null,
                 new ConfigurationManagerAttributes() { CustomDrawer = StringListConfig.Draw }));
@@ -185,6 +196,11 @@ public static class Configs
         _questPanelPos = config("5 - User Interface", "Quest Panel", new Vector3(45f, 870f, 0f), "Set position of quest tooltips", false);
         _questPanelPos.SettingChanged += QuestPanel.OnPosChange;
         _questKey = config("5 - User Interface", "Quest Key", KeyCode.F6, "Set key to show / hide quest tooltips", false);
+
+        _enableAchievementEffects = config("6 - Achievements", "Status Effects", Toggle.Off,
+            "If on, will allow legacy achievement feature: status effects");
+        _maxAchievementEffects = config("6 - Achievements", "Max Effects", 8,
+            "Set maximum amount of concurrent achievement effects");
         SetupWatcher();
     }
     

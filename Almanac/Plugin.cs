@@ -32,7 +32,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.6.2";
+        internal const string ModVersion = "3.6.4";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         public const string ConfigFileName = ModGUID + ".cfg";
@@ -165,6 +165,7 @@ namespace Almanac
                 Player.m_localPlayer.ClearTokens();
                 Player.m_localPlayer.ClearSavedQuests();
                 Player.m_localPlayer.ClearSavedDialogues();
+                Player.m_localPlayer.ClearNotices();
                 return true;
             });
 
@@ -204,6 +205,7 @@ namespace Almanac
                     Player.m_localPlayer.ClearTokens();
                     Player.m_localPlayer.ClearSavedQuests();
                     Player.m_localPlayer.ClearSavedDialogues();
+                    Player.m_localPlayer.ClearNotices();
                     Player.m_localPlayer.m_knownBiome.Clear();
                     Player.m_localPlayer.m_knownMaterial.Clear();
                     Player.m_localPlayer.m_knownRecipes.Clear();

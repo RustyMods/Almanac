@@ -149,7 +149,7 @@ public class DialogueManager : MonoBehaviour
         Clone npc = new Clone("Player", "AlmanacNPC");
         npc.OnCreated += prefab =>
         {
-            var hitEffects = prefab.GetComponent<Player>().m_hitEffects;
+            EffectList? hitEffects = prefab.GetComponent<Player>().m_hitEffects;
             prefab.Remove<Player>();
             prefab.Remove<Rigidbody>();
             prefab.Remove<PlayerController>();
@@ -169,8 +169,7 @@ public class DialogueManager : MonoBehaviour
             buildPiece.Name.English("Almanac NPC");
             buildPiece.Description.English("Placeable human NPC");
             buildPiece.Category.Set("Almanac");
-            buildPiece.SpecialProperties.NoConfig = true;
-            // buildPiece.SpecialProperties.AdminOnly = true;
+            buildPiece.RequiredItems.Add("SwordCheat", 1, true);
         };
         SyncedDialogue.ValueChanged += OnSyncedDialogueChange;
         AlmanacPlugin.OnZNetAwake += UpdateSyncedDialogues;

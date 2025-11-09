@@ -10,31 +10,27 @@ namespace Almanac.ExternalAPIs;
 [PublicAPI]
 public static class DiscordBot_API
 {
-    private static bool _isLoaded;
+    private static readonly Method? _RegisterCommand;
+    private static readonly Method? _SendWebhookMessage;
+    private static readonly Method? _SendWebhookTable;
 
-    private static bool isLoaded
+    static DiscordBot_API()
     {
-        get
-        {
-            if (_isLoaded) return true;
-            _isLoaded = Type.GetType("DiscordBot.API, DiscordBot") != null;
-            return _isLoaded;
-        }
+        if (!IsLoaded()) return;
+        _RegisterCommand = new Method("RegisterCommand");
+        _SendWebhookMessage = new Method("SendWebhookMessage");
+        _SendWebhookTable = new Method("SendWebhookTable");
     }
-
-    public static bool IsLoaded() => isLoaded;
-
-    private static readonly Method _RegisterCommand = new("RegisterCommand");
-    private static readonly Method _SendWebhookMessage = new("SendWebhookMessage");
-    private static readonly Method _SendWebhookTable = new("SendWebhookTable");
+    
+    public static bool IsLoaded() => Type.GetType("DiscordBot.API, DiscordBot") != null;
 
     [PublicAPI]
     public enum Channel { Notifications, Chat, Commands, }
-    public static void SendWebhookTable(Channel channel, string title, Dictionary<string, string> tableData) => _SendWebhookTable.Invoke(channel.ToString(), title, tableData);
-    public static void SendWebhookMessage(Channel channel, string message) => _SendWebhookMessage.Invoke(channel.ToString(), message);
+    public static void SendWebhookTable(Channel channel, string title, Dictionary<string, string> tableData) => _SendWebhookTable?.Invoke(channel.ToString(), title, tableData);
+    public static void SendWebhookMessage(Channel channel, string message) => _SendWebhookMessage?.Invoke(channel.ToString(), message);
     public static void RegisterCommand(string command, string description, Action<string[]> action, Action<ZPackage>? reaction = null, bool adminOnly = false, bool isSecret = false, string emoji = "")
     {
-        _RegisterCommand.Invoke(command, description, action, reaction, adminOnly, isSecret, emoji);
+        _RegisterCommand?.Invoke(command, description, action, reaction, adminOnly, isSecret, emoji);
     }
     internal class Method
     {

@@ -1,3 +1,23 @@
+# 3.6.4
+- added status effect option for achievement reward
+- achievement either rewards status effect or token, not both
+- if achievement has status effect, and config to use effects are on, achievement will never be marked as completed
+- instead, it allows players to apply or remove effect
+- config to set max amount of concurrent achievement effects
+- transitioned to vanilla player profile kill data (found out they already record kill amount per creature)
+- added notification icon to mark achievements that have been `completed` and `not collected`
+- added status effect icon to mark achievements that reward effects
+- added notification icon to mark active bounty
+- if there is an active bounty, only active bounty is interactable
+- removed log warnings if discord bot is not installed
+- fixed treasure cancel message showing bounty canceled
+
+# 3.6.3
+- made npc build piece configurable
+- added optional items reward to bounties
+- added achievement notifications [default config is off]
+- added notification when bounty is vanquished
+
 # 3.6.2
 - NPC can be removed by creator
 - added new config: `admin list`

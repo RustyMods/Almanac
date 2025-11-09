@@ -98,6 +98,7 @@ public class Bounty : MonoBehaviour
                 if (BountyManager.bounties.TryGetValue(m_bountyID, out BountyManager.BountyData bounty))
                 {
                     bounty.completed = true;
+                    MessageHud.instance.ShowBiomeFoundMsg($"{m_character.m_name} {Keys.Vanquished}", true);
                 }
             }
             else

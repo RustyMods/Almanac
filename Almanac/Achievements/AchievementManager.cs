@@ -21,12 +21,17 @@ namespace Almanac.Achievements;
 public static class ZNet_RegisterAchievements
 {
     [UsedImplicitly]
-    private static void Postfix() => AchievementManager.UpdateServerAchievements();
+    private static void Postfix()
+    {
+        AchievementManager.UpdateServerAchievements();
+        AlmanacPlugin.instance.gameObject.AddComponent<AchievementNotifier>();
+    }
 }
 
 public static class AchievementManager
 {
     public const string ACHIEVEMENT_KEY = "Almanac_Collected_Achievements";
+    public const string ACHIEVEMENT_EFFECTS = "Almanac.Achievements.ActiveEffects";
     public static readonly ISerializer serializer = new SerializerBuilder()
         .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitDefaults | DefaultValuesHandling.OmitNull | DefaultValuesHandling.OmitEmptyCollections)
         .Build();
@@ -140,7 +145,6 @@ public static class AchievementManager
             AlmanacPlugin.AlmanacLogger.LogWarning("Failed to delete achievement: " + Path.GetFileName(e.FullPath));
         }
     }
-
     public static void UpdateServerAchievements()
     {
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
@@ -586,8 +590,97 @@ public static class AchievementManager
         trinkets.Requirement.Type = AchievementType.Trinkets;
         achievements[trinkets.UniqueID] = trinkets;
     }
-    
     public static bool IsValidType(string input, out AchievementType type) => Enum.TryParse(input, true, out type);
+    public static void SaveAchievementEffect(this Achievement achievement, Player player)
+    {
+        HashSet<string> list = new();
+        if (player.m_customData.TryGetValue(ACHIEVEMENT_EFFECTS, out var savedEffects))
+        {
+            list = savedEffects.Split(';').ToHashSet();
+        }
+        list.Add(achievement.UniqueID);
+        player.m_customData[ACHIEVEMENT_EFFECTS] = string.Join(";", list);
+    }
+
+    public static bool IsSavedEffect(this Achievement achievement, Player player)
+    {
+        if (!player.m_customData.TryGetValue(ACHIEVEMENT_EFFECTS, out var savedEffects)) return false;
+        HashSet<string> list = savedEffects.Split(';').ToHashSet();
+        return list.Contains(achievement.UniqueID);
+    }
+
+    public static void RemoveAchievementEffect(this Achievement achievement, Player player)
+    {
+        if (string.IsNullOrEmpty(achievement.StatusEffect)) return;
+        var hash = achievement.StatusEffect.GetStableHashCode();
+        player.GetSEMan().RemoveStatusEffect(hash);
+        achievement.DeleteAchievementEffect(player);
+    }
+    public static void DeleteAchievementEffect(this Achievement achievement, Player player)
+    {
+        if (!player.m_customData.TryGetValue(ACHIEVEMENT_EFFECTS, out var savedEffects)) return;
+        HashSet<string> list = savedEffects.Split(';').ToHashSet();
+        list.Remove(achievement.UniqueID);
+        player.m_customData[ACHIEVEMENT_EFFECTS] = string.Join(";", list);
+    }
+
+    public static int CountAchievementEffects(this Player player)
+    {
+        HashSet<string> list = new();
+        if (player.m_customData.TryGetValue(ACHIEVEMENT_EFFECTS, out var savedEffects))
+        {
+            list = savedEffects.Split(';').ToHashSet();
+        }
+
+        int count = 0;
+
+        foreach (var id in list)
+        {
+            if (!TryGetAchievement(id, out var achievement)) continue;
+            if (achievement.HasAchievementEffect(player))
+            {
+                ++count;
+            }
+        }
+
+        return count;
+    }
+    
+    public static void ApplyAchievementEffect(this Achievement achievement, Player player, bool save = true)
+    {
+        int hash = achievement.StatusEffect.GetStableHashCode();
+        if (ObjectDB.instance.GetStatusEffect(hash) is null)
+        {
+            AlmanacPlugin.AlmanacLogger.LogError($"Failed to find Achievement Effect for: {achievement.UniqueID}, {achievement.Name} - {achievement.StatusEffect}");
+        }
+        else
+        {
+            player.GetSEMan().AddStatusEffect(hash, true);
+            if (save) achievement.SaveAchievementEffect(player);
+        }
+    }
+
+    public static bool HasAchievementEffect(this Achievement achievement, Player player)
+    {
+        if (string.IsNullOrEmpty(achievement.StatusEffect)) return false;
+        var hash = achievement.StatusEffect.GetStableHashCode();
+        return player.GetSEMan().HaveStatusEffect(hash);
+    }
+
+    [HarmonyPatch(typeof(Player), nameof(Player.OnSpawned))]
+    private static class Player_OnSpawned_Patch
+    {
+        [UsedImplicitly]
+        private static void Postfix(Player __instance)
+        {
+            if (!Configs.AchievementEffectsEnabled) return;
+            foreach (Achievement achievement in achievements.Values)
+            {
+                if (!achievement.IsCompleted(__instance) || string.IsNullOrEmpty(achievement.StatusEffect) || !achievement.IsSavedEffect(__instance)) continue;
+                achievement.ApplyAchievementEffect(__instance, false);
+            }
+        }
+    }
 
     [Serializable]
     public class Achievement
@@ -596,6 +689,7 @@ public static class AchievementManager
         public string Name = string.Empty;
         public string Lore = string.Empty;
         public string Icon = string.Empty;
+        public string StatusEffect = string.Empty;
         public int TokenReward;
         [YamlMember(DefaultValuesHandling = DefaultValuesHandling.OmitEmptyCollections)]
         public AchievementRequirement Requirement = new();
@@ -778,6 +872,11 @@ public static class AchievementManager
                     }
                     break;
             }
+            if (Configs.AchievementEffectsEnabled && !string.IsNullOrEmpty(StatusEffect) && ObjectDB.instance.GetStatusEffect(StatusEffect.GetStableHashCode()) is CustomEffect achievementEffect)
+            {
+                builder.Add("Reward Effect");
+                builder.Add(achievementEffect.GetTooltipString(), "lore");
+            }
             return builder.ToList();
         }
 
@@ -795,7 +894,7 @@ public static class AchievementManager
                 edit.SetLabel("Edit");
                 edit.OnClick(() =>
                 {
-                    var form = new FormPanel.AchievementForm();
+                    FormPanel.AchievementForm form = new FormPanel.AchievementForm();
                     form.SetTopic("Edit Achievement");
                     form.SetButtonText("Confirm Edit");
                     form.SetDescription("Edit achievement");
@@ -815,18 +914,52 @@ public static class AchievementManager
                 });
             }
             ToEntries().Build(panel.description.view);
-            panel.description.requirements.SetTokens(TokenReward);
             panel.description.view.Resize();
-            panel.description.SetButtonText(isCompleted ? isCollected ? Keys.Collected : Keys.CollectReward : Keys.InProgress);
-            panel.description.Interactable(isCompleted && !isCollected);
-            if (!isCompleted) return;
-            panel.OnMainButton = () =>
+
+            if (Configs.AchievementEffectsEnabled && !string.IsNullOrEmpty(StatusEffect))
             {
-                Player.m_localPlayer.AddTokens(TokenReward);
-                Player.m_localPlayer.SetAchievementCollected(this);
-                panel.description.Interactable(false);
-                panel.description.SetButtonText(Keys.Collected);
-            };
+                bool hasEffect = this.HasAchievementEffect(Player.m_localPlayer);
+                int count = Player.m_localPlayer.CountAchievementEffects();
+                panel.description.SetButtonText(hasEffect ? isCompleted ? Keys.RemoveEffect : Keys.InProgress : Keys.ApplyEffect);
+                panel.description.Interactable(isCompleted || hasEffect);
+                if (!isCompleted) return;
+                panel.OnMainButton = () =>
+                {
+                    if (hasEffect)
+                    {
+                        this.RemoveAchievementEffect(Player.m_localPlayer);
+                    }
+                    else
+                    {
+                        bool shouldAdd = count < Configs.MaxAchievementEffects;
+                        if (shouldAdd)
+                        {
+                            this.ApplyAchievementEffect(Player.m_localPlayer);
+                        }
+                        else
+                        {
+                            Player.m_localPlayer.Message(MessageHud.MessageType.Center, Keys.TooManyAchievements);
+                        }
+                    }
+                    hasEffect = this.HasAchievementEffect(Player.m_localPlayer);
+                    panel.description.SetButtonText(hasEffect ? isCompleted ? Keys.RemoveEffect : Keys.InProgress : Keys.ApplyEffect);
+                };
+            }
+            else
+            {
+                panel.description.SetButtonText(isCompleted ? isCollected ? Keys.Collected : Keys.CollectReward : Keys.InProgress);
+                panel.description.Interactable(isCompleted && !isCollected);
+                panel.description.requirements.SetTokens(TokenReward);
+                if (!isCompleted) return;
+                panel.OnMainButton = () =>
+                {
+                    Player.m_localPlayer.AddTokens(TokenReward);
+                    Player.m_localPlayer.SetAchievementCollected(this);
+                    panel.description.Interactable(false);
+                    panel.description.SetButtonText(Keys.Collected);
+                    item.ShowNotice(false);
+                };
+            }
         }
         
         [Serializable]

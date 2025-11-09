@@ -70,7 +70,7 @@ public static class PlayerExtensions
         int size = Encoding.UTF8.GetByteCount(data);
         return size;
     }
-    public static int GetKills(this PlayerInfo.PlayerRecords records, string creatureName) => records.kills.TryGetValue(creatureName, out int value) ? value : 0;
+    // public static int GetKills(this PlayerInfo.PlayerRecords records, string creatureName) => records.kills.TryGetValue(creatureName, out int value) ? value : 0;
     public static int GetDeaths(this PlayerInfo.PlayerRecords records, string creatureName) => records.deaths.TryGetValue(creatureName, out int value) ? value : 0;
     public static int GetItemPicked(this PlayerInfo.PlayerRecords records, string itemName) => records.itemsPicked.TryGetValue(itemName, out int value) ? value : 0;
 }
@@ -90,7 +90,7 @@ public static class PlayerInfo
     [Serializable]
     public class PlayerRecords
     {
-        public Dictionary<string, int> kills = new();
+        // public Dictionary<string, int> kills = new();
         public Dictionary<string, int> deaths = new();
         public Dictionary<string, int> itemsPicked = new();
         public List<int> knownStatusEffects = new();
@@ -118,7 +118,7 @@ public static class PlayerInfo
         if (!Player.m_localPlayer || string.IsNullOrEmpty(name)) return 0;
         return type switch
         {
-            RecordType.Kill => Records.GetKills(name),
+            RecordType.Kill => Game.instance.GetPlayerProfile().m_enemyStats.TryGetValue(name, out var value) ? (int)value : 0,
             RecordType.Death => Records.GetDeaths(name),
             RecordType.Pickable => Records.GetItemPicked(name),
             _ => 0
@@ -128,7 +128,7 @@ public static class PlayerInfo
     public static int GetEnemyKill(string name, bool shared = true)
     {
         if (!shared && CritterHelper.namedCritters.TryGetValue(name, out var info)) name = info.character.m_name;
-        return Records.GetKills(name);
+        return Game.instance.GetPlayerProfile().m_enemyStats.TryGetValue(name, out var value) ? (int)value : 0;
     }
 
     public static event Action<Character>? OnCharacterDeathByLocal;
@@ -143,7 +143,7 @@ public static class PlayerInfo
             if (__instance.m_lastHit?.GetAttacker() is not { } attacker) return;
             if (attacker == Player.m_localPlayer)
             {
-                Records.kills.IncrementOrSet(__instance.m_name);
+                // Records.kills.IncrementOrSet(__instance.m_name);
                 OnCharacterDeathByLocal?.Invoke(__instance);
             }
             else if (__instance == Player.m_localPlayer)

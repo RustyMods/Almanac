@@ -469,6 +469,7 @@ public class CustomEffect : SE_Stats
         {
             sb.AppendFormat("{0}: <color=orange>{1:+0;-0}</color>\n", Keys.Armor, m_armor);
         }
+        
         if (m_lifeSteal != 0f)
         {
             sb.AppendFormat("{0}: <color=orange>{1:+0;-0}%</color> {2}\n", Keys.LifeSteal, Mathf.Clamp01(m_lifeSteal - 1f) * 100f, Keys.IncomingDamage);

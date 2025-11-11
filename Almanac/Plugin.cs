@@ -32,7 +32,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.6.4";
+        internal const string ModVersion = "3.6.6";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         public const string ConfigFileName = ModGUID + ".cfg";
@@ -135,7 +135,7 @@ namespace Almanac
                     return;
                 }
                 Dictionary<string, string> table = new Dictionary<string, string>();
-                foreach (var info in leaderboard)
+                foreach (Leaderboard.LeaderboardInfo? info in leaderboard)
                 {
                     table[info.PlayerName] = "```" + string.Join("\n",
                         new List<string>()

@@ -717,9 +717,27 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         {
             formBuilder.Build(FormPanel.FormBuilder.FormType.Achievement);
         }
-        
-        List<AchievementManager.Achievement> list = AchievementManager.achievements.Values.ToList().OrderBy(x => !x.IsCompleted(Player.m_localPlayer)).ToList();
 
+        List<AchievementManager.Achievement> list;
+        switch (Configs.AchievementOrderType)
+        {
+            case OrderType.Completed:
+                list = AchievementManager.achievements.Values.ToList().OrderBy(x => !x.IsCompleted(Player.m_localPlayer)).ToList();
+                break;
+            case OrderType.NotCompleted:
+                list = AchievementManager.achievements.Values.ToList().OrderBy(x => x.IsCompleted(Player.m_localPlayer)).ToList();
+                break;
+            case OrderType.DisplayName:
+                list = AchievementManager.achievements.Values.ToList().OrderBy(x => x.Name).ToList();
+                break;
+            case OrderType.UniqueID:
+                list = AchievementManager.achievements.Values.ToList().OrderBy(x => x.UniqueID).ToList();
+                break;
+            default:
+                list = AchievementManager.achievements.Values.ToList();
+                break;
+        }
+        
         for (int i = 0; i < list.Count; ++i)
         {
             AchievementManager.Achievement? achievement = list[i];

@@ -47,7 +47,14 @@ public static class CreatureGroup
             foreach (string file in files)
             {
                 string data = File.ReadAllText(file);
-                groups.AddRange(deserializer.Deserialize<Dictionary<string, List<string>>>(data));
+                try
+                {
+                    groups.AddRange(deserializer.Deserialize<Dictionary<string, List<string>>>(data));
+                }
+                catch
+                {
+                    AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse creature group: " + Path.GetFileName(file));
+                }
             }
         }
 

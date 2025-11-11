@@ -48,14 +48,20 @@ public class NPCTalk : MonoBehaviour
     public void SetRandomTalkID(string id)
     {
         if (m_randomTalkID == id) return;
-        m_nview.InvokeRPC(nameof(RPC_SetRandomTalkID), id);
+        m_randomTalkID = id;
+        if (!RandomTalkManager.TryGetRandomTalk(id, out var randomTalk)) return;
+        SetRandomTalk(randomTalk.Talk);
+        SetRandomGreets(randomTalk.Greets);
+        SetRandomGoodbye(randomTalk.GoodBye);
+        if (!m_nview.IsValid() || !m_nview.IsOwner()) return;
+        m_nview.GetZDO().Set(NPCVars.RandomTalk, id);
+        m_nview.InvokeRPC(ZNetView.Everybody, nameof(RPC_SetRandomTalkID), id);
     }
 
     public void RPC_SetRandomTalkID(long sender, string id)
     {
-        if (!m_nview.IsValid()) return;
+        if (m_randomTalkID == id) return;
         m_randomTalkID = id;
-        m_nview.GetZDO().Set(NPCVars.RandomTalk, id);
         if (!RandomTalkManager.TryGetRandomTalk(id, out var randomTalk)) return;
         SetRandomTalk(randomTalk.Talk);
         SetRandomGreets(randomTalk.Greets);
@@ -66,11 +72,10 @@ public class NPCTalk : MonoBehaviour
     public void SetRandomGoodbye(List<string> talk) => m_randomGoodbye = talk;
     public void Update()
     {
-        if (!m_nview.IsValid()) return;
-        UpdateTarget();
-        if (m_targetPlayer is not null)
+        if (!m_nview.IsValid() || !m_nview.IsOwner()) return;
+        if (UpdateTarget())
         {
-            if (m_nview.IsOwner())
+            if (m_targetPlayer is not null)
             {
                 float distance = Vector3.Distance(m_targetPlayer.transform.position, transform.position);
                 if (!m_didGreet && distance < m_greetRange)
@@ -85,11 +90,11 @@ public class NPCTalk : MonoBehaviour
                     QueueSay(m_randomGoodbye, "wave");
                 }
             }
-        }
-        else
-        {
-            m_didGreet = false;
-            m_didGoodbye = false;
+            else
+            {
+                m_didGreet = false;
+                m_didGoodbye = false;
+            }
         }
         
         UpdateSayQueue();
@@ -120,14 +125,12 @@ public class NPCTalk : MonoBehaviour
         });
     }
 
-    public void UpdateTarget()
+    public bool UpdateTarget()
     {
-        if (Time.time - m_lastTargetUpdate <= 1.0) return;
+        if (Time.time - m_lastTargetUpdate <= 1.0) return false;
         m_lastTargetUpdate = Time.time;
-        m_targetPlayer = null;
-        Player closestPlayer = Player.GetClosestPlayer(transform.position, m_maxRange);
-        if (closestPlayer is null) return;
-        m_targetPlayer = closestPlayer;
+        m_targetPlayer = Player.GetClosestPlayer(transform.position, m_maxRange);
+        return true;
     }
 
     public void RandomTalk()

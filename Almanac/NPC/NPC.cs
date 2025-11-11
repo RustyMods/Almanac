@@ -105,6 +105,7 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
     }
     public void Update()
     {
+        if (!m_nview.IsValid() || !m_nview.IsOwner()) return;
         float dt = Time.deltaTime;
         m_timeSinceLastAnim += dt;
         if (m_animQueue.Count > 0)
@@ -194,27 +195,29 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
     {
         if (string.IsNullOrEmpty(text)) return;
         if (m_name == text) return;
-        m_nview.InvokeRPC(nameof(RPC_SetName), text);
+        m_name = text;
+        if (!m_nview.IsValid() || !m_nview.IsOwner()) return;
+        m_nview.GetZDO().Set(ZDOVars.s_tamedName, text);
+        m_nview.InvokeRPC(ZNetView.Everybody, nameof(RPC_SetName), text);
     }
 
     public void RPC_SetName(long sender, string text)
     {
         m_name = text;
-        if (!m_nview.IsValid()) return;
-        m_nview.GetZDO().Set(ZDOVars.s_tamedName, text);
     }
 
     public void SetDialogue(string id)
     {
         if (id == m_dialogueID) return;
-        m_nview.InvokeRPC(nameof(RPC_SetDialogue), id);
+        m_dialogueID = id;
+        if (!m_nview.IsValid() || !m_nview.IsOwner()) return;
+        m_nview.GetZDO().Set(NPCVars.Dialogue, id);
+        m_nview.InvokeRPC(ZNetView.Everybody, nameof(RPC_SetDialogue), id);
     }
 
     public void RPC_SetDialogue(long sender, string id)
     {
-        if (!m_nview.IsValid()) return;
         m_dialogueID = id;
-        m_nview.GetZDO().Set(NPCVars.Dialogue, id);
     }
 
     public void SetRandomTalk(string id)
@@ -225,12 +228,13 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
     public void SetAnimation(string text)
     {
         if (text == m_animation) return;
-        m_nview.InvokeRPC(nameof(RPC_SetAnimation), text);
+        DoAnimation(text);
+        m_animation = text;
+        m_nview.InvokeRPC(ZNetView.Everybody, nameof(RPC_SetAnimation), text);
     }
 
     public void RPC_SetAnimation(long sender, string text)
     {
-        DoAnimation(text);
         m_animation = text;
     }
 
@@ -238,14 +242,18 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
     {
         if (m_scale == scale) return;
         if (scale.AnyNegative()) return;
-        if (m_nview.IsOwner()) RPC_SetScale(0L, scale);
-        else m_nview.InvokeRPC(nameof(RPC_SetScale), scale);
+        
+        m_scale = scale;
+        transform.localScale = scale;
+        if (!m_nview.IsValid() || !m_nview.IsOwner()) return;
+        m_nview.GetZDO().Set(NPCVars.Scale, scale);
+        
+        m_nview.InvokeRPC(ZNetView.Everybody, nameof(RPC_SetScale), scale);
     }
     public void RPC_SetScale(long sender, Vector3 scale)
     {
         m_scale = scale;
         transform.localScale = scale;
-        m_nview.GetZDO().Set(NPCVars.Scale, scale);
     }
 
     public void SetLeftItem(string item, int variant = 0)
@@ -336,7 +344,7 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
     {
         if (alt)
         {
-            // if (AlmanacPanel.isLocalAdminOrHostAndNoCost) NPCCustomization.instance?.Show(this);
+            m_nview.ClaimOwnership();
             NPCCustomization.instance?.Show(this);
         }
         else
@@ -353,10 +361,6 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
         {
             text += $"\n[<color=yellow><b>$KEY_Use</b></color>] {Keys.Talk}";
         }
-        // if (AlmanacPanel.isLocalAdminOrHostAndNoCost)
-        // {
-        //     text += $"\n[<color=yellow><b>L.Shift + $KEY_Use</b></color>] {Keys.Customize}";
-        // }
         text += $"\n[<color=yellow><b>L.Shift + $KEY_Use</b></color>] {Keys.Customize}";
 
         return Localization.instance.Localize(text);

@@ -1,3 +1,12 @@
+# 3.6.6
+- fixed npc data not being applied if two or more players in same scene
+- fixed `SitChair` animation trigger for NPC
+- fixed dialogue and random talk not syncing
+
+# 3.6.5
+- added config to set ordering style for achievements
+- added try/catch to bounty yml deserializer
+
 # 3.6.4
 - added status effect option for achievement reward
 - achievement either rewards status effect or token, not both

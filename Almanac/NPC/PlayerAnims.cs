@@ -96,7 +96,7 @@ public enum PlayerAnims
     [AnimType(trigger = "emote_roar", isEmote = true)] Roar,
     [AnimType(trigger = "emote_shrug", isEmote = true)] Shrug,
     [AnimType(trigger = "emote_sit", isBool = true, isEmote = true)] Sit,
-    [AnimType(trigger = "emote_sitchair", isEmote = true, isBool = true)] SitChair,
+    [AnimType(trigger = "attach_chair", isBool = true)] SitChair,
     [AnimType(trigger = "emote_stop", isEmote = true)] Stop,
     [AnimType(trigger = "emote_thumbsup", isEmote = true)] ThumbsUp,
     [AnimType(trigger = "emote_toast", isEmote = true)] Toast,

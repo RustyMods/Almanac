@@ -178,11 +178,18 @@ public class BountyManager : MonoBehaviour
             bounties.Clear();
             foreach (string file in files)
             {
-                string data = File.ReadAllText(file);
-                BountyData bounty = deserializer.Deserialize<BountyData>(data);
-                bounties[bounty.UniqueID] = bounty;
-                fileBounties[file] = bounty;
-                bounty.Path = file;
+                try
+                {
+                    string data = File.ReadAllText(file);
+                    BountyData bounty = deserializer.Deserialize<BountyData>(data);
+                    bounties[bounty.UniqueID] = bounty;
+                    fileBounties[file] = bounty;
+                    bounty.Path = file;
+                }
+                catch
+                {
+                    AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse bounty: " + Path.GetFileName(file));
+                }
             }
         }
 
@@ -202,8 +209,7 @@ public class BountyManager : MonoBehaviour
         if (string.IsNullOrEmpty(SyncedBounties.Value)) return;
         try
         {
-            Dictionary<string, BountyData> data =
-                deserializer.Deserialize<Dictionary<string, BountyData>>(SyncedBounties.Value);
+            Dictionary<string, BountyData> data = deserializer.Deserialize<Dictionary<string, BountyData>>(SyncedBounties.Value);
             ActiveBountyLocation = null;
             fileBounties = data;
             bounties.Clear();

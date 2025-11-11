@@ -193,6 +193,7 @@ public class DialogueManager : MonoBehaviour
             Dialogue dialogue = deserializer.Deserialize<Dialogue>(data);
             dialogues[dialogue.UniqueID] = dialogue;
             fileDialogues[args.FullPath] = dialogue;
+            UpdateSyncedDialogues();
         }
         catch
         {
@@ -209,6 +210,7 @@ public class DialogueManager : MonoBehaviour
             Dialogue dialogue = deserializer.Deserialize<Dialogue>(data);
             dialogues[dialogue.UniqueID] = dialogue;
             fileDialogues[args.FullPath] = dialogue;
+            UpdateSyncedDialogues();
         }
         catch
         {
@@ -222,6 +224,7 @@ public class DialogueManager : MonoBehaviour
         if (!fileDialogues.TryGetValue(args.FullPath, out Dialogue dialogue)) return;
         dialogues.Remove(dialogue.UniqueID);
         fileDialogues.Remove(args.FullPath);
+        UpdateSyncedDialogues();
     }
     
     public static bool Exists(string id) => dialogues.ContainsKey(id);

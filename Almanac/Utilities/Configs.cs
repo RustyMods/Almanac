@@ -13,6 +13,15 @@ namespace Almanac.Utilities;
 
 public enum Toggle { On = 1, Off = 0 }
 
+public enum OrderType
+{
+    None,
+    Completed,
+    NotCompleted,
+    DisplayName,
+    UniqueID
+}
+
 public static class Configs
 {
     private static ConfigEntry<Toggle> _serverConfigLocked = null!;
@@ -63,6 +72,8 @@ public static class Configs
 
     private static ConfigEntry<Toggle> _enableAchievementEffects = null!;
     private static ConfigEntry<int> _maxAchievementEffects = null!;
+    private static ConfigEntry<OrderType> _achievementOrdering = null!;
+    
     
     public static bool UseIgnoreList => _UseIgnoreList.Value is Toggle.On;
     public static bool ShowBounties => _BountyEnabled.Value is Toggle.On;
@@ -70,10 +81,8 @@ public static class Configs
     public static bool ShowTreasures => _TreasureEnabled.Value is Toggle.On;
     public static bool ShowAllData => _ShowAllData.Value is Toggle.On;
     public static bool UseKnowledgeWall => _KnowledgeWall.Value is Toggle.On;
-    
     public static bool AchievementEffectsEnabled => _enableAchievementEffects.Value is Toggle.On;
     public static int MaxAchievementEffects => _maxAchievementEffects.Value;
-    
     public static bool ShowAchievementNotices => _enableAchievementNotices.Value is Toggle.On;
     public static bool Transparent => _Transparent.Value is Toggle.On;
     public static Color OutlineColor => _OutlineColor.Value;
@@ -112,6 +121,8 @@ public static class Configs
     public static AlmanacPanel.Background.BackgroundOption bkgOption => Transparent
         ? AlmanacPanel.Background.BackgroundOption.Transparent
         : AlmanacPanel.Background.BackgroundOption.Opaque;
+
+    public static OrderType AchievementOrderType => _achievementOrdering.Value;
     
     public static void Load()
     {
@@ -127,11 +138,8 @@ public static class Configs
         _conversionItem = config("1 - General", "Conversion Item", "Coins", "Set item to use to convert into almanac tokens");
         _almanacEnabled = config("1 - General", "Almanac Button", Toggle.On, "If on, almanac button replaces trophies button");
         _checkNoCost = config("1 - General", "Admin Tools Check No Cost", Toggle.Off, "If on, no cost must be enabled to use admin tools");
-        _enableAchievementNotices = config("1 - General", "Achievement Notices", Toggle.Off,
-            "If on, will show notifications of achievement completion");
-        _adminList = config("1 - General", "Admin List", "",
-            new ConfigDescription("Almanac admin list, names seperated by a comma", null,
-                new ConfigurationManagerAttributes() { CustomDrawer = StringListConfig.Draw }));
+        _enableAchievementNotices = config("1 - General", "Achievement Notices", Toggle.Off, "If on, will show notifications of achievement completion");
+        _adminList = config("1 - General", "Admin List", "", new ConfigDescription("Almanac admin list, names seperated by a comma", null, new ConfigurationManagerAttributes() { CustomDrawer = StringListConfig.Draw }));
         _almanacEnabled.SettingChanged += (_, _) => AlmanacPanel.inventoryButton?.Show(ShowAlmanac);
         _lotteryEnabled = config("2 - Tabs", "Lottery", Toggle.On, "If on, lottery feature is enabled");
         _lotteryEnabled.SettingChanged += (_, _) => AlmanacPanel.instance?.Tabs[AlmanacPanel.Tab.TabOption.Lottery].SetActive(ShowLottery);
@@ -201,6 +209,8 @@ public static class Configs
             "If on, will allow legacy achievement feature: status effects");
         _maxAchievementEffects = config("6 - Achievements", "Max Effects", 8,
             "Set maximum amount of concurrent achievement effects");
+        _achievementOrdering = config("6 - Achievements", "Order Style", OrderType.Completed,
+            "Set how achievements are ordered");
         SetupWatcher();
     }
     

@@ -45,6 +45,7 @@ public static class RandomTalkManager
             RandomTalk talk = deserializer.Deserialize<RandomTalk>(data);
             randomTalks[talk.UniqueID] = talk;
             fileRandomTalks[args.FullPath] = talk;
+            UpdateSyncedTalks();
         }
         catch
         {
@@ -61,6 +62,7 @@ public static class RandomTalkManager
             RandomTalk talk = deserializer.Deserialize<RandomTalk>(data);
             randomTalks[talk.UniqueID] = talk;
             fileRandomTalks[args.FullPath] = talk;
+            UpdateSyncedTalks();
         }
         catch
         {
@@ -74,6 +76,7 @@ public static class RandomTalkManager
         if (!fileRandomTalks.TryGetValue(args.FullPath, out RandomTalk talk)) return;
         randomTalks.Remove(talk.UniqueID);
         fileRandomTalks.Remove(args.FullPath);
+        UpdateSyncedTalks();
     }
 
     private static void LoadDefaults()
@@ -425,7 +428,7 @@ public static class RandomTalkManager
         if (string.IsNullOrEmpty(SyncedRandomTalk.Value)) return;
         try
         {
-            var data = deserializer.Deserialize<Dictionary<string, RandomTalk>>(SyncedRandomTalk.Value);
+            Dictionary<string, RandomTalk> data = deserializer.Deserialize<Dictionary<string, RandomTalk>>(SyncedRandomTalk.Value);
             randomTalks.Clear();
             randomTalks.AddRange(data);
         }

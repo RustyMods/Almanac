@@ -95,7 +95,6 @@ public static class QuestTrackers
             string normalizedName = __instance.name.Replace("(Clone)",string.Empty);
             foreach (QuestManager.Quest? quest in QuestManager.GetQuestsByType(QuestType.Harvest))
             {
-                AlmanacPlugin.AlmanacLogger.LogWarning($"{quest.name}: {quest.prefabName} : {normalizedName}");
                 if (quest.prefabName != normalizedName) continue;
                 quest.Increment();
             }

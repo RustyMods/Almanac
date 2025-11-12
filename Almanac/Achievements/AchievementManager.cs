@@ -589,6 +589,16 @@ public static class AchievementManager
         trinkets.TokenReward = 100;
         trinkets.Requirement.Type = AchievementType.Trinkets;
         achievements[trinkets.UniqueID] = trinkets;
+
+        Achievement meadowTrophies = new Achievement();
+        meadowTrophies.UniqueID = "MeadowTrophies.001";
+        meadowTrophies.Name = "Meadow Trophies";
+        meadowTrophies.Lore = "Collect the trophies of the meadows.";
+        meadowTrophies.Icon = "TrophyEikthyr";
+        meadowTrophies.TokenReward = 10;
+        meadowTrophies.Requirement.Type = AchievementType.CollectItems;
+        meadowTrophies.Requirement.PrefabName = "TrophyDeer,5;TrophyNeck,5;TrophyBoar,5;TrophyEikthyr,1";
+        achievements[meadowTrophies.UniqueID] = meadowTrophies;
     }
     public static bool IsValidType(string input, out AchievementType type) => Enum.TryParse(input, true, out type);
     public static void SaveAchievementEffect(this Achievement achievement, Player player)
@@ -706,6 +716,7 @@ public static class AchievementManager
             Requirement.Threshold = other.Requirement.Threshold;
             Requirement.PrefabName = other.Requirement.PrefabName;
             Requirement._sharedName = null;
+            Requirement._items = null;
         }
         public List<Entries.Entry> ToEntries()
         {
@@ -871,6 +882,15 @@ public static class AchievementManager
                         builder.Add(sharedName, formatted);
                     }
                     break;
+                case AchievementType.CollectItems:
+                    builder.Add(Keys.Require);
+                    foreach (KeyValuePair<string, int> kvp in Requirement.GetRequiredItems())
+                    {
+                        int inventoryCount = Player.m_localPlayer.GetInventory().CountItems(kvp.Key);
+                        string formatted = $"{inventoryCount}/{kvp.Value}";
+                        builder.Add(kvp.Key, formatted);
+                    }
+                    break;
             }
             if (Configs.AchievementEffectsEnabled && !string.IsNullOrEmpty(StatusEffect) && ObjectDB.instance.GetStatusEffect(StatusEffect.GetStableHashCode()) is CustomEffect achievementEffect)
             {
@@ -969,7 +989,9 @@ public static class AchievementManager
             public string Group = string.Empty;
             public string PrefabName = string.Empty;
             public int Threshold;
+            
             [NonSerialized, YamlIgnore] public string? _sharedName;
+            [NonSerialized, YamlIgnore] public Dictionary<string, int>? _items;
             [YamlIgnore] public GameObject? prefab => ZNetScene.instance.GetPrefab(PrefabName);
             public int GetThreshold()
             {
@@ -995,8 +1017,28 @@ public static class AchievementManager
                     AchievementType.Trinkets => Threshold > 0 ? Threshold : ItemHelper.trinkets.Count,
                     AchievementType.Recipes => Threshold > 0 ? Threshold : ItemHelper.recipes.Count,
                     AchievementType.CreatureGroup => CreatureGroup.TryGetGroup(Group, out List<string> group) ? group.Count : 0,
+                    AchievementType.CollectItems => Threshold > 0 ? Threshold : GetRequiredItems().Count,
                     _ => Threshold,
                 };
+            }
+
+            public Dictionary<string, int> GetRequiredItems()
+            {
+                if (_items != null) return _items;
+                Dictionary<string, int> items = new Dictionary<string, int>();
+                if (Type is not AchievementType.CollectItems) return items;
+                string[] parts = PrefabName.Split(';');
+                foreach (string part in parts)
+                {
+                    string[] args = part.Split(',');
+                    if (args.Length < 2) continue;
+                    string name = args[0].Trim();
+                    if (!int.TryParse(args[1], out int amount)) continue;
+                    if (ObjectDB.instance.GetItemPrefab(name) is not {} itemPrefab || !itemPrefab.TryGetComponent(out ItemDrop itemDrop)) continue;
+                    items[itemDrop.m_itemData.m_shared.m_name] = amount;
+                }
+                _items = items;
+                return items;
             }
             public int GetProgress(Player player)
             {
@@ -1041,8 +1083,23 @@ public static class AchievementManager
                     AchievementType.Pickable => PlayerInfo.GetPlayerStat(PlayerInfo.RecordType.Pickable, PrefabName),
                     AchievementType.Kill => PlayerInfo.GetEnemyKill(PrefabName, false),
                     AchievementType.CreatureGroup => CreatureGroup.GetProgress(Group, Threshold),
+                    AchievementType.CollectItems => GetCollectItemsProgress(player),
                     _ => 0,
                 };
+            }
+
+            public int GetCollectItemsProgress(Player player)
+            {
+                Dictionary<string, int> items = GetRequiredItems();
+                Dictionary<string, int> inventoryCount = player.GetInventory().CountMultipleItems(items.Keys.ToList());
+                int count = 0;
+                foreach (KeyValuePair<string, int> item in items)
+                {
+                    if (!inventoryCount.TryGetValue(item.Key, out int inventoryAmount) || inventoryAmount < item.Value) continue;
+                    ++count;
+                }
+
+                return count;
             }
         }
     }
@@ -1054,6 +1111,20 @@ public static class AchievementHelpers
     public static bool IsCollected(this AchievementManager.Achievement achievement, Player player)
     {
         return player.GetCollectedAchievements().Contains(achievement.Name.GetStableHashCode());
+    }
+
+    public static Dictionary<string, int> CountMultipleItems(this Inventory inventory, List<string> itemNames)
+    {
+        Dictionary<string, int> output = new Dictionary<string, int>();
+        foreach (ItemDrop.ItemData? item in inventory.m_inventory)
+        {
+            if (itemNames.Contains(item.m_shared.m_name))
+            {
+                output.IncrementOrSet(item.m_shared.m_name);
+            }
+        }
+
+        return output;
     }
     public static void ResetAchievementCollected(this Player player, AchievementManager.Achievement achievement)
     {

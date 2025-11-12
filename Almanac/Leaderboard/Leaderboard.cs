@@ -20,7 +20,7 @@ public static class Leaderboard
 {
     private static string? LeaderboardFileName;
     private static readonly CustomSyncedValue<string> SyncedLeaderboard = new(AlmanacPlugin.ConfigSync, "Almanac_Server_Synced_Leaderboard", "");
-    private static readonly Dictionary<string, LeaderboardInfo> players = new();
+    public static readonly Dictionary<string, LeaderboardInfo> players = new();
     public static readonly AlmanacDir LeaderboardDir = new (AlmanacPlugin.AlmanacDir.Path, "Leaderboards");
     private static readonly ISerializer serializer = new SerializerBuilder().Build();
     private static readonly IDeserializer deserializer = new DeserializerBuilder().Build();

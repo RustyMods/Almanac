@@ -15,18 +15,18 @@ These achievements sync between server and client, and are dynamically reloaded 
 
 Below are the available **Achievement Types** you can use:
 
-|                       |                       |                       |                       |
-|-----------------------|-----------------------|-----------------------|-----------------------|
-| `Arrows`              | `ArrowsShot`          | `Axes`                | `Bows`                |
-| `Consumables`         | `CreatureGroup`       | `CreatureTamed`       | `Deaths`              |
-| `DistanceInAir`       | `DistanceRan`         | `DistanceSailed`      | `DistanceWalked`      |
-| `EnemyKills`          | `Fish`                | `FoodEaten`           | `ItemsPicked`         |
-| `Kill`                | `Knives`              | `Maces`               | `Materials`           |
-| `MineHits`            | `Pickable`            | `PlayerKills`         | `PoleArms`            |
-| `Potions`             | `Recipes`             | `Shields`             | `Spears`              |
-| `Staves`              | `Swords`              | `TimeInBase`          | `TimeOutOfBase`       |
-| `TotalJumps`          | `TotalMined`          | `Trophies`            | `Valuables`           |
-| `Weapons`             |                       |                       |                       |
+|                       |                 |                       |                       |
+|-----------------------|-----------------|-----------------------|-----------------------|
+| `Arrows`              | `ArrowsShot`    | `Axes`                | `Bows`                |
+| `Consumables`         | `CreatureGroup` | `CreatureTamed`       | `Deaths`              |
+| `DistanceInAir`       | `DistanceRan`   | `DistanceSailed`      | `DistanceWalked`      |
+| `EnemyKills`          | `Fish`          | `FoodEaten`           | `ItemsPicked`         |
+| `Kill`                | `Knives`        | `Maces`               | `Materials`           |
+| `MineHits`            | `Pickable`      | `PlayerKills`         | `PoleArms`            |
+| `Potions`             | `Recipes`       | `Shields`             | `Spears`              |
+| `Staves`              | `Swords`        | `TimeInBase`          | `TimeOutOfBase`       |
+| `TotalJumps`          | `TotalMined`    | `Trophies`            | `Valuables`           |
+| `Weapons`             | `CollectItems`  |                       |                       |
 
 
 ### Achievement File Structure
@@ -48,6 +48,7 @@ Each achievement is defined as a YAML file with properties like:
 - Server automatically syncs achievements to clients.
 - Thresholds can be left at `0` for auto-detection (e.g., total number of fish).
 - PrefabName is required for `Kill` and `Pickable` types.
+- `CollectItems` type Requirement.PrefabName entry format: `prefabname,amount;prefabname,amount`
 
 # Almanac Bounties
 The Almanac Bounty system lets players purchase bounty contracts to hunt special creatures.
@@ -72,7 +73,6 @@ Each bounty entry can define:
 - Bounties require players to kill the target directly — indirect deaths won’t count.
 - If the bounty despawns, escapes, or is killed by another player, the cost is returned.
 - Bounties are subject to a configurable cooldown (default in minutes).
-
 ### Tips
 - You can reload or edit `.yml` bounty files while the server is running; changes sync automatically.
 - Each bounty spawns a pin on the map when accepted.

@@ -59,11 +59,11 @@ public static class AchievementNoticeExtensions
     public static void SetNotified(this AchievementManager.Achievement achievement)
     {
         if (!Player.m_localPlayer) return;
-        if (Player.m_localPlayer.m_customData.TryGetValue(NOTIFICATION_KEY, out var data))
+        if (Player.m_localPlayer.m_customData.TryGetValue(NOTIFICATION_KEY, out string? data))
         {
             List<string> list = data.Split(';').ToList();
             list.Add(achievement.UniqueID);
-            Player.m_localPlayer.m_customData[NOTIFICATION_KEY] = string.Join(";", list.ToArray());
+            Player.m_localPlayer.m_customData[NOTIFICATION_KEY] = string.Join(";", list);
         }
         else
         {

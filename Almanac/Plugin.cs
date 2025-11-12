@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using Almanac.Achievements;
 using Almanac.Bounties;
 using Almanac.Data;
@@ -32,7 +31,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.6.6";
+        internal const string ModVersion = "3.6.7";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         public const string ConfigFileName = ModGUID + ".cfg";
@@ -82,6 +81,7 @@ namespace Almanac
             PlayerInfo.Setup();
             DialogueManager.Setup();
             RandomTalkManager.Setup();
+            
             SetupCommands();
             SetupDiscordCommands();
             Assembly assembly = Assembly.GetExecutingAssembly();
@@ -148,6 +148,36 @@ namespace Almanac
                 }
                 DiscordBot_API.SendWebhookTable(DiscordBot_API.Channel.Commands, "Leaderboard", table);
             }, emoji:"brokenheart");
+            
+            DiscordBot_API.RegisterCommand("!almanacstore", "displays player items on sale", _ =>
+            {
+                var list = MarketManager.GetMarketItems();
+                if (list.Count <= 0)
+                {
+                    DiscordBot_API.SendWebhookMessage(DiscordBot_API.Channel.Commands, "No player items on marketplace");
+                }
+                else
+                {
+                    Dictionary<string, string> details = new();
+                    foreach (var item in list)
+                    {
+                        details[item.itemData.m_shared.m_name] =
+                            $"${item.GetCostPerUnit():0.0} {Keys.AlmanacToken}\nPosted by: {item.PostedBy}\nDate posted: {item.DatePosted:yyyy-M-d dddd}";
+                    }
+                    DiscordBot_API.SendWebhookTable(DiscordBot_API.Channel.Commands, "Marketplace", details);
+                }
+            });
+            
+            DiscordBot_API.RegisterCommand("!leaderboardremove", "removes player entry from leaderboard, `player name`",
+                args =>
+                {
+                    if (args.Length < 2) return;
+                    string playerName = args[1].Trim();
+                    if (!Leaderboard.players.Remove(playerName))
+                    {
+                        DiscordBot_API.SendWebhookMessage(DiscordBot_API.Channel.Commands, "Failed to find leaderboard player");
+                    }
+                }, adminOnly: true);
         }
         private void SetupCommands()
         {

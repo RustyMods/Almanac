@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using BepInEx;
 using HarmonyLib;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Almanac.Managers;
@@ -41,6 +42,7 @@ public class CommandData
     [HarmonyPatch(typeof(Terminal), nameof(Terminal.updateSearch))]
     private static class Terminal_UpdateSearch_Patch
     {
+        [UsedImplicitly]
         private static bool Prefix(Terminal __instance, string word)
         {
             if (__instance.m_search == null) return true;
@@ -94,6 +96,7 @@ public class CommandData
     [HarmonyPatch(typeof(Terminal), nameof(Terminal.tabCycle))]
     private static class Terminal_TabCycle_Patch
     {
+        [UsedImplicitly]
         private static bool Prefix(Terminal __instance, string word, List<string>? options, bool usePrefix)
         { 
             if (options == null || options.Count == 0) return true;

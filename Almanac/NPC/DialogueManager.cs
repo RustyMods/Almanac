@@ -169,7 +169,7 @@ public class DialogueManager : MonoBehaviour
             buildPiece.Name.English("Almanac NPC");
             buildPiece.Description.English("Placeable human NPC");
             buildPiece.Category.Set("Almanac");
-            buildPiece.RequiredItems.Add("SwordCheat", 1, true);
+            buildPiece.RequiredItems.Add("SwordCheat", 1, false);
         };
         SyncedDialogue.ValueChanged += OnSyncedDialogueChange;
         AlmanacPlugin.OnZNetAwake += UpdateSyncedDialogues;

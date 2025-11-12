@@ -141,7 +141,6 @@
         <Compile Include="Bounties\Bounty.cs" />
         <Compile Include="Bounties\BountyManager.cs" />
         <Compile Include="Bounties\NameGenerator.cs" />
-        <Compile Include="Data\ModHelper.cs" />
         <Compile Include="Data\PieceHelper.cs" />
         <Compile Include="Data\CritterHelper.cs" />
         <Compile Include="Data\ItemHelper.cs" />

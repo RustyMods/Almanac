@@ -1,6 +1,6 @@
 {
   "name": "Almanac",
-  "version_number": "3.6.6",
+  "version_number": "3.6.7",
   "website_url": "https://github.com/RustyMods/Almanac",
   "description": "Achievements, Bounties, Treasure Hunt, Player Metrics, Leaderboard, Indexing, Marketplace, Lottery",
   "dependencies": [

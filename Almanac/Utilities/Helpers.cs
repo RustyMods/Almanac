@@ -29,11 +29,11 @@ public static class Helpers
         if (prefab.TryGetComponent(out T component)) Object.Destroy(component);
     }
 
-    public static bool HasItem(this Player player, string sharedName, int quality)
+    public static bool HasItem(this Player player, string sharedName, int quality = -1)
     {
         foreach (ItemDrop.ItemData? item in player.GetInventory().GetAllItems())
         {
-            if (item.m_shared.m_name == sharedName && item.m_quality == quality) return true;
+            if (item.m_shared.m_name == sharedName && (quality == -1 || item.m_quality == quality)) return true;
         }
         return false;
     }

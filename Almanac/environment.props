@@ -4,7 +4,7 @@
         <BepInExPath>$(ValheimGamePath)\BepInEx</BepInExPath>
         <CorlibPath>$(ValheimGamePath)\unstripped_corlib</CorlibPath>
         <PublicizedAssembliesPath>$(ValheimGamePath)\valheim_Data\Managed\publicized_assemblies</PublicizedAssembliesPath>
-        <CopyOutputDLLPath>C:\Users\peima\AppData\Roaming\com.kesomannen.gale\valheim\profiles\vanilla\BepInEx\plugins\RustyMods-Almanac</CopyOutputDLLPath>
+        <CopyOutputDLLPath>C:\Users\peima\AppData\Roaming\com.kesomannen.gale\valheim\profiles\tester\BepInEx\plugins\RustyMods-Almanac</CopyOutputDLLPath>
         <CopyOutputDLLPath2>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server\BepInEx\plugins</CopyOutputDLLPath2>
         <AfterTargets>ILRepacker</AfterTargets>
     </PropertyGroup>

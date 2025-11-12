@@ -41,5 +41,6 @@ public enum AchievementType
     Recipes,
     CreatureGroup,
     Pickable,
-    Kill
+    Kill,
+    CollectItems
 }

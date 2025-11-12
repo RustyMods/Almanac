@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Almanac.UI;
 using Almanac.Utilities;
-using BepInEx;
 using HarmonyLib;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -35,6 +34,7 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
     public ZSyncAnimation m_zanim = null!;
     public NPCTalk? m_talk;
     public EffectList m_hitEffects = new();
+    public Piece m_piece;
 
     public string m_name = NPCVars.DefaultName;
     public string m_dialogueID = string.Empty;
@@ -67,6 +67,7 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
         m_visEquipment = GetComponent<VisEquipment>();
         m_zanim = GetComponent<ZSyncAnimation>();
         m_talk = GetComponent<NPCTalk>();
+        m_piece = GetComponent<Piece>();
         if (!m_nview.IsValid()) return;
         m_nview.Register<HitData>(nameof(RPC_Damage), RPC_Damage);
         m_nview.Register(nameof(RPC_Stagger), RPC_Stagger);
@@ -342,7 +343,7 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
     private static string GetPrefabFromHash(int hash) => !ObjectDB.instance || ObjectDB.instance.GetItemPrefab(hash) is not { } prefab ? string.Empty : prefab.name;
     public bool Interact(Humanoid user, bool hold, bool alt)
     {
-        if (alt)
+        if (alt && (m_piece.IsCreator() || AlmanacPanel.isLocalAdminOrHostAndNoCost))
         {
             m_nview.ClaimOwnership();
             NPCCustomization.instance?.Show(this);
@@ -361,7 +362,7 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
         {
             text += $"\n[<color=yellow><b>$KEY_Use</b></color>] {Keys.Talk}";
         }
-        text += $"\n[<color=yellow><b>L.Shift + $KEY_Use</b></color>] {Keys.Customize}";
+        if (m_piece.IsCreator() || AlmanacPanel.isLocalAdminOrHostAndNoCost) text += $"\n[<color=yellow><b>L.Shift + $KEY_Use</b></color>] {Keys.Customize}";
 
         return Localization.instance.Localize(text);
     }

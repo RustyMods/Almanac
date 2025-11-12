@@ -1,3 +1,7 @@
+# 3.6.7
+- made npc customization locked behind creator of npc or admin
+- added achievement type: `CollectItems`, use requirement field: `PrefabName` formatting example: `TrophyDeer,5;TrophyBoar,2;TrophyNeck,3` for `prefabID, count`. Must have items in inventory while checking achievement.
+
 # 3.6.6
 - fixed npc data not being applied if two or more players in same scene
 - fixed `SitChair` animation trigger for NPC

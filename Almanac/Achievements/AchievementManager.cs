@@ -599,6 +599,16 @@ public static class AchievementManager
         meadowTrophies.Requirement.Type = AchievementType.CollectItems;
         meadowTrophies.Requirement.PrefabName = "TrophyDeer,5;TrophyNeck,5;TrophyBoar,5;TrophyEikthyr,1";
         achievements[meadowTrophies.UniqueID] = meadowTrophies;
+
+        Achievement completionist = new Achievement();
+        completionist.UniqueID = "Completionist.001";
+        completionist.Name = "Completionist";
+        completionist.Icon = "crown";
+        completionist.TokenReward = 20;
+        completionist.Lore = "Complete over 10 achievements";
+        completionist.Requirement.Type = AchievementType.Achievements;
+        completionist.Requirement.Threshold = 10;
+        achievements[completionist.UniqueID] = completionist;
     }
     public static bool IsValidType(string input, out AchievementType type) => Enum.TryParse(input, true, out type);
     public static void SaveAchievementEffect(this Achievement achievement, Player player)
@@ -891,6 +901,13 @@ public static class AchievementManager
                         builder.Add(kvp.Key, formatted);
                     }
                     break;
+                case AchievementType.Achievements:
+                    if (Requirement.Achievements.Count <= 0)
+                    {
+                        builder.Add(Keys.Require);
+                        builder.Add($"Collect {Requirement.GetThreshold()} achievements", "lore");
+                    }
+                    break;
             }
             if (Configs.AchievementEffectsEnabled && !string.IsNullOrEmpty(StatusEffect) && ObjectDB.instance.GetStatusEffect(StatusEffect.GetStableHashCode()) is CustomEffect achievementEffect)
             {
@@ -900,7 +917,7 @@ public static class AchievementManager
             return builder.ToList();
         }
 
-        public void OnClick(AlmanacPanel panel, AlmanacPanel.ElementView.Element item)
+        public void OnClick(AlmanacPanel panel, AlmanacPanel.ElementView.Element? item)
         {
             bool isCompleted = this.IsCompleted(Player.m_localPlayer);
             bool isCollected = this.IsCollected(Player.m_localPlayer);
@@ -926,14 +943,41 @@ public static class AchievementManager
                     form.loreField.input?.Set(Lore);
                     form.iconField.input?.Set(Icon);
                     form.rewardField.input?.Set(TokenReward.ToString());
+                    form.statusField.input?.Set(StatusEffect);
                     form.typeField.input?.Set(Requirement.Type.ToString());
                     form.prefabField.input?.Set(Requirement.PrefabName);
                     form.groupField.input?.Set(Requirement.Group);
+                    form.achievementField.input?.Set(string.Join(";", Requirement.Achievements));
                     form.thresholdField.input?.Set(Requirement.Threshold.ToString());
                     form.HasChanged = false;
                 });
             }
             ToEntries().Build(panel.description.view);
+
+            if (Requirement.Type is AchievementType.Achievements && Requirement.Achievements.Count > 0)
+            {
+                panel.description.view.CreateTitle().SetTitle(Keys.Require);
+                List<Achievement> achievements = new List<Achievement>();
+                foreach (string? name in Requirement.Achievements)
+                {
+                    if (!TryGetAchievement(name, out var achievement)) continue;
+                    achievements.Add(achievement);
+                }
+
+                if (achievements.Count > 4)
+                {
+                    IEnumerable<List<Achievement>> batches = achievements.Batch(4);
+                    foreach (List<Achievement>? batch in batches)
+                    {
+                        panel.description.view.CreateIcons().SetIcons(batch.ToArray());
+                    }
+                }
+                else
+                {
+                    panel.description.view.CreateIcons().SetIcons(achievements.ToArray());
+                }
+            }
+            
             panel.description.view.Resize();
 
             if (Configs.AchievementEffectsEnabled && !string.IsNullOrEmpty(StatusEffect))
@@ -977,7 +1021,7 @@ public static class AchievementManager
                     Player.m_localPlayer.SetAchievementCollected(this);
                     panel.description.Interactable(false);
                     panel.description.SetButtonText(Keys.Collected);
-                    item.ShowNotice(false);
+                    item?.ShowNotice(false);
                 };
             }
         }
@@ -988,6 +1032,7 @@ public static class AchievementManager
             public AchievementType Type;
             public string Group = string.Empty;
             public string PrefabName = string.Empty;
+            public List<string> Achievements = new();
             public int Threshold;
             
             [NonSerialized, YamlIgnore] public string? _sharedName;
@@ -1018,6 +1063,7 @@ public static class AchievementManager
                     AchievementType.Recipes => Threshold > 0 ? Threshold : ItemHelper.recipes.Count,
                     AchievementType.CreatureGroup => CreatureGroup.TryGetGroup(Group, out List<string> group) ? group.Count : 0,
                     AchievementType.CollectItems => Threshold > 0 ? Threshold : GetRequiredItems().Count,
+                    AchievementType.Achievements => Threshold > 0 ? Threshold : Achievements.Count,
                     _ => Threshold,
                 };
             }
@@ -1084,6 +1130,7 @@ public static class AchievementManager
                     AchievementType.Kill => PlayerInfo.GetEnemyKill(PrefabName, false),
                     AchievementType.CreatureGroup => CreatureGroup.GetProgress(Group, Threshold),
                     AchievementType.CollectItems => GetCollectItemsProgress(player),
+                    AchievementType.Achievements => GetAchievementsProgress(player),
                     _ => 0,
                 };
             }
@@ -1097,6 +1144,18 @@ public static class AchievementManager
                 {
                     if (!inventoryCount.TryGetValue(item.Key, out int inventoryAmount) || inventoryAmount < item.Value) continue;
                     ++count;
+                }
+
+                return count;
+            }
+
+            public int GetAchievementsProgress(Player player)
+            {
+                int count = 0;
+                foreach (var achievement in Achievements)
+                {
+                    if (!TryGetAchievement(achievement, out Achievement data)) continue;
+                    if (data.IsCompleted(player)) ++count;
                 }
 
                 return count;
@@ -1142,7 +1201,7 @@ public static class AchievementHelpers
     }
     public static List<int> GetCollectedAchievements(this Player player)
     {
-        return !player.m_customData.TryGetValue(AchievementManager.ACHIEVEMENT_KEY, out var achievements) 
+        return !player.m_customData.TryGetValue(AchievementManager.ACHIEVEMENT_KEY, out string? achievements) 
             ? new() 
             : AchievementManager.deserializer.Deserialize<List<int>>(achievements);
     }

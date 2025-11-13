@@ -1,3 +1,33 @@
+# 3.6.8
+- added new achievement requirement type: `Achievements`
+Format Examples:  
+```yml
+## Complete specific achievements
+UniqueID: SomeAchievements.001
+Name: Some Achievements
+Lore: Complete the achievements
+Icon: crown
+TokenReward: 20
+Requirement:
+  Type: Achievements
+  Achievements:
+  - MeadowTrophies.001
+  - Trinkets.001
+  - Eikthyr.001
+  - Boars.001
+  - TotalMined.001
+```
+```yml
+## complete a count of achievements
+UniqueID: Completionist.001
+Name: Completionist
+Lore: Complete over 10 achievements
+Icon: crown
+TokenReward: 20
+Requirement:
+  Type: Achievements
+  Threshold: 10
+```
 # 3.6.7
 - made npc customization locked behind creator of npc or admin
 - added achievement type: `CollectItems`, use requirement field: `PrefabName` formatting example: `TrophyDeer,5;TrophyBoar,2;TrophyNeck,3` for `prefabID, count`. Must have items in inventory while checking achievement.

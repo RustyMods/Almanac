@@ -1442,6 +1442,7 @@ public class FormPanel : MonoBehaviour, IDragHandler, IBeginDragHandler
         private AchievementType type;
         private string PrefabID = string.Empty;
         private string Group = string.Empty;
+        private List<string> Achievements = new();
         private int threshold;
 
         public readonly FormField idField;
@@ -1454,6 +1455,7 @@ public class FormPanel : MonoBehaviour, IDragHandler, IBeginDragHandler
         public readonly FormField prefabField;
         public readonly FormField groupField;
         public readonly FormField thresholdField;
+        public readonly FormField achievementField;
 
         public bool inEditMode;
         public string overridePath = string.Empty;
@@ -1653,6 +1655,13 @@ public class FormPanel : MonoBehaviour, IDragHandler, IBeginDragHandler
                         break;
                 }
                 field.SetTextColor(!data.isValid ? Color.red : Color.white);
+            }, startsValid: true);
+            achievementField = AddField(Keys.Achievement, "List of achievements", "...", (s, field, data) =>
+            {
+                HasChanged = true;
+                Achievements.Clear();
+                if (string.IsNullOrEmpty(s)) return;
+                Achievements.AddRange(s.Split(';'));
             }, startsValid: true);
             thresholdField = AddField(Keys.Threshold, "If 0, uses max value of achievement type, ie. achievement type fish is all fish (12)", "0", (s, _, _) =>
                 {

@@ -42,5 +42,6 @@ public enum AchievementType
     CreatureGroup,
     Pickable,
     Kill,
-    CollectItems
+    CollectItems,
+    Achievements
 }

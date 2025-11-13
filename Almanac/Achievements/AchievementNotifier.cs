@@ -10,7 +10,7 @@ public class AchievementNotifier : MonoBehaviour
     public float checkInterval = 1800f;
     public float timer;
     public float messageInterval = 300f;
-    public readonly Queue<string> messages = new();
+    public readonly Queue<AchievementManager.Achievement> queuedAchievements = new();
     public void Awake()
     {
         InvokeRepeating(nameof(CheckAchievements), 300f, checkInterval);   
@@ -22,10 +22,11 @@ public class AchievementNotifier : MonoBehaviour
         timer += Time.deltaTime;
         if (timer < messageInterval) return;
         timer = 0.0f;
-        if (messages.Count <= 0) return;
-        string? message = messages.Dequeue();
+        if (queuedAchievements.Count <= 0) return;
+        AchievementManager.Achievement? achievement = queuedAchievements.Dequeue();
+        string message = $"{achievement.Name} {Keys.Completed}";
         MessageHud.instance.ShowBiomeFoundMsg(message, true);
-
+        achievement.SetNotified();
     }
 
     public void CheckAchievements()
@@ -36,10 +37,8 @@ public class AchievementNotifier : MonoBehaviour
         for (int i = 0; i < list.Count; ++i)
         {
             AchievementManager.Achievement? achievement = list[i];
-            if (achievement.IsCollected(Player.m_localPlayer) || !achievement.IsCompleted(Player.m_localPlayer) || achievement.HasBeenNotified()) continue;
-            string message = $"{achievement.Name} {Keys.Completed}";
-            messages.Enqueue(message);
-            achievement.SetNotified();
+            if (achievement.IsCollected(Player.m_localPlayer) || !achievement.IsCompleted(Player.m_localPlayer) || achievement.HasBeenNotified() || queuedAchievements.Contains(achievement)) continue;
+            queuedAchievements.Enqueue(achievement);
         }
     }
 }

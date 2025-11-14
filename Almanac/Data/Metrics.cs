@@ -139,12 +139,18 @@ public static class PlayerInfo
         [UsedImplicitly]
         private static void Prefix(Character __instance)
         {
+            // this is run only by the ZDO owner
             if (!__instance || !Player.m_localPlayer) return;
             if (__instance.m_lastHit?.GetAttacker() is not { } attacker) return;
             if (attacker == Player.m_localPlayer)
             {
                 // Records.kills.IncrementOrSet(__instance.m_name);
                 OnCharacterDeathByLocal?.Invoke(__instance);
+            }
+            else if (attacker is Player player)
+            {
+                // because only the owner updates their profile, we need to broadcast the kill
+                ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.Everybody, nameof(RPC_BroadcastKill), player.GetPlayerID(), __instance.m_name);
             }
             else if (__instance == Player.m_localPlayer)
             {
@@ -205,6 +211,14 @@ public static class PlayerInfo
         AlmanacPlugin.OnPlayerProfileLoadPlayerDataPostfix += player => _cachedRecords = player.GetRecords();
         AlmanacPlugin.OnPlayerProfileSavePlayerDataPrefix += player => Records.Save(player);
         AlmanacPlugin.OnNewCharacterDone += () => _cachedRecords = new PlayerRecords();
+        AlmanacPlugin.OnZNetAwake += () => ZRoutedRpc.instance.Register<long, string>(nameof(RPC_BroadcastKill), RPC_BroadcastKill);
+    }
+
+    public static void RPC_BroadcastKill(long sender, long playerID, string creatureSharedName)
+    {
+        if (!Player.m_localPlayer || Player.m_localPlayer.GetPlayerID() != playerID) return;
+        Game.instance.GetPlayerProfile().m_enemyStats.IncrementOrSet(creatureSharedName);
+        AlmanacPlugin.AlmanacLogger.LogDebug($"Received RPC of character death: {creatureSharedName}, and I am the one who hit last.");
     }
     
     public static List<Entries.Entry> GetEntries()

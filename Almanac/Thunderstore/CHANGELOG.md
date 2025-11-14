@@ -28,6 +28,8 @@ Requirement:
   Type: Achievements
   Threshold: 10
 ```
+- added ZRoutedRPC to broadcast kill so even if player who hit last is not the owner of the character who died, their metrics increment.
+- fix notifications not notifying if player quits game before queued message revealed
 # 3.6.7
 - made npc customization locked behind creator of npc or admin
 - added achievement type: `CollectItems`, use requirement field: `PrefabName` formatting example: `TrophyDeer,5;TrophyBoar,2;TrophyNeck,3` for `prefabID, count`. Must have items in inventory while checking achievement.

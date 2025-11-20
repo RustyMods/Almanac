@@ -115,6 +115,7 @@ public static class MarketManager
     }
     private static void Initialize()
     {
+        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("MarketManager.Initialize");
         MarketFileName = ZNet.instance.GetWorldName() + ".Marketplace.dat";
         RevenueFileName = ZNet.instance.GetWorldName() + ".Revenue.dat";
         ZRoutedRpc.instance.Register<string>(nameof(RPC_AddMarketItem), RPC_AddMarketItem);
@@ -128,6 +129,7 @@ public static class MarketManager
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
         string data = serializer.Serialize(marketItems);
         SyncedMarket.Value = data;
+        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Server: Marketplace.Update");
     }
     private static void OnServerRevenueChange()
     {
@@ -138,6 +140,7 @@ public static class MarketManager
             Dictionary<string, int> data = deserializer.Deserialize<Dictionary<string, int>>(SyncedRevenue.Value);
             revenues.Clear();
             revenues.AddRange(data);
+            if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Client: Marketplace.Revenue.Update");
             if (!AlmanacPanel.IsVisible()) return;
             if (AlmanacPanel.instance?.Tabs[AlmanacPanel.Tab.TabOption.Store].IsSelected ?? false) AlmanacPanel.instance.OnStoreTab();
         }
@@ -152,6 +155,7 @@ public static class MarketManager
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
         string data = serializer.Serialize(revenues);
         SyncedRevenue.Value = data;
+        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Server: Marketplace.Revenue.Update");
     }
     public static List<MarketItem> GetMarketItems()
     {
@@ -391,7 +395,9 @@ public static class MarketManager
         {
             panel.elementView.SetSelected(item);
             panel.description.Reset();
-            panel.description.SetName(itemData.m_shared.m_name + $" x{Stack}");
+            string displayName = itemData.m_shared.m_name;
+            if (Stack != 1) displayName += $" x{Stack}";
+            panel.description.SetName(displayName);
             panel.description.SetIcon(itemData.GetIcon());
             bool hasReqs = HasRequirements(Player.m_localPlayer);
             panel.description.Interactable(hasReqs);

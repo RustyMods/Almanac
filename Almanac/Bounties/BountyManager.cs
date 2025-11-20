@@ -39,12 +39,14 @@ public class BountyManager : MonoBehaviour
     public static bool TryGetBountyData(string id, out BountyData data) => bounties.TryGetValue(id, out data); 
     public void Awake()
     {
+        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Almanac.BountyManager.Awake");
         instance = this;
     }
     public void Initialize()
     {
         if (IsInvoking(nameof(CheckBountyLocation))) return;
         InvokeRepeating(nameof(CheckBountyLocation), 10f, 10f);
+        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("BountyManager.Initialize");
     }
     public void OnDestroy()
     {
@@ -84,6 +86,7 @@ public class BountyManager : MonoBehaviour
         GameObject go = ZNetScene.instance.CreateObject(zdo);
         go.AddComponent<Bounty>();
         SpawnEffects.Create(go.transform.position, Quaternion.identity);
+        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug($"BountyManager.SpawnBounty: {ActiveBountyLocation.data.Creature}");
     }
     public static bool IsOnCooldown()
     {
@@ -164,6 +167,7 @@ public class BountyManager : MonoBehaviour
         string[] files = BountyDir.GetFiles("*.yml", true);
         if (files.Length <= 0)
         {
+            if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("BountyManager: No bounties on disk, writing defaults");
             foreach (BountyData? bounty in bounties.Values)
             {
                 string data = serializer.Serialize(bounty);
@@ -175,6 +179,7 @@ public class BountyManager : MonoBehaviour
         }
         else
         {
+            if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug($"BountyManager. Bounties found ({files.Length}), updating");
             bounties.Clear();
             foreach (string file in files)
             {
@@ -217,6 +222,7 @@ public class BountyManager : MonoBehaviour
             {
                 bounties[bounty.UniqueID] = bounty;
             }
+            if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Client: BountyManager.Bounties.OnServerBountyChanged");
         }
         catch
         {

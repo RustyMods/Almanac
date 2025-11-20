@@ -47,6 +47,7 @@ public static class AchievementManager
         string[] files = AchievementDir.GetFiles("*.yml", true);
         if (files.Length == 0)
         {
+            if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("AchievementManager: No achievements found, writing defaults");
             foreach (Achievement achievement in achievements.Values)
             {
                 string data = serializer.Serialize(achievement);
@@ -59,6 +60,7 @@ public static class AchievementManager
         }
         else
         {
+            if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug($"AchievementManager: Achievements found ({files.Length}), updating");
             achievements.Clear();
             foreach (string file in files)
             {
@@ -149,6 +151,7 @@ public static class AchievementManager
     {
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
         SyncedServerAchievements.Value = serializer.Serialize(achievements);
+        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Server: AchievementManager.UpdateAchievements");
     }
     private static void OnServerAchievementsChanged()
     {
@@ -159,6 +162,7 @@ public static class AchievementManager
             Dictionary<string, Achievement> data = deserializer.Deserialize<Dictionary<string, Achievement>>(SyncedServerAchievements.Value);
             achievements.Clear();
             achievements.AddRange(data);
+            if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Client: AchievementManager.UpdateAchievements");
         }
         catch
         {
@@ -621,14 +625,12 @@ public static class AchievementManager
         list.Add(achievement.UniqueID);
         player.m_customData[ACHIEVEMENT_EFFECTS] = string.Join(";", list);
     }
-
     public static bool IsSavedEffect(this Achievement achievement, Player player)
     {
         if (!player.m_customData.TryGetValue(ACHIEVEMENT_EFFECTS, out var savedEffects)) return false;
         HashSet<string> list = savedEffects.Split(';').ToHashSet();
         return list.Contains(achievement.UniqueID);
     }
-
     public static void RemoveAchievementEffect(this Achievement achievement, Player player)
     {
         if (string.IsNullOrEmpty(achievement.StatusEffect)) return;
@@ -694,11 +696,14 @@ public static class AchievementManager
         private static void Postfix(Player __instance)
         {
             if (!Configs.AchievementEffectsEnabled) return;
+            int count = 0;
             foreach (Achievement achievement in achievements.Values)
             {
                 if (!achievement.IsCompleted(__instance) || string.IsNullOrEmpty(achievement.StatusEffect) || !achievement.IsSavedEffect(__instance)) continue;
                 achievement.ApplyAchievementEffect(__instance, false);
+                ++count;
             }
+            if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug($"Player.OnSpawned: Applying saved achievement effects ({count})");
         }
     }
 
@@ -977,6 +982,30 @@ public static class AchievementManager
                     panel.description.view.CreateIcons().SetIcons(achievements.ToArray());
                 }
             }
+
+            if (Requirement.CompletedAchievements.Count > 0)
+            {
+                panel.description.view.CreateTitle().SetTitle(Keys.RequiredAchievement);
+                List<Achievement> achievements = new List<Achievement>();
+                foreach (string? name in Requirement.CompletedAchievements)
+                {
+                    if (!TryGetAchievement(name, out var achievement)) continue;
+                    achievements.Add(achievement);
+                }
+
+                if (achievements.Count > 4)
+                {
+                    IEnumerable<List<Achievement>> batches = achievements.Batch(4);
+                    foreach (List<Achievement>? batch in batches)
+                    {
+                        panel.description.view.CreateIcons().SetIcons(batch.ToArray());
+                    }
+                }
+                else
+                {
+                    panel.description.view.CreateIcons().SetIcons(achievements.ToArray());
+                }
+            }
             
             panel.description.view.Resize();
 
@@ -1034,6 +1063,7 @@ public static class AchievementManager
             public string PrefabName = string.Empty;
             public List<string> Achievements = new();
             public int Threshold;
+            public List<string> CompletedAchievements = new();
             
             [NonSerialized, YamlIgnore] public string? _sharedName;
             [NonSerialized, YamlIgnore] public Dictionary<string, int>? _items;
@@ -1067,7 +1097,6 @@ public static class AchievementManager
                     _ => Threshold,
                 };
             }
-
             public Dictionary<string, int> GetRequiredItems()
             {
                 if (_items != null) return _items;
@@ -1134,7 +1163,6 @@ public static class AchievementManager
                     _ => 0,
                 };
             }
-
             public int GetCollectItemsProgress(Player player)
             {
                 Dictionary<string, int> items = GetRequiredItems();
@@ -1148,7 +1176,6 @@ public static class AchievementManager
 
                 return count;
             }
-
             public int GetAchievementsProgress(Player player)
             {
                 int count = 0;
@@ -1160,13 +1187,23 @@ public static class AchievementManager
 
                 return count;
             }
+            public bool HasOtherAchievements(Player player)
+            {
+                if (CompletedAchievements.Count <= 0) return true;
+                foreach (string id in CompletedAchievements)
+                {
+                    if (!TryGetAchievement(id, out Achievement achievement)) continue;
+                    if (!achievement.IsCompleted(player)) return false;
+                }
+                return true;
+            }
         }
     }
 }
 
 public static class AchievementHelpers
 {
-    public static bool IsCompleted(this AchievementManager.Achievement achievement, Player player) => achievement.Requirement.GetProgress(player) >= achievement.Requirement.GetThreshold();
+    public static bool IsCompleted(this AchievementManager.Achievement achievement, Player player) => achievement.Requirement.GetProgress(player) >= achievement.Requirement.GetThreshold() && achievement.Requirement.HasOtherAchievements(player);
     public static bool IsCollected(this AchievementManager.Achievement achievement, Player player)
     {
         return player.GetCollectedAchievements().Contains(achievement.Name.GetStableHashCode());
@@ -1179,10 +1216,9 @@ public static class AchievementHelpers
         {
             if (itemNames.Contains(item.m_shared.m_name))
             {
-                output.IncrementOrSet(item.m_shared.m_name);
+                output.IncrementOrSet(item.m_shared.m_name, item.m_stack);
             }
         }
-
         return output;
     }
     public static void ResetAchievementCollected(this Player player, AchievementManager.Achievement achievement)
@@ -1228,52 +1264,4 @@ public static class AchievementHelpers
         return requirement._sharedName;
     }
     public static int Floor(this float value) => Mathf.FloorToInt(value);
-}
-
-public static class AchievementReadMeBuilder
-{
-    private static readonly string[] Prefix = new[]
-    {
-        "# Achievements",
-        "Almanac lets you define custom achievements using `.yml` files in the Achievements folder.",
-        "These achievements sync between server and client, and are dynamically reloaded when edited.",
-        "",
-        "Below are the available **Achievement Types** you can use:",
-        "```"
-    };
-
-    private static readonly string[] Postfix = new[]
-    {
-        "```",
-        "### Achievement File Structure",
-        "Each achievement is defined as a YAML file with properties like:",
-        "- `UniqueID`: A unique identifier string (e.g., `Weapons.001`).",
-        "- `Name`: Display name for the achievement.",
-        "- `Lore`: A short description or flavor text.",
-        "- `Icon`: The icon name from the game's assets.",
-        "- `TokenReward`: Reward tokens for completing the achievement.",
-        "- `Requirement`: The type, threshold, and optional group or prefab name.",
-        "",
-        "### Examples",
-        "- Defeating creatures from a biome: `AchievementType.CreatureGroup` with `Group = Meadows`.",
-        "- Reaching a milestone (kills, distance, etc.): set `Requirement.Type` to the relevant stat.",
-        "- Collecting all of an item type (fish, weapons, trophies, etc.): use collection-based types.",
-        "",
-        "### Tips",
-        "- Files can be added, changed, or deleted while the server is running.",
-        "- Server automatically syncs achievements to clients.",
-        "- Thresholds can be left at `0` for auto-detection (e.g., total number of fish).",
-        "- PrefabName is required for `Kill` and `Pickable` types."
-    };
-
-    public static void Write()
-    {
-        if (AlmanacPlugin.AlmanacDir.FileExists("Achievements_README.md")) return;
-        var achievementTypes = Enum.GetNames(typeof(AchievementType));
-        List<string> lines = new();
-        lines.AddRange(Prefix);
-        lines.AddRange(achievementTypes);
-        lines.AddRange(Postfix);
-        AlmanacPlugin.AlmanacDir.WriteAllLines("Achievements_README.md", lines);
-    }
 }

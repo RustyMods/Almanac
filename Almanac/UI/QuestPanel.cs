@@ -23,6 +23,7 @@ public class QuestPanel : MonoBehaviour
     private readonly Vector3 offScreenPos = new Vector3(5000f, 5000f, 0f);
     public void Awake()
     {
+        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Almanac.Quest.Panel.Awake");
         instance = this;
         root = transform.Find("ListView/Viewport/ListRoot").GetComponent<RectTransform>();
         _textArea = new TextArea(transform.Find("ListView/Viewport/TextArea"));
@@ -81,7 +82,8 @@ public class QuestPanel : MonoBehaviour
         {
             if (quest.isCompleted) continue;
             TextArea element = _textArea.Create(root);
-            quest.ui = element;
+            quest.referenceUI = element;
+            element.referenceQuest = quest;
             element.SetText(quest.GetTooltip());
             elements.Add(element);
         }
@@ -201,6 +203,7 @@ public class QuestPanel : MonoBehaviour
         protected readonly GameObject prefab;
         protected readonly RectTransform rect;
         public float height => GetHeight();
+        public QuestManager.Quest? referenceQuest;
 
         protected QuestElement(Transform transform)
         {
@@ -210,7 +213,11 @@ public class QuestPanel : MonoBehaviour
 
         protected virtual float GetHeight() => rect.sizeDelta.y;
 
-        public void Destroy() => UnityEngine.Object.Destroy(prefab);
+        public void Destroy()
+        {
+            if (referenceQuest != null) referenceQuest.referenceUI = null;
+            UnityEngine.Object.Destroy(prefab);
+        }
     }
 }
 

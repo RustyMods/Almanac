@@ -51,6 +51,7 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
     
     public void Awake()
     {
+        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Almanac.NPC.Customization.Panel.Awake");
         instance = this;
         background = new AlmanacPanel.Background(transform);
         topic = transform.Find("Name").GetComponent<Text>();
@@ -64,7 +65,9 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
         background.SetBackground(Configs.bkgOption);
 
         mainButton.onClick.AddListener(OnMainButton);
-
+        
+        view.Clear();
+        
         npcName = new NPCSetting(SettingType.Name);
         npcName.SetDescription("Name of the NPC");
         npcName.SetTitle(Keys.Name);
@@ -334,6 +337,7 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
         private readonly RectTransform root;
         private readonly GridLayoutGroup grid;
         private readonly ViewElement _element;
+        private readonly List<ViewElement> elements = new();
         public int Count => root.childCount;
         private readonly float height;
         private float availableWidth => root.rect.width - grid.padding.left - grid.padding.right;
@@ -362,7 +366,21 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
             scrollbar.value = 1f;
         }
 
-        public ViewElement Create() => _element.Create(root);
+        public ViewElement Create()
+        {
+            var element = _element.Create(root);
+            elements.Add(element);
+            return element;
+        }
+
+        public void Clear()
+        {
+            foreach (var element in elements)
+            {
+                element.Destroy();
+            }
+            elements.Clear();
+        }
     }
 
     public class ViewElement

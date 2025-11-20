@@ -13,6 +13,7 @@ public class AchievementNotifier : MonoBehaviour
     public readonly Queue<AchievementManager.Achievement> queuedAchievements = new();
     public void Awake()
     {
+        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("AchievementNotifier.Awake");
         InvokeRepeating(nameof(CheckAchievements), 300f, checkInterval);   
     }
 

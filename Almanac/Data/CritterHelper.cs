@@ -211,9 +211,9 @@ public static class CritterHelper
 
                 if (humanoid.m_randomSets != null)
                 {
-                    foreach (var set in humanoid.m_randomSets)
+                    foreach (Humanoid.ItemSet? set in humanoid.m_randomSets)
                     {
-                        foreach (var item in set.m_items)
+                        foreach (GameObject? item in set.m_items)
                         {
                             if (item == null || !item.TryGetComponent(out ItemDrop itemDrop)) continue;
                             items.Add(itemDrop);
@@ -239,14 +239,6 @@ public static class CritterHelper
             if (Configs.ShowAllData)
             {
                 builder.Add(Keys.InternalID, prefab.name);
-                // if (ModHelper.TryGetAssetInfo(prefab.name, out ModHelper.AssetInfo assetInfo))
-                // {
-                //     builder.Add("Asset Bundle", assetInfo.bundle);
-                //     if (assetInfo.info != null)
-                //     {
-                //         builder.Add("Plugin", assetInfo.info.Metadata.Name);
-                //     }
-                // }
             }
             int killCount = PlayerInfo.GetPlayerStat(PlayerInfo.RecordType.Kill, character.m_name);
             int deathCount = PlayerInfo.GetPlayerStat(PlayerInfo.RecordType.Death, character.m_name);

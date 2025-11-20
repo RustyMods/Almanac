@@ -29,6 +29,7 @@ public class DialoguePanel : MonoBehaviour
     
     public void Awake()
     {
+        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Almanac.Dialogue.Panel.Awake");
         instance = this;
         root = transform.Find("ListView/Viewport/ListRoot").GetComponent<RectTransform>();
         _textArea = new TextArea(transform.Find("ListView/Viewport/TextArea"));
@@ -154,7 +155,6 @@ public class DialoguePanel : MonoBehaviour
         {
             if (!DialogueManager.TryGetDialogue(option, out DialogueManager.Dialogue talk) || !talk.isValid) continue;
             if (!talk.ShouldShowDialogue()) continue;
-            
             talk.previous = dialogue;
             DialogueButton button = _button.Create(root);
             elements.Add(button);
@@ -250,7 +250,10 @@ public class DialoguePanel : MonoBehaviour
 
     public void Clear()
     {
-        foreach(var element in elements) element.Destroy();
+        foreach (var element in elements)
+        {
+            element.Destroy();
+        }
         elements.Clear();
     }
 

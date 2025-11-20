@@ -330,18 +330,18 @@ public static class QuestManager
         [YamlIgnore] public string name => data?.Name ?? string.Empty;
         [YamlIgnore] public string prefabName => data?.PrefabName ?? string.Empty;
         [YamlIgnore] public List<string> prefabNames => data?.PrefabNames ?? new List<string>();
-        [YamlIgnore] public QuestPanel.TextArea? ui;
+        [YamlIgnore] public QuestPanel.TextArea? referenceUI;
 
         public void Increment(int amount = 1)
         {
             progress += amount;
-            ui?.SetText(GetTooltip());
+            referenceUI?.SetText(GetTooltip());
         }
 
         public void SetProgress(int amount)
         {
             progress = amount;
-            ui?.SetText(GetTooltip());
+            referenceUI?.SetText(GetTooltip());
         }
         public bool IsComplete() => progress >= data?.Threshold || isCompleted;
 

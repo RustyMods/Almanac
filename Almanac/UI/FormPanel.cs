@@ -57,6 +57,7 @@ public class FormPanel : MonoBehaviour, IDragHandler, IBeginDragHandler
     private Action<float>? OnUpdate;
     public void Awake()
     {
+        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Almanac.Form.Panel.Awake");
         instance = this;
         root = transform.Find("ListView/Viewport/ListRoot").GetComponent<RectTransform>();
         scrollbar = transform.Find("ListView/Scrollbar").GetComponent<Scrollbar>();

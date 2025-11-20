@@ -73,6 +73,8 @@ public static class Configs
     private static ConfigEntry<Toggle> _enableAchievementEffects = null!;
     private static ConfigEntry<int> _maxAchievementEffects = null!;
     private static ConfigEntry<OrderType> _achievementOrdering = null!;
+
+    private static ConfigEntry<Toggle> _logging = null!;
     
     
     public static bool UseIgnoreList => _UseIgnoreList.Value is Toggle.On;
@@ -123,12 +125,16 @@ public static class Configs
         : AlmanacPanel.Background.BackgroundOption.Opaque;
 
     public static OrderType AchievementOrderType => _achievementOrdering.Value;
+
+    public static bool AddLogs => _logging.Value is Toggle.On;
     
     public static void Load()
     {
         _serverConfigLocked = config("1 - General", "0 - Lock Configuration", Toggle.On,
             "If on, the configuration is locked and can be changed by server admins only.");
         _ = AlmanacPlugin.ConfigSync.AddLockingConfigEntry(_serverConfigLocked);
+
+        _logging = config("1 - General", "Logging", Toggle.Off, "If on, will add development debug logs", false);
 
         _KnowledgeWall = config("1 - General", "Knowledge Wall", Toggle.On, "If on, the plugin blacks out unknown items from the almanac");
         _UseIgnoreList = config("1 - General", "Use Ignore List", Toggle.On, "If on, the plugin uses the IgnoreList.yml to filter almanac");

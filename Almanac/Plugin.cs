@@ -31,7 +31,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.6.8";
+        internal const string ModVersion = "3.7.0";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         public const string ConfigFileName = ModGUID + ".cfg";
@@ -55,12 +55,12 @@ namespace Almanac
         public void Awake()
         {
             instance = this;
+            Configs.Load();
             Clone._root = new GameObject("Almanac.PrefabManager.Clones");
             DontDestroyOnLoad(Clone._root);
             Clone._root.SetActive(false);
             Keys.Write();
             Localizer.Load();
-            Configs.Load();
             
             SpriteManager.RegisterCustomIcons();
             StoreManager.Setup();
@@ -162,7 +162,7 @@ namespace Almanac
                     foreach (var item in list)
                     {
                         details[item.itemData.m_shared.m_name] =
-                            $"${item.GetCostPerUnit():0.0} {Keys.AlmanacToken}\nPosted by: {item.PostedBy}\nDate posted: {item.DatePosted:yyyy-M-d dddd}";
+                            $"```Cost: {item.GetCostPerUnit()} {Keys.AlmanacToken}\nPosted by: {item.PostedBy}\nDate posted: {item.DatePosted:yyyy-M-d dddd}```";
                     }
                     DiscordBot_API.SendWebhookTable(DiscordBot_API.Channel.Commands, "Marketplace", details);
                 }
@@ -293,7 +293,6 @@ namespace Almanac
             [UsedImplicitly]
             public static void Postfix(ZNetScene __instance)
             {
-                // ModHelper.MapAssets();
                 foreach (GameObject? prefab in __instance.m_prefabs)
                 {
                     if (prefab == null) continue;

@@ -85,6 +85,7 @@ public static class Filters
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
         ServerFilters.Value = serializer.Serialize(filters);
         ServerSpecialFilters.Value = serializer.Serialize(specialFilters);
+        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Server: Almanac.Filters.Update");
     }
 
     private static void OnServerSpecialFiltersChanged()
@@ -95,6 +96,7 @@ public static class Filters
         {
             specialFilters.Clear();
             specialFilters.AddRange(deserializer.Deserialize<List<string>>(ServerSpecialFilters.Value));
+            if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Client: Almanac.Filters.Special.Update");
         }
         catch
         {
@@ -110,6 +112,7 @@ public static class Filters
         {
             filters.Clear();
             filters.AddRange(deserializer.Deserialize<List<string>>(ServerFilters.Value));
+            if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Client: Almanac.Filters.Update");
         }
         catch
         {
@@ -121,6 +124,7 @@ public static class Filters
         string[] files = FilterDir.GetFiles("*.yml");
         if (files.Length == 0)
         {
+            if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Almanac.Filters: No filters found, writing defaults");
             FilterDir.WriteAllLines("IgnoreList.yml", m_default);
         }
         

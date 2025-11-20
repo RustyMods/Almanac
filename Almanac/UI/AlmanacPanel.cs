@@ -26,186 +26,209 @@ namespace Almanac.UI;
 [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.Awake))]
 public static class InventoryGui_Awake_Patch
 {
-    private static bool loaded;
     [UsedImplicitly]
     private static void Postfix(InventoryGui __instance)
     {
-        if (!loaded)
-        {
-            GameObject craftingPanel = __instance.m_crafting.gameObject;
-            GameObject? trophyPanel = __instance.m_trophiesPanel;
-            GameObject? sfx = craftingPanel.GetComponentInChildren<ButtonSfx>().m_sfxPrefab;
+        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Initializing Almanac UI");
+        var craftingPanel = __instance.m_crafting.gameObject;
+        var trophyPanel = __instance.m_trophiesPanel;
+        var sfx = craftingPanel.GetComponentInChildren<ButtonSfx>().m_sfxPrefab;
 
-            Text[] npcDialogueText = DialoguePanel._panel.GetComponentsInChildren<Text>(true);
-            foreach (ButtonSfx? component in DialoguePanel._panel.GetComponentsInChildren<ButtonSfx>(true)) component.m_sfxPrefab = sfx;
-            FontManager.SetFont(npcDialogueText);
-            GameObject dialoguePanel = Object.Instantiate(DialoguePanel._panel, __instance.transform.parent.Find("HUD"));
-            dialoguePanel.name = "Almanac NPC Dialogue";
-            dialoguePanel.AddComponent<DialoguePanel>();
-            
-            GameObject questPanel = Object.Instantiate(DialoguePanel._panel, __instance.transform.parent.Find("HUD"));
-            questPanel.name = "Almanac Quest";
-            questPanel.AddComponent<QuestPanel>();
+        Text[]? npcDialogueText = DialoguePanel._panel.GetComponentsInChildren<Text>(true);
+        foreach (var component in DialoguePanel._panel.GetComponentsInChildren<ButtonSfx>(true)) component.m_sfxPrefab = sfx;
+        FontManager.SetFont(npcDialogueText);
+        var dialoguePanel = Object.Instantiate(DialoguePanel._panel, __instance.transform.parent.Find("HUD"));
+        dialoguePanel.name = "Almanac NPC Dialogue";
+        dialoguePanel.AddComponent<DialoguePanel>();
 
-            Text[] npcTexts = NPCCustomization._Modal.GetComponentsInChildren<Text>(true);
-            foreach (var component in NPCCustomization._Modal.GetComponentsInChildren<ButtonSfx>(true)) component.m_sfxPrefab = sfx;
-            FontManager.SetFont(npcTexts);
-            NPCCustomization._Modal.CopySpriteAndMaterial(trophyPanel, "bkg", "TrophiesFrame/border (1)");
-            NPCCustomization._Modal.CopySpriteAndMaterial(craftingPanel, "ListView/Viewport/Element/Title/TabBorder", "TabsButtons/TabBorder");
-            NPCCustomization._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Scrollbar", "TrophiesFrame/Trophies/TrophyListScroll");
-            NPCCustomization._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Scrollbar/Sliding Area/Handle", "TrophiesFrame/Trophies/TrophyListScroll/Sliding Area/Handle");
-            NPCCustomization._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Viewport", "TrophiesFrame/Trophies/TrophyList");
-            NPCCustomization._Modal.CopySpriteAndMaterial(craftingPanel, "ListView/Viewport/Element/InputField/Glow", "RepairButton/Glow");
-            NPCCustomization._Modal.CopySpriteAndMaterial(trophyPanel, "MainButton", "TrophiesFrame/Closebutton");
-            NPCCustomization._Modal.CopyButtonState(trophyPanel, "MainButton", "TrophiesFrame/Closebutton");
-            NPCCustomization._Modal.AddComponent<NPCCustomization>();
-            GameObject npc_modal = Object.Instantiate(NPCCustomization._Modal, __instance.transform.parent.Find("HUD"));
-            npc_modal.name = "Almanac NPC UI";
-            
-            Text[]? modalTexts = FormPanel._Modal.GetComponentsInChildren<Text>(true);
-            foreach (ButtonSfx? component in FormPanel._Modal.GetComponentsInChildren<ButtonSfx>(true)) component.m_sfxPrefab = sfx;
-            FontManager.SetFont(modalTexts);
-            
-            FormPanel._Modal.CopySpriteAndMaterial(trophyPanel, "bkg", "TrophiesFrame/border (1)");
-            FormPanel._Modal.CopySpriteAndMaterial(craftingPanel, "ListView/Viewport/Title/TabBorder", "TabsButtons/TabBorder");
-            FormPanel._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Scrollbar", "TrophiesFrame/Trophies/TrophyListScroll");
-            FormPanel._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Scrollbar/Sliding Area/Handle", "TrophiesFrame/Trophies/TrophyListScroll/Sliding Area/Handle");
-            FormPanel._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Viewport", "TrophiesFrame/Trophies/TrophyList");
-            FormPanel._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Viewport/Button", "TrophiesFrame/Closebutton");
-            FormPanel._Modal.CopyButtonState(trophyPanel, "ListView/Viewport/Button", "TrophiesFrame/Closebutton");
-            FormPanel._Modal.CopySpriteAndMaterial(craftingPanel, "ListView/Viewport/InputField/Glow", "RepairButton/Glow");
+        var questPanel = Object.Instantiate(DialoguePanel._panel, __instance.transform.parent.Find("HUD"));
+        questPanel.name = "Almanac Quest";
+        questPanel.AddComponent<QuestPanel>();
 
-            FormPanel._Modal.CopySpriteAndMaterial(trophyPanel, "MainButton", "TrophiesFrame/Closebutton");
-            FormPanel._Modal.CopyButtonState(trophyPanel, "MainButton", "TrophiesFrame/Closebutton");
-        
-            FormPanel._Modal.AddComponent<FormPanel>();
-            
-            GameObject panel = AssetBundleManager.LoadAsset<GameObject>("almanac_ui", "AlmanacUI")!;
-            GameObject go = Object.Instantiate(panel, __instance.transform.parent.Find("HUD"));
-            go.name = "Almanac";
-            
-            Text[]? panelTexts = go.GetComponentsInChildren<Text>(true);
-            foreach (ButtonSfx? component in go.GetComponentsInChildren<ButtonSfx>(true)) component.m_sfxPrefab = sfx;
-            FontManager.SetFont(panelTexts);
-            
-            go.CopySpriteAndMaterial(trophyPanel, "bkg", "TrophiesFrame/border (1)");
-            
-            go.CopySpriteAndMaterial(craftingPanel, "Tabs/Trophies", "TabsButtons/Craft");
-            go.CopySpriteAndMaterial(craftingPanel, "Tabs/Trophies/Selected", "TabsButtons/Craft/Selected");
-            go.CopyButtonState(craftingPanel, "Tabs/Trophies", "TabsButtons/Craft");
-            
-            go.CopySpriteAndMaterial(craftingPanel, "Tabs/Pieces", "TabsButtons/Craft");
-            go.CopySpriteAndMaterial(craftingPanel, "Tabs/Pieces/Selected", "TabsButtons/Craft/Selected");
-            go.CopyButtonState(craftingPanel, "Tabs/Pieces", "TabsButtons/Craft");
-            
-            go.CopySpriteAndMaterial(craftingPanel, "Tabs/Items", "TabsButtons/Craft");
-            go.CopySpriteAndMaterial(craftingPanel, "Tabs/Items/Selected", "TabsButtons/Craft/Selected");
-            go.CopyButtonState(craftingPanel, "Tabs/Items", "TabsButtons/Craft");
-            
-            go.CopySpriteAndMaterial(craftingPanel, "Tabs/Creatures", "TabsButtons/Craft");
-            go.CopySpriteAndMaterial(craftingPanel, "Tabs/Creatures/Selected", "TabsButtons/Craft/Selected");
-            go.CopyButtonState(craftingPanel, "Tabs/Creatures", "TabsButtons/Craft");
-            
-            go.CopySpriteAndMaterial(craftingPanel, "Tabs/StatusEffects", "TabsButtons/Craft");
-            go.CopySpriteAndMaterial(craftingPanel, "Tabs/StatusEffects/Selected", "TabsButtons/Craft/Selected");
-            go.CopyButtonState(craftingPanel, "Tabs/StatusEffects", "TabsButtons/Craft");
-            
-            go.CopySpriteAndMaterial(craftingPanel, "Tabs/Achievements", "TabsButtons/Craft");
-            go.CopySpriteAndMaterial(craftingPanel, "Tabs/Achievements/Selected", "TabsButtons/Craft/Selected");
-            go.CopyButtonState(craftingPanel, "Tabs/Achievements", "TabsButtons/Craft");
-            
-            go.CopySpriteAndMaterial(craftingPanel, "Tabs/Bounties", "TabsButtons/Craft");
-            go.CopySpriteAndMaterial(craftingPanel, "Tabs/Bounties/Selected", "TabsButtons/Craft/Selected");
-            go.CopyButtonState(craftingPanel, "Tabs/Bounties", "TabsButtons/Craft");
-            
-            go.CopySpriteAndMaterial(craftingPanel, "Tabs/Treasures", "TabsButtons/Craft");
-            go.CopySpriteAndMaterial(craftingPanel, "Tabs/Treasures/Selected", "TabsButtons/Craft/Selected");
-            go.CopyButtonState(craftingPanel, "Tabs/Treasures", "TabsButtons/Craft");
-            
-            go.CopySpriteAndMaterial(craftingPanel, "Tabs/Store", "TabsButtons/Craft");
-            go.CopySpriteAndMaterial(craftingPanel, "Tabs/Store/Selected", "TabsButtons/Craft/Selected");
-            go.CopyButtonState(craftingPanel, "Tabs/Store", "TabsButtons/Craft");
-            
-            go.CopySpriteAndMaterial(craftingPanel, "Tabs/Metrics", "TabsButtons/Craft");
-            go.CopySpriteAndMaterial(craftingPanel, "Tabs/Metrics/Selected", "TabsButtons/Craft/Selected");
-            go.CopyButtonState(craftingPanel, "Tabs/Metrics", "TabsButtons/Craft");
-            
-            go.CopySpriteAndMaterial(craftingPanel, "Tabs/Leaderboard", "TabsButtons/Craft");
-            go.CopySpriteAndMaterial(craftingPanel, "Tabs/Leaderboard/Selected", "TabsButtons/Craft/Selected");
-            go.CopyButtonState(craftingPanel, "Tabs/Leaderboard", "TabsButtons/Craft");
-            
-            go.CopySpriteAndMaterial(craftingPanel, "Tabs/Lottery", "TabsButtons/Craft");
-            go.CopySpriteAndMaterial(craftingPanel, "Tabs/Lottery/Selected", "TabsButtons/Craft/Selected");
-            go.CopyButtonState(craftingPanel, "Tabs/Lottery", "TabsButtons/Craft");
-            
-            go.CopySpriteAndMaterial(craftingPanel, "TabBorder", "TabsButtons/TabBorder");
-            
-            go.CopySpriteAndMaterial(trophyPanel, "ListView/Scrollbar", "TrophiesFrame/Trophies/TrophyListScroll");
-            go.CopySpriteAndMaterial(trophyPanel, "ListView/Scrollbar/Sliding Area/Handle", "TrophiesFrame/Trophies/TrophyListScroll/Sliding Area/Handle");
-            go.CopySpriteAndMaterial(trophyPanel, "ListView/Viewport", "TrophiesFrame/Trophies/TrophyList");
+        var npcTexts = NPCCustomization._Modal.GetComponentsInChildren<Text>(true);
+        foreach (var component in NPCCustomization._Modal.GetComponentsInChildren<ButtonSfx>(true)) component.m_sfxPrefab = sfx;
+        FontManager.SetFont(npcTexts);
+        NPCCustomization._Modal.CopySpriteAndMaterial(trophyPanel, "bkg", "TrophiesFrame/border (1)");
+        NPCCustomization._Modal.CopySpriteAndMaterial(craftingPanel, "ListView/Viewport/Element/Title/TabBorder", "TabsButtons/TabBorder");
+        NPCCustomization._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Scrollbar", "TrophiesFrame/Trophies/TrophyListScroll");
+        NPCCustomization._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Scrollbar/Sliding Area/Handle", "TrophiesFrame/Trophies/TrophyListScroll/Sliding Area/Handle");
+        NPCCustomization._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Viewport", "TrophiesFrame/Trophies/TrophyList");
+        NPCCustomization._Modal.CopySpriteAndMaterial(craftingPanel, "ListView/Viewport/Element/InputField/Glow", "RepairButton/Glow");
+        NPCCustomization._Modal.CopySpriteAndMaterial(trophyPanel, "MainButton", "TrophiesFrame/Closebutton");
+        NPCCustomization._Modal.CopyButtonState(trophyPanel, "MainButton", "TrophiesFrame/Closebutton");
+        NPCCustomization._Modal.AddComponent<NPCCustomization>();
+        var npc_modal = Object.Instantiate(NPCCustomization._Modal, __instance.transform.parent.Find("HUD"));
+        npc_modal.name = "Almanac NPC UI";
 
-            go.CopySpriteAndMaterial(trophyPanel, "ListView/Viewport/ListElement/Background", "TrophiesFrame/Trophies/TrophyList/TrophyElement/icon_bkg");
-            go.CopySpriteAndMaterial(trophyPanel, "ListView/Viewport/ListElement/Background/Icon", "TrophiesFrame/Trophies/TrophyList/TrophyElement/icon_bkg/icon");
-            go.CopySpriteAndMaterial(craftingPanel, "ListView/Viewport/ListElement/Selected", "RepairButton/Glow");
+        var modalTexts = FormPanel._Modal.GetComponentsInChildren<Text>(true);
+        foreach (var component in FormPanel._Modal.GetComponentsInChildren<ButtonSfx>(true))
+            component.m_sfxPrefab = sfx;
+        FontManager.SetFont(modalTexts);
 
-            go.CopySpriteAndMaterial(trophyPanel, "ButtonView/Scrollbar", "TrophiesFrame/Trophies/TrophyListScroll");
-            go.CopySpriteAndMaterial(trophyPanel, "ButtonView/Scrollbar/Sliding Area/Handle", "TrophiesFrame/Trophies/TrophyListScroll/Sliding Area/Handle");
-            go.CopySpriteAndMaterial(trophyPanel, "ButtonView/Viewport", "TrophiesFrame/Trophies/TrophyList");
-            
-            go.CopySpriteAndMaterial(trophyPanel, "GamblePanel/Scrollbar", "TrophiesFrame/Trophies/TrophyListScroll");
-            go.CopySpriteAndMaterial(trophyPanel, "GamblePanel/Scrollbar/Sliding Area/Handle", "TrophiesFrame/Trophies/TrophyListScroll/Sliding Area/Handle");
-            go.CopySpriteAndMaterial(trophyPanel, "GamblePanel/Viewport", "TrophiesFrame/Trophies/TrophyList");
-            go.CopySpriteAndMaterial(craftingPanel, "GamblePanel/Viewport/Slot/Port/Viewport/Element/Icon", "Decription/requirements/res_bkg/res_icon");
-            go.CopySpriteAndMaterial(craftingPanel, "GamblePanel/Viewport/Slot/Port/Viewport/Element/Glow", "RepairButton/Glow");
+        FormPanel._Modal.CopySpriteAndMaterial(trophyPanel, "bkg", "TrophiesFrame/border (1)");
+        FormPanel._Modal.CopySpriteAndMaterial(craftingPanel, "ListView/Viewport/Title/TabBorder",
+            "TabsButtons/TabBorder");
+        FormPanel._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Scrollbar",
+            "TrophiesFrame/Trophies/TrophyListScroll");
+        FormPanel._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Scrollbar/Sliding Area/Handle",
+            "TrophiesFrame/Trophies/TrophyListScroll/Sliding Area/Handle");
+        FormPanel._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Viewport", "TrophiesFrame/Trophies/TrophyList");
+        FormPanel._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Viewport/Button", "TrophiesFrame/Closebutton");
+        FormPanel._Modal.CopyButtonState(trophyPanel, "ListView/Viewport/Button", "TrophiesFrame/Closebutton");
+        FormPanel._Modal.CopySpriteAndMaterial(craftingPanel, "ListView/Viewport/InputField/Glow", "RepairButton/Glow");
 
-            go.CopySpriteAndMaterial(trophyPanel, "ButtonView/Viewport/Button", "TrophiesFrame/Closebutton");
-            go.CopyButtonState(trophyPanel, "ButtonView/Viewport/Button", "TrophiesFrame/Closebutton");
-            go.CopySpriteAndMaterial(craftingPanel, "ButtonView/Viewport/Button/Selected", "RepairButton/Glow");
+        FormPanel._Modal.CopySpriteAndMaterial(trophyPanel, "MainButton", "TrophiesFrame/Closebutton");
+        FormPanel._Modal.CopyButtonState(trophyPanel, "MainButton", "TrophiesFrame/Closebutton");
 
-            go.CopySpriteAndMaterial(trophyPanel, "Closebutton", "TrophiesFrame/Closebutton");
-            go.CopyButtonState(trophyPanel, "Closebutton", "TrophiesFrame/Closebutton");
+        FormPanel._Modal.AddComponent<FormPanel>();
 
-            go.CopySpriteAndMaterial(craftingPanel, "Description", "Decription");
-            go.CopySpriteAndMaterial(craftingPanel, "Description/Icon", "Decription/Icon");
-            
-            go.CopySpriteAndMaterial(trophyPanel, "Description/ListView/Scrollbar", "TrophiesFrame/Trophies/TrophyListScroll");
-            go.CopySpriteAndMaterial(trophyPanel, "Description/ListView/Scrollbar/Sliding Area/Handle", "TrophiesFrame/Trophies/TrophyListScroll/Sliding Area/Handle");
-            go.CopySpriteAndMaterial(trophyPanel, "Description/ListView/Viewport", "TrophiesFrame/Trophies/TrophyList");
-            
-            go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Title/TabBorder", "TabsButtons/TabBorder");
-            go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/1", "Decription/requirements/res_bkg");
-            go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/1/Icon", "Decription/requirements/res_bkg/res_icon");
-            go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/2", "Decription/requirements/res_bkg");
-            go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/2/Icon", "Decription/requirements/res_bkg/res_icon");
-            go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/3", "Decription/requirements/res_bkg");
-            go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/3/Icon", "Decription/requirements/res_bkg/res_icon");
-            go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/4", "Decription/requirements/res_bkg");
-            go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/4/Icon", "Decription/requirements/res_bkg/res_icon");
-            go.CopySpriteAndMaterial(trophyPanel, "Description/ListView/Viewport/Button", "TrophiesFrame/Closebutton");
-            go.CopyButtonState(trophyPanel, "Description/ListView/Viewport/Button", "TrophiesFrame/Closebutton");
+        var panel = AssetBundleManager.LoadAsset<GameObject>("almanac_ui", "AlmanacUI")!;
+        var go = Object.Instantiate(panel, __instance.transform.parent.Find("HUD"));
+        go.name = "Almanac";
 
-            go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/1", "Decription/requirements/res_bkg");
-            go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/2", "Decription/requirements/res_bkg");
-            go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/3", "Decription/requirements/res_bkg");
-            go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/4", "Decription/requirements/res_bkg");
-            go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/1/Icon", "Decription/requirements/res_bkg/res_icon");
-            go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/2/Icon", "Decription/requirements/res_bkg/res_icon");
-            go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/3/Icon", "Decription/requirements/res_bkg/res_icon");
-            go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/4/Icon", "Decription/requirements/res_bkg/res_icon");
-            go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/Star", "Decription/requirements/level");
-            go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/Star/Icon", "Decription/requirements/level/MinLevel");
-            
-            go.CopySpriteAndMaterial(craftingPanel, "Description/MainButton", "Decription/craft_button_panel/CraftButton");
-            go.CopyButtonState(craftingPanel, "Description/MainButton", "Decription/craft_button_panel/CraftButton");
-            
-            go.CopySpriteAndMaterial(craftingPanel, "SearchField", "Decription/craft_button_panel/CraftButton");
-            go.CopySpriteAndMaterial(craftingPanel, "SearchField (1)", "Decription/craft_button_panel/CraftButton");
-            
-            go.CopySpriteAndMaterial(craftingPanel, "Currency/Icon", "Decription/requirements/res_bkg/res_icon");
-            
-            go.AddComponent<AlmanacPanel>();
-            loaded = true;
-        }
+        var panelTexts = go.GetComponentsInChildren<Text>(true);
+        foreach (var component in go.GetComponentsInChildren<ButtonSfx>(true)) component.m_sfxPrefab = sfx;
+        FontManager.SetFont(panelTexts);
+
+        go.CopySpriteAndMaterial(trophyPanel, "bkg", "TrophiesFrame/border (1)");
+
+        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Trophies", "TabsButtons/Craft");
+        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Trophies/Selected", "TabsButtons/Craft/Selected");
+        go.CopyButtonState(craftingPanel, "Tabs/Trophies", "TabsButtons/Craft");
+
+        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Pieces", "TabsButtons/Craft");
+        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Pieces/Selected", "TabsButtons/Craft/Selected");
+        go.CopyButtonState(craftingPanel, "Tabs/Pieces", "TabsButtons/Craft");
+
+        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Items", "TabsButtons/Craft");
+        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Items/Selected", "TabsButtons/Craft/Selected");
+        go.CopyButtonState(craftingPanel, "Tabs/Items", "TabsButtons/Craft");
+
+        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Creatures", "TabsButtons/Craft");
+        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Creatures/Selected", "TabsButtons/Craft/Selected");
+        go.CopyButtonState(craftingPanel, "Tabs/Creatures", "TabsButtons/Craft");
+
+        go.CopySpriteAndMaterial(craftingPanel, "Tabs/StatusEffects", "TabsButtons/Craft");
+        go.CopySpriteAndMaterial(craftingPanel, "Tabs/StatusEffects/Selected", "TabsButtons/Craft/Selected");
+        go.CopyButtonState(craftingPanel, "Tabs/StatusEffects", "TabsButtons/Craft");
+
+        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Achievements", "TabsButtons/Craft");
+        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Achievements/Selected", "TabsButtons/Craft/Selected");
+        go.CopyButtonState(craftingPanel, "Tabs/Achievements", "TabsButtons/Craft");
+
+        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Bounties", "TabsButtons/Craft");
+        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Bounties/Selected", "TabsButtons/Craft/Selected");
+        go.CopyButtonState(craftingPanel, "Tabs/Bounties", "TabsButtons/Craft");
+
+        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Treasures", "TabsButtons/Craft");
+        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Treasures/Selected", "TabsButtons/Craft/Selected");
+        go.CopyButtonState(craftingPanel, "Tabs/Treasures", "TabsButtons/Craft");
+
+        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Store", "TabsButtons/Craft");
+        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Store/Selected", "TabsButtons/Craft/Selected");
+        go.CopyButtonState(craftingPanel, "Tabs/Store", "TabsButtons/Craft");
+
+        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Metrics", "TabsButtons/Craft");
+        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Metrics/Selected", "TabsButtons/Craft/Selected");
+        go.CopyButtonState(craftingPanel, "Tabs/Metrics", "TabsButtons/Craft");
+
+        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Leaderboard", "TabsButtons/Craft");
+        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Leaderboard/Selected", "TabsButtons/Craft/Selected");
+        go.CopyButtonState(craftingPanel, "Tabs/Leaderboard", "TabsButtons/Craft");
+
+        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Lottery", "TabsButtons/Craft");
+        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Lottery/Selected", "TabsButtons/Craft/Selected");
+        go.CopyButtonState(craftingPanel, "Tabs/Lottery", "TabsButtons/Craft");
+
+        go.CopySpriteAndMaterial(craftingPanel, "TabBorder", "TabsButtons/TabBorder");
+
+        go.CopySpriteAndMaterial(trophyPanel, "ListView/Scrollbar", "TrophiesFrame/Trophies/TrophyListScroll");
+        go.CopySpriteAndMaterial(trophyPanel, "ListView/Scrollbar/Sliding Area/Handle",
+            "TrophiesFrame/Trophies/TrophyListScroll/Sliding Area/Handle");
+        go.CopySpriteAndMaterial(trophyPanel, "ListView/Viewport", "TrophiesFrame/Trophies/TrophyList");
+
+        go.CopySpriteAndMaterial(trophyPanel, "ListView/Viewport/ListElement/Background",
+            "TrophiesFrame/Trophies/TrophyList/TrophyElement/icon_bkg");
+        go.CopySpriteAndMaterial(trophyPanel, "ListView/Viewport/ListElement/Background/Icon",
+            "TrophiesFrame/Trophies/TrophyList/TrophyElement/icon_bkg/icon");
+        go.CopySpriteAndMaterial(craftingPanel, "ListView/Viewport/ListElement/Selected", "RepairButton/Glow");
+
+        go.CopySpriteAndMaterial(trophyPanel, "ButtonView/Scrollbar", "TrophiesFrame/Trophies/TrophyListScroll");
+        go.CopySpriteAndMaterial(trophyPanel, "ButtonView/Scrollbar/Sliding Area/Handle",
+            "TrophiesFrame/Trophies/TrophyListScroll/Sliding Area/Handle");
+        go.CopySpriteAndMaterial(trophyPanel, "ButtonView/Viewport", "TrophiesFrame/Trophies/TrophyList");
+
+        go.CopySpriteAndMaterial(trophyPanel, "GamblePanel/Scrollbar", "TrophiesFrame/Trophies/TrophyListScroll");
+        go.CopySpriteAndMaterial(trophyPanel, "GamblePanel/Scrollbar/Sliding Area/Handle",
+            "TrophiesFrame/Trophies/TrophyListScroll/Sliding Area/Handle");
+        go.CopySpriteAndMaterial(trophyPanel, "GamblePanel/Viewport", "TrophiesFrame/Trophies/TrophyList");
+        go.CopySpriteAndMaterial(craftingPanel, "GamblePanel/Viewport/Slot/Port/Viewport/Element/Icon",
+            "Decription/requirements/res_bkg/res_icon");
+        go.CopySpriteAndMaterial(craftingPanel, "GamblePanel/Viewport/Slot/Port/Viewport/Element/Glow",
+            "RepairButton/Glow");
+
+        go.CopySpriteAndMaterial(trophyPanel, "ButtonView/Viewport/Button", "TrophiesFrame/Closebutton");
+        go.CopyButtonState(trophyPanel, "ButtonView/Viewport/Button", "TrophiesFrame/Closebutton");
+        go.CopySpriteAndMaterial(craftingPanel, "ButtonView/Viewport/Button/Selected", "RepairButton/Glow");
+
+        go.CopySpriteAndMaterial(trophyPanel, "Closebutton", "TrophiesFrame/Closebutton");
+        go.CopyButtonState(trophyPanel, "Closebutton", "TrophiesFrame/Closebutton");
+
+        go.CopySpriteAndMaterial(craftingPanel, "Description", "Decription");
+        go.CopySpriteAndMaterial(craftingPanel, "Description/Icon", "Decription/Icon");
+
+        go.CopySpriteAndMaterial(trophyPanel, "Description/ListView/Scrollbar",
+            "TrophiesFrame/Trophies/TrophyListScroll");
+        go.CopySpriteAndMaterial(trophyPanel, "Description/ListView/Scrollbar/Sliding Area/Handle",
+            "TrophiesFrame/Trophies/TrophyListScroll/Sliding Area/Handle");
+        go.CopySpriteAndMaterial(trophyPanel, "Description/ListView/Viewport", "TrophiesFrame/Trophies/TrophyList");
+
+        go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Title/TabBorder",
+            "TabsButtons/TabBorder");
+        go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/1",
+            "Decription/requirements/res_bkg");
+        go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/1/Icon",
+            "Decription/requirements/res_bkg/res_icon");
+        go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/2",
+            "Decription/requirements/res_bkg");
+        go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/2/Icon",
+            "Decription/requirements/res_bkg/res_icon");
+        go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/3",
+            "Decription/requirements/res_bkg");
+        go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/3/Icon",
+            "Decription/requirements/res_bkg/res_icon");
+        go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/4",
+            "Decription/requirements/res_bkg");
+        go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/4/Icon",
+            "Decription/requirements/res_bkg/res_icon");
+        go.CopySpriteAndMaterial(trophyPanel, "Description/ListView/Viewport/Button", "TrophiesFrame/Closebutton");
+        go.CopyButtonState(trophyPanel, "Description/ListView/Viewport/Button", "TrophiesFrame/Closebutton");
+
+        go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/1", "Decription/requirements/res_bkg");
+        go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/2", "Decription/requirements/res_bkg");
+        go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/3", "Decription/requirements/res_bkg");
+        go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/4", "Decription/requirements/res_bkg");
+        go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/1/Icon",
+            "Decription/requirements/res_bkg/res_icon");
+        go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/2/Icon",
+            "Decription/requirements/res_bkg/res_icon");
+        go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/3/Icon",
+            "Decription/requirements/res_bkg/res_icon");
+        go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/4/Icon",
+            "Decription/requirements/res_bkg/res_icon");
+        go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/Star", "Decription/requirements/level");
+        go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/Star/Icon",
+            "Decription/requirements/level/MinLevel");
+
+        go.CopySpriteAndMaterial(craftingPanel, "Description/MainButton", "Decription/craft_button_panel/CraftButton");
+        go.CopyButtonState(craftingPanel, "Description/MainButton", "Decription/craft_button_panel/CraftButton");
+
+        go.CopySpriteAndMaterial(craftingPanel, "SearchField", "Decription/craft_button_panel/CraftButton");
+        go.CopySpriteAndMaterial(craftingPanel, "SearchField (1)", "Decription/craft_button_panel/CraftButton");
+
+        go.CopySpriteAndMaterial(craftingPanel, "Currency/Icon", "Decription/requirements/res_bkg/res_icon");
+
+        go.AddComponent<AlmanacPanel>();
         
         AlmanacPanel.inventoryButton = new AlmanacPanel.AlmanacButton(__instance);
         AlmanacPanel.inventoryButton.Show(Configs.ShowAlmanac);
@@ -219,6 +242,7 @@ public static class InventoryGui_OnOpenTrophies_Prefix
     private static bool Prefix(InventoryGui __instance)
     {
         if (AlmanacPanel.instance == null || !Configs.ShowAlmanac) return true;
+        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("InventoryGUI.OnOpenTrophies.Almanac.Override");
         AlmanacPanel.instance.Show();
         __instance.Hide();
         return false;
@@ -377,6 +401,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
     
     public void Awake()
     {
+        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Almanac.Panel.Awake");
         instance = this;
         background = new Background(transform);
         topic = transform.Find("topic").GetComponent<Text>();
@@ -538,6 +563,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         gameObject.SetActive(false);
         GridView.activeView = null;
         formPanel?.SetActive(false);
+        lottery.CancelRoll();
     }
 
     private void Reset() => Reset(null);
@@ -566,8 +592,11 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         Tabs[Tab.TabOption.Trophies].SetSelected(true);
         Reset(intro);
         elementView.SetActive(true);
-        foreach (ItemHelper.ItemInfo data in ItemHelper.trophies)
+        var list = ItemHelper.trophies.OrderBy(x => Localization.instance.Localize(x.itemData.m_shared.m_name)).ToList();
+        
+        for (int i = 0; i < list.Count; i++)
         {
+            var data = list[i];
             bool isKnown = !Configs.UseKnowledgeWall || Player.m_localPlayer.IsKnownMaterial(data.shared.m_name) || Player.m_localPlayer.NoCostCheat();
             if (Configs.HideUnknownEntries && !isKnown) continue;
             ElementView.Element item = elementView.Create();
@@ -587,9 +616,10 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         Tabs[Tab.TabOption.Pieces].SetSelected(true);
         Reset(intro);
         elementView.SetActive(true);
-
-        foreach (PieceHelper.PieceInfo data in PieceHelper.GetPieces())
+        var list = PieceHelper.GetPieces().OrderBy(x => Localization.instance.Localize(x.piece.m_name)).ToList();
+        for (int i = 0; i < list.Count; i++)
         {
+            var data = list[i];
             bool isKnown = Player.m_localPlayer.IsPieceKnown(data.piece) || !Configs.UseKnowledgeWall || Player.m_localPlayer.NoCostCheat();
             if (Configs.HideUnknownEntries && !isKnown) continue;
             ElementView.Element item = elementView.Create();
@@ -610,8 +640,12 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         Tabs[Tab.TabOption.Items].SetSelected(true);
         Reset(intro);
         elementView.SetActive(true);
-        foreach (ItemHelper.ItemInfo data in ItemHelper.GetItemsWhileIgnoring(ItemDrop.ItemData.ItemType.Trophy))
+        var list = ItemHelper.GetItemsWhileIgnoring(ItemDrop.ItemData.ItemType.Trophy)
+            .OrderBy(x => Localization.instance.Localize(x.itemData.m_shared.m_name)).ToList();
+        
+        for (int i = 0; i < list.Count; ++i)
         {
+            var data = list[i];
             bool isKnown = Player.m_localPlayer.NoCostCheat() || !Configs.UseKnowledgeWall || Player.m_localPlayer.IsKnownMaterial(data.shared.m_name);
             if (Configs.HideUnknownEntries && !isKnown) continue;
             ElementView.Element item = elementView.Create();
@@ -632,8 +666,12 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         Tabs[Tab.TabOption.Creatures].SetSelected(true);
         Reset(intro);
         buttonView.SetActive(true);
-        foreach (CritterHelper.CritterInfo data in CritterHelper.GetCritters())
+
+        var list = CritterHelper.GetCritters().OrderBy(x => Localization.instance.Localize(x.character.m_name)).ToList();
+        
+        for (int i = 0; i < list.Count; ++i)
         {
+            var data = list[i];
             bool isKnown = Player.m_localPlayer.NoCostCheat() || !Configs.UseKnowledgeWall || data.isKnown();
             if (Configs.HideUnknownEntries && !isKnown) continue;
             ButtonView.ElementButton item = buttonView.Create();
@@ -889,7 +927,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         elementView.SetActive(true);
         foreach (ItemDrop.ItemData itemData in Player.m_localPlayer.GetInventory().GetAllItems())
         {
-            if (!itemData.m_shared.m_teleportable) continue;
+            if (!itemData.m_shared.m_teleportable || itemData.m_equipped || itemData.IsBound()) continue;
             ElementView.Element item = elementView.Create();
             string formattedName = itemData.m_shared.m_name + $" x{itemData.m_stack}";
             item.SetIcon(itemData.GetIcon());
@@ -931,7 +969,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         PlayerInfo.GetEntries().Build(description.view);
         description.view.Resize();
         ElementView.Element quests = elementView.Create();
-        quests.SetName("Quests");
+        quests.SetName(Keys.Quest);
         int questCount = QuestManager.GetActiveQuests().Count;
         quests.SetDescription(questCount.ToString());
         quests.SetIcon(SpriteManager.GetSprite(SpriteManager.IconOption.BookRed));
@@ -2496,6 +2534,23 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 scrollbar.value = 0f;
             }
             instance.OnUpdate = UpdateRoll;
+        }
+
+        public void CancelRoll()
+        {
+            if (!isRolling) return;
+            if (instance is not null) instance.OnUpdate = null;
+            isRolling = false;
+            foreach (Scrollbar? scrollbar in scrollbars)
+            {
+                _scrollbars[scrollbar] = 0f;
+                scrollbar.value = 0f;
+            }
+            foreach (Slot.SlotElement? element in finalElements)
+            {
+                element.SetGlow(false);
+                element.ResetGlowAlpha();
+            }
         }
 
         private static double CalculateWinChance(int slotCount, int iconCount, int matchLength)

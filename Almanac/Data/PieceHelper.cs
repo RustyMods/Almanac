@@ -141,14 +141,6 @@ public static class PieceHelper
             {
                 builder.Add(Keys.InternalID, prefab.name);
                 builder.Add(Keys.Enabled, piece.m_enabled);
-                // if (ModHelper.TryGetAssetInfo(prefab.name, out ModHelper.AssetInfo assetInfo))
-                // {
-                //     builder.Add("Asset Bundle", assetInfo.bundle);
-                //     if (assetInfo.info != null)
-                //     {
-                //         builder.Add("Plugin", assetInfo.info.Metadata.Name);
-                //     }
-                // }
             }
             builder.Add(Keys.PieceCategory, piece.m_category);
             if (piece.m_craftingStation != null)

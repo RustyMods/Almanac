@@ -15,18 +15,18 @@ These achievements sync between server and client, and are dynamically reloaded 
 
 Below are the available **Achievement Types** you can use:
 
-|                       |                 |                       |                       |
-|-----------------------|-----------------|-----------------------|-----------------------|
-| `Arrows`              | `ArrowsShot`    | `Axes`                | `Bows`                |
-| `Consumables`         | `CreatureGroup` | `CreatureTamed`       | `Deaths`              |
-| `DistanceInAir`       | `DistanceRan`   | `DistanceSailed`      | `DistanceWalked`      |
-| `EnemyKills`          | `Fish`          | `FoodEaten`           | `ItemsPicked`         |
-| `Kill`                | `Knives`        | `Maces`               | `Materials`           |
-| `MineHits`            | `Pickable`      | `PlayerKills`         | `PoleArms`            |
-| `Potions`             | `Recipes`       | `Shields`             | `Spears`              |
-| `Staves`              | `Swords`        | `TimeInBase`          | `TimeOutOfBase`       |
-| `TotalJumps`          | `TotalMined`    | `Trophies`            | `Valuables`           |
-| `Weapons`             | `CollectItems`  |                       |                       |
+|                       |                 |                  |                       |
+|-----------------------|-----------------|------------------|-----------------------|
+| `Arrows`              | `ArrowsShot`    | `Axes`           | `Bows`                |
+| `Consumables`         | `CreatureGroup` | `CreatureTamed`  | `Deaths`              |
+| `DistanceInAir`       | `DistanceRan`   | `DistanceSailed` | `DistanceWalked`      |
+| `EnemyKills`          | `Fish`          | `FoodEaten`      | `ItemsPicked`         |
+| `Kill`                | `Knives`        | `Maces`          | `Materials`           |
+| `MineHits`            | `Pickable`      | `PlayerKills`    | `PoleArms`            |
+| `Potions`             | `Recipes`       | `Shields`        | `Spears`              |
+| `Staves`              | `Swords`        | `TimeInBase`     | `TimeOutOfBase`       |
+| `TotalJumps`          | `TotalMined`    | `Trophies`       | `Valuables`           |
+| `Weapons`             | `CollectItems`  | `Achievements`   |                       |
 
 
 ### Achievement File Structure

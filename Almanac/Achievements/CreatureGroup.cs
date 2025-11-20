@@ -38,11 +38,13 @@ public static class CreatureGroup
         string[] files = CreatureDir.GetFiles("*.yml", true);
         if (files.Length == 0)
         {
+            if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Almanac.CreatureGroups: No files found, writing defaults");
             string data = serializer.Serialize(groups);
             CreatureDir.WriteFile("Creatures.yml", data);
         }
         else
         {
+            if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug($"Almanac.CreatureGroups: Found {files.Length} files");
             groups.Clear();
             foreach (string file in files)
             {

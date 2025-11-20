@@ -29,6 +29,8 @@ public static class Helpers
         if (prefab.TryGetComponent(out T component)) Object.Destroy(component);
     }
 
+    public static bool IsBound(this ItemDrop.ItemData item) => item.m_gridPos.y == 0;
+
     public static bool HasItem(this Player player, string sharedName, int quality = -1)
     {
         foreach (ItemDrop.ItemData? item in player.GetInventory().GetAllItems())

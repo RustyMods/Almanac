@@ -20,9 +20,9 @@ public static class CharacterDamagePatch
 
 public static class BountyVars
 {
-    public static readonly int DamageModifier = "DamageModifier".GetStableHashCode();
-    public static readonly int BountyID = "BountyID".GetStableHashCode();
-    public static readonly int BountyHealth = "BountyHealth".GetStableHashCode();
+    public static readonly int DamageModifier = "Almanac.DamageModifier".GetStableHashCode();
+    public static readonly int BountyID = "Almanac.BountyID".GetStableHashCode();
+    public static readonly int BountyHealth = "Almanac.BountyHealth".GetStableHashCode();
 }
 
 [RequireComponent(typeof(Character))]

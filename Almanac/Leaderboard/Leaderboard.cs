@@ -34,6 +34,7 @@ public static class Leaderboard
     }
     private static void Initialize()
     {
+        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Almanac.Leaderboard.Initialize");
         LeaderboardFileName = ZNet.instance.GetWorldName() + ".Leaderboard.dat";
 
         ZRoutedRpc.instance.Register<ZPackage>(nameof(RPC_Leaderboard), RPC_Leaderboard);
@@ -45,6 +46,7 @@ public static class Leaderboard
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
         string data = serializer.Serialize(players);
         SyncedLeaderboard.Value = data;
+        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Server: Leaderboard.Update");
     }
     private static void OnSyncedLeaderboardChange()
     {
@@ -55,6 +57,7 @@ public static class Leaderboard
             Dictionary<string, LeaderboardInfo> data = deserializer.Deserialize<Dictionary<string, LeaderboardInfo>>(SyncedLeaderboard.Value);
             players.Clear();
             players.AddRange(data);
+            if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Client: Leaderboard.Update");
         }
         catch
         {
@@ -102,6 +105,7 @@ public static class Leaderboard
         string data = serializer.Serialize(players);
         byte[] compressedData = CompressAndEncode(data);
         LeaderboardDir.WriteAllBytes(LeaderboardFileName, compressedData);
+        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Server: Almanac.Leaderboard.Save");
     }
     private static void Read()
     {

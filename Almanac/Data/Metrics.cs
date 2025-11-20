@@ -13,7 +13,7 @@ namespace Almanac.Data;
 public static class PlayerExtensions
 {
     private static readonly ISerializer serializer = new SerializerBuilder().Build();
-    private static readonly IDeserializer deserializer = new DeserializerBuilder().Build();
+    private static readonly IDeserializer deserializer = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
 
     public static PlayerInfo.PlayerRecords GetRecords(this Player player)
     {
@@ -94,12 +94,14 @@ public static class PlayerInfo
         public Dictionary<string, int> deaths = new();
         public Dictionary<string, int> itemsPicked = new();
         public List<int> knownStatusEffects = new();
+        public Dictionary<string, int> stumps = new();
     }
     public enum RecordType
     {
         Kill,
         Death,
         Pickable,
+        Stump
     }
     public static J GetValueOrDefault<T, J>(this Dictionary<T, J> dict, T key, J defaultValue)
     {
@@ -121,6 +123,7 @@ public static class PlayerInfo
             RecordType.Kill => Game.instance.GetPlayerProfile().m_enemyStats.TryGetValue(name, out var value) ? (int)value : 0,
             RecordType.Death => Records.GetDeaths(name),
             RecordType.Pickable => Records.GetItemPicked(name),
+            RecordType.Stump => Records.stumps.TryGetValue(name, out var value) ? value : 0,
             _ => 0
         };
     }
@@ -133,6 +136,17 @@ public static class PlayerInfo
 
     public static event Action<Character>? OnCharacterDeathByLocal;
     
+    [HarmonyPatch(typeof(Destructible), nameof(Destructible.Destroy))]
+    public class Destructible_Destroy_Patch
+    {
+        [UsedImplicitly]
+        private static void Prefix(Destructible __instance, HitData? hit)
+        {
+            if (hit?.GetAttacker() is not { } attacker || attacker != Player.m_localPlayer) return;
+            Records.stumps.IncrementOrSet(__instance.name.Replace("(Clone)",string.Empty));
+        }
+    }
+    
     [HarmonyPatch(typeof(Character), nameof(Character.OnDeath))]
     private static class CharacterOnDeathPatch
     {
@@ -144,13 +158,15 @@ public static class PlayerInfo
             if (__instance.m_lastHit?.GetAttacker() is not { } attacker) return;
             if (attacker == Player.m_localPlayer)
             {
-                // Records.kills.IncrementOrSet(__instance.m_name);
                 OnCharacterDeathByLocal?.Invoke(__instance);
             }
             else if (attacker is Player player)
             {
                 // because only the owner updates their profile, we need to broadcast the kill
                 ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.Everybody, nameof(RPC_BroadcastKill), player.GetPlayerID(), __instance.m_name);
+                //
+                // ZRoutedRpc.instance.InvokeRoutedRPC(player.m_nview.m_zdo.GetOwner(), nameof(RPC_BroadcastKill), __instance.m_name);
+                // ZRoutedRpc.instance.InvokeRoutedRPC(player.GetZDOID().UserID, nameof(RPC_BroadcastKill), __instance.m_name);
             }
             else if (__instance == Player.m_localPlayer)
             {
@@ -158,6 +174,7 @@ public static class PlayerInfo
             }
         }
     }
+    
 
     [HarmonyPatch(typeof(Player), nameof(Player.EatFood))]
     private static class PlayerEatFoodFix

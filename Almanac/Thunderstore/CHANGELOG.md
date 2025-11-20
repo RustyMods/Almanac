@@ -1,3 +1,28 @@
+# 3.7.0
+- if hiding Almanac UI and is rolling lottery, will cancel roll and reset it, to prevent bug of not being able to roll afterwards
+- ordering trophy, item, piece and creature by name
+- changed bounty variables for compatibility with EpicLoot bounties
+
+# 3.6.91
+- hotfix, did did not generate configs soon enough sorry!!
+
+# 3.6.9
+- removed equipped or hotbar items from possible items to put up for sale
+- added new field to Achievement.Requirements: `OtherAchievements`, which is a list of required achievements needed to be completed, on top of the base requirements.
+Format Example:
+```yml
+ UniqueID: ArrowsShotAndMustCompleteMeadows.001
+ Name: Sharpshooter
+ Lore: From afar, death rises.
+ Icon: ArrowIron
+ TokenReward: 20
+ Requirement:
+   Type: ArrowsShot
+   Threshold: 1000
+   CompletedAchievements: 
+    - MeadowTrophies.001
+```
+- fixed UI being broken after logout/login
 # 3.6.8
 - added new achievement requirement type: `Achievements`
 Format Examples:  

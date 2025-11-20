@@ -1,4 +1,5 @@
-﻿using Almanac.UI;
+﻿using System;
+using Almanac.UI;
 using HarmonyLib;
 using JetBrains.Annotations;
 
@@ -12,23 +13,31 @@ public static class QuestTrackers
         [UsedImplicitly]
         private static void Postfix(Player __instance)
         {
-            if (__instance != Player.m_localPlayer) return;
-            if (__instance.m_isLoading) return;
-            if (DialoguePanel.IsVisible()) return; // problem updating UI when dialogue modifies quest UI
-            foreach (QuestManager.Quest? quest in QuestManager.GetQuestsByType(QuestType.Collect))
+            if (__instance != Player.m_localPlayer || __instance.m_isLoading) return;
+            try
             {
-                int count = __instance.GetInventory().CountItems(quest.GetSharedName());
-                quest.SetProgress(count);
-            }
-
-            foreach (QuestManager.Quest quest in QuestManager.GetQuestsByType(QuestType.LearnItems))
-            {
-                int itemCount = 0;
-                foreach (string sharedName in quest.GetSharedNames())
+                if (DialoguePanel.IsVisible()) return; // problem updating UI when dialogue modifies quest UI
+                
+                foreach (QuestManager.Quest? quest in QuestManager.GetQuestsByType(QuestType.Collect))
                 {
-                    if (__instance.IsKnownMaterial(sharedName)) ++itemCount;
+                    int count = __instance.GetInventory().CountItems(quest.GetSharedName());
+                    quest.SetProgress(count);
                 }
-                quest.SetProgress(itemCount);
+
+                foreach (QuestManager.Quest quest in QuestManager.GetQuestsByType(QuestType.LearnItems))
+                {
+                    int itemCount = 0;
+                    foreach (string sharedName in quest.GetSharedNames())
+                    {
+                        if (__instance.IsKnownMaterial(sharedName)) ++itemCount;
+                    }
+                    quest.SetProgress(itemCount);
+                }
+            }
+            catch (Exception ex)
+            {
+                AlmanacPlugin.AlmanacLogger.LogWarning("Almanac.QuestTracker.Player.OnInventoryChanged: Failed to update quests");
+                AlmanacPlugin.AlmanacLogger.LogError(ex.Message);
             }
         }
     }

@@ -20,6 +20,7 @@ public static class Keys
             lines.Add($"{kvp.Key}: '{kvp.Value}'");
         }
         AlmanacPlugin.AlmanacDir.WriteAllLines("Almanac.English.yml", lines);
+        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Almanac.Localize.Keys.Write");
     }
     private static void LocalizePlayerStats()
     {
@@ -215,6 +216,7 @@ public static class Keys
     public static readonly string Variant = new Key("$label_variant", "Variant").key;
     public static readonly string ItemType = new Key("$label_itemtype", "Item Type").key;
     public static readonly string QuestItem = new Key("$label_questitem", "Quest Item").key;
+    public static readonly string Quest = new Key("$label_quest", "Quest").key;
     public static readonly string EquipDuration = new Key("$label_equipduration", "Equip Duration").key;
     public static readonly string Floating = new Key("$label_floating", "Floating").key;
     public static readonly string Fish  = new Key("$label_fish", "Fish").key;

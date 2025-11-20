@@ -1410,10 +1410,11 @@ public class DialogueManager : MonoBehaviour
             string[] parts = Parameters.Split(',');
             if (parts.Length < 2) return false;
             name = parts[0].Trim();
-            if (!ObjectDB.instance.m_itemByHash.ContainsKey(name.GetStableHashCode())) return false;
+            if (ObjectDB.instance.GetItemPrefab(name) is not { } itemPrefab || !itemPrefab.TryGetComponent(out ItemDrop itemDrop)) return false;
             if (parts.Length > 1 && !int.TryParse(parts[1].Trim(), out amount)) amount = 1;
             if (parts.Length > 2 && !int.TryParse(parts[2].Trim(), out quality)) quality = 1;
             if (parts.Length > 3 && !int.TryParse(parts[3].Trim(), out variant)) variant = 0;
+            if (variant > itemDrop.m_itemData.m_shared.m_variants) variant = 0;
             return true;
         }
 

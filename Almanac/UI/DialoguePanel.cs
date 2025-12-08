@@ -304,7 +304,7 @@ public class DialoguePanel : MonoBehaviour
         }
         
         public void OnClick(UnityAction action) => button.onClick.AddListener(action);
-        public void SetText(string text) => label.text = Localization.instance.Localize(text);
+        public void SetText(string text) => label.text = Localization.instance.Localize(text.Replace("%player_name%", Player.m_localPlayer?.GetPlayerName() ?? " ").Replace("%npc_name%", instance?.m_currentNPC?.m_name ?? " "));
         public void Interactable(bool enable) => button.interactable = enable;
     }
 
@@ -339,7 +339,9 @@ public class DialoguePanel : MonoBehaviour
 
         public void SetText(string text)
         {
-            area.text = text;
+            area.text = Localization.instance.Localize(text
+                .Replace("%player_name%", Player.m_localPlayer?.GetPlayerName() ?? " ")
+                .Replace("%npc_name%", instance?.m_currentNPC?.m_name ?? " "));
             Resize();
         }
         

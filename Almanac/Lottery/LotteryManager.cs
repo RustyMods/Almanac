@@ -36,10 +36,10 @@ public static class LotteryManager
     {
         LotteryTotal = Configs.MinFullHouse;
         if (!ZNet.instance || !ZNet.instance.IsServer()  || LotteryFileName == null) return;
-        if (!File.Exists(LotteryFileName)) return;
+        if (!LotteryDir.FileExists(LotteryFileName)) return;
         try
         {
-            byte[] compressedData = File.ReadAllBytes(LotteryFileName);
+            byte[] compressedData = LotteryDir.ReadAllBytes(LotteryFileName);
             string data = DecompressAndDecode(compressedData);
             LotteryTotal = int.TryParse(data, out int result) ? Math.Max(result, Configs.MinFullHouse) : Configs.MinFullHouse;
             if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Lottery.FullHouse.Reading Saved Total: " + LotteryTotal);

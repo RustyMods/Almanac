@@ -10,19 +10,21 @@ public static class RandomLocationFinder
         Vector2 vector2 = UnityEngine.Random.insideUnitCircle * margin;
         return point + new Vector3(vector2.x, 0.0f, vector2.y);
     }
-    public static bool FindSpawnLocation(Heightmap.Biome biome, out Vector3 position)
+    public static bool FindSpawnLocation(Heightmap.Biome biome, float range, float increment, out Vector3 position)
     {
         position = Vector3.zero;
         // First try near player
         for (int index = 0; index < 1000; ++index)
         {
-            Vector3 candidatePos = GetRandomVectorWithin(Player.m_localPlayer.transform.position, 3000f);
+            Vector3 candidatePos = GetRandomVectorWithin(Player.m_localPlayer.transform.position, range);
             
             if (IsValidSpawnLocation(biome, candidatePos))
             {
                 position = candidatePos;
                 return true;
             }
+
+            range += increment; // increment range for each failed random position
         }
         // Then try entire world
         for (int index = 0; index < 1000; ++index)
@@ -40,8 +42,8 @@ public static class RandomLocationFinder
 
     private static bool IsValidSpawnLocation(Heightmap.Biome biome, Vector3 candidatePos)
     {
-        if (WorldGenerator.instance.GetBiome(candidatePos) != biome)
-            return false;
+        Heightmap.Biome candidateBiome = WorldGenerator.instance.GetBiome(candidatePos);
+        if (!biome.HasFlag(candidateBiome)) return false;
             
         if (WorldGenerator.instance.GetBiomeArea(candidatePos) is not Heightmap.BiomeArea.Median)
             return false;

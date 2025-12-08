@@ -134,9 +134,11 @@
         <Compile Include="Achievements\AchievementTypes.cs" />
         <Compile Include="Achievements\CreatureGroup.cs" />
         <Compile Include="API.cs" />
+        <Compile Include="Bounties\BountyDefaults.cs" />
         <Compile Include="Bounties\BountyGenerator.cs" />
         <Compile Include="ExternalAPIs\ClassesAPI.cs" />
         <Compile Include="ExternalAPIs\DiscordBot_API.cs" />
+        <Compile Include="ExternalAPIs\EpicLoot.cs" />
         <Compile Include="ExternalAPIs\EpicMMOSystem_API.cs" />
         <Compile Include="Bounties\Bounty.cs" />
         <Compile Include="Bounties\BountyManager.cs" />
@@ -145,6 +147,7 @@
         <Compile Include="Data\CritterHelper.cs" />
         <Compile Include="Data\ItemHelper.cs" />
         <Compile Include="Data\Metrics.cs" />
+        <Compile Include="ExternalAPIs\RustyBagsAPI.cs" />
         <Compile Include="Leaderboard\Leaderboard.cs" />
         <Compile Include="Lottery\LotteryManager.cs" />
         <Compile Include="Managers\AssetBundleManager.cs" />
@@ -155,6 +158,7 @@
         <Compile Include="Marketplace\JewelCraft.cs" />
         <Compile Include="Marketplace\MarketManager.cs" />
         <Compile Include="NPC\Clone.cs" />
+        <Compile Include="NPC\DialogueDefaults.cs" />
         <Compile Include="NPC\NPC.cs" />
         <Compile Include="NPC\PlayerAnims.cs" />
         <Compile Include="NPC\VikingNameGenerator.cs" />
@@ -173,11 +177,14 @@
         <Compile Include="TreasureHunt\TreasureHunt.cs" />
         <Compile Include="TreasureHunt\TreasureManager.cs" />
         <Compile Include="Tutorials\Tutorial.cs" />
+        <Compile Include="UI\AlmanacButton.cs" />
         <Compile Include="UI\AlmanacPanel.cs" />
         <Compile Include="UI\DialoguePanel.cs" />
         <Compile Include="UI\FormPanel.cs" />
+        <Compile Include="UI\LotteryPanel.cs" />
         <Compile Include="UI\NPCCustomization.cs" />
         <Compile Include="UI\QuestPanel.cs" />
+        <Compile Include="UI\UI_Patches.cs" />
         <Compile Include="Utilities\AlmanacDir.cs" />
         <Compile Include="Utilities\Configs.cs" />
         <Compile Include="Utilities\Entries.cs" />
@@ -240,6 +247,7 @@
         <Content Include="UpdateManifest.ps1" />
         <EmbeddedResource Include="Tutorials\Bounties.md" />
         <EmbeddedResource Include="Tutorials\Leaderboard.md" />
+        <EmbeddedResource Include="Tutorials\Readme.md" />
         <EmbeddedResource Include="Tutorials\Store.md" />
         <EmbeddedResource Include="Tutorials\Treasures.md" />
     </ItemGroup>

@@ -19,345 +19,13 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Valheim.SettingsGui;
 using Object = UnityEngine.Object;
 
 namespace Almanac.UI;
 
-[HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.Awake))]
-public static class InventoryGui_Awake_Patch
+public partial class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler
 {
-    [UsedImplicitly]
-    private static void Postfix(InventoryGui __instance)
-    {
-        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Initializing Almanac UI");
-        var craftingPanel = __instance.m_crafting.gameObject;
-        var trophyPanel = __instance.m_trophiesPanel;
-        var sfx = craftingPanel.GetComponentInChildren<ButtonSfx>().m_sfxPrefab;
-
-        Text[]? npcDialogueText = DialoguePanel._panel.GetComponentsInChildren<Text>(true);
-        foreach (var component in DialoguePanel._panel.GetComponentsInChildren<ButtonSfx>(true)) component.m_sfxPrefab = sfx;
-        FontManager.SetFont(npcDialogueText);
-        var dialoguePanel = Object.Instantiate(DialoguePanel._panel, __instance.transform.parent.Find("HUD"));
-        dialoguePanel.name = "Almanac NPC Dialogue";
-        dialoguePanel.AddComponent<DialoguePanel>();
-
-        var questPanel = Object.Instantiate(DialoguePanel._panel, __instance.transform.parent.Find("HUD"));
-        questPanel.name = "Almanac Quest";
-        questPanel.AddComponent<QuestPanel>();
-
-        var npcTexts = NPCCustomization._Modal.GetComponentsInChildren<Text>(true);
-        foreach (var component in NPCCustomization._Modal.GetComponentsInChildren<ButtonSfx>(true)) component.m_sfxPrefab = sfx;
-        FontManager.SetFont(npcTexts);
-        NPCCustomization._Modal.CopySpriteAndMaterial(trophyPanel, "bkg", "TrophiesFrame/border (1)");
-        NPCCustomization._Modal.CopySpriteAndMaterial(craftingPanel, "ListView/Viewport/Element/Title/TabBorder", "TabsButtons/TabBorder");
-        NPCCustomization._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Scrollbar", "TrophiesFrame/Trophies/TrophyListScroll");
-        NPCCustomization._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Scrollbar/Sliding Area/Handle", "TrophiesFrame/Trophies/TrophyListScroll/Sliding Area/Handle");
-        NPCCustomization._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Viewport", "TrophiesFrame/Trophies/TrophyList");
-        NPCCustomization._Modal.CopySpriteAndMaterial(craftingPanel, "ListView/Viewport/Element/InputField/Glow", "RepairButton/Glow");
-        NPCCustomization._Modal.CopySpriteAndMaterial(trophyPanel, "MainButton", "TrophiesFrame/Closebutton");
-        NPCCustomization._Modal.CopyButtonState(trophyPanel, "MainButton", "TrophiesFrame/Closebutton");
-        NPCCustomization._Modal.AddComponent<NPCCustomization>();
-        var npc_modal = Object.Instantiate(NPCCustomization._Modal, __instance.transform.parent.Find("HUD"));
-        npc_modal.name = "Almanac NPC UI";
-
-        var modalTexts = FormPanel._Modal.GetComponentsInChildren<Text>(true);
-        foreach (var component in FormPanel._Modal.GetComponentsInChildren<ButtonSfx>(true))
-            component.m_sfxPrefab = sfx;
-        FontManager.SetFont(modalTexts);
-
-        FormPanel._Modal.CopySpriteAndMaterial(trophyPanel, "bkg", "TrophiesFrame/border (1)");
-        FormPanel._Modal.CopySpriteAndMaterial(craftingPanel, "ListView/Viewport/Title/TabBorder",
-            "TabsButtons/TabBorder");
-        FormPanel._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Scrollbar",
-            "TrophiesFrame/Trophies/TrophyListScroll");
-        FormPanel._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Scrollbar/Sliding Area/Handle",
-            "TrophiesFrame/Trophies/TrophyListScroll/Sliding Area/Handle");
-        FormPanel._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Viewport", "TrophiesFrame/Trophies/TrophyList");
-        FormPanel._Modal.CopySpriteAndMaterial(trophyPanel, "ListView/Viewport/Button", "TrophiesFrame/Closebutton");
-        FormPanel._Modal.CopyButtonState(trophyPanel, "ListView/Viewport/Button", "TrophiesFrame/Closebutton");
-        FormPanel._Modal.CopySpriteAndMaterial(craftingPanel, "ListView/Viewport/InputField/Glow", "RepairButton/Glow");
-
-        FormPanel._Modal.CopySpriteAndMaterial(trophyPanel, "MainButton", "TrophiesFrame/Closebutton");
-        FormPanel._Modal.CopyButtonState(trophyPanel, "MainButton", "TrophiesFrame/Closebutton");
-
-        FormPanel._Modal.AddComponent<FormPanel>();
-
-        var panel = AssetBundleManager.LoadAsset<GameObject>("almanac_ui", "AlmanacUI")!;
-        var go = Object.Instantiate(panel, __instance.transform.parent.Find("HUD"));
-        go.name = "Almanac";
-
-        var panelTexts = go.GetComponentsInChildren<Text>(true);
-        foreach (var component in go.GetComponentsInChildren<ButtonSfx>(true)) component.m_sfxPrefab = sfx;
-        FontManager.SetFont(panelTexts);
-
-        go.CopySpriteAndMaterial(trophyPanel, "bkg", "TrophiesFrame/border (1)");
-
-        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Trophies", "TabsButtons/Craft");
-        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Trophies/Selected", "TabsButtons/Craft/Selected");
-        go.CopyButtonState(craftingPanel, "Tabs/Trophies", "TabsButtons/Craft");
-
-        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Pieces", "TabsButtons/Craft");
-        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Pieces/Selected", "TabsButtons/Craft/Selected");
-        go.CopyButtonState(craftingPanel, "Tabs/Pieces", "TabsButtons/Craft");
-
-        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Items", "TabsButtons/Craft");
-        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Items/Selected", "TabsButtons/Craft/Selected");
-        go.CopyButtonState(craftingPanel, "Tabs/Items", "TabsButtons/Craft");
-
-        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Creatures", "TabsButtons/Craft");
-        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Creatures/Selected", "TabsButtons/Craft/Selected");
-        go.CopyButtonState(craftingPanel, "Tabs/Creatures", "TabsButtons/Craft");
-
-        go.CopySpriteAndMaterial(craftingPanel, "Tabs/StatusEffects", "TabsButtons/Craft");
-        go.CopySpriteAndMaterial(craftingPanel, "Tabs/StatusEffects/Selected", "TabsButtons/Craft/Selected");
-        go.CopyButtonState(craftingPanel, "Tabs/StatusEffects", "TabsButtons/Craft");
-
-        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Achievements", "TabsButtons/Craft");
-        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Achievements/Selected", "TabsButtons/Craft/Selected");
-        go.CopyButtonState(craftingPanel, "Tabs/Achievements", "TabsButtons/Craft");
-
-        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Bounties", "TabsButtons/Craft");
-        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Bounties/Selected", "TabsButtons/Craft/Selected");
-        go.CopyButtonState(craftingPanel, "Tabs/Bounties", "TabsButtons/Craft");
-
-        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Treasures", "TabsButtons/Craft");
-        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Treasures/Selected", "TabsButtons/Craft/Selected");
-        go.CopyButtonState(craftingPanel, "Tabs/Treasures", "TabsButtons/Craft");
-
-        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Store", "TabsButtons/Craft");
-        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Store/Selected", "TabsButtons/Craft/Selected");
-        go.CopyButtonState(craftingPanel, "Tabs/Store", "TabsButtons/Craft");
-
-        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Metrics", "TabsButtons/Craft");
-        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Metrics/Selected", "TabsButtons/Craft/Selected");
-        go.CopyButtonState(craftingPanel, "Tabs/Metrics", "TabsButtons/Craft");
-
-        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Leaderboard", "TabsButtons/Craft");
-        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Leaderboard/Selected", "TabsButtons/Craft/Selected");
-        go.CopyButtonState(craftingPanel, "Tabs/Leaderboard", "TabsButtons/Craft");
-
-        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Lottery", "TabsButtons/Craft");
-        go.CopySpriteAndMaterial(craftingPanel, "Tabs/Lottery/Selected", "TabsButtons/Craft/Selected");
-        go.CopyButtonState(craftingPanel, "Tabs/Lottery", "TabsButtons/Craft");
-
-        go.CopySpriteAndMaterial(craftingPanel, "TabBorder", "TabsButtons/TabBorder");
-
-        go.CopySpriteAndMaterial(trophyPanel, "ListView/Scrollbar", "TrophiesFrame/Trophies/TrophyListScroll");
-        go.CopySpriteAndMaterial(trophyPanel, "ListView/Scrollbar/Sliding Area/Handle",
-            "TrophiesFrame/Trophies/TrophyListScroll/Sliding Area/Handle");
-        go.CopySpriteAndMaterial(trophyPanel, "ListView/Viewport", "TrophiesFrame/Trophies/TrophyList");
-
-        go.CopySpriteAndMaterial(trophyPanel, "ListView/Viewport/ListElement/Background",
-            "TrophiesFrame/Trophies/TrophyList/TrophyElement/icon_bkg");
-        go.CopySpriteAndMaterial(trophyPanel, "ListView/Viewport/ListElement/Background/Icon",
-            "TrophiesFrame/Trophies/TrophyList/TrophyElement/icon_bkg/icon");
-        go.CopySpriteAndMaterial(craftingPanel, "ListView/Viewport/ListElement/Selected", "RepairButton/Glow");
-
-        go.CopySpriteAndMaterial(trophyPanel, "ButtonView/Scrollbar", "TrophiesFrame/Trophies/TrophyListScroll");
-        go.CopySpriteAndMaterial(trophyPanel, "ButtonView/Scrollbar/Sliding Area/Handle",
-            "TrophiesFrame/Trophies/TrophyListScroll/Sliding Area/Handle");
-        go.CopySpriteAndMaterial(trophyPanel, "ButtonView/Viewport", "TrophiesFrame/Trophies/TrophyList");
-
-        go.CopySpriteAndMaterial(trophyPanel, "GamblePanel/Scrollbar", "TrophiesFrame/Trophies/TrophyListScroll");
-        go.CopySpriteAndMaterial(trophyPanel, "GamblePanel/Scrollbar/Sliding Area/Handle",
-            "TrophiesFrame/Trophies/TrophyListScroll/Sliding Area/Handle");
-        go.CopySpriteAndMaterial(trophyPanel, "GamblePanel/Viewport", "TrophiesFrame/Trophies/TrophyList");
-        go.CopySpriteAndMaterial(craftingPanel, "GamblePanel/Viewport/Slot/Port/Viewport/Element/Icon",
-            "Decription/requirements/res_bkg/res_icon");
-        go.CopySpriteAndMaterial(craftingPanel, "GamblePanel/Viewport/Slot/Port/Viewport/Element/Glow",
-            "RepairButton/Glow");
-
-        go.CopySpriteAndMaterial(trophyPanel, "ButtonView/Viewport/Button", "TrophiesFrame/Closebutton");
-        go.CopyButtonState(trophyPanel, "ButtonView/Viewport/Button", "TrophiesFrame/Closebutton");
-        go.CopySpriteAndMaterial(craftingPanel, "ButtonView/Viewport/Button/Selected", "RepairButton/Glow");
-
-        go.CopySpriteAndMaterial(trophyPanel, "Closebutton", "TrophiesFrame/Closebutton");
-        go.CopyButtonState(trophyPanel, "Closebutton", "TrophiesFrame/Closebutton");
-
-        go.CopySpriteAndMaterial(craftingPanel, "Description", "Decription");
-        go.CopySpriteAndMaterial(craftingPanel, "Description/Icon", "Decription/Icon");
-
-        go.CopySpriteAndMaterial(trophyPanel, "Description/ListView/Scrollbar",
-            "TrophiesFrame/Trophies/TrophyListScroll");
-        go.CopySpriteAndMaterial(trophyPanel, "Description/ListView/Scrollbar/Sliding Area/Handle",
-            "TrophiesFrame/Trophies/TrophyListScroll/Sliding Area/Handle");
-        go.CopySpriteAndMaterial(trophyPanel, "Description/ListView/Viewport", "TrophiesFrame/Trophies/TrophyList");
-
-        go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Title/TabBorder",
-            "TabsButtons/TabBorder");
-        go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/1",
-            "Decription/requirements/res_bkg");
-        go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/1/Icon",
-            "Decription/requirements/res_bkg/res_icon");
-        go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/2",
-            "Decription/requirements/res_bkg");
-        go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/2/Icon",
-            "Decription/requirements/res_bkg/res_icon");
-        go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/3",
-            "Decription/requirements/res_bkg");
-        go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/3/Icon",
-            "Decription/requirements/res_bkg/res_icon");
-        go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/4",
-            "Decription/requirements/res_bkg");
-        go.CopySpriteAndMaterial(craftingPanel, "Description/ListView/Viewport/Icons/4/Icon",
-            "Decription/requirements/res_bkg/res_icon");
-        go.CopySpriteAndMaterial(trophyPanel, "Description/ListView/Viewport/Button", "TrophiesFrame/Closebutton");
-        go.CopyButtonState(trophyPanel, "Description/ListView/Viewport/Button", "TrophiesFrame/Closebutton");
-
-        go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/1", "Decription/requirements/res_bkg");
-        go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/2", "Decription/requirements/res_bkg");
-        go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/3", "Decription/requirements/res_bkg");
-        go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/4", "Decription/requirements/res_bkg");
-        go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/1/Icon",
-            "Decription/requirements/res_bkg/res_icon");
-        go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/2/Icon",
-            "Decription/requirements/res_bkg/res_icon");
-        go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/3/Icon",
-            "Decription/requirements/res_bkg/res_icon");
-        go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/List/4/Icon",
-            "Decription/requirements/res_bkg/res_icon");
-        go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/Star", "Decription/requirements/level");
-        go.CopySpriteAndMaterial(craftingPanel, "Description/Requirements/Star/Icon",
-            "Decription/requirements/level/MinLevel");
-
-        go.CopySpriteAndMaterial(craftingPanel, "Description/MainButton", "Decription/craft_button_panel/CraftButton");
-        go.CopyButtonState(craftingPanel, "Description/MainButton", "Decription/craft_button_panel/CraftButton");
-
-        go.CopySpriteAndMaterial(craftingPanel, "SearchField", "Decription/craft_button_panel/CraftButton");
-        go.CopySpriteAndMaterial(craftingPanel, "SearchField (1)", "Decription/craft_button_panel/CraftButton");
-
-        go.CopySpriteAndMaterial(craftingPanel, "Currency/Icon", "Decription/requirements/res_bkg/res_icon");
-
-        go.AddComponent<AlmanacPanel>();
-        
-        AlmanacPanel.inventoryButton = new AlmanacPanel.AlmanacButton(__instance);
-        AlmanacPanel.inventoryButton.Show(Configs.ShowAlmanac);
-    }
-}
-
-[HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.OnOpenTrophies))]
-public static class InventoryGui_OnOpenTrophies_Prefix
-{
-    [UsedImplicitly]
-    private static bool Prefix(InventoryGui __instance)
-    {
-        if (AlmanacPanel.instance == null || !Configs.ShowAlmanac) return true;
-        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("InventoryGUI.OnOpenTrophies.Almanac.Override");
-        AlmanacPanel.instance.Show();
-        __instance.Hide();
-        return false;
-    }
-}
-    
-[HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.OnCloseTrophies))]
-public static class InventoryGui_OnCloseTrophies_Postfix
-{
-    [UsedImplicitly]
-    private static void Postfix() => AlmanacPanel.instance?.Hide();
-}
-
-[HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.UpdateTrophyList))]
-public static class InventoryGui_UpdateTrophyList_Prefix
-{
-    [UsedImplicitly]
-    private static bool Prefix() => !Configs.ShowAlmanac;
-}
-
-[HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.Hide))]
-public static class InventoryGui_Hide_Prefix
-{
-    [UsedImplicitly]
-    private static bool Prefix() => !AlmanacPanel.InSearchField();
-}
-
-[HarmonyPatch(typeof(PlayerController), nameof(PlayerController.TakeInput))]
-public static class PlayerController_TakeInput_Patch
-{
-    [UsedImplicitly]
-    private static void Postfix(ref bool __result)
-    {
-        __result &= !AlmanacPanel.InSearchField();
-    }
-}
-
-[HarmonyPatch(typeof(Player), nameof(Player.TakeInput))]
-public static class PlayerTakeInput_Patch
-{
-    [UsedImplicitly]
-    private static void Postfix(ref bool __result)
-    {
-        __result &= !AlmanacPanel.InSearchField();
-    } 
-}
-
-[HarmonyPatch(typeof(Chat), nameof(Chat.HasFocus))]
-public static class Chat_HasFocus_Patch
-{
-    [UsedImplicitly]
-    private static void Postfix(ref bool __result)
-    {
-        __result &= !AlmanacPanel.InSearchField();
-    } 
-}
-
-[HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.IsVisible))]
-public static class InventoryGui_IsVisible_Patch
-{
-    [UsedImplicitly]
-    private static void Postfix(ref bool __result)
-    {
-        __result |= AlmanacPanel.IsVisible() || NPCCustomization.IsVisible() || DialoguePanel.IsVisible();
-    }
-}
-
-public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler
-{
-    public class AlmanacButton
-    {
-        private readonly UITooltip tooltip;
-        private readonly Image icon;
-
-        private readonly Sprite defaultIcon;
-        private readonly string defaultTooltip;
-
-        private bool replaced;
-        public AlmanacButton(InventoryGui instance)
-        {
-            Transform info = Utils.FindChild(instance.m_inventoryRoot.transform, "Info");
-            Transform trophiesOpenButton = Utils.FindChild(info, "Trophies");
-            Transform image = Utils.FindChild(trophiesOpenButton, "Image");
-            
-            tooltip = trophiesOpenButton.GetComponent<UITooltip>();
-            icon = image.GetComponent<Image>();
-            defaultIcon = icon.sprite;
-            defaultTooltip = tooltip.m_text;
-        }
-
-        public void Show(bool enable)
-        {
-            if (enable) Replace();
-            else Revert();
-        }
-
-        private void Replace()
-        {
-            if (replaced) return;
-            SetIcon(SpriteManager.AlmanacIcon);
-            SetTooltip(Keys.Almanac);
-            replaced = true;
-        }
-
-        private void Revert()
-        {
-            if (!replaced) return;
-            SetIcon(defaultIcon);
-            SetTooltip(defaultTooltip);
-            replaced = false;
-        }
-
-        private void SetTooltip(string text) => tooltip.m_text = text;
-        private void SetIcon(Sprite sprite) => icon.sprite = sprite;
-    }
     public static AlmanacButton? inventoryButton;
     
     private static readonly Tutorials.Tutorial achievements = new (Keys.Achievement, "Achievements.md");
@@ -366,12 +34,14 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
     private static readonly Tutorials.Tutorial leaderboard = new(Keys.Leaderboard, "Leaderboard.md");
     private static readonly Tutorials.Tutorial store = new(Keys.AlmanacStore, "Store.md");
     private static readonly Tutorials.Tutorial treasures = new (Keys.Treasures, "Treasures.md");
+    private static readonly Tutorials.Tutorial readme = new ("READ ME", "Readme.md");
     
     public Background background = null!;
     public Text topic = null!;
     public readonly Dictionary<Tab.TabOption, Tab> Tabs = new();
     public ButtonView buttonView = null!;
     public ElementView elementView = null!;
+    public TextView textView = null!;
     private Lottery lottery = null!;
     public RightPanel description = null!;
     private Search mainSearch = null!;
@@ -382,12 +52,13 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
     private Vector3 mouseDifference = Vector3.zero;
     public Action<float>? OnUpdate;
     public Action? OnMainButton;
-    
+    public HorizontalLayoutGroup tabGroup;
     public static AlmanacPanel? instance;
     private static FormPanel? formPanel;
     public FormPanel.FormBuilder formBuilder = null!;
     private const float Input_Cooldown = 0.1f;
     private float lastInputTime;
+    
     public static bool isLocalAdminOrHostAndNoCost
     {
         get
@@ -405,6 +76,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         instance = this;
         background = new Background(transform);
         topic = transform.Find("topic").GetComponent<Text>();
+        tabGroup = transform.Find("Tabs").GetComponent<HorizontalLayoutGroup>();
         Tabs[Tab.TabOption.Trophies] = new Tab(transform.Find("Tabs/Trophies"), OnTrophyTab);
         Tabs[Tab.TabOption.Pieces] = new Tab(transform.Find("Tabs/Pieces"), OnPieceTab);
         Tabs[Tab.TabOption.Items] = new Tab(transform.Find("Tabs/Items"), OnItemTab);
@@ -414,12 +86,14 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         Tabs[Tab.TabOption.Bounties] = new Tab(transform.Find("Tabs/Bounties"), OnBountyTab);
         Tabs[Tab.TabOption.Treasures] = new Tab(transform.Find("Tabs/Treasures"), OnTreasureTab);
         Tabs[Tab.TabOption.Store] = new Tab(transform.Find("Tabs/Store"), OnStoreTab);
+        Tabs[Tab.TabOption.Lottery] = new Tab(transform.Find("Tabs/Lottery"), OnLotteryTab);
         Tabs[Tab.TabOption.Metrics] = new Tab(transform.Find("Tabs/Metrics"), OnMetricsTab);
         Tabs[Tab.TabOption.Leaderboard] = new Tab(transform.Find("Tabs/Leaderboard"), OnLeaderboardTab);
-        Tabs[Tab.TabOption.Lottery] = new Tab(transform.Find("Tabs/Lottery"), OnLotteryTab);
-
+        Tabs[Tab.TabOption.Readme] = new Tab(transform.Find("Tabs/Readme"), OnReadmeTab);
+        
         elementView = new ElementView(transform.Find("ListView"));
         buttonView = new ButtonView(transform.Find("ButtonView"));
+        textView = new TextView(transform.Find("TextView"));
         lottery = new Lottery(transform.Find("GamblePanel"));
         description = new RightPanel(transform.Find("Description"));
         mainSearch = new Search(transform.Find("SearchField"));
@@ -437,6 +111,17 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         sideSearch.SetPlaceholder(Keys.SearchPlaceholder);
         description.OnClick(() => OnMainButton?.Invoke());
         close.SetLabel(Keys.Close);
+        close.gamepadText = GamepadMapController.GetType() switch
+        {
+            GamepadMapType.PS => "O",
+            _ => "B"
+        };
+        description.gamepadButtonText = GamepadMapController.GetType() switch
+        {
+            GamepadMapType.PS => "X",
+            _ => "A",
+        };
+        
         topic.gameObject.SetActive(false);
         currency.SetIcon(SpriteManager.GetSprite(SpriteManager.IconOption.SilverCoins));
         background.SetBackground(Configs.Transparent ? Background.BackgroundOption.Transparent : Background.BackgroundOption.Opaque);
@@ -472,6 +157,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         Tabs[Tab.TabOption.Lottery].SetActive(Configs.ShowLottery);
         Tabs[Tab.TabOption.Metrics].SetActive(Configs.ShowMetrics);
         Tabs[Tab.TabOption.Leaderboard].SetActive(Configs.ShowLeaderboard);
+        Tabs[Tab.TabOption.Readme].SetActive(false);
         
         scrollRects = GetComponentsInChildren<ScrollRect>(true);
         OnScrollbarSensitivityChanged(Configs.ScrollbarSensitivity);
@@ -494,9 +180,12 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             Hide();
             return;
         }
+        
+        UpdateGamepad();
+        UpdateGamepadLabels();
 
         float dt = Time.deltaTime;
-        if (Time.time - lastInputTime > Input_Cooldown && (ZInput.GetKeyDown(KeyCode.Escape) || (ZInput.GetKeyDown(KeyCode.Tab) && !InSearchField())))
+        if (Time.time - lastInputTime > Input_Cooldown && (ZInput.GetKeyDown(KeyCode.Escape) || ZInput.GetButtonDown("JoyButtonB") || (ZInput.GetKeyDown(KeyCode.Tab) && !InSearchField())))
         {
             lastInputTime = Time.time;
             Hide();
@@ -506,6 +195,48 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         lottery.UpdateGlow(dt);
         GridView.activeView?.HandleArrowKeys();
     }
+
+    public void UpdateGamepad()
+    {
+        if (!ZInput.IsGamepadActive() && ZInput.IsMouseActive()) return;
+        if (ZInput.GetButtonDown("JoyTabLeft"))
+        {
+            Tab previous = Tab.GetPreviousTab(Tab.selectedTab);
+            previous.Click();
+            
+        }
+        if (ZInput.GetButtonDown("JoyTabRight"))
+        {
+            Tab next = Tab.GetNextTab(Tab.selectedTab);
+            next.Click();
+        }
+        
+        if (ZInput.GetButtonDown("JoyButtonA"))
+        {
+            description.Click();
+        }
+
+        if (ZInput.GetButtonDown("JoyRStickUp"))
+        {
+            float scrollValue = description.view.scrollbar.value;
+            scrollValue = Mathf.Clamp01(scrollValue + 0.1f);
+            description.view.scrollbar.value = scrollValue;
+        }
+
+        if (ZInput.GetButtonDown("JoyRStickDown"))
+        {
+            float scrollValue = description.view.scrollbar.value;
+            scrollValue = Mathf.Clamp01(scrollValue - 0.1f);
+            description.view.scrollbar.value = scrollValue;
+        }
+    }
+
+    public void UpdateGamepadLabels()
+    {
+        close.UpdateLabel();
+        description.UpdateLabel();
+    }
+    
     public void OnDestroy()
     {
         instance = null;
@@ -517,7 +248,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
     public void Show(Tab.TabOption option = Tab.TabOption.Trophies)
     {
         gameObject.SetActive(true);
-
         switch (option)
         {
             case Tab.TabOption.Items:
@@ -549,6 +279,9 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 break;
             case Tab.TabOption.Metrics:
                 OnMetricsTab();
+                break;
+            case Tab.TabOption.Readme:
+                OnReadmeTab();
                 break;
             default:
                 OnTrophyTab();
@@ -587,6 +320,17 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
 
     public static bool InSearchField() => instance?.mainSearch.IsSearching() == true || instance?.sideSearch.IsSearching() == true || FormPanel.IsFocused() || NPCCustomization.IsVisible();
 
+    public void OnReadmeTab()
+    {
+        Tabs[Tab.TabOption.Readme].SetSelected(true);
+        Reset(intro);
+        elementView.SetActive(false);
+        textView.SetActive(true);
+        textView.Clear();
+        textView.AddTextBlock(readme.tooltip);
+        textView.Resize();
+    }
+
     public void OnTrophyTab()
     {
         Tabs[Tab.TabOption.Trophies].SetSelected(true);
@@ -596,7 +340,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         
         for (int i = 0; i < list.Count; i++)
         {
-            var data = list[i];
+            ItemHelper.ItemInfo data = list[i];
             bool isKnown = !Configs.UseKnowledgeWall || Player.m_localPlayer.IsKnownMaterial(data.shared.m_name) || Player.m_localPlayer.NoCostCheat();
             if (Configs.HideUnknownEntries && !isKnown) continue;
             ElementView.Element item = elementView.Create();
@@ -609,6 +353,13 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             item.OnClick(() => data.OnClick(this, item));
         }
         elementView.Resize(elementView.Count);
+        
+        if (ZInput.IsGamepadActive())
+        {
+            GridElement? firstValidElement = elementView.GetElements().FirstOrDefault(x => x.IsKnown());
+            if (firstValidElement == null) return;
+            firstValidElement.Select();
+        }
     }
     
     public void OnPieceTab()
@@ -619,7 +370,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         var list = PieceHelper.GetPieces().OrderBy(x => Localization.instance.Localize(x.piece.m_name)).ToList();
         for (int i = 0; i < list.Count; i++)
         {
-            var data = list[i];
+            PieceHelper.PieceInfo data = list[i];
             bool isKnown = Player.m_localPlayer.IsPieceKnown(data.piece) || !Configs.UseKnowledgeWall || Player.m_localPlayer.NoCostCheat();
             if (Configs.HideUnknownEntries && !isKnown) continue;
             ElementView.Element item = elementView.Create();
@@ -633,6 +384,13 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             item.OnClick(() => data.OnClick(this, item));
         }
         elementView.Resize(elementView.Count);
+        
+        if (ZInput.IsGamepadActive())
+        {
+            GridElement? firstValidElement = elementView.GetElements().FirstOrDefault(x => x.IsKnown());
+            if (firstValidElement == null) return;
+            firstValidElement.Select();
+        }
     }
 
     public void OnItemTab()
@@ -640,12 +398,12 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         Tabs[Tab.TabOption.Items].SetSelected(true);
         Reset(intro);
         elementView.SetActive(true);
-        var list = ItemHelper.GetItemsWhileIgnoring(ItemDrop.ItemData.ItemType.Trophy)
+        List<ItemHelper.ItemInfo> list = ItemHelper.GetItemsWhileIgnoring(ItemDrop.ItemData.ItemType.Trophy)
             .OrderBy(x => Localization.instance.Localize(x.itemData.m_shared.m_name)).ToList();
         
         for (int i = 0; i < list.Count; ++i)
         {
-            var data = list[i];
+            ItemHelper.ItemInfo data = list[i];
             bool isKnown = Player.m_localPlayer.NoCostCheat() || !Configs.UseKnowledgeWall || Player.m_localPlayer.IsKnownMaterial(data.shared.m_name);
             if (Configs.HideUnknownEntries && !isKnown) continue;
             ElementView.Element item = elementView.Create();
@@ -659,6 +417,13 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             item.OnClick(() => data.OnClick(this, item));
         }
         elementView.Resize(elementView.Count);
+        
+        if (ZInput.IsGamepadActive())
+        {
+            GridElement? firstValidElement = elementView.GetElements().FirstOrDefault(x => x.IsKnown());
+            if (firstValidElement == null) return;
+            firstValidElement.Select();
+        }
     }
 
     public void OnCreatureTab()
@@ -671,7 +436,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         
         for (int i = 0; i < list.Count; ++i)
         {
-            var data = list[i];
+            CritterHelper.CritterInfo data = list[i];
             bool isKnown = Player.m_localPlayer.NoCostCheat() || !Configs.UseKnowledgeWall || data.isKnown();
             if (Configs.HideUnknownEntries && !isKnown) continue;
             ButtonView.ElementButton item = buttonView.Create();
@@ -681,6 +446,13 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             item.OnClick(() => data.OnClick(this, item));
         }
         buttonView.Resize(buttonView.Count);
+        
+        if (ZInput.IsGamepadActive())
+        {
+            GridElement? firstValidElement = buttonView.GetElements().FirstOrDefault(x => x.IsKnown());
+            if (firstValidElement == null) return;
+            firstValidElement.Select();
+        }
     }
 
     public void OnStatusEffectTab()
@@ -749,6 +521,13 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             });
         }
         elementView.Resize(elementView.Count);
+        
+        if (ZInput.IsGamepadActive())
+        {
+            GridElement? firstValidElement = elementView.GetElements().FirstOrDefault(x => x.IsKnown());
+            if (firstValidElement == null) return;
+            firstValidElement.Select();
+        }
     }
 
     public void OnAchievementTab()
@@ -791,6 +570,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             item.SetIconColor(isCompleted ? Color.white : Color.black);
             item.SetDescription(achievement.Lore);
             item.Interactable(true);
+            item.isKnown = true;
             Sprite? sprite = string.IsNullOrEmpty(achievement.StatusEffect)
                 ? null
                 : ObjectDB.instance.GetStatusEffect(achievement.StatusEffect.GetStableHashCode())?.m_icon;
@@ -800,6 +580,13 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             item.OnClick(() => achievement.OnClick(this, item));
         }
         elementView.Resize(elementView.Count);
+        
+        if (ZInput.IsGamepadActive())
+        {
+            GridElement? firstValidElement = elementView.GetElements().FirstOrDefault(x => x.IsKnown());
+            if (firstValidElement == null) return;
+            firstValidElement.Select();
+        }
     }
 
     public void OnBountyTab()
@@ -810,9 +597,10 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         if (isLocalAdminOrHostAndNoCost) formBuilder.Build(FormPanel.FormBuilder.FormType.Bounty);
         List<BountyManager.BountyData> list = BountyManager.bounties.Values.ToList();
         if (Configs.GenerateBounties) list.AddRange(BountyGenerator.GetRandomBounties(list, 5));
-        
-        foreach (BountyManager.BountyData? bounty in list)
+
+        for (var index = 0; index < list.Count; ++index)
         {
+            BountyManager.BountyData? bounty = list[index];
             bool hasReqs = bounty.HasRequirements(Player.m_localPlayer);
             if (Configs.HideUnknownEntries && !hasReqs) continue;
             ElementView.Element item = elementView.Create();
@@ -821,11 +609,20 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             item.SetDescription(bounty.GetNameOverride());
             item.SetIcon(bounty.icon);
             item.SetIconColor(hasReqs ? Color.white : Color.black);
-            item.Interactable(hasReqs && (BountyManager.ActiveBountyLocation is null || BountyManager.ActiveBountyLocation.data == bounty));
+            item.Interactable(hasReqs && (BountyManager.ActiveBountyLocation is null ||
+                                          BountyManager.ActiveBountyLocation.data == bounty));
             item.ShowNotice(bounty.completed || BountyManager.ActiveBountyLocation?.data == bounty);
             item.OnClick(() => bounty.OnClick(this, item));
         }
+
         elementView.Resize(elementView.Count);
+        
+        if (ZInput.IsGamepadActive())
+        {
+            GridElement? firstValidElement = elementView.GetElements().FirstOrDefault(x => x.IsKnown());
+            if (firstValidElement == null) return;
+            firstValidElement.Select();
+        }
     }
 
     public void OnTreasureTab()
@@ -837,8 +634,11 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         {
             formBuilder.Build(FormPanel.FormBuilder.FormType.Treasure);
         }
-        foreach (TreasureManager.TreasureData? treasure in TreasureManager.treasures.Values)
+
+        List<TreasureManager.TreasureData> list = TreasureManager.treasures.Values.ToList();
+        for (var index = 0; index < list.Count; ++index)
         {
+            TreasureManager.TreasureData? treasure = list[index];
             bool isKnown = Player.m_localPlayer.NoCostCheat() || Player.m_localPlayer.IsBiomeKnown(treasure.biome);
             if (Configs.HideUnknownEntries && !isKnown) continue;
             ElementView.Element item = elementView.Create();
@@ -851,7 +651,15 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             item.ShowNotice(TreasureManager.ActiveTreasureLocation?.data == treasure);
             item.OnClick(() => treasure.OnClick(this, item));
         }
+
         elementView.Resize(elementView.Count);
+        
+        if (ZInput.IsGamepadActive())
+        {
+            GridElement? firstValidElement = elementView.GetElements().FirstOrDefault(x => x.IsKnown());
+            if (firstValidElement == null) return;
+            firstValidElement.Select();
+        }
     }
 
     public void OnStoreTab()
@@ -887,12 +695,14 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             sell.SetDescription(Keys.SellYourItems);
             sell.Interactable(true);
             sell.OnClick(OnMarketplace);
+            sell.isKnown = true;
             ElementView.Element revenue = elementView.Create();
             revenue.SetIcon(SpriteManager.GetSprite(SpriteManager.IconOption.SilverCoins));
             revenue.SetName(Keys.Revenue);
             revenue.SetDescription(MarketManager.GetRevenue(Player.m_localPlayer).ToString());
             revenue.Interactable(MarketManager.HasRevenue(Player.m_localPlayer));
             revenue.OnClick(() => MarketManager.CollectRevenue(Player.m_localPlayer));
+            revenue.isKnown = true;
             foreach (MarketManager.MarketItem? playerItem in MarketManager.GetMarketItems())
             {
                 ElementView.Element item = elementView.Create();
@@ -901,6 +711,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 item.SetName(formattedName);
                 item.SetDescription(playerItem.itemData.m_shared.m_description);
                 item.Interactable(true);
+                item.isKnown = true;
                 item.OnClick(() => playerItem.OnClick(this, item));
             }
         }
@@ -918,6 +729,13 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             item.OnClick(() => data.OnClick(this, item));
         }
         elementView.Resize(elementView.Count);
+        
+        if (ZInput.IsGamepadActive())
+        {
+            GridElement? firstValidElement = elementView.GetElements().LastOrDefault(x => x.IsKnown());
+            if (firstValidElement == null) return;
+            firstValidElement.Select();
+        }
     }
 
     public void OnMarketplace()
@@ -934,6 +752,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             item.SetName(formattedName);
             item.SetDescription(itemData.m_shared.m_description);
             item.Interactable(true);
+            item.isKnown = true;
             item.OnClick(() =>
             {
                 elementView.SetSelected(item);
@@ -958,6 +777,13 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             });
         }
         elementView.Resize(elementView.Count);
+        
+        if (ZInput.IsGamepadActive())
+        {
+            GridElement? firstValidElement = elementView.GetElements().FirstOrDefault(x => x.IsKnown());
+            if (firstValidElement == null) return;
+            firstValidElement.Select();
+        }
     }
 
     public void OnMetricsTab()
@@ -1008,9 +834,17 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             item.SetDescription($"{Keys.Rank} {player.GetRank()}");
             item.SetIcon(SpriteManager.GetSprite(SpriteManager.IconOption.CrownGold));
             item.Interactable(true);
+            item.isKnown = true;
             item.OnClick(() => player.OnClick(this, item));
         }
         elementView.Resize(elementView.Count);
+        
+        if (ZInput.IsGamepadActive())
+        {
+            GridElement? firstValidElement = elementView.GetElements().First();
+            if (firstValidElement == null) return;
+            firstValidElement.Select();
+        }
     }
 
     public void OnLotteryTab()
@@ -1029,24 +863,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         bool canGamble = Player.m_localPlayer.NoCostCheat() || tokens >= Lottery.COST_TO_ROLL;
         description.Interactable(canGamble);
         description.SetButtonText(Keys.Gamble);
-        OnMainButton = () =>
-        {
-            if (lottery.isRolling) return;
-            if (!Player.m_localPlayer.NoCostCheat())
-            {
-                Player.m_localPlayer.RemoveTokens(Lottery.COST_TO_ROLL);
-                LotteryManager.SendToServer(Lottery.COST_TO_ROLL);
-                description.view.Clear();
-                description.view.CreateTextArea().SetText(Keys.LotteryLore + "\n\n");
-                description.view.CreateTitle().SetTitle(Keys.Chance);
-                lottery.ToEntries().Build(description.view);
-                description.view.Resize();
-                tokens = Player.m_localPlayer.GetTokens();
-                canGamble = tokens >= Lottery.COST_TO_ROLL;
-                description.Interactable(canGamble);
-            }
-            lottery.Roll();
-        };
+        OnMainButton = lottery.OnGamble;
     }
     
     public void SetTopic(string text) => topic.text = Localization.instance.Localize(text);
@@ -1073,18 +890,37 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
     {
         private readonly Button button;
         private readonly Text label;
+        public string baseText = string.Empty;
+        public string gamepadText = string.Empty;
 
         public ButtonElement(Transform transform, UnityAction action)
         {
             button = transform.GetComponent<Button>();
             label = transform.Find("Text").GetComponent<Text>();
+            label.supportRichText = true;
             OnClick(action);
         }
 
         private void OnClick(UnityAction action) => button.onClick.AddListener(action);
-        public void SetLabel(string text) => label.text = Localization.instance.Localize(text);
-    }
 
+        public void SetLabel(string text)
+        {
+            baseText = Localization.instance.Localize(text);
+            label.text = baseText;
+        }
+
+        public void UpdateLabel()
+        {
+            if (ZInput.IsGamepadActive() && !ZInput.IsMouseActive())
+            {
+                label.text = baseText + $" <color=yellow>[{gamepadText}]</color>";
+            }
+            else
+            {
+                label.text = baseText;
+            }
+        }
+    }
     private class Search
     {
         private readonly InputField field;
@@ -1101,7 +937,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         public bool IsSearching() => field.isFocused;
         public void Reset() => field.SetTextWithoutNotify(null);
     }
-
     public class RightPanel
     {
         private readonly Image icon;
@@ -1110,8 +945,10 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         public readonly RequirementView requirements;
         private readonly Button button;
         private readonly Text buttonText;
-        
         private readonly Sprite defaultIcon;
+
+        private string baseButtonText = string.Empty;
+        public string gamepadButtonText = string.Empty;
 
         public RightPanel(Transform transform)
         {
@@ -1131,10 +968,31 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
 
         public void SetButtonText(string text)
         {
-            buttonText.text = Localization.instance.Localize(text);
+            baseButtonText = Localization.instance.Localize(text);
+            buttonText.text = baseButtonText;
             button.gameObject.SetActive(true);
         }
+
+        public void UpdateLabel()
+        {
+            if (ZInput.IsGamepadActive() && !ZInput.IsMouseActive())
+            {
+                buttonText.text = baseButtonText + $" <color=yellow>[{gamepadButtonText}]</color>";
+            }
+            else
+            {
+                buttonText.text = baseButtonText;
+            }
+        }
         public void Interactable(bool enable) => button.interactable = enable;
+
+        public void Click()
+        {
+            if (button.IsInteractable())
+            {
+                button.onClick.Invoke();
+            }
+        }
 
         public void Reset()
         {
@@ -1147,7 +1005,6 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             buttonText.text = string.Empty;
         }
     }
-    
     public class ButtonView : GridView
     {
         private readonly ElementButton _element;
@@ -1168,7 +1025,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             return button;
         }
 
-        protected override List<GridElement> GetElements() => elements.Select(GridElement (e) => e).ToList();
+        public override List<GridElement> GetElements() => elements.Select(GridElement (e) => e).ToList();
         protected override GridElement? GetSelectedElement() => selectedElement;
         public void SetSelectedColor(Color color)
         {
@@ -1242,7 +1099,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             }
         }
     }
-
+    
     public class ElementView : GridView
     {
         private readonly Element _element;
@@ -1261,7 +1118,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             return temp;
         }
 
-        protected override List<GridElement> GetElements() => elements.Select(GridElement (e) => e).ToList();
+        public override List<GridElement> GetElements() => elements.Select(GridElement (e) => e).ToList();
         protected override GridElement? GetSelectedElement() => selectedElement;
         public void SetSelected(Element? element)
         {
@@ -1430,7 +1287,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         public static readonly List<GridView> views = new List<GridView>();
         public static GridView? activeView;
         private readonly float height;
-        protected bool handleArrowKeys;
+        protected bool handleArrowKeys = true;
         private float lastInputTime;
         private float availableWidth => root.rect.width - grid.padding.left - grid.padding.right;
         private int columns => Mathf.Max(1, Mathf.FloorToInt((availableWidth + grid.spacing.x) / (grid.cellSize.x + grid.spacing.x)));
@@ -1445,7 +1302,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         }
 
         public void SetGridElementSize(Vector2 size) => grid.cellSize = size;
-        protected virtual List<GridElement> GetElements() => new();
+        public virtual List<GridElement> GetElements() => new();
         protected virtual GridElement? GetSelectedElement() => null;
         private void ScrollToElement(int elementIndex)
         {
@@ -1472,26 +1329,33 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         {
             if (activeView == null || !IsVisible() || !handleArrowKeys) return;
             if (Time.time - lastInputTime < Input_Cooldown) return;
-            if (!ZInput.GetKeyDown(KeyCode.LeftArrow) && !ZInput.GetKeyDown(KeyCode.RightArrow) && !ZInput.GetKeyDown(KeyCode.UpArrow) && !ZInput.GetKeyDown(KeyCode.DownArrow)) return;
+            
+            bool up = ZInput.GetButtonDown("JoyLStickUp") || ZInput.GetButtonDown("JoyDPadUp") || ZInput.GetKeyDown(KeyCode.UpArrow);
+            bool down = ZInput.GetButtonDown("JoyLStickDown") || ZInput.GetButtonDown("JoyDPadDown") || ZInput.GetKeyDown(KeyCode.DownArrow);
+            bool left = ZInput.GetButtonDown("JoyLStickLeft") || ZInput.GetButtonDown("JoyDPadLeft") || ZInput.GetKeyDown(KeyCode.LeftArrow);
+            bool right = ZInput.GetButtonDown("JoyLStickRight") || ZInput.GetButtonDown("JoyDPadRight") || ZInput.GetKeyDown(KeyCode.RightArrow);
+
+            if (!up && !down && !left && !right) return;
+            
             lastInputTime = Time.time;
             if (activeView.GetSelectedElement() is not { } selectedElement) return;
             List<GridElement> list = activeView.GetElements().Where(element => !element.IsHidden()).ToList();
             int indexOf = list.IndexOf(selectedElement);
             if (indexOf == -1) return;
             int nextElement = indexOf;
-            if (ZInput.GetKeyDown(KeyCode.LeftArrow))
+            if (left)
             {
                 nextElement = FindNextValidElement(list, indexOf, -1, 0, list.Count - 1);
             }
-            else if (ZInput.GetKeyDown(KeyCode.RightArrow))
+            else if (right)
             {
                 nextElement = FindNextValidElement(list, indexOf, 1, 0, list.Count - 1);
             }
-            else if (ZInput.GetKeyDown(KeyCode.UpArrow))
+            else if (up)
             {
                 nextElement = FindNextValidElementVertical(list, indexOf, -columns, 0, list.Count - 1);
             }
-            else if (ZInput.GetKeyDown(KeyCode.DownArrow))
+            else if (down)
             {
                 nextElement = FindNextValidElementVertical(list, indexOf, columns, 0, list.Count - 1);
             }
@@ -1539,6 +1403,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
                 view.prefab.SetActive(view == this && enable);
             }
             activeView = this;
+            instance?.textView.SetActive(false);
         }
         public void Resize(int count)
         {
@@ -1549,6 +1414,76 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         }
         public virtual void OnSearch(string query) { }
     }
+
+    public class TextView
+    {
+        public readonly GameObject prefab;
+        public readonly RectTransform root;
+        public readonly VerticalLayoutGroup layout;
+        public readonly Scrollbar scrollbar;
+        public readonly TextBlock _template;
+        public readonly List<TextBlock> blocks = new();
+        public readonly float height;
+
+        public TextView(Transform transform)
+        {
+            prefab = transform.gameObject;
+            root = transform.Find("Viewport/ListRoot").GetComponent<RectTransform>();
+            layout = root.GetComponent<VerticalLayoutGroup>();
+            scrollbar = transform.Find("Scrollbar").GetComponent<Scrollbar>();
+            _template = new TextBlock(transform.Find("Viewport/ListElement"));
+            height = root.rect.height;
+        }
+        
+        public void SetActive(bool enable) => prefab.SetActive(enable);
+
+        public void Resize()
+        {
+            float totalHeight = layout.padding.top + layout.padding.bottom + blocks.Sum(x => x.GetHeight());
+            root.sizeDelta = new Vector2(root.sizeDelta.x, Mathf.Max(totalHeight, height));
+            scrollbar.value = 1f;
+        }
+
+        public void Clear()
+        {
+            foreach(var block in blocks) block.Destroy();
+            blocks.Clear();
+        }
+
+        public void AddTextBlock(string text)
+        {
+            var element = _template.Create(root);
+            element.SetText(text);
+            blocks.Add(element);
+        }
+
+        public class TextBlock
+        {
+            public readonly GameObject prefab;
+            public readonly Text component;
+
+            public TextBlock(Transform transform)
+            {
+                prefab =transform.gameObject;
+                component = prefab.GetComponent<Text>();
+            }
+            
+            public float GetHeight() => component.preferredHeight;
+
+            public TextBlock Create(Transform parent)
+            {
+                var go = Instantiate(prefab, parent);
+                go.SetActive(true);
+                var block = new TextBlock(go.transform);
+                return block;
+            }
+
+            public void Destroy() => Object.Destroy(prefab);
+
+            public void SetText(string text) => component.text = Localization.instance.Localize(text);
+        }
+    }
+    
     public class InfoView
     {
         private readonly Title _title;
@@ -1560,7 +1495,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         private readonly GameObject prefab;
         private readonly RectTransform root;
         private readonly VerticalLayoutGroup group;
-        private readonly Scrollbar scrollbar;
+        public readonly Scrollbar scrollbar;
         private readonly List<InfoElement> elements = new();
         private readonly float minHeight;
         private readonly float padding;
@@ -2240,6 +2175,7 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         private readonly GameObject selected;
         private readonly Text selectedLabel;
         public bool IsSelected => selected.activeSelf;
+        public static Tab? selectedTab;
         public Tab(Transform transform, UnityAction action)
         {
             prefab = transform.gameObject;
@@ -2247,10 +2183,11 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             label = transform.Find("Text").GetComponent<Text>();
             selected = transform.Find("Selected").gameObject;
             selectedLabel = transform.Find("Selected/Text").GetComponent<Text>();
-            OnClick(action);
+            AddListener(action);
         }
         public void SetActive(bool active) => prefab.SetActive(active);
-        private void OnClick(UnityAction action) => button.onClick.AddListener(action);
+        public void AddListener(UnityAction action) => button.onClick.AddListener(action);
+        public void Click() => button.onClick.Invoke();
         public void SetLabel(string text)
         {
             label.text = Localization.instance.Localize(text);
@@ -2261,10 +2198,38 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
             if (instance == null) return;
             foreach (Tab? tab in instance.Tabs.Values)
             {
-                tab.selected.SetActive(tab == this && enable);
+                if (tab == this)
+                {
+                    tab.selected.gameObject.SetActive(enable);
+                    selectedTab = tab;
+                }
+                else
+                {
+                    tab.selected.SetActive(false);
+                }
             }
         }
-        public enum TabOption {Trophies, Pieces, Items, Creatures, StatusEffects, Achievements, Bounties, Treasures, Store, Metrics, Leaderboard, Lottery}
+
+        public static Tab GetNextTab(Tab? currentTab)
+        {
+            List<Tab> list = instance!.Tabs.Values.Where(x => x.prefab.activeInHierarchy).ToList();
+            if (currentTab == null) return list.First();
+            int indexOf = list.IndexOf(currentTab);
+            if (indexOf == -1) return list.First();
+            Tab tab = indexOf + 1 >= list.Count ? list.First() : list[indexOf + 1];
+            return tab;
+        }
+
+        public static Tab GetPreviousTab(Tab? currentTab)
+        {
+            List<Tab> list = instance!.Tabs.Values.Where(x => x.prefab.activeInHierarchy).ToList();
+            if (currentTab == null) return list.First();
+            int indexOf = list.IndexOf(currentTab);
+            if (indexOf == -1) return list.First();
+            Tab tab = indexOf - 1 < 0 ? list.Last() : list[indexOf - 1];
+            return tab;
+        }
+        public enum TabOption {Trophies, Pieces, Items, Creatures, StatusEffects, Achievements, Bounties, Treasures, Store, Metrics, Leaderboard, Lottery, Readme}
     }
     public class Currency
     {
@@ -2283,415 +2248,5 @@ public class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandler, IEnd
         private void SetText(string text) => field.text = Localization.instance.Localize(text);
         public void SetAmount(int amount) => SetText($"{Keys.AlmanacToken} <color=yellow>x{amount}</color>");
         public void SetActive(bool enable) => prefab.SetActive(enable);
-    }
-    private class Lottery : GridView
-    {
-        private readonly Dictionary<Scrollbar, float> _scrollbars = new();
-        private readonly List<Scrollbar> scrollbars;
-        private readonly List<Slot> slots = new();
-        private readonly List<Slot.SlotElement> finalElements = new();
-        private const float fullHouseChance = 0.99f;
-        private const int RequiredMatchCount = 3;
-        private const float UPDATE_INTERVAL = 0.033f;
-        private const int TokensPerSuccess = 10;
-        public static int COST_TO_ROLL => Configs.LotteryCost;
-        private float glowTimer;
-        public bool isRolling;
-        private bool isFullHouse;
-        private int SlotCount => slots.Count;
-        private static int IconCount => Slot.icons.Length;
-        private double _winChance;
-        private double winChance
-        {
-            get
-            {
-                if (_winChance == 0)
-                {
-                    _winChance = CalculateWinChance(SlotCount, IconCount, RequiredMatchCount);
-                }
-                return _winChance;
-            }
-        }
-        private double _expectedWins;
-        private double expectedWins
-        {
-            get
-            {
-                if (_expectedWins == 0)
-                {
-                    _expectedWins = CalculateExpectedWins(SlotCount, IconCount, RequiredMatchCount);
-                }
-                return _expectedWins;
-            }
-        }
-        private int _possibleSequences;
-        private int possibleSequences
-        {
-            get
-            {
-                if (_possibleSequences == 0)
-                {
-                    _possibleSequences = SlotCount - RequiredMatchCount + 1;
-                }
-                return _possibleSequences;
-            }
-        }
-        private double _sequenceProb;
-        private double sequenceProb
-        {
-            get
-            {
-                if (_sequenceProb == 0)
-                {
-                    _sequenceProb = Math.Pow(1.0 / IconCount, RequiredMatchCount - 1);
-                }
-
-                return _sequenceProb;
-            }
-        }
-        
-        public Lottery(Transform transform) : base(transform)
-        {
-            Slot template = new Slot(transform.Find("Viewport/Slot"));
-            for(int index = 0; index < 48; ++index)
-            {
-                Slot slot = template.Create(root);
-                slots.Add(slot);
-                _scrollbars[slot.scrollbar] = 0f;
-                finalElements.Add(slot.GetFinalElement());
-            }
-            scrollbars = new List<Scrollbar>(_scrollbars.Keys);
-        }
-        public void RandomizeIcons()
-        {
-            isFullHouse = UnityEngine.Random.value > fullHouseChance;
-            SpriteManager.IconOption? fullHouseIcon = isFullHouse ? 
-                (SpriteManager.IconOption)Slot.icons.GetValue(UnityEngine.Random.Range(0, Slot.icons.Length)) 
-                : null;
-
-            foreach (Slot slot in slots)
-            {
-                slot.RandomizeIcons(fullHouseIcon);
-            }
-        }
-        private void UpdateRoll(float dt)
-        {
-            if (instance is null) return;
-            
-            isRolling = true;
-            
-            bool allFinished = true;
-            
-            SpriteManager.IconOption? previous = null;
-            int match = 0;
-            int success = 0;
-            HashSet<Slot> successMatches = new();
-            List<Slot> matches = new();
-            float t = Time.time;
-            for (int index = 0; index < slots.Count; ++index)
-            {
-                Slot slot = slots[index];
-                Scrollbar scrollbar = scrollbars[index];
-                
-                float startDelay = index * 0.3f;
-                bool scrollbarFinished = false;
-                
-                if (t >= startDelay)
-                {
-                    float elapsedTime = _scrollbars[scrollbar] + dt;
-                    float time = Mathf.Clamp01(elapsedTime / 2f);
-                    float ease = Mathf.SmoothStep(0f, 1f, time);
-                    _scrollbars[scrollbar] = elapsedTime;
-                    scrollbar.value = ease;
-                    
-                    scrollbarFinished = elapsedTime >= 2f;
-                }
-                
-                if (!scrollbarFinished)
-                {
-                    allFinished = false;
-                }
-
-                if (!scrollbarFinished) continue;
-                if (isFullHouse)
-                {
-                    slot.GetFinalElement().SetGlow(true);
-                }
-                else
-                {
-                    if (previous == null)
-                    {
-                        match = 1;
-                        matches.Clear();
-                        matches.Add(slot);
-                        slot.GetFinalElement().SetGlow(true);
-                    }
-                    else
-                    {
-                        if (previous == slot.option)
-                        {
-                            match++;
-                            matches.Add(slot);
-                            slot.GetFinalElement().SetGlow(true);
-                        }
-                        else
-                        {
-                            match = 1;
-                            foreach (Slot? previousMatches in matches)
-                            {
-                                if (successMatches.Contains(previousMatches)) continue;
-                                previousMatches.GetFinalElement().SetGlow(false);
-                            }
-                            matches.Clear();
-                            matches.Add(slot);
-                            slot.GetFinalElement().SetGlow(true);
-                        }
-                        
-                        if (match == RequiredMatchCount)
-                        {
-                            success++;
-                            foreach(Slot successMatch in matches) successMatches.Add(successMatch);
-                            List<Slot> lastTwo = matches.Skip(matches.Count - 2).ToList();
-                            matches.Clear();
-                            matches.AddRange(lastTwo);
-                            match = 2;
-                        }
-                    }
-                    previous = slot.option;
-                }
-            }
-            if (!allFinished) return;
-            if (isFullHouse)
-            {
-                Player.m_localPlayer.Message(MessageHud.MessageType.Center, Keys.FullHouse);
-                instance.description.SetButtonText(Keys.CollectReward);
-                instance.OnMainButton = () =>
-                {
-                    Player.m_localPlayer.AddTokens(LotteryManager.LotteryTotal);
-                    LotteryManager.SendToServer(0);
-                    instance.description.SetButtonText(Keys.Gamble);
-                    instance.OnMainButton = () => instance.lottery.Roll();
-                };
-            }
-            else if (success > 0)
-            {
-                Player.m_localPlayer.Message(MessageHud.MessageType.Center, Keys.Success);
-                instance.description.SetButtonText(Keys.CollectReward + $" ({success * TokensPerSuccess})");
-                instance.OnMainButton = () =>
-                {
-                    Player.m_localPlayer.AddTokens(success * TokensPerSuccess);
-                    instance.description.SetButtonText(Keys.Gamble);
-                    instance.OnMainButton = () => instance.lottery.Roll();
-                };
-            }
-            else
-            {
-                Player.m_localPlayer.Message(MessageHud.MessageType.Center, Keys.TryAgainNextTime);
-                foreach(Slot? previousMatch in matches) previousMatch.GetFinalElement().SetGlow(false);
-            }
-            isRolling = false;
-            instance.OnUpdate = null;
-        }
-        public void UpdateGlow(float dt)
-        {
-            if (!instance?.Tabs[Tab.TabOption.Lottery].IsSelected ?? false) return;
-            if (isRolling) return;
-            glowTimer += dt;
-            if (glowTimer < UPDATE_INTERVAL) return;
-            glowTimer = 0.0f;
-            float time = Time.time;
-            for (int i = 0; i < finalElements.Count; i++)
-            {
-                Slot.SlotElement? element = finalElements[i];
-                if (!element.isGlowing) continue;
-                float staggerDelay = i * 0.2f;
-                element.UpdateGlow(time, staggerDelay);
-            }
-        }
-        public void Preview()
-        {
-            for (int index = 0; index < scrollbars.Count; index++)
-            {
-                Slot slot = slots[index];
-                Scrollbar scrollbar = scrollbars[index];
-                scrollbar.value = 1f;
-                slot.GetFinalElement().SetGlow(true);
-            }
-        }
-        public void Roll()
-        {
-            RandomizeIcons();
-            if (instance == null) return;
-            float accumulatedDelay = 0f;
-            for (int index = 0; index < scrollbars.Count; index++)
-            {
-                Scrollbar scrollbar = scrollbars[index];
-                Slot slot = slots[index];
-                slot.GetFinalElement().ResetGlowAlpha();
-                float randomDelay = UnityEngine.Random.Range(0.1f, 0.3f);
-                _scrollbars[scrollbar] = -accumulatedDelay;
-                accumulatedDelay += randomDelay;
-                scrollbar.value = 0f;
-            }
-            instance.OnUpdate = UpdateRoll;
-        }
-
-        public void CancelRoll()
-        {
-            if (!isRolling) return;
-            if (instance is not null) instance.OnUpdate = null;
-            isRolling = false;
-            foreach (Scrollbar? scrollbar in scrollbars)
-            {
-                _scrollbars[scrollbar] = 0f;
-                scrollbar.value = 0f;
-            }
-            foreach (Slot.SlotElement? element in finalElements)
-            {
-                element.SetGlow(false);
-                element.ResetGlowAlpha();
-            }
-        }
-
-        private static double CalculateWinChance(int slotCount, int iconCount, int matchLength)
-        {
-            if (slotCount < matchLength) return 0.0;
-            double sequenceProb = Math.Pow(1.0 / iconCount, matchLength - 1);
-            int possibleSequences = slotCount - matchLength + 1;
-            double noWinProb = 1.0 - sequenceProb;
-            double allFailProb = Math.Pow(noWinProb, possibleSequences);
-            double winProb = 1.0 - allFailProb;
-            return winProb * 100.0; 
-        }
-        private static double CalculateExpectedWins(int slotCount, int iconCount, int matchLength)
-        {
-            if (slotCount < matchLength) return 0.0;
-            double sequenceProb = Math.Pow(1.0 / iconCount, matchLength - 1);
-            int possibleSequences = slotCount - matchLength + 1;
-            return possibleSequences * sequenceProb;
-        }
-        public List<Entries.Entry> ToEntries()
-        {
-            Entries.EntryBuilder builder = new();
-            builder.Add(Keys.Slots, SlotCount);
-            builder.Add(Keys.Icons, IconCount);
-            builder.Add(Keys.MatchLength, RequiredMatchCount);
-            builder.Add(Keys.PossibleSequences, possibleSequences);
-            builder.Add(Keys.ChancePerSequence, $"{sequenceProb:P4} ({1.0/sequenceProb:F1} to 1)");
-            builder.Add(Keys.ExpectedWins, $"{expectedWins:F3}");
-            builder.Add(Keys.WinChance, $"{winChance:F2}%");
-            builder.Add(Keys.FailureChance, $"{100 - winChance:F2}%");
-            builder.Add(Keys.ChanceForFullHouse, $"{(1f - fullHouseChance) * 100}%");
-            builder.Add(Keys.FullHouseReward, LotteryManager.LotteryTotal);
-            builder.Add(Keys.Reward, $"{TokensPerSuccess} {Keys.PerMatches}");
-            builder.Add(Keys.Cost);
-            builder.Add(Keys.AlmanacToken, COST_TO_ROLL);
-            return builder.ToList();
-        }
-        public class Slot
-        {
-            public static readonly SpriteManager.IconOption[] icons = 
-                Enum.GetValues(typeof(SpriteManager.IconOption))
-                    .Cast<SpriteManager.IconOption>()
-                    .Where(x => x != SpriteManager.IconOption.Almanac)
-                    .ToArray();            
-            private readonly SlotElement template;
-            private readonly RectTransform root;
-            private readonly GameObject prefab;
-            public readonly Scrollbar scrollbar;
-            private readonly List<SlotElement> elements = new();
-            public SpriteManager.IconOption? option;
-            public Slot(Transform transform)
-            {
-                prefab = transform.gameObject;
-                root = transform.Find("Port/Viewport/Listroot").GetComponent<RectTransform>();
-                scrollbar = transform.Find("Port/Scrollbar").GetComponent<Scrollbar>();
-                template = new SlotElement(transform.Find("Port/Viewport/Element"));
-                scrollbar.interactable = false;
-            }
-            private void LoadElements()
-            {
-                for (int index = 0; index < 12; ++index)
-                {
-                    elements.Add(template.Create(root));
-                }
-            }
-            public SlotElement GetFinalElement() => elements.First();
-            public void RandomizeIcons(SpriteManager.IconOption? fullHouseOption = null)
-            {
-                foreach (SlotElement element in elements)
-                {
-                    SpriteManager.IconOption randomIcon = (SpriteManager.IconOption)icons.GetValue(UnityEngine.Random.Range(0, icons.Length));
-                    element.option = randomIcon;
-                    Sprite? sprite = SpriteManager.GetSprite(randomIcon);
-                    element.SetIcon(sprite);
-                }
-
-                if (fullHouseOption != null)
-                {
-                    SlotElement final = GetFinalElement();
-                    final.SetIcon(SpriteManager.GetSprite((SpriteManager.IconOption)fullHouseOption));
-                    final.option = fullHouseOption;
-                    option = fullHouseOption;
-                }
-                else option = GetFinalElement().option;
-            }
-            public Slot Create(Transform parent)
-            {
-                GameObject go = Instantiate(prefab, parent);
-                go.layer = 5;
-                go.SetActive(true);
-                Slot slot = new Slot(go.transform);
-                slot.LoadElements();
-                return slot;
-            }
-            public class SlotElement
-            {
-                private readonly GameObject prefab;
-                private readonly Image bkg;
-                private readonly Image icon;
-                private readonly Image glow;
-                private readonly Color glowColor;
-                private readonly Sprite defaultSprite;
-                public bool isGlowing => glow.gameObject.activeInHierarchy;
-                private const float waveSpeed = 2f;
-                public SpriteManager.IconOption? option;
-                public SlotElement(Transform transform)
-                {
-                    prefab = transform.gameObject;
-                    bkg = transform.GetComponent<Image>();
-                    icon = transform.Find("Icon").GetComponent<Image>();
-                    glow = transform.Find("Glow").GetComponent<Image>();
-                    glowColor = glow.color;
-                    SetGlow(false);
-                    defaultSprite = icon.sprite;
-                    SetBackgroundColor(Color.clear);
-                }
-                public SlotElement Create(Transform parent)
-                {
-                    GameObject go = Instantiate(prefab, parent);
-                    go.layer = 5;
-                    go.SetActive(true);
-                    SlotElement element = new SlotElement(go.transform);
-                    return element;
-                }
-                private void SetBackgroundColor(Color color) => bkg.color = color;
-                public void SetIcon(Sprite? sprite) => icon.sprite = sprite ?? defaultSprite;
-                public void SetGlow(bool enable) => glow.gameObject.SetActive(enable);
-                public void UpdateGlow(float t, float staggerOffset = 0f)
-                {
-                    float time = t * waveSpeed + staggerOffset;
-                    float alpha = (Mathf.Cos(time) + 1f) * 0.5f;
-                    alpha = Mathf.SmoothStep(0f, 1f, alpha);
-                    Color currentGlow = glowColor;
-                    currentGlow.a = alpha;
-                    glow.color = currentGlow;
-                }
-                public void ResetGlowAlpha()
-                {
-                    glow.color = glowColor;
-                }
-            }
-        }
     }
 }

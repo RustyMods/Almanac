@@ -137,12 +137,17 @@ public static class Keys
     public static readonly string Gamble = new Key("$label_gamble", "Gamble").key;
     public static readonly string SearchPlaceholder = new Key("$placeholder_search", "Search...").key;
     public static readonly string FullHouse = new Key("$msg_full_house", "Full house !!").key;
+
+    public static readonly string FullHouseMessage =
+        new Key("$msg_full_house_message", "{0} hit the jackpot for {1} tokens!").key;
     public static readonly string ChanceForFullHouse = new Key("$label_chance_for_full_house", "Chance for full house").key;
     public static readonly string FullHouseReward = new Key("$label_full_house_total", "Full house Reward").key;
     public static readonly string Cost = new Key("$msg_cost", "Cost").key;
     public static readonly string SetupSale = new Key("$label_setup_sale", "Setup Sale").key;
     public static readonly string CostPerUnit = new Key("$label_cost_per_unit", "Cost per unit").key;
     public static readonly string Success = new Key("$label_success", "Success !!").key;
+    public static readonly string LotteryWinMessage = new Key("$msg_lottery_win", "{0} has won {1} tokens in the lottery!").key;
+    public static readonly string FullHouseWinMessage = new Key("$msg_fullhouse_win", "{0} just hit the jackpot and won {1} tokens!").key;
     public static readonly string CollectReward = Collect + " " + Reward;
     public static readonly string TryAgainNextTime = new Key("$msg_try_again_next_time", "Try again next time!!").key;
     public static readonly string Slots = new Key("$label_slots", "Slots").key;
@@ -202,7 +207,7 @@ public static class Keys
     public static readonly string Group = new Key("$label_group", "Group").key;
     public static readonly string ComfortGroup = Comfort + " " + Group;
     public static readonly string CreatureGroup = Creature + " " + Group;
-    public static readonly string DamageReduction = new Key("$se_damagereduction", "Damage Reduction").key;
+    public static readonly string DamageReduction = new Key("$se_damagereduction", "All").key;
     public static readonly string Grow = new Key("$label_grow", "Grow").key;
     public static readonly string GrowDuration = Grow + " " + Duration;
     public static readonly string LifeSteal = new Key("$label_life_steal", "Life Steal").key;

@@ -40,6 +40,14 @@ public static class Configs
     private static ConfigEntry<int> _lotteryCost = null!;
     private static ConfigEntry<int> _minFullHouse = null!;
     private static ConfigEntry<Toggle> _generateBounties = null!;
+    private static ConfigEntry<float> _bountyRange = null!;
+    private static ConfigEntry<float> _treasureRange = null!;
+    
+    private static ConfigEntry<float> _fullHouseChance = null!;
+    private static ConfigEntry<int> _lotteryMatchCount = null!;
+    private static ConfigEntry<int> _tokensPerSuccess = null!;
+    private static ConfigEntry<int> _iconOptionCount = null!;
+    private static ConfigEntry<Toggle> _broadcastWin = null!;
     
     private static ConfigEntry<Toggle> _TreasureEnabled = null!;
     private static ConfigEntry<Toggle> _BountyEnabled = null!;
@@ -58,6 +66,7 @@ public static class Configs
     private static ConfigEntry<Vector2> _elementViewGridSize = null!;
     public static ConfigEntry<Vector3> _questPanelPos = null!;
     private static ConfigEntry<KeyCode> _questKey = null!;
+    // public static ConfigEntry<Toggle> _readmeEnabled = null!;
     
     private static ConfigEntry<Toggle> _allowConversion = null!;
     private static ConfigEntry<int> _conversionRate = null!;
@@ -89,6 +98,8 @@ public static class Configs
     public static bool Transparent => _Transparent.Value is Toggle.On;
     public static Color OutlineColor => _OutlineColor.Value;
     public static int BountyCooldown => _BountyCooldown.Value;
+    public static float BountyRange => _bountyRange.Value;
+    public static float TreasureRange => _treasureRange.Value;
     public static int TreasureCooldown => _TreasureCooldown.Value;
     public static bool ShowLottery => _lotteryEnabled.Value is Toggle.On;
     public static bool ShowStatusEffects => _statusEffectsEnabled.Value is Toggle.On;
@@ -110,6 +121,7 @@ public static class Configs
     public static bool ShowPieces => _piecesEnabled.Value is Toggle.On;
     public static bool ShowCreatures => _creaturesEnabled.Value is Toggle.On;
     public static bool ShowAlmanac => _almanacEnabled.Value is Toggle.On;
+    // public static bool ShowReadme => _readmeEnabled.Value is Toggle.On;
     public static Vector3 QuestPanelPos => _questPanelPos.Value;
     public static Vector2 ElementViewGridSize => _elementViewGridSize.Value;
     public static Vector3 CustomizationPos => _customizationPos.Value;
@@ -127,6 +139,13 @@ public static class Configs
     public static OrderType AchievementOrderType => _achievementOrdering.Value;
 
     public static bool AddLogs => _logging.Value is Toggle.On;
+    
+    public static float FullHouseChance => _fullHouseChance.Value;
+    public static int RequiredMatchCount => _lotteryMatchCount.Value;
+    public static int TokensPerSuccess => _tokensPerSuccess.Value;
+    public static int IconsCount => _iconOptionCount.Value;
+    public static bool BroadcastWin => _broadcastWin.Value is Toggle.On;
+    
     
     public static void Load()
     {
@@ -172,16 +191,32 @@ public static class Configs
         _piecesEnabled.SettingChanged += (_,_) => AlmanacPanel.instance?.Tabs[AlmanacPanel.Tab.TabOption.Pieces].SetActive(ShowPieces);
         _creaturesEnabled = config("2 - Tabs", "Creatures", Toggle.On, "If on, creatures are enabled");
         _creaturesEnabled.SettingChanged += (_,_)=>AlmanacPanel.instance?.Tabs[AlmanacPanel.Tab.TabOption.Creatures].SetActive(ShowCreatures);
+        // _readmeEnabled = config("2 - Tabs", "Readme", Toggle.Off, "If on, readme tab is enabled", false);
+        // _readmeEnabled.SettingChanged += (_, _) => AlmanacPanel.instance?.Tabs[AlmanacPanel.Tab.TabOption.Readme].SetActive(ShowReadme);
         
         _TreasureCooldown = config("4 - Treasures", "Cooldown", 30, "Set cooldown between treasure hunts, in minutes");
-        _returnTreasureCostWhenCancel = config("4 - Treasures", "Cancel Return Cost", Toggle.Off,
-            "If on, cost will be reimbursed when canceled");
+        _returnTreasureCostWhenCancel = config("4 - Treasures", "Cancel Return Cost", Toggle.Off, "If on, cost will be reimbursed when canceled");
+        _treasureRange = config("4 - Treasures", "Range", 3000f,
+            new ConfigDescription("Set initial range to spawn treasure, will increment radius by 50.0 per each attempt to find suitable location",
+                new AcceptableValueRange<float>(1000f, 5000f)));
         
         _BountyCooldown = config("3 - Bounties", "Cooldown", 30, "Set cooldown between bounty hunts, in minutes");
         _returnBountyCostWhenCancel = config("3 - Bounties", "Cancel Return Cost", Toggle.Off, "If on, cost will be reimbursed when canceled");
         _generateBounties = config("3 - Bounties", "Generate", Toggle.Off, "If on, will generate random bounties");
+        _bountyRange = config("3 - Bounties", "Range", 3000f,
+            new ConfigDescription("Set initial search range to spawn bounty, will increment radius by 50.0 per each attempt to find suitable location",
+                new AcceptableValueRange<float>(1000f, 5000f)));
+        
         _lotteryCost = config("4 - Lottery", "Cost to Roll", 1, "Set cost to roll");
         _minFullHouse = config("4 - Lottery", "Min Full House", 10, "Set minimum full house reward");
+        _fullHouseChance = config("4 - Lottery", "Full House Chance", 0.01f, new ConfigDescription("Set chance to roll a full house", new AcceptableValueRange<float>(0f, 1f)));
+        _lotteryMatchCount = config("4 - Lottery", "Match Count", 3, new ConfigDescription("Required matches for a success", new AcceptableValueRange<int>(1, 5)));
+        _tokensPerSuccess = config("4 - Lottery", "Tokens Per Success", 10, "Set amount of tokens per match success");
+        _iconOptionCount = config("4 - Lottery", "Unique Icons", 26,
+            new ConfigDescription("Set amount of unique icons to use in lottery, reduce to increase chances",
+                new AcceptableValueRange<int>(3, 26)));
+        _broadcastWin = config("4 - Lottery", "Broadcast Win", Toggle.On,
+            "If on, will broadcast to everyone that player has won");
 
         _HideUnknownEntries = config("5 - User Interface", "Hide Unknown", Toggle.Off, "If on, elements are not displayed instead of blacked out");
         _panelPos = config("5 - User Interface", "Panel Position", new Vector3(410f, 200f, 0f), "Set position of panel", false);
@@ -211,12 +246,9 @@ public static class Configs
         _questPanelPos.SettingChanged += QuestPanel.OnPosChange;
         _questKey = config("5 - User Interface", "Quest Key", KeyCode.F6, "Set key to show / hide quest tooltips", false);
 
-        _enableAchievementEffects = config("6 - Achievements", "Status Effects", Toggle.Off,
-            "If on, will allow legacy achievement feature: status effects");
-        _maxAchievementEffects = config("6 - Achievements", "Max Effects", 8,
-            "Set maximum amount of concurrent achievement effects");
-        _achievementOrdering = config("6 - Achievements", "Order Style", OrderType.Completed,
-            "Set how achievements are ordered");
+        _enableAchievementEffects = config("6 - Achievements", "Status Effects", Toggle.Off, "If on, will allow legacy achievement feature: status effects");
+        _maxAchievementEffects = config("6 - Achievements", "Max Effects", 8, "Set maximum amount of concurrent achievement effects");
+        _achievementOrdering = config("6 - Achievements", "Order Style", OrderType.Completed, "Set how achievements are ordered");
         SetupWatcher();
     }
     

@@ -59,6 +59,8 @@ public static class PlayerExtensions
     public static int GetKnownLegs(this Player player) => ItemHelper.legs.FindAll(l => player.IsKnownMaterial(l.shared.m_name)).Count;
     public static int GetKnownValuables(this Player player) => ItemHelper.valuables.FindAll(v => player.IsKnownMaterial(v.shared.m_name)).Count;
     public static int GetKnownTrinkets(this Player player) => ItemHelper.trinkets.FindAll(t => player.IsKnownMaterial(t.shared.m_name)).Count;
+
+    public static int GetCompletedBounties(this Player player) => player.GetRecords().bounties;
     public static void ClearRecords(this Player player)
     {
         player.m_customData.Remove(PlayerInfo.ALMANAC_PLAYER_RECORDS);
@@ -70,7 +72,6 @@ public static class PlayerExtensions
         int size = Encoding.UTF8.GetByteCount(data);
         return size;
     }
-    // public static int GetKills(this PlayerInfo.PlayerRecords records, string creatureName) => records.kills.TryGetValue(creatureName, out int value) ? value : 0;
     public static int GetDeaths(this PlayerInfo.PlayerRecords records, string creatureName) => records.deaths.TryGetValue(creatureName, out int value) ? value : 0;
     public static int GetItemPicked(this PlayerInfo.PlayerRecords records, string itemName) => records.itemsPicked.TryGetValue(itemName, out int value) ? value : 0;
 }
@@ -90,18 +91,19 @@ public static class PlayerInfo
     [Serializable]
     public class PlayerRecords
     {
-        // public Dictionary<string, int> kills = new();
         public Dictionary<string, int> deaths = new();
         public Dictionary<string, int> itemsPicked = new();
         public List<int> knownStatusEffects = new();
         public Dictionary<string, int> stumps = new();
+        public int bounties;
     }
     public enum RecordType
     {
         Kill,
         Death,
         Pickable,
-        Stump
+        Stump,
+        Bounty
     }
     public static J GetValueOrDefault<T, J>(this Dictionary<T, J> dict, T key, J defaultValue)
     {
@@ -115,7 +117,7 @@ public static class PlayerInfo
         if (Game.instance.m_playerProfile == null) return 0;
         return Game.instance.m_playerProfile.m_playerStats.m_stats.TryGetValue(type, out float value) ? value : 0;
     }
-    public static int GetPlayerStat(RecordType type, string name)
+    public static int GetPlayerStat(RecordType type, string name = "")
     {
         if (!Player.m_localPlayer || string.IsNullOrEmpty(name)) return 0;
         return type switch
@@ -124,6 +126,7 @@ public static class PlayerInfo
             RecordType.Death => Records.GetDeaths(name),
             RecordType.Pickable => Records.GetItemPicked(name),
             RecordType.Stump => Records.stumps.TryGetValue(name, out var value) ? value : 0,
+            RecordType.Bounty => Records.bounties,
             _ => 0
         };
     }
@@ -133,7 +136,7 @@ public static class PlayerInfo
         if (!shared && CritterHelper.namedCritters.TryGetValue(name, out var info)) name = info.character.m_name;
         return Game.instance.GetPlayerProfile().m_enemyStats.TryGetValue(name, out var value) ? (int)value : 0;
     }
-
+    
     public static event Action<Character>? OnCharacterDeathByLocal;
     
     [HarmonyPatch(typeof(Destructible), nameof(Destructible.Destroy))]
@@ -166,7 +169,7 @@ public static class PlayerInfo
                 ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.Everybody, nameof(RPC_BroadcastKill), player.GetPlayerID(), __instance.m_name);
                 //
                 // ZRoutedRpc.instance.InvokeRoutedRPC(player.m_nview.m_zdo.GetOwner(), nameof(RPC_BroadcastKill), __instance.m_name);
-                // ZRoutedRpc.instance.InvokeRoutedRPC(player.GetZDOID().UserID, nameof(RPC_BroadcastKill), __instance.m_name);
+                ZRoutedRpc.instance.InvokeRoutedRPC(player.GetZDOID().UserID, nameof(RPC_CharacterDeath), __instance.m_name);
             }
             else if (__instance == Player.m_localPlayer)
             {
@@ -229,6 +232,7 @@ public static class PlayerInfo
         AlmanacPlugin.OnPlayerProfileSavePlayerDataPrefix += player => Records.Save(player);
         AlmanacPlugin.OnNewCharacterDone += () => _cachedRecords = new PlayerRecords();
         AlmanacPlugin.OnZNetAwake += () => ZRoutedRpc.instance.Register<long, string>(nameof(RPC_BroadcastKill), RPC_BroadcastKill);
+        AlmanacPlugin.OnZNetAwake += () => ZRoutedRpc.instance.Register<string>(nameof(RPC_CharacterDeath), RPC_CharacterDeath);
     }
 
     public static void RPC_BroadcastKill(long sender, long playerID, string creatureSharedName)
@@ -237,15 +241,26 @@ public static class PlayerInfo
         Game.instance.GetPlayerProfile().m_enemyStats.IncrementOrSet(creatureSharedName);
         AlmanacPlugin.AlmanacLogger.LogDebug($"Received RPC of character death: {creatureSharedName}, and I am the one who hit last.");
     }
+
+    public static void RPC_CharacterDeath(long sender, string creatureSharedName)
+    {
+        var profile = Game.instance.GetPlayerProfile();
+        if (profile == null) return;
+        profile.m_enemyStats.IncrementOrSet(creatureSharedName);
+        AlmanacPlugin.AlmanacLogger.LogDebug($"Received RPC of character death: {creatureSharedName}");
+    }
     
     public static List<Entries.Entry> GetEntries()
     {
         Entries.EntryBuilder builder = new();
         builder.m_showAll = true;
         builder.Add(Keys.Resistances);
+
+        HitData.DamageModifiers modifiers = Player.m_localPlayer.GetDamageModifiers().Clone();
+        Player.m_localPlayer.GetSEMan().ApplyDamageMods(ref modifiers);
         foreach (HitData.DamageType mod in Enum.GetValues(typeof(HitData.DamageType)))
         {
-            HitData.DamageModifier modifier = Player.m_localPlayer.m_damageModifiers.GetModifier(mod);
+            HitData.DamageModifier modifier = modifiers.GetModifier(mod);
             builder.Add(mod, modifier);
         }
         builder.Add(Keys.Combat);

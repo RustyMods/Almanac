@@ -381,17 +381,17 @@ public class CustomEffect : SE_Stats
 
     public override void OnDamaged(HitData hit, Character character)
     {
-        hit.m_damage.m_blunt *= Mathf.Clamp01(1f - m_bluntResistance);
-        hit.m_damage.m_slash *= Mathf.Clamp01(1f - m_slashResistance);
-        hit.m_damage.m_pierce *= Mathf.Clamp01(1f - m_pierceResistance);
-        hit.m_damage.m_chop *= Mathf.Clamp01(1f - m_chopResistance);
-        hit.m_damage.m_pickaxe *= Mathf.Clamp01(1f - m_pickaxeResistance);
-        hit.m_damage.m_fire *= Mathf.Clamp01(1f - m_fireResistance);
-        hit.m_damage.m_frost *= Mathf.Clamp01(1f - m_frostResistance);
-        hit.m_damage.m_lightning *= Mathf.Clamp01(1f - m_lightningResistance);
-        hit.m_damage.m_poison *= Mathf.Clamp01(1f - m_poisonResistance);
-        hit.m_damage.m_spirit *= Mathf.Clamp01(1f - m_spiritResistance);
-        hit.ApplyModifier(Mathf.Clamp01(1f - m_damageReduction));
+        hit.m_damage.m_blunt *= 1f - m_bluntResistance;
+        hit.m_damage.m_slash *= 1f - m_slashResistance;
+        hit.m_damage.m_pierce *= 1f - m_pierceResistance;
+        hit.m_damage.m_chop *= 1f - m_chopResistance;
+        hit.m_damage.m_pickaxe *= 1f - m_pickaxeResistance;
+        hit.m_damage.m_fire *= 1f - m_fireResistance;
+        hit.m_damage.m_frost *= 1f - m_frostResistance;
+        hit.m_damage.m_lightning *= 1f - m_lightningResistance;
+        hit.m_damage.m_poison *= 1f - m_poisonResistance;
+        hit.m_damage.m_spirit *= 1f - m_spiritResistance;
+        hit.ApplyModifier(1f - m_damageReduction);
     }
     public void LifeSteal(HitData hit, Character character)
     {
@@ -403,55 +403,51 @@ public class CustomEffect : SE_Stats
             character.Heal(total);
         }
     }
+
+    public void GetResistanceTooltip()
+    {
+        (string Key, float Value)[] resistances = new (string Key, float Value)[]
+        {
+            (Keys.DamageReduction,  m_damageReduction),
+            (Keys.Blunt,            m_bluntResistance),
+            (Keys.Slash,            m_slashResistance),
+            (Keys.Pierce,           m_pierceResistance),
+            (Keys.Chop,             m_chopResistance),
+            (Keys.Pickaxe,          m_pickaxeResistance),
+            (Keys.Fire,             m_fireResistance),
+            (Keys.Frost,            m_frostResistance),
+            (Keys.Lightning,        m_lightningResistance),
+            (Keys.Poison,           m_poisonResistance),
+            (Keys.Spirit,           m_spiritResistance),
+        };
+
+        bool addedTitle = false;
+        
+        foreach ((string key, float value) in resistances)
+        {
+            if (value == 0f) continue;
+
+            if (!addedTitle)
+            {
+                sb.Append($"<color=orange>{Keys.Resistances}</color>:\n");
+                addedTitle = true;
+            }
+            
+            float percent = (1f - value) * 100f - 100f;
+
+            sb.AppendFormat("{0}: <color=orange>{1:+0;-0}%</color>\n", key, percent);
+        }
+    }
+    
+    private static readonly StringBuilder sb = new();
+    
     public override string GetTooltipString()
     {
+        sb.Clear();
         if (data == null) return base.GetTooltipString();
-        StringBuilder sb = new();
         sb.Append(base.GetTooltipString());
-        if (m_damageReduction != 0f)
-        {
-            sb.AppendFormat("{0}: <color=orange>{1:+0;-0}%</color>\n", Keys.DamageReduction, Mathf.Clamp01(1f - m_damageReduction) * 100f - 100);
-        }
-        if (m_bluntResistance != 0f)
-        {
-            sb.AppendFormat("{0}: <color=orange>{1:+0;-0}%</color>\n", Keys.Blunt, Mathf.Clamp01(1f - m_bluntResistance) * 100f - 100);
-        }
-        if (m_slashResistance != 0f)
-        {
-            sb.AppendFormat("{0}: <color=orange>{1:+0;-0}%</color>\n", Keys.Slash, Mathf.Clamp01(1f - m_slashResistance) * 100f - 100);
-        }
-        if (m_pierceResistance != 0f)
-        {
-            sb.AppendFormat("{0}: <color=orange>{1:+0;-0}%</color>\n", Keys.Pierce, Mathf.Clamp01(1f - m_pierceResistance) * 100f - 100);
-        }
-        if (m_chopResistance != 0f)
-        {
-            sb.AppendFormat("{0}: <color=orange>{1:+0;-0}%</color>\n", Keys.Chop, Mathf.Clamp01(1f - m_chopResistance) * 100f - 100);
-        }
-        if (m_pickaxeResistance != 0f)
-        {
-            sb.AppendFormat("{0}: <color=orange>{1:+0;-0}%</color>\n", Keys.Pickaxe, Mathf.Clamp01(1f - m_pickaxeResistance) * 100f - 100);
-        }
-        if (m_fireResistance != 0f)
-        {
-            sb.AppendFormat("{0}: <color=orange>{1:+0;-0}%</color>\n", Keys.Fire, Mathf.Clamp01(1f - m_fireResistance) * 100f - 100);
-        }
-        if (m_frostResistance != 0f)
-        {
-            sb.AppendFormat("{0}: <color=orange>{1:+0;-0}%</color>\n", Keys.Frost, Mathf.Clamp01(1f - m_frostResistance) * 100f - 100);
-        }
-        if (m_lightningResistance != 0f)
-        {
-            sb.AppendFormat("{0}: <color=orange>{1:+0;-0}%</color>\n", Keys.Lightning, Mathf.Clamp01(1f - m_lightningResistance) * 100f - 100);
-        }
-        if (m_poisonResistance != 0f)
-        {
-            sb.AppendFormat("{0}: <color=orange>{1:+0;-0}%</color>\n", Keys.Poison, Mathf.Clamp01(1f - m_poisonResistance) * 100f - 100);
-        }
-        if (m_spiritResistance != 0f)
-        {
-            sb.AppendFormat("{0}: <color=orange>{1:+0;-0}%</color>\n", Keys.Spirit, Mathf.Clamp01(1f - m_spiritResistance) * 100f - 100);
-        }
+        
+        
         if (m_health != 0f)
         {
             sb.AppendFormat("{0}: <color=orange>{1:+0;-0}</color>\n", Keys.Health, m_health);
@@ -484,6 +480,10 @@ public class CustomEffect : SE_Stats
         {
             sb.AppendFormat("{0}: <color=orange>{1:+0;-0}</color>\n", "$skill_" + skill.Key.ToLower(), skill.Value);
         }
+        
+        GetResistanceTooltip();
+
+        
         return sb.ToString();
     }
     [Serializable]

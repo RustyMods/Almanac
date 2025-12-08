@@ -9,3 +9,12 @@ Yet the Almanac is more than record-keeping—it is a hall of deeds. Through sag
 Hold <color=yellow>Left Alt</color> to drag window
 <color=yellow>Tab</color> to return to inventory
 <color=yellow>Esc</color> to close
+<color=yellow>Arrows</color> to move between main window elements
+
+Gamepad support
+
+<color=yellow>Bumpers</color> to move between tabs
+<color=yellow>Left Joystick</color> or <color=yellow>D-Pad</color> to move between main window elements
+<color=yellow>Right Joystick</color> to scroll right panel
+<color=yellow>JoyButtonB</color> to close
+<color=yellow>JoyButtonA</color> to use main button

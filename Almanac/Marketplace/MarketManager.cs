@@ -4,13 +4,13 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
-using Almanac.Achievements;
 using Almanac.Data;
 using Almanac.Store;
 using Almanac.UI;
 using Almanac.Utilities;
 using ServerSync;
 using YamlDotNet.Serialization;
+using Helpers = Almanac.Utilities.Helpers;
 
 namespace Almanac.Marketplace;
 
@@ -395,7 +395,9 @@ public static class MarketManager
         {
             panel.elementView.SetSelected(item);
             panel.description.Reset();
+            
             string displayName = itemData.m_shared.m_name;
+            
             if (Stack != 1) displayName += $" x{Stack}";
             panel.description.SetName(displayName);
             panel.description.SetIcon(itemData.GetIcon());

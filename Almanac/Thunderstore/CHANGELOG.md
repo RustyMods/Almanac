@@ -1,10 +1,28 @@
+# 3.7.3
+- hotfix zrouted rpc error
+
+# 3.7.2
+- removed hit check on bounty kill, if bounty dies from any source, will send message to bounty hunter of completion, hunter must be in area
+- removed clamp on damage resistance modifiers on custom effects to allow for damage increase instead as well as reduction, to create weakness effects
+- changed default buildable npc to misc category
+- fixed `CollectItems` achievement from going back to `in progress` if items are no longer in inventory even though achievement has been collected
+
+# 3.7.1
+- added many more lottery configs
+- added config to broadcast lottery win
+- fixed leaderboard and achievement elements not responding to arrow keys
+- fixed lottery not costing anything after winning and continuing to gamble
+- added some gamepad support
+- added config to set initial search radius to spawn bounty and treasure
+- changed bounty and treasure data to allow multiple biomes, format: `Biome: Meadows, BlackForest`
+
 # 3.7.0
 - if hiding Almanac UI and is rolling lottery, will cancel roll and reset it, to prevent bug of not being able to roll afterwards
 - ordering trophy, item, piece and creature by name
 - changed bounty variables for compatibility with EpicLoot bounties
 
 # 3.6.91
-- hotfix, did did not generate configs soon enough sorry!!
+- hotfix, did not generate configs soon enough sorry!!
 
 # 3.6.9
 - removed equipped or hotbar items from possible items to put up for sale

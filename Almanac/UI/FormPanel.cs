@@ -448,7 +448,7 @@ public class FormPanel : MonoBehaviour, IDragHandler, IBeginDragHandler
             if (MarketManager.AddMarketItem(Item, Cost, Stack, Player.m_localPlayer.GetPlayerName()))
             {
                 if (Player.m_localPlayer.IsItemEquiped(Item)) Player.m_localPlayer.UnequipItem(Item);
-                Player.m_localPlayer.GetInventory().RemoveItem(Item, Stack); ;
+                Player.m_localPlayer.GetInventory().RemoveItem(Item, Stack); 
             }
             else
             {

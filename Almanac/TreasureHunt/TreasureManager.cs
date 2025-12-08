@@ -434,7 +434,7 @@ public class TreasureManager : MonoBehaviour
         }
         public bool FindSpawnLocation()
         {
-            return RandomLocationFinder.FindSpawnLocation(data.biome, out position);
+            return RandomLocationFinder.FindSpawnLocation(data.biome, Configs.TreasureRange, 50f, out position);
         }
     }
     [Serializable]

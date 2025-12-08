@@ -12,7 +12,7 @@ public class Tutorial
     private readonly List<string> lines;
     public readonly string label;
     public readonly string tooltip;
-    public Tutorial(string label, string resourceFileName) : this(label, LoadMarkdownFromAssembly(resourceFileName)){}
+    public Tutorial(string label, string resourceFileName, string folder = "Tutorials") : this(label, LoadMarkdownFromAssembly(resourceFileName, folder)){}
     private Tutorial(string label, List<string> lines)
     {
         this.label = label;

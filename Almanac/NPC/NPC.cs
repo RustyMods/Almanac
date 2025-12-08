@@ -340,6 +340,7 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
         if (m_visEquipment?.m_modelIndex == index) return;
         m_visEquipment?.SetModel(index);
     }
+
     private static string GetPrefabFromHash(int hash) => !ObjectDB.instance || ObjectDB.instance.GetItemPrefab(hash) is not { } prefab ? string.Empty : prefab.name;
     public bool Interact(Humanoid user, bool hold, bool alt)
     {

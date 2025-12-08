@@ -1,4 +1,5 @@
-﻿using Almanac.Utilities;
+﻿using Almanac.Data;
+using Almanac.Utilities;
 using HarmonyLib;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -18,8 +19,19 @@ public static class CharacterDamagePatch
     }
 }
 
+[HarmonyPatch(typeof(Character), nameof(Character.GetHoverName))]
+public static class CharacterHoverPatch
+{
+    private static void Postfix(Character __instance, ref string __result)
+    {
+        if (!__instance.TryGetComponent(out Bounty component)) return;
+        __result = component.m_overrideName;
+    }
+}
+
 public static class BountyVars
 {
+    public static readonly int LocationGUID = "Almanac.BountyLocation.ID".GetStableHashCode();
     public static readonly int DamageModifier = "Almanac.DamageModifier".GetStableHashCode();
     public static readonly int BountyID = "Almanac.BountyID".GetStableHashCode();
     public static readonly int BountyHealth = "Almanac.BountyHealth".GetStableHashCode();
@@ -37,6 +49,7 @@ public class Bounty : MonoBehaviour
     private long m_hunter;
     private string m_bountyID = null!;
     public float m_damageMultiplier = 1f;
+    public string m_overrideName = "";
 
     private Minimap.PinData pin = null!;
     public void Awake()
@@ -48,8 +61,10 @@ public class Bounty : MonoBehaviour
         m_hunter = m_nview.GetZDO().GetLong(ZDOVars.s_creator);
         m_bountyID = m_nview.GetZDO().GetString(BountyVars.BountyID);
         m_damageMultiplier = m_nview.GetZDO().GetFloat(BountyVars.DamageModifier, 1f);
-        m_character.m_name = m_nview.GetZDO().GetString(ZDOVars.s_tamedName, m_character.m_name);
+        m_overrideName = m_nview.GetZDO().GetString(ZDOVars.s_tamedName, m_character.m_name);
+        // m_character.m_name = m_nview.GetZDO().GetString(ZDOVars.s_tamedName, m_character.m_name);
         m_character.m_boss = true;
+        m_nview.Register<string, string>(nameof(RPC_OnDeath), RPC_OnDeath);
         AddPin();
     }
 
@@ -89,25 +104,20 @@ public class Bounty : MonoBehaviour
     public void DestroyPin() => Minimap.instance.RemovePin(pin);
     public void OnDeath()
     {
-        if (m_character == null) return;
-        if (m_character.m_lastHit?.GetAttacker() is Player player)
-        {
-            long killerID = player.GetPlayerID();
-            if ((Groups.API.IsLoaded() && Groups.API.FindGroupMemberByPlayerId(killerID) is not null) || killerID == m_hunter)
-            {
-                if (BountyManager.bounties.TryGetValue(m_bountyID, out BountyManager.BountyData bounty))
-                {
-                    bounty.completed = true;
-                    MessageHud.instance.ShowBiomeFoundMsg($"{m_character.m_name} {Keys.Vanquished}", true);
-                }
-            }
-            else
-            {
-                Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"{Keys.BountyStolen} {player.GetPlayerName()}");
-                BountyManager.ActiveBountyLocation = null;
-            }
-            
-        }
+        if (m_character == null || Player.GetPlayer(m_hunter) is not {} owner) return;
+        
+        m_nview.InvokeRPC(owner.GetZDOID().UserID, nameof(RPC_OnDeath), m_character.m_name, m_bountyID);
+        
         m_isDead = true;
+    }
+
+    public void RPC_OnDeath(long sender, string characterName, string bountyID)
+    {
+        if (BountyManager.bounties.TryGetValue(bountyID, out BountyManager.BountyData bounty))
+        {
+            bounty.completed = true;
+            MessageHud.instance.ShowBiomeFoundMsg($"{characterName} {Keys.Vanquished}", true);
+            Player.m_localPlayer.GetRecords().bounties++;
+        }
     }
 }

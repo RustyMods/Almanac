@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Almanac.Achievements;
+using Almanac.ExternalAPIs;
 using Almanac.Managers;
 using Almanac.UI;
 using Almanac.Utilities;
@@ -165,6 +166,7 @@ public static class ItemHelper
     public static List<ItemInfo> legs => GetItemByType(ItemType.Legs);
     public static List<ItemInfo> weapons => GetItemsWhileIgnoring(ItemType.None, ItemType.Material, ItemType.Consumable, ItemType.Customization, ItemType.Legs, ItemType.Trophy, ItemType.Torch, ItemType.Misc, ItemType.Shoulder, ItemType.Utility, ItemType.Tool, ItemType.Attach_Atgeir, ItemType.Fish, ItemType.Ammo, ItemType.AmmoNonEquipable, ItemType.Helmet, ItemType.Chest);
     private static List<ItemInfo> items => ItemInfos.Values.ToList();
+    public static List<ItemInfo> epicloot => items.FindAll(x => x.itemDrop.m_itemData.IsEpicLoot());
     private static List<ItemInfo> GetItems() => items.FindAll(x => !Filters.Ignore(x.prefab.name));
     public static bool IsSword(this ItemInfo info) => swords.Contains(info);
     public static bool IsAxe(this ItemInfo info) => axes.Contains(info);
@@ -187,6 +189,7 @@ public static class ItemHelper
     public static bool IsChest(this ItemInfo info) => chests.Contains(info);
     public static bool IsLegs(this ItemInfo info) => legs.Contains(info);
     public static bool IsTrinket(this ItemInfo info) => trinkets.Contains(info);
+    public static bool IsBag(this ItemInfo info) => info.itemDrop.m_itemData.IsBag();
     public static ItemInfo? GetInfo(this ItemDrop item) => item.m_itemData.GetInfo();
     private static readonly Dictionary<string, ItemInfo> ItemInfos = new();
     public readonly record struct ItemInfo
@@ -255,14 +258,6 @@ public static class ItemHelper
             if (Configs.ShowAllData)
             {
                 builder.Add(Keys.InternalID, prefab.name);
-                // if (ModHelper.TryGetAssetInfo(prefab.name, out ModHelper.AssetInfo assetInfo))
-                // {
-                //     builder.Add("Asset Bundle", assetInfo.bundle);
-                //     if (assetInfo.info != null)
-                //     {
-                //         builder.Add("Plugin", assetInfo.info.Metadata.Name);
-                //     }
-                // }
             }
             builder.Add(Keys.Teleportable, shared.m_teleportable);
             builder.Add(Keys.Value, shared.m_value);
@@ -277,6 +272,7 @@ public static class ItemHelper
             builder.Add(Keys.QuestItem, shared.m_questItem);
             builder.Add(Keys.EquipDuration, shared.m_equipDuration, Entries.EntryBuilder.Option.Seconds);
             builder.Add(Keys.Floating, isFloating);
+            
             switch (shared.m_itemType)
             {
                 case ItemType.Fish:
@@ -557,6 +553,7 @@ public static class ItemHelper
                     }
                     break;
             }
+            
             return builder.ToList();
         }
         public void OnClick(AlmanacPanel panel, AlmanacPanel.ElementView.Element? element)

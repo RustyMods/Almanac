@@ -28,10 +28,11 @@ namespace Almanac
     [BepInPlugin(ModGUID, ModName, ModVersion)]
     [BepInIncompatibility("randyknapp.mods.auga")]
     [BepInDependency("RustyMods.DiscordBot", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("RustyMods.RustyBags", BepInDependency.DependencyFlags.SoftDependency)]
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.7.0";
+        internal const string ModVersion = "3.7.3";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         public const string ConfigFileName = ModGUID + ".cfg";
@@ -253,6 +254,15 @@ namespace Almanac
                 Player.m_localPlayer.AddTokens(amount);
                 return true;
             }, adminOnly: true);
+
+            CommandData setFullhouse = new CommandData("fullhouse", "[amount] Set current full house lottery reward",
+                args =>
+                {
+                    if (args.Length < 2) return false;
+                    if (!int.TryParse(args[1], out int amount)) return false;
+                    LotteryManager.LotteryTotal = amount;
+                    return true;
+                }, adminOnly: true);
         }
 
         [HarmonyPatch(typeof(PlayerProfile), nameof(PlayerProfile.SavePlayerData))]

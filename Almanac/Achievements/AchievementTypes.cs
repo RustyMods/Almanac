@@ -43,5 +43,6 @@ public enum AchievementType
     Pickable,
     Kill,
     CollectItems,
-    Achievements
+    Achievements,
+    Bounties
 }

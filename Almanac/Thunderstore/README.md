@@ -70,8 +70,7 @@ Each bounty entry can define:
 - **Cost**: Item or token requirements to purchase the bounty.
 ### Notes
 - Costs can be `AlmanacToken` or regular items (e.g., `Coins`).
-- Bounties require players to kill the target directly — indirect deaths won’t count.
-- If the bounty despawns, escapes, or is killed by another player, the cost is returned.
+- If the bounty despawns or escapes the cost is returned.
 - Bounties are subject to a configurable cooldown (default in minutes).
 ### Tips
 - You can reload or edit `.yml` bounty files while the server is running; changes sync automatically.
@@ -84,7 +83,7 @@ UniqueID: Troll.001
 Creature: Troll
 Name: Forest Stalker
 Icon: TrophyFrostTroll
-Biome: BlackForest
+Biome: BlackForest, Swamp
 Health: 1200
 Level: 3
 DamageMultiplier: 1.5
@@ -196,22 +195,22 @@ Players can purchase treasure hunts using tokens from the Almanac store system.
 
 ## Example Treasure File
 ```yaml
-Name: "Mountain Stash"
-Lore: "Only those who brave the jagged cliffs will uncover what the mountains hide."
-Icon: "map"
-Biome: "Mountain"
+Name: Mountain Stash
+Lore: Only those who brave the jagged cliffs will uncover what the mountains hide.
+Icon: map
+Biome: Mountain, Plains
 Cost:
   almanac_token: 1
 Loot:
-  - Item: "SilverOre"
+  - Item: SilverOre
     Min: 10
     Max: 20
     Weight: 1.0
-  - Item: "WolfClaw"
+  - Item: WolfClaw
     Min: 1
     Max: 20
     Weight: 1.0
-  - Item: "TrophyCultist"
+  - Item: TrophyCultist
     Min: 1
     Max: 1
     Weight: 1.0

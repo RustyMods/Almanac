@@ -892,18 +892,25 @@ public static class AchievementManager
                     foreach (string prefabName in group)
                     {
                         string? sharedName = CritterHelper.namedCritters.TryGetValue(prefabName, out CritterHelper.CritterInfo info) ? info.character.m_name : prefabName;
-                        int progress = PlayerInfo.GetPlayerStat(PlayerInfo.RecordType.Kill, sharedName);
-                        string formatted = $"{progress}/{Requirement.Threshold}";
+                        string formatted = $"{PlayerInfo.GetPlayerStat(PlayerInfo.RecordType.Kill, sharedName)}/{Requirement.Threshold}";
                         builder.Add(sharedName, formatted);
                     }
                     break;
                 case AchievementType.CollectItems:
                     builder.Add(Keys.Require);
+                    bool isCollected = this.IsCollected(Player.m_localPlayer);
                     foreach (KeyValuePair<string, int> kvp in Requirement.GetRequiredItems())
                     {
-                        int inventoryCount = Player.m_localPlayer.GetInventory().CountItems(kvp.Key);
-                        string formatted = $"{inventoryCount}/{kvp.Value}";
-                        builder.Add(kvp.Key, formatted);
+                        if (isCollected)
+                        {
+                            builder.Add(kvp.Key, $"{kvp.Value}/{kvp.Value}");
+                        }
+                        else
+                        {
+                            int inventoryCount = Player.m_localPlayer.GetInventory().CountItems(kvp.Key);
+                            string formatted = $"{inventoryCount}/{kvp.Value}";
+                            builder.Add(kvp.Key, formatted);
+                        }
                     }
                     break;
                 case AchievementType.Achievements:
@@ -912,6 +919,10 @@ public static class AchievementManager
                         builder.Add(Keys.Require);
                         builder.Add($"Collect {Requirement.GetThreshold()} achievements", "lore");
                     }
+                    break;
+                case AchievementType.Bounties:
+                    builder.Add(Keys.Require);
+                    builder.Add(Keys.Bounties, $"{PlayerInfo.GetPlayerStat(PlayerInfo.RecordType.Bounty)}/{Requirement.Threshold}");
                     break;
             }
             if (Configs.AchievementEffectsEnabled && !string.IsNullOrEmpty(StatusEffect) && ObjectDB.instance.GetStatusEffect(StatusEffect.GetStableHashCode()) is CustomEffect achievementEffect)
@@ -1160,11 +1171,13 @@ public static class AchievementManager
                     AchievementType.CreatureGroup => CreatureGroup.GetProgress(Group, Threshold),
                     AchievementType.CollectItems => GetCollectItemsProgress(player),
                     AchievementType.Achievements => GetAchievementsProgress(player),
+                    AchievementType.Bounties => PlayerInfo.GetPlayerStat(PlayerInfo.RecordType.Bounty),
                     _ => 0,
                 };
             }
             public int GetCollectItemsProgress(Player player)
             {
+                
                 Dictionary<string, int> items = GetRequiredItems();
                 Dictionary<string, int> inventoryCount = player.GetInventory().CountMultipleItems(items.Keys.ToList());
                 int count = 0;
@@ -1179,7 +1192,7 @@ public static class AchievementManager
             public int GetAchievementsProgress(Player player)
             {
                 int count = 0;
-                foreach (var achievement in Achievements)
+                foreach (string? achievement in Achievements)
                 {
                     if (!TryGetAchievement(achievement, out Achievement data)) continue;
                     if (data.IsCompleted(player)) ++count;
@@ -1203,7 +1216,9 @@ public static class AchievementManager
 
 public static class AchievementHelpers
 {
-    public static bool IsCompleted(this AchievementManager.Achievement achievement, Player player) => achievement.Requirement.GetProgress(player) >= achievement.Requirement.GetThreshold() && achievement.Requirement.HasOtherAchievements(player);
+    public static bool IsCompleted(this AchievementManager.Achievement achievement, Player player) => achievement.IsCollected(player) ||
+        (achievement.Requirement.GetProgress(player) >= achievement.Requirement.GetThreshold() &&
+         achievement.Requirement.HasOtherAchievements(player));
     public static bool IsCollected(this AchievementManager.Achievement achievement, Player player)
     {
         return player.GetCollectedAchievements().Contains(achievement.Name.GetStableHashCode());

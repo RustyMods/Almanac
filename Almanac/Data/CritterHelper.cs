@@ -143,7 +143,7 @@ public static class CritterHelper
         private static readonly EntryBuilder builder = new();
         public readonly GameObject prefab;
         public readonly Character character;
-        private readonly BaseAI? ai;
+        private readonly BaseAI ai = null!;
         private readonly HashSet<ItemDrop> items = new();
         private readonly HashSet<Attack> attacks = new();
         public readonly HashSet<ItemDrop> consumeItems = new();
@@ -158,7 +158,7 @@ public static class CritterHelper
             this.prefab = prefab;
             character = prefab.GetComponent<Character>();
             ai = prefab.GetComponent<BaseAI>();
-            if (ai != null && ai is MonsterAI monsterAI)
+            if (ai != null && ai is MonsterAI { m_onConsumedItem: not null } monsterAI)
             {
                 foreach (ItemDrop? item in monsterAI.m_consumeItems)
                 {

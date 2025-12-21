@@ -34,7 +34,7 @@ public class NPC : MonoBehaviour, Interactable, Hoverable, IDestructible
     public ZSyncAnimation m_zanim = null!;
     public NPCTalk? m_talk;
     public EffectList m_hitEffects = new();
-    public Piece m_piece;
+    public Piece m_piece = null!;
 
     public string m_name = NPCVars.DefaultName;
     public string m_dialogueID = string.Empty;

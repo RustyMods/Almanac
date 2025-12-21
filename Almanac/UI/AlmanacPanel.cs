@@ -52,7 +52,7 @@ public partial class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandl
     private Vector3 mouseDifference = Vector3.zero;
     public Action<float>? OnUpdate;
     public Action? OnMainButton;
-    public HorizontalLayoutGroup tabGroup;
+    public HorizontalLayoutGroup tabGroup = null!;
     public static AlmanacPanel? instance;
     private static FormPanel? formPanel;
     public FormPanel.FormBuilder formBuilder = null!;

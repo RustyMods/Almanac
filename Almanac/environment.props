@@ -5,7 +5,7 @@
         <CorlibPath>$(ValheimGamePath)\unstripped_corlib</CorlibPath>
         <PublicizedAssembliesPath>$(ValheimGamePath)\valheim_Data\Managed\publicized_assemblies</PublicizedAssembliesPath>
         <CopyOutputDLLPath>C:\Users\peima\Desktop\VALHEIM MODDING\projects\Almanac\Almanac\Thunderstore</CopyOutputDLLPath>
-<!--        <CopyOutputDLLPath2>C:\Program Files (x86)\Steam\steamapps\common\Valheim dedicated server\BepInEx\plugins</CopyOutputDLLPath2>-->
+        <CopyOutputDLLPath2>C:\Users\peima\AppData\Roaming\com.kesomannen.gale\valheim\profiles\Rustheim 3.0\BepInEx\plugins\RustyMods-Almanac</CopyOutputDLLPath2>
         <AfterTargets>ILRepacker</AfterTargets>
     </PropertyGroup>
 </Project>

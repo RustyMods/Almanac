@@ -259,6 +259,7 @@ public static class ItemHelper
             {
                 builder.Add(Keys.InternalID, prefab.name);
             }
+
             builder.Add(Keys.Teleportable, shared.m_teleportable);
             builder.Add(Keys.Value, shared.m_value);
             builder.Add(Keys.Weight, shared.m_weight);

@@ -1,3 +1,10 @@
+# 3.7.5
+- updated localizer
+- fixed treasure loot
+
+# 3.7.4
+- added null check when looking for creature consume items
+
 # 3.7.3
 - hotfix zrouted rpc error
 

@@ -142,6 +142,7 @@ public static class PieceHelper
                 builder.Add(Keys.InternalID, prefab.name);
                 builder.Add(Keys.Enabled, piece.m_enabled);
             }
+
             builder.Add(Keys.PieceCategory, piece.m_category);
             if (piece.m_craftingStation != null)
             {

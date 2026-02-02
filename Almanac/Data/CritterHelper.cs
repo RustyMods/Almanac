@@ -130,6 +130,13 @@ public static class CritterHelper
         ["TentaRoot"] = Heightmap.Biome.BlackForest,
         ["Unbjorn"] = Heightmap.Biome.Plains,
         ["Wolf_cub"] = Heightmap.Biome.Mountain,
+        ["Meadows_Norseman_RS"] = Heightmap.Biome.Meadows,
+        ["BlackForest_Norseman_RS"] = Heightmap.Biome.BlackForest,
+        ["Swamp_Norseman_RS"] = Heightmap.Biome.Swamp,
+        ["Mountains_Norseman_RS"] = Heightmap.Biome.Mountain,
+        ["Plains_Norseman_RS"] = Heightmap.Biome.Plains,
+        ["Mistlands_Norseman_RS"] = Heightmap.Biome.Mistlands,
+        ["AshLands_Norseman_RS"] = Heightmap.Biome.AshLands,
     };
     public static Heightmap.Biome GetBiome(string name) => creatureBiomes.TryGetValue(name, out var biome) ? biome : Heightmap.Biome.None;
     public static List<CritterInfo> GetCritters() => critters.FindAll(c => !Filters.Ignore(c.prefab.name));
@@ -240,6 +247,7 @@ public static class CritterHelper
             {
                 builder.Add(Keys.InternalID, prefab.name);
             }
+
             int killCount = PlayerInfo.GetPlayerStat(PlayerInfo.RecordType.Kill, character.m_name);
             int deathCount = PlayerInfo.GetPlayerStat(PlayerInfo.RecordType.Death, character.m_name);
             builder.Add(Keys.Killed, killCount);

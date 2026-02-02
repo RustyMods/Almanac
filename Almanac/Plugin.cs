@@ -32,13 +32,13 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.7.3";
+        internal const string ModVersion = "3.7.5";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         public const string ConfigFileName = ModGUID + ".cfg";
         public static readonly string ConfigFileFullPath = Paths.ConfigPath + Path.DirectorySeparatorChar + ConfigFileName;
         internal static string ConnectionError = "";
-        private readonly Harmony _harmony = new(ModGUID);
+        public readonly Harmony _harmony = new(ModGUID);
         public static readonly ManualLogSource AlmanacLogger = BepInEx.Logging.Logger.CreateLogSource(ModName);
         public static readonly ConfigSync ConfigSync = new(ModGUID) { DisplayName = ModName, CurrentVersion = ModVersion, MinimumRequiredVersion = ModVersion };
         public static readonly AlmanacDir AlmanacDir = new(Paths.ConfigPath, ModName);
@@ -60,8 +60,7 @@ namespace Almanac
             Clone._root = new GameObject("Almanac.PrefabManager.Clones");
             DontDestroyOnLoad(Clone._root);
             Clone._root.SetActive(false);
-            Keys.Write();
-            Localizer.Load();
+            Localizer.Start();
             
             SpriteManager.RegisterCustomIcons();
             StoreManager.Setup();

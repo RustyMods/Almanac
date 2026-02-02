@@ -19,7 +19,7 @@ public class Tutorial
         this.lines = lines;
         tooltip = GetInfo();
     }
-    private static List<string> LoadMarkdownFromAssembly(string resourceName, string folder = "Tutorials")
+    public static List<string> LoadMarkdownFromAssembly(string resourceName, string folder = "Tutorials")
     {
         Assembly assembly = Assembly.GetExecutingAssembly();
         string path = $"{AlmanacPlugin.ModName}.{folder}.{resourceName}";

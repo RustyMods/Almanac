@@ -155,7 +155,7 @@
         <Compile Include="Managers\AssetBundleManager.cs" />
         <Compile Include="Managers\CommandData.cs" />
         <Compile Include="Managers\FontManager.cs" />
-        <Compile Include="Managers\LocalizationManager.cs" />
+        <Compile Include="Managers\Localizer.cs" />
         <Compile Include="Managers\SpriteManager.cs" />
         <Compile Include="Marketplace\JewelCraft.cs" />
         <Compile Include="Marketplace\MarketManager.cs" />

@@ -9,7 +9,7 @@ namespace Almanac.Utilities;
 public static class Keys
 {
     private static readonly Dictionary<string, string> keys = new();
-    public static void Write()
+    public static List<string> Write()
     {
         LocalizePlayerStats();
         LocalizeAchievementTypes();
@@ -17,10 +17,10 @@ public static class Keys
         List<string> lines = new();
         foreach (KeyValuePair<string, string> kvp in keys)
         {
-            lines.Add($"{kvp.Key}: '{kvp.Value}'");
+            lines.Add($"{kvp.Key}: {kvp.Value}");
         }
-        AlmanacPlugin.AlmanacDir.WriteAllLines("Almanac.English.yml", lines);
-        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Almanac.Localize.Keys.Write");
+
+        return lines;
     }
     private static void LocalizePlayerStats()
     {

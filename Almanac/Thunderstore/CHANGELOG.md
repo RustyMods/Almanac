@@ -1,3 +1,10 @@
+# 3.7.7
+- reverted back to old localization manager
+
+# 3.7.6
+- added command: `almanac reload_localization`
+- fixed localizer
+
 # 3.7.5
 - updated localizer
 - fixed treasure loot

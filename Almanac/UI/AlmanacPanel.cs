@@ -64,7 +64,7 @@ public partial class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandl
         get
         {
             if (!Player.m_localPlayer || !ZNet.instance) return false;
-            bool isAdmin = (ZNet.instance?.LocalPlayerIsAdminOrHost() ?? false) || Configs.IsAdmin(Player.m_localPlayer.GetPlayerName());
+            bool isAdmin = (Console.instance?.IsCheatsEnabled() ?? false) || (ZNet.instance?.LocalPlayerIsAdminOrHost() ?? false) || Configs.IsAdmin(Player.m_localPlayer.GetPlayerName());
             if (!Configs.CheckNoCost) return isAdmin;
             return isAdmin && Player.m_localPlayer.NoCostCheat();
         }

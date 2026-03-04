@@ -20,6 +20,7 @@ using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
 using JetBrains.Annotations;
+using LocalizationManager;
 using ServerSync;
 using UnityEngine;
 
@@ -32,7 +33,7 @@ namespace Almanac
     public class AlmanacPlugin : BaseUnityPlugin
     {
         internal const string ModName = "Almanac";
-        internal const string ModVersion = "3.7.5";
+        internal const string ModVersion = "3.7.7";
         internal const string Author = "RustyMods";
         private const string ModGUID = Author + "." + ModName;
         public const string ConfigFileName = ModGUID + ".cfg";
@@ -60,7 +61,8 @@ namespace Almanac
             Clone._root = new GameObject("Almanac.PrefabManager.Clones");
             DontDestroyOnLoad(Clone._root);
             Clone._root.SetActive(false);
-            Localizer.Start();
+            Keys.Write();
+            Localizer.Load();
             
             SpriteManager.RegisterCustomIcons();
             StoreManager.Setup();

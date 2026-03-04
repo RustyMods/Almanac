@@ -170,6 +170,7 @@ public partial class DialogueManager : MonoBehaviour
             buildPiece.Description.English("Placeable human NPC");
             buildPiece.Category.Set(BuildPieceCategory.Misc);
             buildPiece.RequiredItems.Add("SwordCheat", 1, false);
+            
         };
         SyncedDialogue.ValueChanged += OnSyncedDialogueChange;
         AlmanacPlugin.OnZNetAwake += UpdateSyncedDialogues;

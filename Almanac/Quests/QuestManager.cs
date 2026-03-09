@@ -152,7 +152,7 @@ public static class QuestManager
                 }
                 catch
                 {
-                    AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse quest: " + Path.GetFileName(file));
+                    AlmanacPlugin.LogWarning("Failed to parse quest: " + Path.GetFileName(file));
                 }
             }
         }
@@ -170,7 +170,7 @@ public static class QuestManager
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server quests");
+            AlmanacPlugin.LogWarning("Failed to parse server quests");
         }
     }
 
@@ -193,7 +193,7 @@ public static class QuestManager
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to create quest: " + Path.GetFileName(args.FullPath));
+            AlmanacPlugin.LogWarning("Failed to create quest: " + Path.GetFileName(args.FullPath));
         }
     }
 
@@ -209,7 +209,7 @@ public static class QuestManager
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to create quest: " + Path.GetFileName(args.FullPath));
+            AlmanacPlugin.LogWarning("Failed to create quest: " + Path.GetFileName(args.FullPath));
         }
     }
 
@@ -286,7 +286,7 @@ public static class QuestManager
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to load active quests");
+            AlmanacPlugin.LogWarning("Failed to load active quests");
             player.m_customData.Remove(PlayerQuestKey);
         }
     }

@@ -24,7 +24,7 @@ public static class LotteryManager
 
     private static void Initialize()
     {
-        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Almanac.Lottery.Initialize");
+        if (Configs.AddLogs) AlmanacPlugin.LogDebug("Almanac.Lottery.Initialize");
         LotteryFileName = ZNet.instance.GetWorldName() + ".Lottery.dat";
 
         ZRoutedRpc.instance.Register<int>(nameof(RPC_Lottery),RPC_Lottery);
@@ -42,11 +42,11 @@ public static class LotteryManager
             byte[] compressedData = LotteryDir.ReadAllBytes(LotteryFileName);
             string data = DecompressAndDecode(compressedData);
             LotteryTotal = int.TryParse(data, out int result) ? Math.Max(result, Configs.MinFullHouse) : Configs.MinFullHouse;
-            if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Lottery.FullHouse.Reading Saved Total: " + LotteryTotal);
+            if (Configs.AddLogs) AlmanacPlugin.LogDebug("Lottery.FullHouse.Reading Saved Total: " + LotteryTotal);
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server lottery: " + Path.GetFileName(LotteryFileName));
+            AlmanacPlugin.LogWarning("Failed to parse server lottery: " + Path.GetFileName(LotteryFileName));
         }
     }
 
@@ -55,7 +55,7 @@ public static class LotteryManager
         if (!ZNet.instance || !ZNet.instance.IsServer() || LotteryFileName == null) return;
         byte[] compressedData = CompressAndEncode(LotteryTotal.ToString());
         LotteryDir.WriteAllBytes(LotteryFileName, compressedData);
-        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Lottery.Save");
+        if (Configs.AddLogs) AlmanacPlugin.LogDebug("Lottery.Save");
     }
     
     private static byte[] CompressAndEncode(string text)
@@ -89,11 +89,11 @@ public static class LotteryManager
         try
         {
             LotteryTotal = int.TryParse(SyncedLottery.Value, out int total) ? Math.Max(total, Configs.MinFullHouse) : Configs.MinFullHouse;
-            if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Client: Lottery.FullHouse.Update: " + LotteryTotal);
+            if (Configs.AddLogs) AlmanacPlugin.LogDebug("Client: Lottery.FullHouse.Update: " + LotteryTotal);
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server lottery");
+            AlmanacPlugin.LogWarning("Failed to parse server lottery");
         }
     }
     public static void SendToServer(int count)

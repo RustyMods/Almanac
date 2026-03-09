@@ -51,7 +51,7 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
     
     public void Awake()
     {
-        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Almanac.NPC.Customization.Panel.Awake");
+        if (Configs.AddLogs) AlmanacPlugin.LogDebug("Almanac.NPC.Customization.Panel.Awake");
         instance = this;
         background = new AlmanacPanel.Background(transform);
         topic = transform.Find("Name").GetComponent<Text>();

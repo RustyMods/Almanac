@@ -239,7 +239,7 @@ public static class PlayerInfo
     {
         if (!Player.m_localPlayer || Player.m_localPlayer.GetPlayerID() != playerID) return;
         Game.instance.GetPlayerProfile().m_enemyStats.IncrementOrSet(creatureSharedName);
-        AlmanacPlugin.AlmanacLogger.LogDebug($"Received RPC of character death: {creatureSharedName}, and I am the one who hit last.");
+        AlmanacPlugin.LogDebug($"Received RPC of character death: {creatureSharedName}, and I am the one who hit last.");
     }
 
     public static void RPC_CharacterDeath(long sender, string creatureSharedName)
@@ -247,7 +247,7 @@ public static class PlayerInfo
         var profile = Game.instance.GetPlayerProfile();
         if (profile == null) return;
         profile.m_enemyStats.IncrementOrSet(creatureSharedName);
-        AlmanacPlugin.AlmanacLogger.LogDebug($"Received RPC of character death: {creatureSharedName}");
+        AlmanacPlugin.LogDebug($"Received RPC of character death: {creatureSharedName}");
     }
     
     public static List<Entries.Entry> GetEntries()

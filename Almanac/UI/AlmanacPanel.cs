@@ -72,7 +72,7 @@ public partial class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandl
     
     public void Awake()
     {
-        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Almanac.Panel.Awake");
+        if (Configs.AddLogs) AlmanacPlugin.LogDebug("Almanac.Panel.Awake");
         instance = this;
         background = new Background(transform);
         topic = transform.Find("topic").GetComponent<Text>();

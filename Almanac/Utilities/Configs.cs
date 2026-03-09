@@ -267,13 +267,13 @@ public static class Configs
         if (!File.Exists(AlmanacPlugin.ConfigFileFullPath)) return;
         try
         {
-            AlmanacPlugin.AlmanacLogger.LogDebug("ReadConfigValues called");
+            AlmanacPlugin.LogDebug("ReadConfigValues called");
             AlmanacPlugin.instance.Config.Reload();
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogError($"There was an issue loading your {AlmanacPlugin.ConfigFileName}");
-            AlmanacPlugin.AlmanacLogger.LogError("Please check your config entries for spelling and format!");
+            AlmanacPlugin.LogError($"There was an issue loading your {AlmanacPlugin.ConfigFileName}");
+            AlmanacPlugin.LogError("Please check your config entries for spelling and format!");
         }
     }
     private static ConfigEntry<T> config<T>(string group, string name, T value, ConfigDescription description,

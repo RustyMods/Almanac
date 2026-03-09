@@ -29,7 +29,7 @@ public class DialoguePanel : MonoBehaviour
     
     public void Awake()
     {
-        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Almanac.Dialogue.Panel.Awake");
+        if (Configs.AddLogs) AlmanacPlugin.LogDebug("Almanac.Dialogue.Panel.Awake");
         instance = this;
         root = transform.Find("ListView/Viewport/ListRoot").GetComponent<RectTransform>();
         _textArea = new TextArea(transform.Find("ListView/Viewport/TextArea"));

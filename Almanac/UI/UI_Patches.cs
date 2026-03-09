@@ -13,7 +13,7 @@ public static class InventoryGui_Awake_Patch
     [UsedImplicitly]
     private static void Postfix(InventoryGui __instance)
     {
-        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Initializing Almanac UI");
+        if (Configs.AddLogs) AlmanacPlugin.LogDebug("Initializing Almanac UI");
         var craftingPanel = __instance.m_crafting.gameObject;
         var trophyPanel = __instance.m_trophiesPanel;
         var sfx = craftingPanel.GetComponentInChildren<ButtonSfx>().m_sfxPrefab;
@@ -230,7 +230,7 @@ public static class InventoryGui_OnOpenTrophies_Prefix
     private static bool Prefix(InventoryGui __instance)
     {
         if (AlmanacPanel.instance == null || !Configs.ShowAlmanac) return true;
-        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("InventoryGUI.OnOpenTrophies.Almanac.Override");
+        if (Configs.AddLogs) AlmanacPlugin.LogDebug("InventoryGUI.OnOpenTrophies.Almanac.Override");
         AlmanacPanel.instance.Show();
         __instance.Hide();
         return false;

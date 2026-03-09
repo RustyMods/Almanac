@@ -36,8 +36,8 @@ public static class QuestTrackers
             }
             catch (Exception ex)
             {
-                AlmanacPlugin.AlmanacLogger.LogWarning("Almanac.QuestTracker.Player.OnInventoryChanged: Failed to update quests");
-                AlmanacPlugin.AlmanacLogger.LogError(ex.Message);
+                AlmanacPlugin.LogWarning("Almanac.QuestTracker.Player.OnInventoryChanged: Failed to update quests");
+                AlmanacPlugin.LogError(ex.Message);
             }
         }
     }

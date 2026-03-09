@@ -49,7 +49,7 @@ public static class RandomTalkManager
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to change random talks: " + Path.GetFileName(args.FullPath));
+            AlmanacPlugin.LogWarning("Failed to change random talks: " + Path.GetFileName(args.FullPath));
         }
     }
 
@@ -66,7 +66,7 @@ public static class RandomTalkManager
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to create random talks: " + Path.GetFileName(args.FullPath));
+            AlmanacPlugin.LogWarning("Failed to create random talks: " + Path.GetFileName(args.FullPath));
         }
     }
 
@@ -410,7 +410,7 @@ public static class RandomTalkManager
                 }
                 catch
                 {
-                    AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse random talk: " + Path.GetFileName(file));
+                    AlmanacPlugin.LogWarning("Failed to parse random talk: " + Path.GetFileName(file));
                 }
             }
         }
@@ -434,7 +434,7 @@ public static class RandomTalkManager
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server random talks");
+            AlmanacPlugin.LogWarning("Failed to parse server random talks");
         }
 
     }

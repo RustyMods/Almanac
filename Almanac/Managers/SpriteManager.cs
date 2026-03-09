@@ -190,12 +190,12 @@ public static class SpriteManager
 
             var sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
             sprite.name = Path.GetFileNameWithoutExtension(filePath);
-            AlmanacPlugin.AlmanacLogger.LogDebug("Successfully registered icon: " + Path.GetFileName(filePath));
+            AlmanacPlugin.LogDebug("Successfully registered icon: " + Path.GetFileName(filePath));
             return sprite;
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to read custom icon: " + Path.GetFileName(filePath));
+            AlmanacPlugin.LogWarning("Failed to read custom icon: " + Path.GetFileName(filePath));
             return null;
         }
     }

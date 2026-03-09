@@ -39,14 +39,14 @@ public partial class BountyManager : MonoBehaviour
     public static bool TryGetBountyData(string id, out BountyData data) => bounties.TryGetValue(id, out data); 
     public void Awake()
     {
-        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Almanac.BountyManager.Awake");
+        if (Configs.AddLogs) AlmanacPlugin.LogDebug("Almanac.BountyManager.Awake");
         instance = this;
     }
     public void Initialize()
     {
         if (IsInvoking(nameof(CheckBountyLocation))) return;
         InvokeRepeating(nameof(CheckBountyLocation), 10f, 10f);
-        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("BountyManager.Initialize");
+        if (Configs.AddLogs) AlmanacPlugin.LogDebug("BountyManager.Initialize");
     }
     public void OnDestroy()
     {
@@ -86,7 +86,7 @@ public partial class BountyManager : MonoBehaviour
         GameObject go = ZNetScene.instance.CreateObject(zdo);
         go.AddComponent<Bounty>();
         SpawnEffects.Create(go.transform.position, Quaternion.identity);
-        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug($"BountyManager.SpawnBounty: {ActiveBountyLocation.data.Creature}");
+        if (Configs.AddLogs) AlmanacPlugin.LogDebug($"BountyManager.SpawnBounty: {ActiveBountyLocation.data.Creature}");
     }
     public static bool IsOnCooldown()
     {
@@ -167,7 +167,7 @@ public partial class BountyManager : MonoBehaviour
         string[] files = BountyDir.GetFiles("*.yml", true);
         if (files.Length <= 0)
         {
-            if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("BountyManager: No bounties on disk, writing defaults");
+            if (Configs.AddLogs) AlmanacPlugin.LogDebug("BountyManager: No bounties on disk, writing defaults");
             foreach (BountyData? bounty in bounties.Values)
             {
                 string data = serializer.Serialize(bounty);
@@ -179,7 +179,7 @@ public partial class BountyManager : MonoBehaviour
         }
         else
         {
-            if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug($"BountyManager. Bounties found ({files.Length}), updating");
+            if (Configs.AddLogs) AlmanacPlugin.LogDebug($"BountyManager. Bounties found ({files.Length}), updating");
             bounties.Clear();
             foreach (string file in files)
             {
@@ -193,7 +193,7 @@ public partial class BountyManager : MonoBehaviour
                 }
                 catch
                 {
-                    AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse bounty: " + Path.GetFileName(file));
+                    AlmanacPlugin.LogWarning("Failed to parse bounty: " + Path.GetFileName(file));
                 }
             }
         }
@@ -222,11 +222,11 @@ public partial class BountyManager : MonoBehaviour
             {
                 bounties[bounty.UniqueID] = bounty;
             }
-            if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Client: BountyManager.Bounties.OnServerBountyChanged");
+            if (Configs.AddLogs) AlmanacPlugin.LogDebug("Client: BountyManager.Bounties.OnServerBountyChanged");
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server bounties");
+            AlmanacPlugin.LogWarning("Failed to parse server bounties");
         }
     }
     private static void OnChange(object sender, FileSystemEventArgs e)
@@ -245,7 +245,7 @@ public partial class BountyManager : MonoBehaviour
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to change bounty: " + Path.GetFileName(e.FullPath));
+            AlmanacPlugin.LogWarning("Failed to change bounty: " + Path.GetFileName(e.FullPath));
         }
     }
     private static void OnCreated(object sender, FileSystemEventArgs e)

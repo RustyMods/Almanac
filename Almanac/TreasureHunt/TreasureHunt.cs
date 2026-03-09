@@ -21,7 +21,6 @@ public class TreasureHunt : MonoBehaviour
         string? data = m_nview.GetZDO().GetString(ZDOVars.s_drops);
         if (!string.IsNullOrEmpty(data))
         {
-            m_destructible.m_dropWhenDestroyed.m_drops.Clear();
             ZPackage pkg = new ZPackage(data);
             int count = pkg.ReadInt();
             m_destructible.m_dropWhenDestroyed.m_drops.Clear();
@@ -33,7 +32,7 @@ public class TreasureHunt : MonoBehaviour
                 double weight = pkg.ReadDouble();
 
                 if (ZNetScene.instance.GetPrefab(item) is not { } prefab) continue;
-                m_destructible.m_dropWhenDestroyed.m_drops.Add(new DropTable.DropData()
+                m_destructible.m_dropWhenDestroyed.m_drops.Add(new DropTable.DropData
                 {
                     m_item = prefab,
                     m_stackMin = min,

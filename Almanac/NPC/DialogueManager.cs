@@ -198,7 +198,7 @@ public partial class DialogueManager : MonoBehaviour
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to create dialogue: " + Path.GetFileName(args.FullPath));
+            AlmanacPlugin.LogWarning("Failed to create dialogue: " + Path.GetFileName(args.FullPath));
         }
     }
 
@@ -215,7 +215,7 @@ public partial class DialogueManager : MonoBehaviour
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to change dialogue: " + Path.GetFileName(args.FullPath));
+            AlmanacPlugin.LogWarning("Failed to change dialogue: " + Path.GetFileName(args.FullPath));
         }
     }
 
@@ -268,8 +268,8 @@ public partial class DialogueManager : MonoBehaviour
                 }
                 catch(Exception e)
                 {
-                    AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse dialogue: " + Path.GetFileName(file));
-                    AlmanacPlugin.AlmanacLogger.LogError(e.Message);
+                    AlmanacPlugin.LogWarning("Failed to parse dialogue: " + Path.GetFileName(file));
+                    AlmanacPlugin.LogError(e.Message);
                 }
             }
         }
@@ -292,7 +292,7 @@ public partial class DialogueManager : MonoBehaviour
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server dialogues");
+            AlmanacPlugin.LogWarning("Failed to parse server dialogues");
         }
     }
 

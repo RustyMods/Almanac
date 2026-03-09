@@ -84,7 +84,7 @@ public static class StoreManager
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server store");
+            AlmanacPlugin.LogWarning("Failed to parse server store");
         }
     }
     private static void UpdateServerStore()
@@ -111,7 +111,7 @@ public static class StoreManager
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed create store item: " + Path.GetFileName(e.FullPath));
+            AlmanacPlugin.LogWarning("Failed create store item: " + Path.GetFileName(e.FullPath));
         }
     }
     private static void OnChanged(object sender, FileSystemEventArgs e)
@@ -126,7 +126,7 @@ public static class StoreManager
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to change store item: " + Path.GetFileName(e.FullPath));
+            AlmanacPlugin.LogWarning("Failed to change store item: " + Path.GetFileName(e.FullPath));
         }
     }
     private static void OnDeleted(object sender, FileSystemEventArgs e)

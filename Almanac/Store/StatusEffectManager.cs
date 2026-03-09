@@ -117,7 +117,7 @@ public static class CustomEffectManager
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to change custom effect: " + Path.GetFileName(e.FullPath));
+            AlmanacPlugin.LogWarning("Failed to change custom effect: " + Path.GetFileName(e.FullPath));
         }
     }
     private static void OnDeleted(object sender, FileSystemEventArgs e)
@@ -147,7 +147,7 @@ public static class CustomEffectManager
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to create custom effect: " + Path.GetFileName(e.FullPath));
+            AlmanacPlugin.LogWarning("Failed to create custom effect: " + Path.GetFileName(e.FullPath));
         }
     }
     private static void LoadDefaults()

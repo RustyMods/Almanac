@@ -47,7 +47,7 @@ public static class AchievementManager
         string[] files = AchievementDir.GetFiles("*.yml", true);
         if (files.Length == 0)
         {
-            if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("AchievementManager: No achievements found, writing defaults");
+            if (Configs.AddLogs) AlmanacPlugin.LogDebug("AchievementManager: No achievements found, writing defaults");
             foreach (Achievement achievement in achievements.Values)
             {
                 string data = serializer.Serialize(achievement);
@@ -60,7 +60,7 @@ public static class AchievementManager
         }
         else
         {
-            if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug($"AchievementManager: Achievements found ({files.Length}), updating");
+            if (Configs.AddLogs) AlmanacPlugin.LogDebug($"AchievementManager: Achievements found ({files.Length}), updating");
             achievements.Clear();
             foreach (string file in files)
             {
@@ -74,7 +74,7 @@ public static class AchievementManager
                 }
                 catch
                 {
-                    AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse achievement: " + Path.GetFileName(file));
+                    AlmanacPlugin.LogWarning("Failed to parse achievement: " + Path.GetFileName(file));
                 }
             }            
         }
@@ -105,7 +105,7 @@ public static class AchievementManager
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to change achievement: " + Path.GetFileName(e.FullPath));
+            AlmanacPlugin.LogWarning("Failed to change achievement: " + Path.GetFileName(e.FullPath));
         }
     }
     private static void OnCreated(object sender, FileSystemEventArgs e)
@@ -125,7 +125,7 @@ public static class AchievementManager
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to create achievement: " + Path.GetFileName(e.FullPath));
+            AlmanacPlugin.LogWarning("Failed to create achievement: " + Path.GetFileName(e.FullPath));
         }
     }
     private static void OnDeleted(object sender, FileSystemEventArgs e)
@@ -144,14 +144,14 @@ public static class AchievementManager
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to delete achievement: " + Path.GetFileName(e.FullPath));
+            AlmanacPlugin.LogWarning("Failed to delete achievement: " + Path.GetFileName(e.FullPath));
         }
     }
     public static void UpdateServerAchievements()
     {
         if (!ZNet.instance || !ZNet.instance.IsServer()) return;
         SyncedServerAchievements.Value = serializer.Serialize(achievements);
-        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Server: AchievementManager.UpdateAchievements");
+        if (Configs.AddLogs) AlmanacPlugin.LogDebug("Server: AchievementManager.UpdateAchievements");
     }
     private static void OnServerAchievementsChanged()
     {
@@ -162,11 +162,11 @@ public static class AchievementManager
             Dictionary<string, Achievement> data = deserializer.Deserialize<Dictionary<string, Achievement>>(SyncedServerAchievements.Value);
             achievements.Clear();
             achievements.AddRange(data);
-            if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Client: AchievementManager.UpdateAchievements");
+            if (Configs.AddLogs) AlmanacPlugin.LogDebug("Client: AchievementManager.UpdateAchievements");
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server achievements");
+            AlmanacPlugin.LogWarning("Failed to parse server achievements");
         }
     }
     public static bool Exists(string id) => achievements.ContainsKey(id);
@@ -673,7 +673,7 @@ public static class AchievementManager
         int hash = achievement.StatusEffect.GetStableHashCode();
         if (ObjectDB.instance.GetStatusEffect(hash) is null)
         {
-            AlmanacPlugin.AlmanacLogger.LogError($"Failed to find Achievement Effect for: {achievement.UniqueID}, {achievement.Name} - {achievement.StatusEffect}");
+            AlmanacPlugin.LogError($"Failed to find Achievement Effect for: {achievement.UniqueID}, {achievement.Name} - {achievement.StatusEffect}");
         }
         else
         {
@@ -703,7 +703,7 @@ public static class AchievementManager
                 achievement.ApplyAchievementEffect(__instance, false);
                 ++count;
             }
-            if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug($"Player.OnSpawned: Applying saved achievement effects ({count})");
+            if (Configs.AddLogs) AlmanacPlugin.LogDebug($"Player.OnSpawned: Applying saved achievement effects ({count})");
         }
     }
 

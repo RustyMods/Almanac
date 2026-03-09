@@ -23,7 +23,7 @@ public class QuestPanel : MonoBehaviour
     private readonly Vector3 offScreenPos = new Vector3(5000f, 5000f, 0f);
     public void Awake()
     {
-        if (Configs.AddLogs) AlmanacPlugin.AlmanacLogger.LogDebug("Almanac.Quest.Panel.Awake");
+        if (Configs.AddLogs) AlmanacPlugin.LogDebug("Almanac.Quest.Panel.Awake");
         instance = this;
         root = transform.Find("ListView/Viewport/ListRoot").GetComponent<RectTransform>();
         _textArea = new TextArea(transform.Find("ListView/Viewport/TextArea"));

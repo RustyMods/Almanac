@@ -93,7 +93,7 @@ public class TreasureManager : MonoBehaviour
                 }
                 catch
                 {
-                    AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse treasure: " + Path.GetFileName(file));
+                    AlmanacPlugin.LogWarning("Failed to parse treasure: " + Path.GetFileName(file));
                 }
             }
         }
@@ -122,7 +122,7 @@ public class TreasureManager : MonoBehaviour
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to parse server treasures");
+            AlmanacPlugin.LogWarning("Failed to parse server treasures");
         }
     }
     private static void OnCreated(object? sender, FileSystemEventArgs e)
@@ -139,7 +139,7 @@ public class TreasureManager : MonoBehaviour
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to create treasure: " + Path.GetFileName(e.FullPath));
+            AlmanacPlugin.LogWarning("Failed to create treasure: " + Path.GetFileName(e.FullPath));
         }
     }
     private static void OnChange(object? sender, FileSystemEventArgs e)
@@ -157,7 +157,7 @@ public class TreasureManager : MonoBehaviour
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to change treasure: " + Path.GetFileName(e.FullPath));
+            AlmanacPlugin.LogWarning("Failed to change treasure: " + Path.GetFileName(e.FullPath));
         }
     }
     private static void OnDeleted(object? sender, FileSystemEventArgs e)
@@ -175,7 +175,7 @@ public class TreasureManager : MonoBehaviour
         }
         catch
         {
-            AlmanacPlugin.AlmanacLogger.LogWarning("Failed to delete treasure: " + Path.GetFileName(e.FullPath));
+            AlmanacPlugin.LogWarning("Failed to delete treasure: " + Path.GetFileName(e.FullPath));
         }
     }
     private static void LoadDefaults()
@@ -321,8 +321,8 @@ public class TreasureManager : MonoBehaviour
         Player.m_localPlayer.Message(MessageHud.MessageType.Center, $"{Keys.SearchFor} {treasureLocation.data.Name}");
         datetime = DateTime.Now;
         ActiveTreasureLocation = treasureLocation;
-        AlmanacPlugin.AlmanacLogger.LogDebug("Successfully added treasure hunt: " + treasureLocation.data.Name);
-        AlmanacPlugin.AlmanacLogger.LogDebug("Location: " + treasureLocation.position.x + " " + treasureLocation.position.z);
+        AlmanacPlugin.LogDebug("Successfully added treasure hunt: " + treasureLocation.data.Name);
+        AlmanacPlugin.LogDebug("Location: " + treasureLocation.position.x + " " + treasureLocation.position.z);
         return true;
     }
     public class TreasureLocation
@@ -403,6 +403,7 @@ public class TreasureManager : MonoBehaviour
                 pkg.Write(loot.Max);
                 pkg.Write((double)loot.Weight);
             }
+            
             ZDO? zdo = ZDOMan.instance.CreateNewZDO(position, "barrell".GetStableHashCode());
             zdo.Persistent = false;
             zdo.Type = ZDO.ObjectType.Default;
@@ -410,7 +411,6 @@ public class TreasureManager : MonoBehaviour
             zdo.SetPrefab("barrell".GetStableHashCode());
             zdo.SetOwner(ZDOMan.GetSessionID());
             zdo.Set(ZDOVars.s_drops, pkg.GetBase64());
-            zdo.Set(ZDOVars.s_creator, Player.m_localPlayer.GetPlayerID());
             GameObject go = ZNetScene.instance.CreateObject(zdo);
             go.AddComponent<TreasureHunt>();
             go.AddComponent<HoverText>().m_text = data.Name;;

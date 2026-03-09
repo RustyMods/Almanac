@@ -1,3 +1,6 @@
+# 3.7.8
+- removed treasure hunt creator check for compatibility with MoreVanillaPrefabs
+
 # 3.7.7
 - reverted back to old localization manager
 

@@ -75,6 +75,10 @@ public class Bounty : MonoBehaviour
         m_monsterAI.SetTarget(Player.GetPlayer(m_hunter));
         
         var healthOverride = m_nview.GetZDO().GetFloat(BountyVars.BountyHealth, m_character.m_health);
+        if (StarLevelSystem.API.IsAvailable) {
+            StarLevelSystem.API.SetCreatureBaseAttribute(m_character, 0, healthOverride);
+            StarLevelSystem.API.ApplyCreatureUpdates(m_character);
+        }
         var health = healthOverride * m_character.m_level;
         m_character.SetMaxHealth(health);
         m_character.SetHealth(health);

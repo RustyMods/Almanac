@@ -144,12 +144,13 @@ public static class QuestTrackers
         }
     }
     
-    [HarmonyPatch(typeof(TreeLog), nameof(TreeLog.Destroy), typeof(HitData))]
+    [HarmonyPatch(typeof(TreeLog), nameof(TreeLog.Destroy), typeof(HitData),typeof(bool))]
     public static class TreeLog_Destroy_Patch
     {
         [UsedImplicitly]
-        private static void Prefix(TreeLog __instance, HitData? hitData)
+        private static void Prefix(TreeLog __instance, HitData? hitData, bool cheatedTool)
         {
+            if (cheatedTool) return;
             if (DialoguePanel.IsVisible()) return;
             if (hitData?.GetAttacker() is not { } attacker || attacker != Player.m_localPlayer) return;
             // beech_log

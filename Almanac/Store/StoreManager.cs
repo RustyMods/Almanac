@@ -607,7 +607,7 @@ public static class StoreHelpers
         {
             if (item.item is not { } itemDrop) continue;
             var variant = item.Variant > itemDrop.m_itemData.m_shared.m_variants ? 0 : item.Variant;
-            player.GetInventory().AddItem(itemDrop.name, item.Amount, item.Quality, variant, 0L, string.Empty);
+            player.GetInventory().AddItem(itemDrop.name, item.Amount, item.Quality, variant, 0L, string.Empty, false);
         }
 
         foreach (StoreManager.StoreCost.Cost? cost in storeItem.Cost.Items)

@@ -1,11 +1,11 @@
 <Project>
     <PropertyGroup>
         <ValheimGamePath>C:\Program Files (x86)\Steam\steamapps\common\Valheim</ValheimGamePath>
-        <BepInExPath>$(ValheimGamePath)\BepInEx</BepInExPath>
-        <CorlibPath>$(ValheimGamePath)\unstripped_corlib</CorlibPath>
+        <BepInExPath>C:\Users\malco\AppData\Roaming\com.kesomannen.gale\valheim\profiles\Default\BepInEx</BepInExPath>
+        <CorlibPath>$(ValheimGamePath)\valheim_Data\Managed</CorlibPath>
         <PublicizedAssembliesPath>$(ValheimGamePath)\valheim_Data\Managed\publicized_assemblies</PublicizedAssembliesPath>
-        <CopyOutputDLLPath>C:\Users\peima\Desktop\VALHEIM MODDING\projects\Almanac\Almanac\Thunderstore</CopyOutputDLLPath>
-        <CopyOutputDLLPath2>C:\Users\peima\AppData\Roaming\com.kesomannen.gale\valheim\profiles\tester\BepInEx\plugins\RustyMods-Almanac</CopyOutputDLLPath2>
+        <CopyOutputDLLPath>C:\Users\malco\AppData\Roaming\com.kesomannen.gale\valheim\profiles\test 1.0\BepInEx\plugins\RustyMods-Almanac</CopyOutputDLLPath>
+<!--        <CopyOutputDLLPath2>C:\Users\peima\AppData\Roaming\com.kesomannen.gale\valheim\profiles\tester\BepInEx\plugins\RustyMods-Almanac</CopyOutputDLLPath2>-->
         <AfterTargets>ILRepacker</AfterTargets>
     </PropertyGroup>
 </Project>

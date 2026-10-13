@@ -276,7 +276,7 @@ public class TreasureManager : MonoBehaviour
             else
             {
                 player.GetInventory()
-                    .AddItem(item.item?.m_itemData?.m_shared.m_name, item.Amount, 1, 0, 0L, "");
+                    .AddItem(item.item?.m_itemData?.m_shared.m_name, item.Amount, 1, 0, 0L, "", false);
             }
         }
     }

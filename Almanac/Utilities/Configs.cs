@@ -67,6 +67,7 @@ public static class Configs
     public static ConfigEntry<Vector3> _questPanelPos = null!;
     private static ConfigEntry<KeyCode> _questKey = null!;
     // public static ConfigEntry<Toggle> _readmeEnabled = null!;
+    private static ConfigEntry<Toggle> _autoHideDialogue = null!;
     
     private static ConfigEntry<Toggle> _allowConversion = null!;
     private static ConfigEntry<int> _conversionRate = null!;
@@ -84,7 +85,24 @@ public static class Configs
     private static ConfigEntry<OrderType> _achievementOrdering = null!;
 
     private static ConfigEntry<Toggle> _logging = null!;
+
+    public static ConfigEntry<Piece.PieceCategory> npc_category = null!;
+    public static ConfigEntry<string> npc_requirements = null!;
+    public static ConfigEntry<string> npc_station = null!;
+
+    public static ConfigEntry<RankType> _rankFlags = null!;
+    public static ConfigEntry<float> _rankAchievementsFactor = null!;
+    public static ConfigEntry<float> _rankKDFactor = null!;
     
+    public static Piece.PieceCategory NPC_Category => npc_category.Value;
+    public static Piece.Requirement[] NPC_Requirements =>
+        SerializedRequirements.toPieceReqs(new SerializedRequirements(npc_requirements.Value));
+    
+    public static CraftingStation? NPC_Station => Helpers.GetPrefab(npc_station.Value)?.GetComponent<CraftingStation>() ?? null;
+
+    public static RankType RankingFlags => _rankFlags.Value;
+    public static float RankingAchievementsFactor =>  _rankAchievementsFactor.Value;
+    public static float RankingKDFactor => _rankKDFactor.Value;
     
     public static bool UseIgnoreList => _UseIgnoreList.Value is Toggle.On;
     public static bool ShowBounties => _BountyEnabled.Value is Toggle.On;
@@ -146,6 +164,7 @@ public static class Configs
     public static int IconsCount => _iconOptionCount.Value;
     public static bool BroadcastWin => _broadcastWin.Value is Toggle.On;
     
+    public static bool AutoHideDialogue => _autoHideDialogue.Value is Toggle.On;
     
     public static void Load()
     {
@@ -245,10 +264,27 @@ public static class Configs
         _questPanelPos = config("5 - User Interface", "Quest Panel", new Vector3(45f, 870f, 0f), "Set position of quest tooltips", false);
         _questPanelPos.SettingChanged += QuestPanel.OnPosChange;
         _questKey = config("5 - User Interface", "Quest Key", KeyCode.F6, "Set key to show / hide quest tooltips", false);
-
+        _autoHideDialogue = config("5 - User Interface", "Auto-Hide Dialogue", Toggle.On,
+            "If on, dialogue panel will auto-close after Give & Quest Commands");
+        
         _enableAchievementEffects = config("6 - Achievements", "Status Effects", Toggle.Off, "If on, will allow legacy achievement feature: status effects");
         _maxAchievementEffects = config("6 - Achievements", "Max Effects", 8, "Set maximum amount of concurrent achievement effects");
         _achievementOrdering = config("6 - Achievements", "Order Style", OrderType.Completed, "Set how achievements are ordered");
+
+        npc_category = config("7 - NPC", "Build Category", Piece.PieceCategory.Misc, "Set NPC Build category");
+        npc_station = config("7 - NPC", "Build Station", "", "Set NPC build crafting station");
+        npc_requirements = config("7 - NPC", "Build Requirements", "SwordCheat:1:true", new ConfigDescription("Set NPC Build requirements", null, SerializedRequirements.attributes));
+
+        _rankFlags = config("8 - Leaderboard", "Ranking", RankType.KD | RankType.Achievement,
+            "Enable/Disable ranking types, (eg. if only Achievement is enabled, ranking will be based off total collected achievements, instead of both k/d + achievements");
+        _rankAchievementsFactor = config("8 - Leaderboard", "Achievements Factor", 1f,
+            new ConfigDescription(
+                "Set completed achievements ranking factor, (eg. 1 = total completed achievements, 1.5 = total completed achiements x 1.5",
+                new AcceptableValueRange<float>(0f, 10f)));
+        _rankKDFactor = config("8 - Leaderboard", "KD Factor", 1f,
+            new ConfigDescription(
+                "Set Kill/Death ratio ranking factor, (eg. 1 = kill / death, 1.5 = (kill / death) x 1.5",
+                new AcceptableValueRange<float>(0f, 10f)));
         SetupWatcher();
     }
     
@@ -354,5 +390,120 @@ public static class Configs
         }
 
         public override string ToString() => string.Join(",", list);
+    }
+    
+    public class SerializedRequirements
+    {
+        public static ConfigurationManagerAttributes attributes = new()
+        {
+            CustomDrawer = DrawConfigTable
+        };
+        public struct Requirement
+        {
+            public string itemName;
+            public int amount;
+            public bool recover;
+        }
+        
+        public static void DrawConfigTable(ConfigEntryBase cfg)
+        {
+            bool locked = cfg.Description.Tags
+                .Select(a =>
+                    a.GetType().Name == "ConfigurationManagerAttributes"
+                        ? (bool?)a.GetType().GetField("ReadOnly")?.GetValue(a)
+                        : null).FirstOrDefault(v => v != null) ?? false;
+
+            List<Requirement> newReqs = [];
+            bool wasUpdated = false;
+
+
+            GUILayout.BeginVertical();
+            foreach (Requirement req in new SerializedRequirements((string)cfg.BoxedValue).Reqs)
+            {
+                GUILayout.BeginHorizontal();
+
+                int amount = req.amount;
+                if (int.TryParse(
+                        GUILayout.TextField(amount.ToString(), new GUIStyle(GUI.skin.textField) { fixedWidth = 40 }),
+                        out int newAmount) && newAmount != amount && !locked)
+                {
+                    amount = newAmount;
+                    wasUpdated = true;
+                }
+
+                string newItemName = GUILayout.TextField(req.itemName, new GUIStyle(GUI.skin.textField));
+                string itemName = locked ? req.itemName : newItemName;
+                wasUpdated = wasUpdated || itemName != req.itemName;
+
+                bool recover = req.recover;
+                if (GUILayout.Toggle(req.recover, "Recover", new GUIStyle(GUI.skin.toggle) { fixedWidth = 67 }) !=
+                    req.recover)
+                {
+                    recover = !recover;
+                    wasUpdated = true;
+                }
+
+                if (GUILayout.Button("x", new GUIStyle(GUI.skin.button) { fixedWidth = 21 }) && !locked)
+                {
+                    wasUpdated = true;
+                }
+                else
+                {
+                    newReqs.Add(new Requirement { amount = amount, itemName = itemName, recover = recover });
+                }
+
+                if (GUILayout.Button("+", new GUIStyle(GUI.skin.button) { fixedWidth = 21 }) && !locked)
+                {
+                    wasUpdated = true;
+                    newReqs.Add(new Requirement { amount = 1, itemName = "", recover = false });
+                }
+
+                GUILayout.EndHorizontal();
+            }
+
+            GUILayout.EndVertical();
+
+            if (wasUpdated)
+            {
+                cfg.BoxedValue = new SerializedRequirements(newReqs).ToString();
+            }
+        }
+        
+        public readonly List<Requirement> Reqs;
+
+        public SerializedRequirements(List<Requirement> reqs) => Reqs = reqs;
+
+        public SerializedRequirements(string reqs)
+        {
+            Reqs = reqs.Split(',').Select(r =>
+            {
+                string[] parts = r.Split(':');
+                return new Requirement
+                {
+                    itemName = parts[0],
+                    amount = parts.Length > 1 && int.TryParse(parts[1], out int amount) ? amount : 1,
+                    recover = parts.Length <= 2 || !bool.TryParse(parts[2], out bool recover) || recover,
+                };
+            }).ToList();
+        }
+
+        public override string ToString()
+        {
+            return string.Join(",", Reqs.Select(r => $"{r.itemName}:{r.amount}:{r.recover}"));
+        }
+
+        public static Piece.Requirement[] toPieceReqs(SerializedRequirements craft)
+        {
+            ItemDrop? ResItem(Requirement r) => Helpers.GetPrefab(r.itemName)?.GetComponent<ItemDrop>();
+
+            Dictionary<string, Piece.Requirement?> resources = craft.Reqs
+                .Where(r => r.itemName != "")
+                .ToDictionary(r => r.itemName,
+                    r => ResItem(r) is { } item
+                        ? new Piece.Requirement { m_amount = r.amount, m_resItem = item, m_recover = r.recover }
+                        : null);
+
+            return resources.Values.Where(v => v != null).ToArray()!;
+        }
     }
 }

@@ -374,7 +374,7 @@ public static class MarketManager
         {
             if (!player.GetInventory().HaveEmptySlot()) return false;
             player.RemoveTokens(TokenCost);
-            ItemDrop.ItemData item = player.GetInventory().AddItem(ItemID, Stack, Quality, Variant, CrafterID, CrafterName);
+            ItemDrop.ItemData item = player.GetInventory().AddItem(ItemID, Stack, Quality, Variant, CrafterID, CrafterName, false);
             item.m_durability = Durability;
             item.m_customData.AddRange(CustomData);
             if (ZNet.instance.IsServer())

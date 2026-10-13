@@ -111,14 +111,14 @@ public partial class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandl
         sideSearch.SetPlaceholder(Keys.SearchPlaceholder);
         description.OnClick(() => OnMainButton?.Invoke());
         close.SetLabel(Keys.Close);
-        close.gamepadText = GamepadMapController.GetType() switch
+        close.gamepadText = GamepadMapController.GetType(ZInput.ConnectedGamepadType, ZInput.CurrentGlyph, Settings.IsSteamRunningOnSteamDeck()) switch
         {
-            GamepadMapType.PS => "O",
+            GamepadMapType.SteamPS => "O",
             _ => "B"
         };
-        description.gamepadButtonText = GamepadMapController.GetType() switch
+        description.gamepadButtonText = GamepadMapController.GetType(ZInput.ConnectedGamepadType, ZInput.CurrentGlyph, Settings.IsSteamRunningOnSteamDeck()) switch
         {
-            GamepadMapType.PS => "X",
+            GamepadMapType.SteamPS => "X",
             _ => "A",
         };
         
@@ -639,7 +639,7 @@ public partial class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandl
         for (var index = 0; index < list.Count; ++index)
         {
             TreasureManager.TreasureData? treasure = list[index];
-            bool isKnown = Player.m_localPlayer.NoCostCheat() || Player.m_localPlayer.IsBiomeKnown(treasure.biome);
+            bool isKnown = Player.m_localPlayer.NoCostCheat() || Player.m_localPlayer.m_knownBiome.Contains(Localization.instance.Localize(BiomeSector.GetBiomeName(treasure.biome)));
             if (Configs.HideUnknownEntries && !isKnown) continue;
             ElementView.Element item = elementView.Create();
             item.isKnown = isKnown;
@@ -1085,7 +1085,7 @@ public partial class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandl
                 SetSelected(false);
             }
             public override void Select() => button.onClick.Invoke();
-            public void SetLabel(string text) => label.text = Localization.instance.Localize(text);
+            public void SetLabel(string text) => label.text = string.IsNullOrEmpty(Localization.instance.Localize(text)) ? text : Localization.instance.Localize(text);
             public void OnClick(UnityAction action) => button.onClick.AddListener(action);
             public void SetSelectedColor(Color color) => selected.color = color;
             public void SetSelected(bool enable) => selected.gameObject.SetActive(enable);
@@ -2048,12 +2048,15 @@ public partial class AlmanacPanel : MonoBehaviour, IDragHandler, IBeginDragHandl
         public void Set(Recipe recipe) => Set(recipe.m_resources);
         public void Set(Piece.Requirement[] requirements)
         {
+            var list = requirements.ToList();
+            list.RemoveAll(x => x.m_resItem.name.StartsWith("Upgrade"));
+            
             for (int index = 0; index < items.Count; ++index)
             {
                 RequirementItem? item = items[index];
-                if (requirements.Length > index)
+                if (list.Count > index)
                 {
-                    Piece.Requirement data = requirements[index];
+                    Piece.Requirement data = list[index];
                     item.Set(data.m_resItem.m_itemData.GetIcon(), data.m_resItem.m_itemData.m_shared.m_name, data.m_amount);
                 }
                 else

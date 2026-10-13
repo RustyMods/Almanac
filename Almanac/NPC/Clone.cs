@@ -11,9 +11,10 @@ public class Clone
 {
     public static GameObject _root = null!;
     internal static readonly Dictionary<string, GameObject> registeredPrefabs = new();
-    private GameObject? Prefab;
+    public GameObject? Prefab;
     private readonly string PrefabName;
     private readonly string NewName;
+    public bool setUnderEmptyGo;
     private bool Loaded;
     public event Action<GameObject>? OnCreated;
 

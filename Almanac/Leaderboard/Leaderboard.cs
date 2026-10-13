@@ -16,6 +16,12 @@ using YamlDotNet.Serialization;
 
 namespace Almanac;
 
+[Flags]
+public enum RankType
+{
+    KD = 1,
+    Achievement = 2
+}
 public static class Leaderboard
 {
     private static string? LeaderboardFileName;
@@ -167,7 +173,20 @@ public static class Leaderboard
 
         public int GetRank()
         {
-            return CollectedAchievements + Mathf.Max(Kills / Math.Max(Deaths, 1), 0);
+            var flags = Configs.RankingFlags;
+
+            var result = 0;
+            if (flags.HasFlag(RankType.Achievement))
+            {
+                result += (int)(CollectedAchievements * Configs.RankingAchievementsFactor);
+            }
+
+            if (flags.HasFlag(RankType.KD))
+            {
+                result += (int)(Mathf.Max(Kills / Math.Max(Deaths, 1), 0) * Configs.RankingKDFactor);
+            }
+
+            return result;
         }
 
         public List<Entries.Entry> ToEntries()

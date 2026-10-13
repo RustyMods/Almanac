@@ -17,7 +17,6 @@ using API;
 using BepInEx;
 using HarmonyLib;
 using JetBrains.Annotations;
-using PieceManager;
 using ServerSync;
 using UnityEngine;
 using YamlDotNet.Serialization;
@@ -164,16 +163,25 @@ public partial class DialogueManager : MonoBehaviour
             prefab.AddComponent<NPCTalk>();
             
             Piece? piece = prefab.AddComponent<Piece>();
+            piece.m_enabled = true;
             piece.m_icon = SpriteManager.GetSprite("blacksmith");
-            BuildPiece buildPiece = new BuildPiece(prefab);
-            buildPiece.Name.English("Almanac NPC");
-            buildPiece.Description.English("Placeable human NPC");
-            buildPiece.Category.Set(BuildPieceCategory.Misc);
-            buildPiece.RequiredItems.Add("SwordCheat", 1, false);
+            piece.m_name = "Almanac NPC";
+            piece.m_description = "Placeable human NPC";
+
+            piece.m_category = Configs.NPC_Category;
+            piece.m_craftingStation = Configs.NPC_Station;
+            piece.m_resources = Configs.NPC_Requirements;
+            piece.m_usage = Piece.UsageTagFlags.Misc;
+
+            Configs.npc_category.SettingChanged += (_, _) => piece.m_category = Configs.NPC_Category;
+            Configs.npc_station.SettingChanged += (_,_) => piece.m_craftingStation = Configs.NPC_Station;
+            Configs.npc_requirements.SettingChanged += (_, _) => piece.m_resources = Configs.NPC_Requirements;
             
+            Helpers.GetPrefab("Hammer")?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_buildPieces.m_pieces.Add(prefab);
         };
         SyncedDialogue.ValueChanged += OnSyncedDialogueChange;
         AlmanacPlugin.OnZNetAwake += UpdateSyncedDialogues;
+
         Read();
         FileSystemWatcher watcher = new FileSystemWatcher(DialogueDir.Path, "*.yml");
         watcher.EnableRaisingEvents = true;
@@ -184,6 +192,8 @@ public partial class DialogueManager : MonoBehaviour
         watcher.Deleted += OnDeleted;
         watcher.Changed += OnChanged;
     }
+    
+    
 
     private static void OnCreated(object sender, FileSystemEventArgs args)
     {
@@ -323,15 +333,19 @@ public partial class DialogueManager : MonoBehaviour
         public bool HasItems(Player player)
         {
             if (Action == null) return false;
-            if (!Action.TryGetItemPrefab(out string name, out int amount, out int quality, out int _)) return false;
-            int count = 0;
-            foreach (ItemDrop.ItemData item in player.GetInventory().GetAllItems())
+
+            if (!Action.TryGetItemPrefabs(out List<(string, int, int, int)> data)) return false;
+            for (int i = 0; i < data.Count; ++i)
             {
-                if (!ItemHelper.TryGetItemBySharedName(item.m_shared.m_name, out ItemDrop itemDrop)) continue;
-                if (itemDrop.name != name || item.m_quality != quality) continue;
-                count += item.m_stack;
+                (string itemId, int amount, int quality, int _) = data[i];
+                var item = ObjectDB.instance.GetItemPrefab(itemId);
+                if (item == null) return false;
+                if (!item.TryGetComponent(out ItemDrop component)) return false;
+                var playerCount = player.GetInventory().CountItems(component.m_itemData.m_shared.m_name, quality);
+                if (playerCount < amount) return false;
             }
-            return count >= amount;
+
+            return true;
         }
         public bool IsInteractable(Player player) => Action?.Type switch
         {
@@ -393,23 +407,38 @@ public partial class DialogueManager : MonoBehaviour
                     AlmanacPanel.instance?.Show(AlmanacPanel.Tab.TabOption.Lottery);
                     break;
                 case Command.Give or Command.Take:
-                    if (!Action.TryGetItemPrefab(out string itemID, out int amount, out int quality, out int variant)) return;
-                    switch (Action.Type)
+                    if (!Action.TryGetItemPrefabs(out List<(string, int, int, int)> list)) return;
+                    for (int i = 0; i < list.Count; ++i)
                     {
-                        case Command.Give:
-                            if (!player.GetInventory().HaveEmptySlot()) return;
-                            ItemDrop.ItemData? item = player.GetInventory().AddItem(itemID, amount, quality, variant, 0L, "");
-                            if (item == null) return;
-                            player.ShowPickupMessage(item, amount);
-                            instance.Hide();
-                            break;
-                        case Command.Take:
-                            if (ObjectDB.instance.GetItemPrefab(itemID) is not { } itemPrefab || !itemPrefab.TryGetComponent(out ItemDrop itemDrop)) return;
-                            player.GetInventory().RemoveItem(itemDrop.m_itemData.m_shared.m_name, amount, quality);
-                            break;
+                        (string itemID, int amount, int quality, int variant) = list[i];
+                        switch (Action.Type)
+                        {
+                            case Command.Give:
+                                if (!player.GetInventory().HaveEmptySlot())
+                                {
+                                    SpawnItemPrefab(itemID, quality, amount, variant, Player.m_localPlayer.transform.position + Player.m_localPlayer.transform.up * 2f, Quaternion.identity);
+                                }
+                                else
+                                {
+                                    ItemDrop.ItemData? item = player.GetInventory().AddItem(itemID, amount, quality, variant, 0L, "", false);
+                                    if (item == null)
+                                    {
+                                        SpawnItemPrefab(itemID, quality, amount, variant, Player.m_localPlayer.transform.position + Player.m_localPlayer.transform.up * 2f, Quaternion.identity);
+                                    }
+                                    else
+                                    {
+                                        player.ShowPickupMessage(item, amount);
+                                    }
+                                }
+                                break;
+                            case Command.Take:
+                                if (ObjectDB.instance.GetItemPrefab(itemID) is not { } itemPrefab || !itemPrefab.TryGetComponent(out ItemDrop itemDrop)) continue;
+                                player.GetInventory().RemoveItem(itemDrop.m_itemData.m_shared.m_name, amount, quality);
+                                break;
+                        }
                     }
                     player.SaveDialogueID(UniqueID);
-                    instance.Hide();
+                    if (Configs.AutoHideDialogue) instance.Hide();
                     break;
                 case Command.Teleport or Command.MapPin or Command.FlyTo:
                     if (!Action.TryGetVector(out Vector3 pos, out string label, out float duration)) return;
@@ -444,18 +473,18 @@ public partial class DialogueManager : MonoBehaviour
                     if (!Action.TryGetBounty(out var bounty)) return;
                     if (!BountyManager.CanPurchase(player, bounty)) return;
                     BountyManager.AcceptBounty(bounty);
-                    instance.Hide();
+                    if (Configs.AutoHideDialogue) instance.Hide();
                     break;
                 case Command.CancelBounty:
                     BountyManager.CancelBounty();
-                    instance.Hide();
+                    if (Configs.AutoHideDialogue) instance.Hide();
                     break;
                 case Command.CompleteBounty:
                     if (BountyManager.ActiveBountyLocation is not { } active || !active.data.completed) return;
                     player.AddTokens(active.data.AlmanacTokenReward);
                     active.data.completed = false;
                     BountyManager.ActiveBountyLocation = null;
-                    instance.Hide();
+                    if (Configs.AutoHideDialogue) instance.Hide();
                     break;
                 case Command.StartQuest or Command.CancelQuest or Command.CompleteQuest:
                     if (!Action.TryGetQuestDialogue(out string questID, out string dialogueID)) return;
@@ -465,18 +494,18 @@ public partial class DialogueManager : MonoBehaviour
                         case Command.StartQuest:
                             QuestManager.StartQuest(questID);
                             if (hasFollowup) instance.Show(dialogue);
-                            else instance.Hide();
+                            else if (Configs.AutoHideDialogue) instance.Hide();
                             break;
                         case Command.CancelQuest:
                             QuestManager.CancelQuest(questID);
                             if (hasFollowup) instance.Show(dialogue);
-                            else instance.Hide();
+                            else if (Configs.AutoHideDialogue) instance.Hide();
                             break;
                         case Command.CompleteQuest:
                             if (!QuestManager.IsQuestComplete(questID)) return;
                             QuestManager.CompleteQuest(questID);
                             if (hasFollowup) instance.Show(dialogue);
-                            else instance.Hide();
+                            else if (Configs.AutoHideDialogue) instance.Hide();
                             break;
                     }
                     break;
@@ -490,7 +519,7 @@ public partial class DialogueManager : MonoBehaviour
                     EpicMMOSystem_API.AddExp(wackyXP);
                     player.SaveDialogueID(UniqueID);
                     break;
-
+                
             }
         }
         [YamlIgnore] public bool isValid => (Action?.IsValid() ?? true) && (Requirements?.HasRequirements() ?? true);
@@ -502,6 +531,27 @@ public partial class DialogueManager : MonoBehaviour
             if (Action?.Type is Command.CancelBounty && BountyManager.ActiveBountyLocation == null) return false;
             if (Action?.Type is Command.CancelTreasure && TreasureManager.ActiveTreasureLocation == null) return false;
             if (Action?.Type is Command.CancelQuest && (Action == null || !Action.TryGetQuestDialogue(out string id, out _) || !QuestManager.IsActive(id))) return false;
+            return true;
+        }
+
+        public bool SpawnItemPrefab(string itemID, int quality, int amount, int variant, Vector3 position, Quaternion rotation)
+        {
+            var prefab = ObjectDB.instance.GetItemPrefab(itemID);
+            if (prefab == null) return false;
+            var spawnedPrefab = Instantiate(prefab, position, rotation);
+            var spawnedItem = spawnedPrefab.GetComponent<ItemDrop>();
+            spawnedItem.m_itemData.m_variant = variant;
+            ItemDrop.OnCreateNew(spawnedItem);
+            spawnedItem.SetQuality(quality);
+            spawnedItem.SetStack(amount);
+            return true;
+        }
+
+        public bool SpawnPrefab(string prefabId, Vector3 position, Quaternion rotation)
+        {
+            var prefab = ZNetScene.instance.GetPrefab(prefabId);
+            if (prefab == null) return false;
+            Instantiate(prefab, position, rotation);
             return true;
         }
     }
@@ -563,6 +613,39 @@ public partial class DialogueManager : MonoBehaviour
             if (parts.Length > 3 && !int.TryParse(parts[3].Trim(), out variant)) variant = 0;
             if (variant > itemDrop.m_itemData.m_shared.m_variants) variant = 0;
             return true;
+        }
+
+        public bool TryGetItemPrefab(string args, out string name, out int amount, out int quality, out int variant)
+        {
+            name = string.Empty;
+            amount = 1;
+            quality = 1;
+            variant = 0;
+            if (string.IsNullOrEmpty(args)) return false;
+            string[] parts = args.Split(',');
+            if (parts.Length < 2) return false;
+            name = parts[0].Trim();
+            if (ObjectDB.instance.GetItemPrefab(name) is not { } itemPrefab || !itemPrefab.TryGetComponent(out ItemDrop itemDrop)) return false;
+            if (parts.Length > 1 && !int.TryParse(parts[1].Trim(), out amount)) amount = 1;
+            if (parts.Length > 2 && !int.TryParse(parts[2].Trim(), out quality)) quality = 1;
+            if (parts.Length > 3 && !int.TryParse(parts[3].Trim(), out variant)) variant = 0;
+            if (variant > itemDrop.m_itemData.m_shared.m_variants) variant = 0;
+            return true;
+        }
+
+        public bool TryGetItemPrefabs(out List<(string, int, int, int)> data)
+        {
+            data = [];
+            if (string.IsNullOrEmpty(Parameters)) return false;
+            string[] parts = Parameters.Split(';');
+            for (int i = 0; i < parts.Length; ++i)
+            {
+                if (!TryGetItemPrefab(parts[i], out string name, out int amount, out int quality, out int variant))
+                    continue;
+                data.Add((name, amount, quality, variant));
+            }
+
+            return data.Count > 0;
         }
 
         public bool TryGetVector(out Vector3 vector, out string label, out float duration)

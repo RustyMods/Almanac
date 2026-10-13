@@ -257,8 +257,9 @@ Each dialogue is defined as a YAML file with properties like:
 **Panel Commands**: `OpenAlmanac`, `OpenItems`, `OpenCreatures`, etc. open specific UI panels.
 
 **Item Commands**:
-- `Give`: Gives items to player. Parameters: `ItemName, Amount, Quality?, Variant?` `? = optional`
+- `Give`: Gives items to player. Parameters: `ItemName, Amount, Quality?, Variant?` `? = optional` 
 - `Take`: Takes items from player. Same parameter format.
+- 3.7.93 update note: can use semi-colon to give or take multiple items
 
 **Location Commands**:
 - `Teleport`: Instantly transports player. Parameters: `X, Y, Z`

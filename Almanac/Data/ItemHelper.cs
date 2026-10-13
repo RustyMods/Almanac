@@ -19,9 +19,15 @@ public static class ItemHelper
     {
         HashSet<ItemDrop> set = new HashSet<ItemDrop>();
         if (string.IsNullOrEmpty(item.m_shared.m_setName)) return set;
-        foreach (ItemDrop itemDrop in ObjectDB.instance.m_items.Select(i => i.GetComponent<ItemDrop>()))
+        foreach (ItemDrop itemDrop in ObjectDB.instance.m_items
+                     .Select(i => i.GetComponent<ItemDrop>())
+                     .Where(i => i != null))
         {
-            if (itemDrop.m_itemData.m_shared.m_setName == item.m_shared.m_setName) set.Add(itemDrop);
+            if (itemDrop.m_itemData.m_shared.m_setName == item.m_shared.m_setName)
+            {
+                if (itemDrop.name.StartsWith("SP_") || itemDrop.name.StartsWith("FW_")) continue;
+                set.Add(itemDrop);
+            }
         }
         return set;
     }
@@ -236,6 +242,7 @@ public static class ItemHelper
             itemDrop = prefab.GetComponent<ItemDrop>();
             isFloating = prefab.GetComponent<Floating>();
             itemData = itemDrop.m_itemData;
+            if (itemData == null) return;
             recipe = ObjectDB.instance?.GetRecipe(itemData);
             shared = itemData.m_shared;
             droppedBy = itemData.DroppedBy();
@@ -246,9 +253,9 @@ public static class ItemHelper
             {
                 Icons.Add(icon);
             }
-            usedIn = recipes.Where(r => r.m_item != null && r.m_resources.Any(resource => resource.m_resItem.name == prefab.name)).ToHashSet();
-            usedInPieces = PieceHelper.GetPieces().Where(p => p.piece.m_resources.Any(resource => resource.m_resItem.name == prefab.name)).ToHashSet();
-            usedInConversions = PieceHelper.GetPieces().Where(p => p.conversions.Any(c => c.from.name == prefab.name)).ToHashSet();
+            usedIn = recipes.Where(r => r.m_item != null && r.m_resources != null && r.m_resources.Any(req => req.m_resItem?.name == prefab.name)).ToHashSet();
+            usedInPieces = PieceHelper.GetPieces().Where(p => p.piece != null && p.piece.m_resources != null && p.piece.m_resources.Any(req => req.m_resItem?.name == prefab.name)).ToHashSet();
+            usedInConversions = PieceHelper.GetPieces().Where(p => p.conversions.Any(ic => ic.from?.name == prefab.name)).ToHashSet();
             ItemInfos[shared.m_name] = this;
         }
 
@@ -701,6 +708,7 @@ public static class ItemHelper
     private static void OnObjectDBPrefabs(GameObject prefab)
     {
         if (prefab == null || !prefab.TryGetComponent(out ItemDrop component)) return;
+        if (prefab.name.StartsWith("SP_") || prefab.name.StartsWith("FW_")) return;
         SpriteManager.OnItemHelperItem(component);
         m_itemBySharedName[component.m_itemData.m_shared.m_name] = component;
         _ = new ItemInfo(prefab);

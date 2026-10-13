@@ -157,7 +157,7 @@ public static class SpriteManager
         byte[] buffer = new byte[stream.Length];
         _ = stream.Read(buffer, 0, buffer.Length);
         Texture2D texture = new Texture2D(2, 2);
-        Sprite? sprite = texture.LoadImage(buffer) ? Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero) : null;
+        Sprite? sprite = texture.LoadImage4x(buffer) ? Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero) : null;
         if (sprite != null) sprite.name = fileName;
         return sprite;
     }
@@ -182,7 +182,7 @@ public static class SpriteManager
         {
             byte[] bytes = File.ReadAllBytes(filePath);
             Texture2D texture = new Texture2D(2, 2, TextureFormat.ARGB32, mipChain: false);
-            bool ok = texture.LoadImage(bytes);
+            bool ok = texture.LoadImage4x(bytes);
             if (!ok) return null;
 
             texture.wrapMode = TextureWrapMode.Clamp;

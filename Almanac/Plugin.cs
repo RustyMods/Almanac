@@ -32,7 +32,7 @@ namespace Almanac;
 public class AlmanacPlugin : BaseUnityPlugin
 {
     internal const string ModName = "Almanac";
-    internal const string ModVersion = "3.7.8";
+    internal const string ModVersion = "3.8.1";
     internal const string Author = "RustyMods";
     private const string ModGUID = Author + "." + ModName;
     public const string ConfigFileName = ModGUID + ".cfg";

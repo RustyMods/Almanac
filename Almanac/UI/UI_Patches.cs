@@ -40,7 +40,7 @@ public static class InventoryGui_Awake_Patch
         NPCCustomization._Modal.CopySpriteAndMaterial(craftingPanel, "ListView/Viewport/Element/InputField/Glow", "RepairButton/Glow");
         NPCCustomization._Modal.CopySpriteAndMaterial(trophyPanel, "MainButton", "TrophiesFrame/Closebutton");
         NPCCustomization._Modal.CopyButtonState(trophyPanel, "MainButton", "TrophiesFrame/Closebutton");
-        NPCCustomization._Modal.AddComponent<NPCCustomization>();
+        if (!NPCCustomization._Modal.GetComponent<NPCCustomization>()) NPCCustomization._Modal.AddComponent<NPCCustomization>();
         var npc_modal = Object.Instantiate(NPCCustomization._Modal, __instance.transform.parent.Find("HUD"));
         npc_modal.name = "Almanac NPC UI";
 

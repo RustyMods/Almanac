@@ -43,6 +43,7 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
     private NPCSetting hairColor = null!;
     private NPCSetting modelIndex = null!;
     private NPCSetting scale = null!;
+    private NPCSetting model = null!;
     
     private NPC.NPC? currentNPC;
     private Vector3 mouseDifference = Vector3.zero;
@@ -77,6 +78,9 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
         randomTalk = new NPCSetting(SettingType.RandomTalk);
         randomTalk.SetDescription("Random Talk ID");
         randomTalk.SetTitle(Keys.RandomTalkID);
+        model = new NPCSetting(SettingType.Model);
+        model.SetTitle("Prefab Model");
+        model.SetDescription("Prefab ID, ex: Greyling");
         helm = new NPCSetting(SettingType.Helmet);
         helm.SetTitle(Keys.Helmet);
         helm.SetDescription("Helmet ItemID, ex: HelmetIron");
@@ -178,22 +182,23 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
         npcName.SetPlaceholder(npc.m_name);
         dialogueID.SetPlaceholder(npc.m_dialogueID);
         randomTalk.SetPlaceholder(npc.m_randomTalk);
-        helm.SetPlaceholder(npc.m_helmetItem);
-        chest.SetPlaceholder(npc.m_chestItem);
-        legs.SetPlaceholder(npc.m_legItem);
-        right.SetPlaceholder(npc.m_rightItem);
-        left.SetPlaceholder(npc.m_leftItem);
-        shoulder.SetPlaceholder(npc.m_shoulderItem);
-        util.SetPlaceholder(npc.m_utilityItem);
-        backRight.SetPlaceholder(npc.m_backRight);
-        backLeft.SetPlaceholder(npc.m_backLeft);
-        hair.SetPlaceholder(npc.m_hairItem);
-        beard.SetPlaceholder(npc.m_beardItem);
+        helm.SetPlaceholder(ObjectDB.instance.GetItemPrefab(npc.m_helmetItem)?.name ?? "");
+        chest.SetPlaceholder(ObjectDB.instance.GetItemPrefab(npc.m_chestItem)?.name ?? "");
+        legs.SetPlaceholder(ObjectDB.instance.GetItemPrefab(npc.m_legItem)?.name ?? "");
+        right.SetPlaceholder(ObjectDB.instance.GetItemPrefab(npc.m_rightItem)?.name ?? "");
+        left.SetPlaceholder(ObjectDB.instance.GetItemPrefab(npc.m_leftItem)?.name ?? "");
+        shoulder.SetPlaceholder(ObjectDB.instance.GetItemPrefab(npc.m_shoulderItem)?.name ?? "");
+        util.SetPlaceholder(ObjectDB.instance.GetItemPrefab(npc.m_utilityItem)?.name ?? "");
+        backRight.SetPlaceholder(ObjectDB.instance.GetItemPrefab(npc.m_backRight)?.name ?? "");
+        backLeft.SetPlaceholder(ObjectDB.instance.GetItemPrefab(npc.m_backLeft)?.name ?? "");
+        hair.SetPlaceholder(ObjectDB.instance.GetItemPrefab(npc.m_hairItem)?.name ?? "");
+        beard.SetPlaceholder(ObjectDB.instance.GetItemPrefab(npc.m_beardItem)?.name ?? "");
         anim.SetPlaceholder(npc.m_animation);
         skin.SetField(Helpers.Vector3ToString(npc.m_skinColor));
         hairColor.SetField(Helpers.Vector3ToString(npc.m_hairColor));
         modelIndex.SetPlaceholder(npc.m_modelIndex.ToString());
         scale.SetPlaceholder($"{npc.m_scale.x} {npc.m_scale.y} {npc.m_scale.z}");
+        model.SetPlaceholder(npc.m_selectedModel);
     }
     
     private void SetTopic(string text) => topic.text = text;
@@ -204,6 +209,7 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
         if (currentNPC != null)
         {
             currentNPC.SetName(npcName.input);
+            currentNPC.SetModel(model.input);
             currentNPC.SetDialogue(dialogueID.input);
             currentNPC.SetRandomTalk(randomTalk.input);
             currentNPC.SetRightItem(right.input);
@@ -231,7 +237,7 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
     {
         Helmet, Chest, Legs, RightHand, LeftHand, Shoulder, Utility, 
         BackRight, BackLeft, Hair, Beard, Animation, SkinColor, Name, 
-        HairColor, Dialogue, ModelIndex, RandomTalk, Scale
+        HairColor, Dialogue, ModelIndex, RandomTalk, Scale, Model
     }
     
     private class NPCSetting
@@ -318,6 +324,9 @@ public class NPCCustomization : MonoBehaviour, IDragHandler, IBeginDragHandler, 
                     break;
                 case SettingType.RandomTalk:
                     element.OnValueChanged(s => element.SetFieldColor(!RandomTalkManager.Exists(s) ? Color.red : Color.white));
+                    break;
+                case SettingType.Model:
+                    element.OnValueChanged(s => element.SetFieldColor(Helpers.GetPrefab(s) == null ? Color.red :  Color.white));
                     break;
             }
         }

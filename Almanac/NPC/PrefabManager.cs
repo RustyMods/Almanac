@@ -33,7 +33,7 @@ public static class PrefabManager
     {
         foreach (GameObject prefab in PrefabsToRegister)
         {
-            if (!prefab.GetComponent<ZNetView>()) continue;
+            if (!prefab.GetComponent<ZNetView>() || __instance.m_prefabs.Contains(prefab)) continue;
             __instance.m_prefabs.Add(prefab);
         }
     }
@@ -44,6 +44,5 @@ public static class PrefabManager
         Helpers._ZNetScene = __instance.m_objectDBPrefab.GetComponent<ZNetScene>();
         Helpers._ObjectDB = __instance.m_objectDBPrefab.GetComponent<ObjectDB>();
         foreach(Clone? clone in Clones) clone.Create();
-        PieceManager.BuildPiece.Patch_FejdStartup(__instance);
     }
 }

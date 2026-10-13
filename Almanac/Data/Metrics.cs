@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Almanac.Managers;
 using Almanac.Utilities;
@@ -115,14 +116,14 @@ public static class PlayerInfo
     {
         if (!Game.instance) return 0;
         if (Game.instance.m_playerProfile == null) return 0;
-        return Game.instance.m_playerProfile.m_playerStats.m_stats.TryGetValue(type, out float value) ? value : 0;
+        return Game.instance.m_playerProfile.m_playerStats[0].m_stats.TryGetValue(type, out float value) ? value : 0;
     }
     public static int GetPlayerStat(RecordType type, string name = "")
     {
         if (!Player.m_localPlayer || string.IsNullOrEmpty(name)) return 0;
         return type switch
         {
-            RecordType.Kill => Game.instance.GetPlayerProfile().m_enemyStats.TryGetValue(name, out var value) ? (int)value : 0,
+            RecordType.Kill => Game.instance.m_playerProfile.m_playerStats[0].m_enemyStats.Sum(array => array.TryGetValue(name, out var value) ? (int)value : 0),
             RecordType.Death => Records.GetDeaths(name),
             RecordType.Pickable => Records.GetItemPicked(name),
             RecordType.Stump => Records.stumps.TryGetValue(name, out var value) ? value : 0,
@@ -134,7 +135,7 @@ public static class PlayerInfo
     public static int GetEnemyKill(string name, bool shared = true)
     {
         if (!shared && CritterHelper.namedCritters.TryGetValue(name, out var info)) name = info.character.m_name;
-        return Game.instance.GetPlayerProfile().m_enemyStats.TryGetValue(name, out var value) ? (int)value : 0;
+        return Game.instance.GetPlayerProfile().m_playerStats[0].m_enemyStats.Sum(array => array.TryGetValue(name, out var value) ? (int)value : 0);
     }
     
     public static event Action<Character>? OnCharacterDeathByLocal;
@@ -150,44 +151,44 @@ public static class PlayerInfo
         }
     }
     
-    [HarmonyPatch(typeof(Character), nameof(Character.OnDeath))]
-    private static class CharacterOnDeathPatch
-    {
-        [UsedImplicitly]
-        private static void Prefix(Character __instance)
-        {
-            // this is run only by the ZDO owner
-            if (!__instance || !Player.m_localPlayer) return;
-            if (__instance.m_lastHit?.GetAttacker() is not { } attacker) return;
-            if (attacker == Player.m_localPlayer)
-            {
-                OnCharacterDeathByLocal?.Invoke(__instance);
-            }
-            else if (attacker is Player player)
-            {
-                // because only the owner updates their profile, we need to broadcast the kill
-                ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.Everybody, nameof(RPC_BroadcastKill), player.GetPlayerID(), __instance.m_name);
-                //
-                // ZRoutedRpc.instance.InvokeRoutedRPC(player.m_nview.m_zdo.GetOwner(), nameof(RPC_BroadcastKill), __instance.m_name);
-                ZRoutedRpc.instance.InvokeRoutedRPC(player.GetZDOID().UserID, nameof(RPC_CharacterDeath), __instance.m_name);
-            }
-            else if (__instance == Player.m_localPlayer)
-            {
-                Records.deaths.IncrementOrSet(attacker.m_name);
-            }
-        }
-    }
+    // [HarmonyPatch(typeof(Character), nameof(Character.OnDeath))]
+    // private static class CharacterOnDeathPatch
+    // {
+    //     [UsedImplicitly]
+    //     private static void Prefix(Character __instance)
+    //     {
+    //         // this is run only by the ZDO owner
+    //         if (!__instance || !Player.m_localPlayer) return;
+    //         if (__instance.m_lastHit?.GetAttacker() is not { } attacker) return;
+    //         if (attacker == Player.m_localPlayer)
+    //         {
+    //             OnCharacterDeathByLocal?.Invoke(__instance);
+    //         }
+    //         else if (attacker is Player player)
+    //         {
+    //             // because only the owner updates their profile, we need to broadcast the kill
+    //             ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.Everybody, nameof(RPC_BroadcastKill), player.GetPlayerID(), __instance.m_name);
+    //             //
+    //             // ZRoutedRpc.instance.InvokeRoutedRPC(player.m_nview.m_zdo.GetOwner(), nameof(RPC_BroadcastKill), __instance.m_name);
+    //             ZRoutedRpc.instance.InvokeRoutedRPC(player.GetZDOID().UserID, nameof(RPC_CharacterDeath), __instance.m_name);
+    //         }
+    //         else if (__instance == Player.m_localPlayer)
+    //         {
+    //             Records.deaths.IncrementOrSet(attacker.m_name);
+    //         }
+    //     }
+    // }
     
 
-    [HarmonyPatch(typeof(Player), nameof(Player.EatFood))]
-    private static class PlayerEatFoodFix
-    {
-        [UsedImplicitly]
-        private static void Postfix(ref bool __result)
-        {
-            if (__result) Game.instance.IncrementPlayerStat(PlayerStatType.FoodEaten);
-        }
-    }
+    // [HarmonyPatch(typeof(Player), nameof(Player.EatFood))]
+    // private static class PlayerEatFoodFix
+    // {
+    //     [UsedImplicitly]
+    //     private static void Postfix(ref bool __result)
+    //     {
+    //         if (__result) Game.instance.IncrementPlayerStat(PlayerStatType.FoodEaten);
+    //     }
+    // }
 
     [HarmonyPatch(typeof(Pickable), nameof(Pickable.Interact))]
     private static class PickableInteractPatch
@@ -215,7 +216,7 @@ public static class PlayerInfo
     }
 
     [HarmonyPatch(typeof(SEMan), nameof(SEMan.AddStatusEffect), typeof(StatusEffect), typeof(bool), typeof(int),
-        typeof(float))]
+        typeof(float),typeof(short))]
     private static class SEMan_AddStatusEffect_Patch
     {
         [UsedImplicitly]
@@ -231,24 +232,24 @@ public static class PlayerInfo
         AlmanacPlugin.OnPlayerProfileLoadPlayerDataPostfix += player => _cachedRecords = player.GetRecords();
         AlmanacPlugin.OnPlayerProfileSavePlayerDataPrefix += player => Records.Save(player);
         AlmanacPlugin.OnNewCharacterDone += () => _cachedRecords = new PlayerRecords();
-        AlmanacPlugin.OnZNetAwake += () => ZRoutedRpc.instance.Register<long, string>(nameof(RPC_BroadcastKill), RPC_BroadcastKill);
-        AlmanacPlugin.OnZNetAwake += () => ZRoutedRpc.instance.Register<string>(nameof(RPC_CharacterDeath), RPC_CharacterDeath);
+        // AlmanacPlugin.OnZNetAwake += () => ZRoutedRpc.instance.Register<long, string>(nameof(RPC_BroadcastKill), RPC_BroadcastKill);
+        // AlmanacPlugin.OnZNetAwake += () => ZRoutedRpc.instance.Register<string>(nameof(RPC_CharacterDeath), RPC_CharacterDeath);
     }
 
-    public static void RPC_BroadcastKill(long sender, long playerID, string creatureSharedName)
-    {
-        if (!Player.m_localPlayer || Player.m_localPlayer.GetPlayerID() != playerID) return;
-        Game.instance.GetPlayerProfile().m_enemyStats.IncrementOrSet(creatureSharedName);
-        AlmanacPlugin.LogDebug($"Received RPC of character death: {creatureSharedName}, and I am the one who hit last.");
-    }
+    // public static void RPC_BroadcastKill(long sender, long playerID, string creatureSharedName)
+    // {
+    //     if (!Player.m_localPlayer || Player.m_localPlayer.GetPlayerID() != playerID) return;
+    //     Game.instance.GetPlayerProfile().m_playerStats[0].m_enemyStats.IncrementOrSet(creatureSharedName);
+    //     AlmanacPlugin.LogDebug($"Received RPC of character death: {creatureSharedName}, and I am the one who hit last.");
+    // }
 
-    public static void RPC_CharacterDeath(long sender, string creatureSharedName)
-    {
-        var profile = Game.instance.GetPlayerProfile();
-        if (profile == null) return;
-        profile.m_enemyStats.IncrementOrSet(creatureSharedName);
-        AlmanacPlugin.LogDebug($"Received RPC of character death: {creatureSharedName}");
-    }
+    // public static void RPC_CharacterDeath(long sender, string creatureSharedName)
+    // {
+    //     var profile = Game.instance.GetPlayerProfile();
+    //     if (profile == null) return;
+    //     profile.m_enemyStats.IncrementOrSet(creatureSharedName);
+    //     AlmanacPlugin.LogDebug($"Received RPC of character death: {creatureSharedName}");
+    // }
     
     public static List<Entries.Entry> GetEntries()
     {

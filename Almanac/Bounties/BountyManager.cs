@@ -444,7 +444,7 @@ public partial class BountyManager : MonoBehaviour
             foreach (StoreManager.StoreCost.Cost? cost in Cost.Items)
             {
                 if (cost.isToken) player.AddTokens(cost.Amount);
-                else player.GetInventory().AddItem(cost.PrefabName, cost.Amount, 1, 0, 0L, string.Empty);
+                else player.GetInventory().AddItem(cost.PrefabName, cost.Amount, 1, 0, 0L, string.Empty, false);
             }
         }
 
@@ -456,7 +456,7 @@ public partial class BountyManager : MonoBehaviour
                 if (ObjectDB.instance.GetItemPrefab(loot.PrefabName) is not { } itemPrefab) continue;
                 var variants = itemPrefab.GetComponent<ItemDrop>().m_itemData.m_shared.m_variants;
                 int variant = loot.Variant > variants ? 0 : loot.Variant;
-                if (Player.m_localPlayer.GetInventory().AddItem(loot.PrefabName, loot.Amount, loot.Quality, variant, 0L, "") is not null) continue;
+                if (Player.m_localPlayer.GetInventory().AddItem(loot.PrefabName, loot.Amount, loot.Quality, variant, 0L, "", false) is not null) continue;
                 GameObject? clone = Instantiate(itemPrefab, Player.m_localPlayer.transform.position, Quaternion.identity);
                 if (!clone.TryGetComponent(out ItemDrop itemDrop)) continue;
                 itemDrop.m_itemData.m_stack = loot.Amount;

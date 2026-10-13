@@ -1,3 +1,27 @@
+# 3.8.1
+- added SLS API for bounties - if you have SLS installed, bounties will generate with SLS attributes & bonuses
+- added new configs to control leaderboard ranking value
+
+# 3.8.0
+- deep north update
+- updated server sync
+
+# 3.7.94
+- modified `Give` command to spawn item in front of player if player's inventory is full
+
+# 3.7.93
+- modified `Give` & `Take` Dialogue Command to accept multiple item parameters, separated by a semi-colon `;`
+- added new npc option to change prefab model, ex to a Greyling
+
+# 3.7.92
+- fixed almanac npc configs not applying
+
+# 3.7.91
+- fixed almanac npc customization panel having duplicate fields when relogging
+
+# 3.7.9
+- fixed almanac npc not showing up in build menu
+
 # 3.7.8
 - removed treasure hunt creator check for compatibility with MoreVanillaPrefabs
 

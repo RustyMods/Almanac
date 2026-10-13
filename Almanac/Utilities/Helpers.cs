@@ -1,13 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using Almanac.Managers;
 using Almanac.NPC;
+using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 namespace Almanac.Utilities;
+
+public static partial class Extensions
+{
+    private static readonly MethodInfo LoadImage = AccessTools.Method(typeof(ImageConversion), nameof(ImageConversion.LoadImage), new [] { typeof(Texture2D), typeof(byte[]) });
+    public static bool LoadImage4x(this Texture2D tex, byte[] data)
+    {
+        return (bool)LoadImage.Invoke(null, new object[] { tex , data});
+    }
+}
 
 public static class Helpers
 {
